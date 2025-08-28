@@ -1,12 +1,13 @@
 package com.common.exception;
 
-import com.common.constants.ErrorCodes;
+import lombok.Getter;
 import com.common.enums.StatusEnums;
 
 /**
  * Base runtime exception for all Shared services.
  * Provides a unified way to carry error codes, messages, and status.
  */
+@Getter
 public class SharedException extends RuntimeException {
 
     /**
@@ -50,18 +51,5 @@ public class SharedException extends RuntimeException {
         this.errorCode = errorCode;
         this.status = StatusEnums.ApiStatus.ERROR;
         this.details = details;
-    }
-
-    // ===== Getters =====
-    public String getErrorCode() {
-        return errorCode;
-    }
-
-    public StatusEnums.ApiStatus getStatus() {
-        return status;
-    }
-
-    public String getDetails() {
-        return details;
     }
 }
