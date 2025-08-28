@@ -3,13 +3,13 @@ package com.common.dto;
 import com.common.enums.StatusEnums.ApiStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.Instant;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Builder.Default;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Standardized error response for Shared APIs.
@@ -21,7 +21,7 @@ import java.util.List;
 public class ErrorResponse {
 
     /** Always ERROR */
-    @Builder.Default
+    @Default
     private ApiStatus status = ApiStatus.ERROR;
 
     /** Business/technical error code (from ErrorCodes) */
@@ -41,7 +41,7 @@ public class ErrorResponse {
     private String tenantId;
 
     /** Timestamp of error */
-    @Builder.Default
+    @Default
     private Instant timestamp = Instant.now();
 
     @JsonProperty("correlationId")

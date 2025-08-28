@@ -3,12 +3,13 @@ package com.common.dto;
 import com.common.enums.StatusEnums.ApiStatus;
 import jakarta.annotation.Nullable;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.function.Function;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.util.Objects;
 
 /**
  * Standard response wrapper for all Shared APIs.
@@ -22,9 +23,7 @@ public class BaseResponse<T> {
     /** High-level status: SUCCESS, ERROR, WARNING */
     private ApiStatus status;
 
-    /**
-     * Business/technical code (e.g., ERR-VALIDATION, ERR-NOT-FOUND, SUCCESS-200)
-     */
+    /** Business/technical code (e.g., ERR-VALIDATION, ERR-NOT-FOUND, SUCCESS-200) */
     private String code;
 
     /** Human-readable message (may be null) */
@@ -36,7 +35,7 @@ public class BaseResponse<T> {
     private T data;
 
     /** Timestamp of response */
-    @Builder.Default
+    @Default
     private Instant timestamp = Instant.now();
 
     // ===== Static builders (nice usability) =====
@@ -82,29 +81,17 @@ public class BaseResponse<T> {
                 .build();
     }
 
-    /**
-     * Convenience check for SUCCESS responses.
-     *
-     * @return true if status is ApiStatus.SUCCESS
-     */
+    /** Convenience check for SUCCESS responses. */
     public boolean isSuccess() {
         return status == ApiStatus.SUCCESS;
     }
 
-    /**
-     * Convenience check for ERROR responses.
-     *
-     * @return true if status is ApiStatus.ERROR
-     */
+    /** Convenience check for ERROR responses. */
     public boolean isError() {
         return status == ApiStatus.ERROR;
     }
 
-    /**
-     * Convenience check for WARNING responses.
-     *
-     * @return true if status is ApiStatus.WARNING
-     */
+    /** Convenience check for WARNING responses. */
     public boolean isWarning() {
         return status == ApiStatus.WARNING;
     }
@@ -126,6 +113,7 @@ public class BaseResponse<T> {
                 .code(code)
                 .message(message)
                 .data(newData)
+                .timestamp(timestamp)
                 .build();
     }
 
@@ -156,101 +144,4 @@ public class BaseResponse<T> {
                 ", timestamp=" + timestamp +
                 '}';
     }
-
-    /**
-     * Convenience check for SUCCESS responses.
-     *
-     * @return true if status is ApiStatus.SUCCESS
-     */
-    public boolean isSuccess() {
-        return status == ApiStatus.SUCCESS;
-    }
-
-    /**
-     * Convenience check for ERROR responses.
-     *
-     * @return true if status is ApiStatus.ERROR
-     */
-    public boolean isError() {
-        return status == ApiStatus.ERROR;
-    }
-
-    /**
-     * Convenience check for WARNING responses.
-     *
-     * @return true if status is ApiStatus.WARNING
-     */
-    public boolean isWarning() {
-        return status == ApiStatus.WARNING;
-    }
-
-    /**
-     * Transform the payload while preserving status, code and message metadata.
-     * <p>
-     * If the payload is {@code null}, the mapper is not invoked and {@code null}
-     * is returned as the new payload.
-     *
-     * @param mapper function to transform the existing payload
-     * @param <R>    target type of the new payload
-     * @return a new {@link BaseResponse} instance with mapped data
-     */
-    public <R> BaseResponse<R> map(Function<? super T, ? extends R> mapper) {
-        R newData = (data != null && mapper != null) ? mapper.apply(data) : null;
-        return new BaseResponse<>(status, code, message, newData);
-    }
-
-    /**
-     * Create a builder for {@link BaseResponse}.
-     *
-     * @param <T> payload type
-     * @return new Builder instance
-     */
-    public static <T> Builder<T> builder() {
-        return new Builder<>();
-    }
-
-    /**
-     * Builder for {@link BaseResponse} allowing fine-grained construction.
-     */
-    public static final class Builder<T> {
-        private ApiStatus status;
-        private String code;
-        private String message;
-        private T data;
-        private Instant timestamp = Instant.now();
-
-        private Builder() {}
-
-        public Builder<T> status(ApiStatus status) {
-            this.status = status;
-            return this;
-        }
-
-        public Builder<T> code(String code) {
-            this.code = code;
-            return this;
-        }
-
-        public Builder<T> message(String message) {
-            this.message = message;
-            return this;
-        }
-
-        public Builder<T> data(T data) {
-            this.data = data;
-            return this;
-        }
-
-        public Builder<T> timestamp(Instant timestamp) {
-            this.timestamp = timestamp;
-            return this;
-        }
-
-        public BaseResponse<T> build() {
-            BaseResponse<T> response = new BaseResponse<>(status, code, message, data);
-            response.setTimestamp(timestamp);
-            return response;
-        }
-    }
 }
-
