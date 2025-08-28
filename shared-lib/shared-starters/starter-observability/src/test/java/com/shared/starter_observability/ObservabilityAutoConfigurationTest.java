@@ -1,24 +1,31 @@
 package com.shared.starter_observability;
 
 import io.micrometer.core.instrument.MeterRegistry;
+<<<<<<< HEAD
 
+=======
+>>>>>>> cce2a19 (chore: enhance shared library)
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 
+<<<<<<< HEAD
 import static org.junit.jupiter.api.Assertions.assertEquals;
+=======
+import static org.assertj.core.api.Assertions.assertThat;
+>>>>>>> cce2a19 (chore: enhance shared library)
 
 class ObservabilityAutoConfigurationTest {
 
     @Test
-    void addsApplicationTag() {
-        ObservabilityAutoConfiguration config = new ObservabilityAutoConfiguration();
-        ObservabilityAutoConfiguration.ObservabilityProps props = new ObservabilityAutoConfiguration.ObservabilityProps();
-        props.setApplication("test-app");
-        MeterRegistryCustomizer<MeterRegistry> customizer = config.metricsCommonTagsCustomizer(props);
-        MeterRegistry registry = new SimpleMeterRegistry();
+    void customizerAddsApplicationTag() {
+        ObservabilityAutoConfiguration.ObservabilityProperties props = new ObservabilityAutoConfiguration.ObservabilityProperties();
+        props.setApplicationName("test-app");
+        ObservabilityAutoConfiguration cfg = new ObservabilityAutoConfiguration();
+        MeterRegistryCustomizer<MeterRegistry> customizer = cfg.metricsCommonTagsCustomizer(props);
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
         customizer.customize(registry);
-        registry.counter("demo.counter").increment();
-        assertEquals("test-app", registry.find("demo.counter").counter().getId().getTag("application"));
+        registry.counter("my.counter").increment();
+        assertThat(registry.get("my.counter").counter().getId().getTag("application")).isEqualTo("test-app");
     }
 }
