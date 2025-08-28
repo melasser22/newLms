@@ -31,6 +31,7 @@
     <dependency><groupId>com.lms</groupId><artifactId>starter-crypto</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>com.lms</groupId><artifactId>starter-money-time</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>com.lms</groupId><artifactId>starter-ratelimit</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-observability</artifactId><version>${project.version}</version></dependency>
   </dependencies>
 </dependencyManagement>
   <modules>
@@ -49,7 +50,8 @@
     <module>starter-crypto</module>
     <module>starter-money-time</module>
     <module>starter-ratelimit</module>
-    <!-- future modules: observability, api-clients, feature-flags -->
+    <module>starter-observability</module>
+    <!-- future modules: api-clients, feature-flags -->
   </modules>
 
   <profiles>

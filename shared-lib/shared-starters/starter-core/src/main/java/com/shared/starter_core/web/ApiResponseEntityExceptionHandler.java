@@ -66,7 +66,7 @@ public class ApiResponseEntityExceptionHandler extends ResponseEntityExceptionHa
             );
         }
 
-        ErrorResponse body = new ErrorResponse(
+        ErrorResponse body = ErrorResponse.of(
                 ErrorCodes.VALIDATION_ERROR,              // "ERR-VALIDATION"
                 "Validation failed",
                 details,
@@ -98,7 +98,7 @@ public class ApiResponseEntityExceptionHandler extends ResponseEntityExceptionHa
               .collect(Collectors.toList())
         );
 
-        ErrorResponse body = new ErrorResponse(
+        ErrorResponse body = ErrorResponse.of(
                 ErrorCodes.VALIDATION_ERROR,
                 "Validation failed",
                 details,
@@ -117,7 +117,7 @@ public class ApiResponseEntityExceptionHandler extends ResponseEntityExceptionHa
                 .map(this::formatConstraintViolation)
                 .collect(Collectors.toList());
 
-        ErrorResponse body = new ErrorResponse(
+        ErrorResponse body = ErrorResponse.of(
                 ErrorCodes.VALIDATION_ERROR,
                 "Validation failed",
                 details,
@@ -146,7 +146,7 @@ public class ApiResponseEntityExceptionHandler extends ResponseEntityExceptionHa
                 ? ex.getClass().getSimpleName()
                 : ex.getMessage();
 
-        ErrorResponse err = new ErrorResponse(
+        ErrorResponse err = ErrorResponse.of(
                 code,
                 message,
                 List.of(),                 // you can add more details here if needed

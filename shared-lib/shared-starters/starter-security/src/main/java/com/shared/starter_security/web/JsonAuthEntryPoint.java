@@ -29,7 +29,7 @@ public class JsonAuthEntryPoint implements AuthenticationEntryPoint {
   public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
       throws IOException {
 
-    ErrorResponse body = new ErrorResponse(
+    ErrorResponse body = ErrorResponse.of(
         ErrorCodes.AUTH_UNAUTHORIZED,                      // e.g., "ERR-401" or "ERR-UNAUTHORIZED"
         safe(authException.getMessage(), "Unauthorized"),
         List.of(),
