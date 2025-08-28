@@ -2,9 +2,10 @@ package com.lms.setup.model;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.DynamicUpdate;
-
-import java.util.Objects;
-import com.lms.setup.model.Country;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(
@@ -17,11 +18,16 @@ import com.lms.setup.model.Country;
     }
 )
 @DynamicUpdate
+@Getter
+@Setter
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class City {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "city_id", nullable = false, updatable = false)
+    @EqualsAndHashCode.Include
     private Integer cityId;
 
     @Column(name = "city_cd", length = 50, nullable = false)
@@ -40,31 +46,5 @@ public class City {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = Boolean.TRUE;
 
-    // Getters/Setters
-    public Integer getCityId() { return cityId; }
-    public void setCityId(Integer cityId) { this.cityId = cityId; }
-
-    public String getCityCd() { return cityCd; }
-    public void setCityCd(String cityCd) { this.cityCd = cityCd; }
-
-    public String getCityEnNm() { return cityEnNm; }
-    public void setCityEnNm(String cityEnNm) { this.cityEnNm = cityEnNm; }
-
-    public String getCityArNm() { return cityArNm; }
-    public void setCityArNm(String cityArNm) { this.cityArNm = cityArNm; }
-
-    public Country getCountry() { return country; }
-    public void setCountry(Country country) { this.country = country; }
-
-    public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean active) { isActive = active; }
     public boolean isActive() { return Boolean.TRUE.equals(isActive); }
-
-    @Override public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof City)) return false;
-        City other = (City) o;
-        return Objects.equals(cityId, other.cityId);
-    }
-    @Override public int hashCode() { return Objects.hash(cityId); }
 }

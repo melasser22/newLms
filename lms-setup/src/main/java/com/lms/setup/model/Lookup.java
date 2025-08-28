@@ -2,14 +2,23 @@ package com.lms.setup.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Entity
 @Table(name = "lookup")
+@Getter
+@Setter
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Lookup {
 
     @Id
     @Column(name = "lookup_item_id", unique = true, nullable = false)
+    @EqualsAndHashCode.Include
     private Integer lookupItemId;
 
     @Column(name = "lookup_item_cd")
@@ -36,32 +45,5 @@ public class Lookup {
     @Column(name = "item_ar_description")
     private String itemArDescription;
 
-    // --- getters & setters ---
-    public Integer getLookupItemId() { return lookupItemId; }
-    public void setLookupItemId(Integer lookupItemId) { this.lookupItemId = lookupItemId; }
-
-    public String getLookupItemCd() { return lookupItemCd; }
-    public void setLookupItemCd(String lookupItemCd) { this.lookupItemCd = lookupItemCd; }
-
-    public String getLookupItemEnNm() { return lookupItemEnNm; }
-    public void setLookupItemEnNm(String lookupItemEnNm) { this.lookupItemEnNm = lookupItemEnNm; }
-
-    public String getLookupItemArNm() { return lookupItemArNm; }
-    public void setLookupItemArNm(String lookupItemArNm) { this.lookupItemArNm = lookupItemArNm; }
-
-    public String getLookupGroupCode() { return lookupGroupCode; }
-    public void setLookupGroupCode(String lookupGroupCode) { this.lookupGroupCode = lookupGroupCode; }
-
-    public String getParentLookupId() { return parentLookupId; }
-    public void setParentLookupId(String parentLookupId) { this.parentLookupId = parentLookupId; }
-
-    public Boolean getIsActive() { return isActive; }
     public Boolean isActive() { return isActive != null ? isActive : Boolean.FALSE; }
-    public void setIsActive(Boolean active) { isActive = active; }
-
-    public String getItemEnDescription() { return itemEnDescription; }
-    public void setItemEnDescription(String itemEnDescription) { this.itemEnDescription = itemEnDescription; }
-
-    public String getItemArDescription() { return itemArDescription; }
-    public void setItemArDescription(String itemArDescription) { this.itemArDescription = itemArDescription; }
 }
