@@ -3,6 +3,7 @@ package com.common.dto;
 import com.common.enums.StatusEnums.ApiStatus;
 import jakarta.annotation.Nullable;
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * Standard response wrapper for all Shared APIs.
@@ -104,5 +105,114 @@ public class BaseResponse<T> {
 
     public void setTimestamp(Instant timestamp) {
         this.timestamp = timestamp;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BaseResponse<?> that = (BaseResponse<?>) o;
+        return status == that.status &&
+                Objects.equals(code, that.code) &&
+                Objects.equals(message, that.message) &&
+                Objects.equals(data, that.data) &&
+                Objects.equals(timestamp, that.timestamp);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(status, code, message, data, timestamp);
+    }
+
+    @Override
+    public String toString() {
+        return "BaseResponse{" +
+                "status=" + status +
+                ", code='" + code + '\'' +
+                ", message='" + message + '\'' +
+                ", data=" + data +
+                ", timestamp=" + timestamp +
+                '}';
+    }
+
+    /**
+     * Convenience check for SUCCESS responses.
+     *
+     * @return true if status is ApiStatus.SUCCESS
+     */
+    public boolean isSuccess() {
+        return status == ApiStatus.SUCCESS;
+    }
+
+    /**
+     * Convenience check for ERROR responses.
+     *
+     * @return true if status is ApiStatus.ERROR
+     */
+    public boolean isError() {
+        return status == ApiStatus.ERROR;
+    }
+
+    /**
+     * Convenience check for WARNING responses.
+     *
+     * @return true if status is ApiStatus.WARNING
+     */
+    public boolean isWarning() {
+        return status == ApiStatus.WARNING;
+    }
+
+    /**
+     * Create a builder for {@link BaseResponse}.
+     *
+     * @param <T> payload type
+     * @return new Builder instance
+     */
+    public static <T> Builder<T> builder() {
+        return new Builder<>();
+    }
+
+    /**
+     * Builder for {@link BaseResponse} allowing fine-grained construction.
+     */
+    public static final class Builder<T> {
+        private ApiStatus status;
+        private String code;
+        private String message;
+        private T data;
+        private Instant timestamp = Instant.now();
+
+        private Builder() {}
+
+        public Builder<T> status(ApiStatus status) {
+            this.status = status;
+            return this;
+        }
+
+        public Builder<T> code(String code) {
+            this.code = code;
+            return this;
+        }
+
+        public Builder<T> message(String message) {
+            this.message = message;
+            return this;
+        }
+
+        public Builder<T> data(T data) {
+            this.data = data;
+            return this;
+        }
+
+        public Builder<T> timestamp(Instant timestamp) {
+            this.timestamp = timestamp;
+            return this;
+        }
+
+        public BaseResponse<T> build() {
+            BaseResponse<T> response = new BaseResponse<>(status, code, message, data);
+            response.setTimestamp(timestamp);
+            return response;
+        }
     }
 }
