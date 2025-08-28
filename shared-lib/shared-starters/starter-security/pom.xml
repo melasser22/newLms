@@ -44,6 +44,13 @@
       <artifactId>shared-common</artifactId>
     </dependency>
 
+    <!-- Lombok for boilerplate reduction -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <!-- Optional web stacks if you ship filters or MVC advice -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

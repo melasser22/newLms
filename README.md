@@ -1,20 +1,56 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+# Learning Management System (LMS)
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+This repository houses two primary components:
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+- **shared-lib** – a collection of reusable Spring Boot starter modules and utilities.
+- **lms-setup** – a Spring Boot microservice for reference lookups and tenant/platform configuration.
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+## Getting Started
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+### Prerequisites
+- Java 21
+- Maven 3.9+
+
+### Build shared libraries
+Install the shared library modules into the local Maven repository:
+
+```bash
+cd shared-lib
+mvn clean install
+```
+
+### Build and run the setup service
+
+```bash
+cd ../lms-setup
+mvn spring-boot:run
+```
+
+The service uses environment variables for database and security settings:
+
+Set the following variables before running:
+
+- `DB_URL`
+- `DB_USERNAME`
+- `DB_PASSWORD`
+- `JWT_SECRET`
+- `CRYPTO_ACTIVE_KID`
+- `CRYPTO_LOCAL_DEV_KEY`
+
+### Running Tests
+
+Run unit tests for both modules:
+
+```bash
+cd shared-lib && mvn test
+cd ../lms-setup && mvn test
+```
+
+The build pulls dependencies from Maven Central; ensure network access is available.
+
+## Contributing
+Contributions are welcome. Please fork the repository and submit pull requests. Ensure tests pass before submitting.
+
+## License
+This project is provided under the MIT License.
+

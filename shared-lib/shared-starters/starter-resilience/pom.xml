@@ -23,6 +23,18 @@
       <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>shared-common</artifactId>
+    </dependency>
+
+    <!-- Lombok for boilerplate reduction -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <!-- Core Resilience4j Boot 3 starter (configures retry, circuit breaker, bulkhead, rate limiter, time limiter) -->
     <dependency>
       <groupId>io.github.resilience4j</groupId>

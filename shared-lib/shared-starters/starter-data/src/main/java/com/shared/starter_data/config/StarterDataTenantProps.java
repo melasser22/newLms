@@ -1,9 +1,14 @@
 package com.shared.starter_data.config;
 
+import com.shared.common.BaseStarterProperties;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+@Getter
+@Setter
 @ConfigurationProperties("shared.data.tenant-filter")
-public class StarterDataTenantProps {
+public class StarterDataTenantProps implements BaseStarterProperties {
     /** Enable tenant filter aspect */
     private boolean enabled = true;
     /** Default include-global if no annotation present */
@@ -13,16 +18,4 @@ public class StarterDataTenantProps {
     /** Param names (must match @FilterDef) */
     private String tenantIdParam = "tenantId";
     private String allowGlobalParam = "allowGlobal";
-
-    // getters/setters
-    public boolean isEnabled() { return enabled; }
-    public void setEnabled(boolean enabled) { this.enabled = enabled; }
-    public boolean isDefaultIncludeGlobal() { return defaultIncludeGlobal; }
-    public void setDefaultIncludeGlobal(boolean v) { this.defaultIncludeGlobal = v; }
-    public String getFilterName() { return filterName; }
-    public void setFilterName(String filterName) { this.filterName = filterName; }
-    public String getTenantIdParam() { return tenantIdParam; }
-    public void setTenantIdParam(String tenantIdParam) { this.tenantIdParam = tenantIdParam; }
-    public String getAllowGlobalParam() { return allowGlobalParam; }
-    public void setAllowGlobalParam(String allowGlobalParam) { this.allowGlobalParam = allowGlobalParam; }
 }

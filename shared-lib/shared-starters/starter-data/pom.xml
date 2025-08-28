@@ -29,9 +29,16 @@
       <artifactId>starter-core</artifactId>
     </dependency>
     <dependency>
-  <groupId>com.lms</groupId>
-  <artifactId>shared-common</artifactId> 
-</dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>shared-common</artifactId>
+    </dependency>
+
+    <!-- Lombok for boilerplate reduction -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
+    </dependency>
 
 		<!-- Spring Data types: Page, Sort, Pageable, etc. -->
     <dependency>

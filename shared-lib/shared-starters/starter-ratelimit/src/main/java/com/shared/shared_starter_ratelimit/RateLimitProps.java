@@ -1,9 +1,24 @@
 package com.shared.shared_starter_ratelimit;
+
+import com.shared.common.BaseStarterProperties;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-@ConfigurationProperties(prefix="shared.ratelimit")
-public class RateLimitProps {
-  private int capacity=100; private int refillPerMinute=100; private String keyStrategy="tenant"; // tenant|ip|user
-  public int getCapacity(){return capacity;} public void setCapacity(int c){this.capacity=c;}
-  public int getRefillPerMinute(){return refillPerMinute;} public void setRefillPerMinute(int r){this.refillPerMinute=r;}
-  public String getKeyStrategy(){return keyStrategy;} public void setKeyStrategy(String k){this.keyStrategy=k;}
+
+/**
+ * Rate limiting properties.
+ */
+@Getter
+@Setter
+@ConfigurationProperties(prefix = "shared.ratelimit")
+public class RateLimitProps implements BaseStarterProperties {
+
+  /** Bucket capacity. */
+  private int capacity = 100;
+
+  /** Tokens refilled per minute. */
+  private int refillPerMinute = 100;
+
+  /** Strategy for identifying buckets: tenant | ip | user. */
+  private String keyStrategy = "tenant";
 }
