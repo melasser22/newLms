@@ -11,12 +11,12 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.common.context.ContextManager;
+import com.common.context.TraceContextUtil;
 import com.common.dto.ErrorResponse;
 import com.common.exception.BusinessRuleException;
 import com.common.exception.NotFoundException;
 import com.common.exception.SharedException;
-import com.shared.starter_core.context.TenantContextHolder;
-import com.shared.starter_core.context.TraceContextHolder;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -32,11 +32,11 @@ public class GlobalExceptionHandler {
         if (tid != null) return tid;
 
         // Or from context holder
-        return trimToNull(TraceContextHolder.getTraceId());
+        return trimToNull(TraceContextUtil.getTraceId());
     }
 
     private String currentTenantId() {
-        String t = trimToNull(TenantContextHolder.getTenantId());
+        String t = trimToNull(ContextManager.Tenant.get());
         if (t != null) return t;
 
         return trimToNull(MDC.get("tenantId"));

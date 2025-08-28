@@ -52,10 +52,10 @@ public class CorrelationHeaderFilter implements Filter {
     }
 
     // Set in ThreadLocal Context
-    ContextManager.Header.setCorrelationId(correlationId);
-    ContextManager.Header.setRequestId(requestId);
-    ContextManager.Header.setTenantId(tenantId);
-    ContextManager.Header.setUserId(userId);
+    ContextManager.setCorrelationId(correlationId);
+    ContextManager.setRequestId(requestId);
+    ContextManager.Tenant.set(tenantId);
+    ContextManager.setUserId(userId);
 
     // Echo back headers on response
     if (correlationId != null) res.setHeader(corrName, correlationId);
@@ -65,7 +65,7 @@ public class CorrelationHeaderFilter implements Filter {
       chain.doFilter(request, response);
     } finally {
       // cleanup
-    	ContextManager.Header.clear();
+        ContextManager.clearHeaders();
       if (props.getMdc().isEnabled()) {
         MDC.remove("correlationId");
         MDC.remove("requestId");

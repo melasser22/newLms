@@ -1,7 +1,7 @@
 package com.shared.starter_core.logging;
 
 import com.common.constants.HeaderNames;
-import com.shared.starter_core.context.TraceContextHolder;
+import com.common.context.TraceContextUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -59,7 +59,7 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
 
         if (!isBlank(correlationId)) {
             MDC.put(mdcKey, correlationId);
-            TraceContextHolder.setTraceId(correlationId);
+            TraceContextUtil.put(TraceContextUtil.TRACE_ID, correlationId);
             // Set early to ensure response always has the header (even on exceptions)
             if (echoResponseHeader) {
                 res.setHeader(headerName, correlationId);
@@ -70,7 +70,7 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
             chain.doFilter(req, res);
         } finally {
             MDC.remove(mdcKey);
-            TraceContextHolder.clear();
+            TraceContextUtil.clear();
         }
     }
 
