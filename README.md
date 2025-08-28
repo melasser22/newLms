@@ -26,10 +26,9 @@ cd ../lms-setup
 mvn spring-boot:run
 ```
 
-The service uses environment variables for database and security settings:
-
 Set the following variables before running:
-
+=======
+The service uses environment variables for database and security settings. Defaults are provided for local development:
 - `DB_URL`
 - `DB_USERNAME`
 - `DB_PASSWORD`

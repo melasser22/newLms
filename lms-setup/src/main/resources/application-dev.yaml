@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/lms?currentSchema=setup}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
       pool-name: HikariPool-LMS
@@ -175,7 +175,7 @@ shared:
   security:
     mode: hs256
     hs256:
-      secret: ${JWT_SECRET}
+      secret: ${JWT_SECRET:dev-secret}
     resource-server:
       enabled: true
       permit-all:
