@@ -53,13 +53,4 @@
     <module>starter-observability</module>
     <!-- future modules: api-clients, feature-flags -->
   </modules>
-
-  <profiles>
-    <profile>
-      <id>ci</id>
-      <properties>
-        <maven.test.skip>true</maven.test.skip>
-      </properties>
-    </profile>
-  </profiles>
 </project>

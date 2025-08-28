@@ -11,6 +11,8 @@
   <description>Aggregator + parent; imports shared-bom and enforces repo-wide standards.</description>
 
   <modules>
+    <module>shared-config</module>
+    <module>shared-quality</module>
     <module>shared-bom</module>
     <module>shared-common</module>
     <module>shared-lib-crypto</module>
@@ -58,6 +60,11 @@
       <dependency>
         <groupId>com.lms</groupId>
         <artifactId>shared-common</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.lms</groupId>
+        <artifactId>shared-config</artifactId>
         <version>${project.version}</version>
       </dependency>
       <!-- add other internal artifacts here when modules are enabled -->

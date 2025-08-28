@@ -1,0 +1,21 @@
+<configuration>
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+      <providers>
+        <timestamp/>
+        <logLevel/>
+        <loggerName/>
+        <threadName/>
+        <pattern>
+          <pattern>{"message":"%message","traceId":"%X{trace_id}","spanId":"%X{span_id}"}</pattern>
+        </pattern>
+        <mdc/>
+      </providers>
+    </encoder>
+  </appender>
+  <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.mdc.v1_0.OpenTelemetryAppender"/>
+  <root level="INFO">
+    <appender-ref ref="OTEL"/>
+    <appender-ref ref="CONSOLE"/>
+  </root>
+</configuration>

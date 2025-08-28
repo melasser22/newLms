@@ -16,8 +16,6 @@
     <spring.cloud.version>2024.0.2</spring.cloud.version> <!-- 2024.0.3 is not on Central -->
 
     <!-- Libraries not fully managed by Boot -->
-    <springdoc.version>2.5.0</springdoc.version>
-    <mapstruct.version>1.5.5.Final</mapstruct.version>
     <flyway.version>10.17.1</flyway.version>
 
     <!-- Observability / Testing -->
@@ -45,6 +43,8 @@
   <lombokMapstruct.version>0.2.0</lombokMapstruct.version>
   <logstashLogback.version>8.0</logstashLogback.version>
   <mockito.version>5.2.0</mockito.version>
+  <otel.instrumentation.version>2.7.0-alpha</otel.instrumentation.version>
+
   </properties>
 
   <dependencyManagement>
@@ -195,7 +195,12 @@
     </dependency>
      <dependency><groupId>javax.money</groupId><artifactId>money-api</artifactId><version>${money.api.version}</version></dependency>
     <dependency><groupId>org.javamoney.moneta</groupId><artifactId>moneta-core</artifactId><version>${moneta.version}</version></dependency>
-  
+ <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-instrumentation-bom-alpha</artifactId>
+        <version>${otel.instrumentation.version}</version>
+        <type>pom</type><scope>import</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 </project>

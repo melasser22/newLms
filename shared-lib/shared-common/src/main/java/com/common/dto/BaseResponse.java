@@ -165,6 +165,11 @@ public class BaseResponse<T> {
 
     /**
      * Transform the payload while preserving status, code and message metadata.
+<<<<<<< HEAD
+=======
+     * <p>
+     * If the payload is {@code null}, the mapper is not invoked and {@code null}
+>>>>>>> fc5fe58 (chore: register config module in parent)
      * is returned as the new payload.
      *
      * @param mapper function to transform the existing payload
@@ -179,6 +184,7 @@ public class BaseResponse<T> {
     /**
      * Create a builder for {@link BaseResponse}.
      *
+     * @param <T> payload type
      * @return new Builder instance
      */
     public static <T> Builder<T> builder() {

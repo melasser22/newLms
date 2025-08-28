@@ -2,12 +2,13 @@
 package com.shared.headers.starter.http;
 
 import com.shared.headers.starter.config.SharedHeadersProperties;
-import com.shared.headers.starter.context.HeaderContext;
+import com.common.context.ContextManager;
 import com.shared.headers.starter.util.HeaderUtils;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.MDC;
+import com.common.constants.HeaderNames;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -43,18 +44,18 @@ public class CorrelationHeaderFilter implements Filter {
     // Set in MDC
     if (props.getMdc().isEnabled()) {
       var kv = new HashMap<String,String>();
-      kv.put("correlationId", correlationId);
-      kv.put("requestId", requestId);
-      if (tenantId != null) kv.put("tenantId", tenantId);
-      if (userId != null) kv.put("userId", userId);
+      kv.put( HeaderNames.CORRELATION_ID, correlationId);
+      kv.put(HeaderNames.REQUEST_ID, requestId);
+      if (tenantId != null) kv.put(HeaderNames.TENANT_ID, tenantId);
+      if (userId != null) kv.put(HeaderNames.USER_ID, userId);
       HeaderUtils.putMdc(kv);
     }
 
     // Set in ThreadLocal Context
-    HeaderContext.setCorrelationId(correlationId);
-    HeaderContext.setRequestId(requestId);
-    HeaderContext.setTenantId(tenantId);
-    HeaderContext.setUserId(userId);
+    ContextManager.Header.setCorrelationId(correlationId);
+    ContextManager.Header.setRequestId(requestId);
+    ContextManager.Header.setTenantId(tenantId);
+    ContextManager.Header.setUserId(userId);
 
     // Echo back headers on response
     if (correlationId != null) res.setHeader(corrName, correlationId);
@@ -64,7 +65,7 @@ public class CorrelationHeaderFilter implements Filter {
       chain.doFilter(request, response);
     } finally {
       // cleanup
-      HeaderContext.clear();
+    	ContextManager.Header.clear();
       if (props.getMdc().isEnabled()) {
         MDC.remove("correlationId");
         MDC.remove("requestId");
