@@ -17,9 +17,12 @@ import org.springframework.context.annotation.Bean;
 
 import com.shared.crypto.AesGcmCrypto;
 import com.shared.crypto.CryptoAlgorithm;
-import com.shared.crypto.CryptoService;
+import com.shared.crypto.CryptoFacade;
 import com.shared.crypto.HmacSigner;
-
+import com.shared.crypto.AesGcmEncryptor;
+import com.shared.crypto.HmacSha256Signer;
+import com.shared.crypto.Encryptor;
+import com.shared.crypto.Signer;
 import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.util.Objects;
@@ -27,7 +30,7 @@ import java.util.function.Supplier;
 
 @AutoConfiguration
 @EnableConfigurationProperties(CryptoProperties.class)
-@ConditionalOnClass({CryptoService.class, CryptoAlgorithm.class})
+@ConditionalOnClass({CryptoFacade.class, CryptoAlgorithm.class})
 @ConditionalOnProperty(prefix = "shared.crypto", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class CryptoAutoConfiguration {
 
@@ -46,25 +49,23 @@ public class CryptoAutoConfiguration {
   }
 
   /**
-   * Main CryptoService bean using the new builder API.
+   * Main CryptoFacade bean using the new Encryptor/Signer APIs.
    * It resolves both AES and HMAC keys from the single-key provider’s current key.
    */
   @Bean
   @ConditionalOnBean(InMemoryKeyProviderAutoConfiguration.KeyProvider.class)
   @ConditionalOnMissingBean
-  public CryptoService cryptoService(
+  public CryptoFacade  cryptoFacade(
       CryptoAlgorithm algorithm,
       InMemoryKeyProviderAutoConfiguration.KeyProvider keyProvider,
       ObjectProvider<MeterRegistry> meters) {
 
     Supplier<SecretKey> currentKeySupplier = keyProvider::getCurrentKey;
 
-    CryptoService svc = CryptoService.builder()
-        .algorithm(algorithm)
-        .encryptionKeySupplier(currentKeySupplier)
-        .macKeySupplier(currentKeySupplier)
-        .build();
-
+    Encryptor encryptor = new AesGcmEncryptor(algorithm, currentKeySupplier);
+    Signer signer = new HmacSha256Signer(currentKeySupplier);
+    CryptoFacade facade = new CryptoFacade(encryptor, signer);
+    
     // optional Micrometer wiring (only if registry present)
     meters.ifAvailable(reg -> {
       MeterBinder binder = r -> {
@@ -75,9 +76,9 @@ public class CryptoAutoConfiguration {
       binder.bindTo(reg);
     });
 
-    log.info("Shared CryptoService initialized (alg={}, provider=current-key)",
+    log.info("Shared CryptoFacade  initialized (alg={}, provider=current-key)",
         algorithm.getClass().getSimpleName());
-    return svc;
+    return facade;
   }
 
   /** Convenience HMAC signer bean (shared lib), if someone wants to inject it directly. */

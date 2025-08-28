@@ -2,7 +2,7 @@ package com.shared.headers.starter.client;
 
 import com.common.constants.HeaderNames;
 import com.shared.headers.starter.config.SharedHeadersProperties;
-import com.shared.headers.starter.context.HeaderContext;
+import com.common.context.ContextManager;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
@@ -37,10 +37,10 @@ public class PropagateHeadersInterceptor implements ClientHttpRequestInterceptor
 
       for (String name : props.getPropagation().getInclude()) {
         String value = switch (name) {
-        case HeaderNames.CORRELATION_ID -> HeaderContext.getCorrelationId();
-        case HeaderNames.REQUEST_ID -> HeaderContext.getRequestId();
-        case HeaderNames.TENANT_ID -> HeaderContext.getTenantId();
-        case HeaderNames.USER_ID -> HeaderContext.getUserId();
+        case HeaderNames.CORRELATION_ID -> ContextManager.Header.getCorrelationId();
+        case HeaderNames.REQUEST_ID -> ContextManager.Header.getRequestId();
+        case HeaderNames.TENANT_ID -> ContextManager.Header.getTenantId();
+        case HeaderNames.USER_ID -> ContextManager.Header.getUserId();
           default                 -> null;
         };
         if (value == null && cur != null) value = cur.getHeader(name);

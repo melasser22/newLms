@@ -86,10 +86,10 @@ public class DefaultMaskingStrategy implements MaskingStrategy {
     return out;
   }
 
+  @SuppressWarnings("unchecked")
   private static Set<String> toSet(Iterable<String> it) {
     if (it == null) return Collections.emptySet();
     if (it instanceof Collection<?> c) {
-      //noinspection unchecked
       return new LinkedHashSet<>((Collection<String>) c);
     }
     Set<String> s = new LinkedHashSet<>();

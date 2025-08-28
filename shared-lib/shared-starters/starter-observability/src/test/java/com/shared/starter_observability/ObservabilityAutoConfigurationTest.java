@@ -1,6 +1,7 @@
 package com.shared.starter_observability;
 
 import io.micrometer.core.instrument.MeterRegistry;
+
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;

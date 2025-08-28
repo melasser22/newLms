@@ -1,7 +1,7 @@
 package com.shared.crypto.starter.metrics;
 
 import com.shared.crypto.starter.InMemoryKeyProviderAutoConfiguration;
-import com.shared.crypto.CryptoService;
+import com.shared.crypto.CryptoFacade;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -12,14 +12,14 @@ import org.springframework.context.annotation.Bean;
 
 /**
  * Binds minimal crypto metrics to Micrometer.
- * We avoid calling non-existent methods on CryptoService; we read key state from the starter KeyProvider.
+ * We avoid calling non-existent methods on the crypto facade; we read key state from the starter KeyProvider.
  */
 @AutoConfiguration
-@ConditionalOnClass({MeterRegistry.class, CryptoService.class})
+@ConditionalOnClass({MeterRegistry.class, CryptoFacade.class})
 public class CryptoMetricsConfiguration {
 
   @Bean
-  @ConditionalOnBean({CryptoService.class, InMemoryKeyProviderAutoConfiguration.KeyProvider.class})
+  @ConditionalOnBean({CryptoFacade.class, InMemoryKeyProviderAutoConfiguration.KeyProvider.class})
   @ConditionalOnMissingBean(name = "cryptoMetricsBinder")
   public MeterBinder cryptoMetricsBinder(InMemoryKeyProviderAutoConfiguration.KeyProvider provider) {
     return (MeterRegistry registry) -> {

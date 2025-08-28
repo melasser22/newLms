@@ -1,0 +1,20 @@
+package com.shared.config;
+
+import com.lms.testsupport.IntegrationTestSupport;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@SpringBootTest(classes = CentralConfigAutoConfiguration.class)
+class CentralConfigAutoConfigurationTest extends IntegrationTestSupport {
+
+    @Autowired
+    private AppProperties props;
+
+    @Test
+    void loadsDefaultEnvironment() {
+        assertThat(props.getEnv()).isEqualTo("dev");
+    }
+}
