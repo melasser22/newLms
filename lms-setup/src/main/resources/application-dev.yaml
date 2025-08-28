@@ -204,4 +204,4 @@ logging:
     org.springframework.cache: INFO
     org.springframework.cache.interceptor.CacheAspectSupport: INFO
 
-debug: TRACE
+debug: true

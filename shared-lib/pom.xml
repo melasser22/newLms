@@ -180,6 +180,27 @@
         </plugin>
 
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>3.5.0</version>
+          <configuration>
+            <configLocation>shared-quality/checkstyle.xml</configLocation>
+            <encoding>${project.build.sourceEncoding}</encoding>
+            <consoleOutput>true</consoleOutput>
+            <failOnViolation>false</failOnViolation>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>com.github.spotbugs</groupId>
+          <artifactId>spotbugs-maven-plugin</artifactId>
+          <version>4.8.6.5</version>
+          <configuration>
+            <effort>Max</effort>
+            <threshold>Low</threshold>
+          </configuration>
+        </plugin>
+
+        <plugin>
           <groupId>org.springframework.boot</groupId>
           <artifactId>spring-boot-maven-plugin</artifactId>
           <version>${spring.boot.version}</version>
@@ -265,6 +286,31 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration><skipITs>${skipITs}</skipITs></configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>quality</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-checkstyle-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals><goal>check</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals><goal>check</goal></goals>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
