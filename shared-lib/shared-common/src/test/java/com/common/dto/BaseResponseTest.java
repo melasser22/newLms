@@ -47,4 +47,26 @@ class BaseResponseTest {
         assertEquals(r1, r2);
         assertEquals(r1.hashCode(), r2.hashCode());
     }
+
+    @Test
+    void mapTransformsPayloadPreservingMetadata() {
+        BaseResponse<String> original = BaseResponse.success("hello");
+
+        BaseResponse<Integer> mapped = original.map(String::length);
+
+        assertEquals(ApiStatus.SUCCESS, mapped.getStatus());
+        assertEquals(original.getCode(), mapped.getCode());
+        assertEquals(original.getMessage(), mapped.getMessage());
+        assertEquals(5, mapped.getData());
+    }
+
+    @Test
+    void mapHandlesNullPayloadGracefully() {
+        BaseResponse<String> original = BaseResponse.success(null);
+
+        BaseResponse<Integer> mapped = original.map(String::length);
+
+        assertNull(mapped.getData());
+        assertEquals(original.getCode(), mapped.getCode());
+    }
 }

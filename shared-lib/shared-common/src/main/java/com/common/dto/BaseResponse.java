@@ -4,6 +4,7 @@ import com.common.enums.StatusEnums.ApiStatus;
 import jakarta.annotation.Nullable;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * Standard response wrapper for all Shared APIs.
@@ -163,9 +164,21 @@ public class BaseResponse<T> {
     }
 
     /**
+     * Transform the payload while preserving status, code and message metadata.
+     * is returned as the new payload.
+     *
+     * @param mapper function to transform the existing payload
+     * @param <R>    target type of the new payload
+     * @return a new {@link BaseResponse} instance with mapped data
+     */
+    public <R> BaseResponse<R> map(Function<? super T, ? extends R> mapper) {
+        R newData = (data != null && mapper != null) ? mapper.apply(data) : null;
+        return new BaseResponse<>(status, code, message, newData);
+    }
+
+    /**
      * Create a builder for {@link BaseResponse}.
      *
-     * @param <T> payload type
      * @return new Builder instance
      */
     public static <T> Builder<T> builder() {

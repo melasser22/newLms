@@ -35,6 +35,13 @@
       <artifactId>slf4j-api</artifactId>
     </dependency>
 
+    <!-- Lombok for reducing boilerplate in DTOs -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>

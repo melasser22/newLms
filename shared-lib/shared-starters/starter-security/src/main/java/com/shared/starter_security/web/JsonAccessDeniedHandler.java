@@ -29,7 +29,7 @@ public class JsonAccessDeniedHandler implements AccessDeniedHandler {
   public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException ex)
       throws IOException {
 
-    ErrorResponse body = new ErrorResponse(
+    ErrorResponse body = ErrorResponse.of(
         ErrorCodes.AUTH_FORBIDDEN,                         // e.g., "ERR-403" or "ERR-FORBIDDEN"
         safe(ex.getMessage(), "Forbidden"),
         List.of(),
