@@ -4,7 +4,7 @@ import com.common.dto.ErrorResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class GlobalExceptionHandlerTest {
 
@@ -13,8 +13,8 @@ class GlobalExceptionHandlerTest {
     @Test
     void handleOtherReturnsInternalServerError() {
         ResponseEntity<ErrorResponse> resp = handler.handleOther(new RuntimeException("boom"));
-        assertThat(resp.getStatusCode().value()).isEqualTo(500);
-        assertThat(resp.getBody().getCode()).isEqualTo("GLB-500");
-        assertThat(resp.getBody().getStatus().name()).isEqualTo("ERROR");
+        assertEquals(500, resp.getStatusCode().value());
+        assertEquals("GLB-500", resp.getBody().getCode());
+        assertEquals("ERROR", resp.getBody().getStatus().name());
     }
 }

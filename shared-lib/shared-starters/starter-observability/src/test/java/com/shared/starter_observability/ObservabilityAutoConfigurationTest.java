@@ -1,19 +1,15 @@
 package com.shared.starter_observability;
 
 import io.micrometer.core.instrument.MeterRegistry;
-<<<<<<< HEAD
 
-=======
->>>>>>> cce2a19 (chore: enhance shared library)
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 
-<<<<<<< HEAD
-import static org.junit.jupiter.api.Assertions.assertEquals;
-=======
+
+
 import static org.assertj.core.api.Assertions.assertThat;
->>>>>>> cce2a19 (chore: enhance shared library)
+
 
 class ObservabilityAutoConfigurationTest {
 
