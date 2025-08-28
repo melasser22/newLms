@@ -1,1 +1,1 @@
-com.shared.config.CentralConfigAutoConfiguration
+com.shared.config.EnvironmentAutoConfiguration

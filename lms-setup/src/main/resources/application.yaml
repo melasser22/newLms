@@ -15,3 +15,7 @@ spring:
     name: lms-setup
   profiles:
     active: dev
+
+shared:
+  observability:
+    application-name: lms-setup

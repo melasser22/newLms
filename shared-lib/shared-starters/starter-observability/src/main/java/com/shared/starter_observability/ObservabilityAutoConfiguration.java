@@ -15,54 +15,44 @@ import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCusto
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.trace.Tracer;
+import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
 /**
- * Auto-configuration that wires basic Micrometer and OpenTelemetry components
- * with sensible defaults for Shared services.
+ * Basic observability auto-configuration that:
+ *  - Applies a common "application" tag to all Micrometer meters
+ *  - Exposes an OpenTelemetry {@link Tracer} backed by the global instance
  */
 @AutoConfiguration
-@ConditionalOnClass({MeterRegistry.class, ObservationRegistry.class})
-@EnableConfigurationProperties(ObservabilityAutoConfiguration.ObservabilityProps.class)
+@EnableConfigurationProperties(ObservabilityAutoConfiguration.ObservabilityProperties.class)
 public class ObservabilityAutoConfiguration {
 
     @Bean
-    @ConditionalOnBean(MeterRegistry.class)
-    MeterRegistryCustomizer<MeterRegistry> metricsCommonTagsCustomizer(ObservabilityProps props) {
-        return registry -> registry.config().commonTags("application", props.getApplication());
-    }
- @Bean
-    OpenTelemetry openTelemetry(ObservabilityProps props) {
-        Resource resource = Resource.getDefault()
-                .merge(Resource.create(Attributes.of(ResourceAttributes.SERVICE_NAME, props.getApplication())));
-        SdkTracerProvider tracerProvider = SdkTracerProvider.builder()
-                .addSpanProcessor(SimpleSpanProcessor.create(new LoggingSpanExporter()))
-                .setResource(resource)
-                .build();
-        return OpenTelemetrySdk.builder().setTracerProvider(tracerProvider).build();
+    MeterRegistryCustomizer<MeterRegistry> metricsCommonTagsCustomizer(ObservabilityProperties props) {
+        return registry -> registry.config().commonTags("application", props.getApplicationName());
     }
 
     @Bean
-    Tracer tracer(OpenTelemetry openTelemetry) {
-        return openTelemetry.getTracer("shared-lib");
+    public Tracer tracer() {
+        return GlobalOpenTelemetry.getTracer("shared-starter");
     }
 
-   /**
-     * Externalized configuration properties for observability features.
-     */
-    @ConfigurationProperties("shared.observability")
-    public static class ObservabilityProps {
-        /** Application tag applied to all exported metrics. */
-        private String application = "app";
+    @ConfigurationProperties(prefix = "shared.observability")
+    public static class ObservabilityProperties {
+        /** Application name used for tagging metrics */
+        private String applicationName = "app";
 
-        public String getApplication() {
-            return application;
+        public String getApplicationName() {
+            return applicationName;
         }
 
-        public void setApplication(String application) {
-            this.application = application;
+        public void setApplicationName(String applicationName) {
+            this.applicationName = applicationName;
         }
     }
 }
