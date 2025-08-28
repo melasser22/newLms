@@ -1,0 +1,201 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.lms</groupId>
+  <artifactId>shared-bom</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+  <name>Shared BOM</name>
+  <description>Centralized dependency management for LMS modules</description>
+
+  <properties>
+    <!-- Platforms -->
+    <spring.boot.version>3.3.3</spring.boot.version>
+    <spring.cloud.version>2024.0.2</spring.cloud.version> <!-- 2024.0.3 is not on Central -->
+
+    <!-- Libraries not fully managed by Boot -->
+    <springdoc.version>2.5.0</springdoc.version>
+    <mapstruct.version>1.5.5.Final</mapstruct.version>
+    <flyway.version>10.17.1</flyway.version>
+
+    <!-- Observability / Testing -->
+    <otel.version>1.45.0</otel.version>
+    <testcontainers.version>1.20.4</testcontainers.version>
+
+    <!-- Messaging / schema -->
+    <avro.version>1.11.3</avro.version>
+    <confluent.version>7.6.1</confluent.version>
+
+    <!-- DB & misc -->
+    <postgres.version>42.7.4</postgres.version>
+    <hibernate.types.version>2.21.1</hibernate.types.version>
+    <jackson.version>2.17.2</jackson.version>
+
+    <!-- Security / resilience -->
+    <jjwt.version>0.13.0</jjwt.version> <!-- per jjwt install guide -->
+    <resilience4j.version>2.2.0</resilience4j.version>
+    <bucket4j.version>8.14.0</bucket4j.version>
+    <springdoc.version>2.6.0</springdoc.version>
+   <money.api.version>1.1</money.api.version>
+   <moneta.version>1.4.5</moneta.version>
+   <mapstruct.version>1.5.5.Final</mapstruct.version>
+  <lombok.version>1.18.32</lombok.version>
+  <lombokMapstruct.version>0.2.0</lombokMapstruct.version>
+  <logstashLogback.version>8.0</logstashLogback.version>
+  <mockito.version>5.2.0</mockito.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- Platform BOMs -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring.boot.version}</version>
+        <type>pom</type><scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>${spring.cloud.version}</version>
+        <type>pom</type><scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>${testcontainers.version}</version>
+        <type>pom</type><scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-bom</artifactId>
+        <version>${otel.version}</version>
+        <type>pom</type><scope>import</scope>
+      </dependency>
+
+      <!-- JJWT: pin artifacts directly (NO jjwt-bom import) -->
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-api</artifactId>
+        <version>${jjwt.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-impl</artifactId>
+        <version>${jjwt.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-jackson</artifactId>
+        <version>${jjwt.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+
+      <!-- Specific pins -->
+      <dependency>
+        <groupId>org.springdoc</groupId>
+        <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        <version>${springdoc.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mapstruct</groupId>
+        <artifactId>mapstruct</artifactId>
+        <version>${mapstruct.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mapstruct</groupId>
+        <artifactId>mapstruct-processor</artifactId>
+        <version>${mapstruct.version}</version>
+      </dependency>
+   <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><version>${lombok.version}</version></dependency>
+    <dependency><groupId>org.projectlombok</groupId><artifactId>lombok-mapstruct-binding</artifactId><version>${lombokMapstruct.version}</version></dependency>
+ 
+      <dependency>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-core</artifactId>
+        <version>${flyway.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-database-postgresql</artifactId>
+        <version>${flyway.version}</version>
+      </dependency>
+     <dependency>
+     <groupId>org.mockito</groupId>
+     <artifactId>mockito-inline</artifactId>
+     <version>${mockito.version}</version>
+     <scope>test</scope>
+     </dependency>
+      <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>${postgres.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.vladmihalcea</groupId>
+        <artifactId>hibernate-types-60</artifactId>
+        <version>${hibernate.types.version}</version>
+      </dependency>
+
+      <!-- Messaging / schema (needs Confluent repo in parent POM) -->
+      <dependency>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro</artifactId>
+        <version>${avro.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.confluent</groupId>
+        <artifactId>kafka-schema-registry-client</artifactId>
+        <version>${confluent.version}</version>
+      </dependency>
+
+      <!-- Resilience -->
+      <dependency>
+        <groupId>io.github.resilience4j</groupId>
+        <artifactId>resilience4j-spring-boot3</artifactId>
+        <version>${resilience4j.version}</version>
+      </dependency>
+
+      <!-- Logging / misc pins -->
+      <dependency>
+        <groupId>net.logstash.logback</groupId>
+        <artifactId>logstash-logback-encoder</artifactId>
+        <version>${logstashLogback.version}</version>
+      </dependency>
+
+      <!-- Optional Jackson pins for non-Boot contexts -->
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-jsr310</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-jdk8</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+        <dependency>
+      <groupId>com.bucket4j</groupId>
+      <artifactId>bucket4j_jdk17-core</artifactId>
+      <version>${bucket4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-common</artifactId>
+      <version>${springdoc.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+      <version>${springdoc.version}</version>
+    </dependency>
+     <dependency><groupId>javax.money</groupId><artifactId>money-api</artifactId><version>${money.api.version}</version></dependency>
+    <dependency><groupId>org.javamoney.moneta</groupId><artifactId>moneta-core</artifactId><version>${moneta.version}</version></dependency>
+  
+    </dependencies>
+  </dependencyManagement>
+</project>

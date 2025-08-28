@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.lms</groupId>
+    <artifactId>shared-lib</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>shared-starter</artifactId>  
+  <packaging>pom</packaging>
+  <name>Shared Starters (Aggregator)</name>
+  <description>Aggregator for all Shared Spring Boot starters</description>
+<dependencyManagement>
+  <dependencies>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-core</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-security</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-data</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-kafka</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-redis</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-resilience</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-openapi</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-mapstruct</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-headers</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-actuator</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-validation</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-audit</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-crypto</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-money-time</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-ratelimit</artifactId><version>${project.version}</version></dependency>
+  </dependencies>
+</dependencyManagement>
+  <modules>
+    <module>starter-core</module>
+    <module>starter-security</module>
+    <module>starter-data</module>
+    <module>starter-kafka</module>
+    <module>starter-redis</module>
+    <module>starter-resilience</module>
+    <module>starter-openapi</module>
+    <module>starter-mapstruct</module>
+    <module>starter-headers</module>
+    <module>starter-actuator</module>
+    <module>starter-validation</module>
+    <module>starter-audit</module>
+    <module>starter-crypto</module>
+    <module>starter-money-time</module>
+    <module>starter-ratelimit</module>
+    <!-- future modules: observability, api-clients, feature-flags -->
+  </modules>
+
+  <profiles>
+    <profile>
+      <id>ci</id>
+      <properties>
+        <maven.test.skip>true</maven.test.skip>
+      </properties>
+    </profile>
+  </profiles>
+</project>

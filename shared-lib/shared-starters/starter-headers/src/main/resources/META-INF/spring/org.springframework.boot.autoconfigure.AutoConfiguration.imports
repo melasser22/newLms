@@ -1,0 +1,3 @@
+com.shared.headers.starter.config.SharedHeadersAutoConfiguration
+com.shared.headers.starter.config.SharedHeadersFeignAutoConfiguration
+com.shared.headers.starter.config.SharedHeadersWebClientAutoConfiguration

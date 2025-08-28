@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.lms</groupId>
+    <artifactId>shared-starter</artifactId>
+    <version>1.0.0</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>starter-headers</artifactId>
+  <packaging>jar</packaging>
+  <name>Shared Starter - Headers</name>
+  <description>Correlation/request/tenant propagation, security response headers, outbound propagation (MVC/WebFlux/Feign)</description>
+
+  <dependencies>
+    <!-- Autoconfiguration infra -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-autoconfigure</artifactId>
+    </dependency>
+
+    <!-- Servlet / MVC (opt-in) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- Reactive (opt-in) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webflux</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- Feign for outbound header propagation (opt-in; version managed in shared-bom) -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-openfeign</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- MDC API used by filters/interceptors -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+
+    <!-- Metadata processors (compile-time only) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-configuration-processor</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-autoconfigure-processor</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+    	<groupId>com.lms</groupId>
+    	<artifactId>shared-common</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Inherit plugin versions from parent -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <release>${maven.compiler.release}</release>
+          <parameters>true</parameters>
+        </configuration>
+      </plugin>
+
+      <!-- Stable JPMS module name -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Automatic-Module-Name>com.shared.starter.headers</Automatic-Module-Name>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

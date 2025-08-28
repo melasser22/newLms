@@ -1,0 +1,92 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"title": "AuditEvent",
+	"type": "object",
+	"properties": {
+		"schemaVersion": {
+			"type": "string"
+		},
+		"eventId": {
+			"type": "string",
+			"format": "uuid"
+		},
+		"timestamp": {
+			"type": "string",
+			"format": "date-time"
+		},
+		"tenantId": {
+			"type": "string"
+		},
+		"actor": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"username": {
+					"type": "string"
+				},
+				"roles": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"authType": {
+					"type": "string"
+				}
+			}
+		},
+		"action": {
+			"type": "string"
+		},
+		"entity": {
+			"type": "object",
+			"properties": {
+				"type": {
+					"type": "string"
+				},
+				"id": {
+					"type": "string"
+				}
+			}
+		},
+		"resource": {
+			"type": "object",
+			"properties": {
+				"path": {
+					"type": "string"
+				},
+				"method": {
+					"type": "string"
+				}
+			}
+		},
+		"outcome": {
+			"type": "string"
+		},
+		"sensitivity": {
+			"type": "string"
+		},
+		"dataClass": {
+			"type": "string"
+		},
+		"diff": {
+			"type": "object"
+		},
+		"metadata": {
+			"type": "object"
+		},
+		"message": {
+			"type": "string"
+		}
+	},
+	"required": [
+		"schemaVersion",
+		"eventId",
+		"timestamp",
+		"tenantId",
+		"action",
+		"outcome"
+	]
+}

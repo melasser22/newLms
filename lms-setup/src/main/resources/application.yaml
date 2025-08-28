@@ -1,0 +1,17 @@
+server:
+  port: 8080
+  shutdown: graceful
+  servlet:
+    context-path: /core
+  compression:
+    enabled: true
+    mime-types: text/html,text/plain,text/css,application/json,application/javascript
+    min-response-size: 2KB
+  error:
+    include-message: always
+    include-binding-errors: always
+spring:
+  application:
+    name: lms-setup
+  profiles:
+    active: dev

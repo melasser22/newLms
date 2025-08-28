@@ -1,0 +1,3 @@
+com.shared.crypto.starter.CryptoAutoConfiguration
+com.shared.crypto.starter.InMemoryKeyProviderAutoConfiguration
+com.shared.crypto.starter.metrics.CryptoMetricsConfiguration

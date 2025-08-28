@@ -1,0 +1,13 @@
+package com.shared.audit.starter.core.enrich;
+
+import com.shared.audit.starter.api.AuditEvent;
+
+/** Uses a ThreadLocal or external TenantContext if available. */
+public class TenantEnricher implements Enricher {
+  private final java.util.function.Supplier<String> tenantSupplier;
+  public TenantEnricher(java.util.function.Supplier<String> supplier) { this.tenantSupplier = supplier; }
+  @Override public void enrich(AuditEvent.Builder b) {
+    String t = tenantSupplier.get();
+    if (t != null && !t.isBlank()) b.tenantId(t);
+  }
+}

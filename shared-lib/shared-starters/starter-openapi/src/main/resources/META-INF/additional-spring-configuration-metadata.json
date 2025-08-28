@@ -1,0 +1,105 @@
+{
+  "groups": [
+    {
+      "name": "shared.openapi",
+      "type": "com.shared.openapi.starter.config.SharedOpenApiProperties",
+      "sourceType": "com.shared.openapi.starter.config.SharedOpenApiProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "shared.openapi.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Enable/disable Shared OpenAPI starter."
+    },
+    {
+      "name": "shared.openapi.title",
+      "type": "java.lang.String",
+      "description": "OpenAPI title."
+    },
+    {
+      "name": "shared.openapi.description",
+      "type": "java.lang.String",
+      "description": "OpenAPI description."
+    },
+    {
+      "name": "shared.openapi.version",
+      "type": "java.lang.String",
+      "description": "OpenAPI version string."
+    },
+    {
+      "name": "shared.openapi.terms-of-service",
+      "type": "java.lang.String",
+      "description": "Terms of service URL."
+    },
+    {
+      "name": "shared.openapi.contact.name",
+      "type": "java.lang.String",
+      "description": "Contact name."
+    },
+    {
+      "name": "shared.openapi.contact.email",
+      "type": "java.lang.String",
+      "description": "Contact email."
+    },
+    {
+      "name": "shared.openapi.contact.url",
+      "type": "java.lang.String",
+      "description": "Contact URL."
+    },
+    {
+      "name": "shared.openapi.license.name",
+      "type": "java.lang.String",
+      "description": "License name."
+    },
+    {
+      "name": "shared.openapi.license.url",
+      "type": "java.lang.String",
+      "description": "License URL."
+    },
+    {
+      "name": "shared.openapi.security.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": false,
+      "description": "Enable Bearer JWT security scheme."
+    },
+    {
+      "name": "shared.openapi.security.name",
+      "type": "java.lang.String",
+      "defaultValue": "bearer-jwt",
+      "description": "Security scheme name."
+    },
+    {
+      "name": "shared.openapi.security.bearer-format",
+      "type": "java.lang.String",
+      "defaultValue": "JWT",
+      "description": "Bearer format label."
+    },
+    {
+      "name": "shared.openapi.servers[0].url",
+      "type": "java.lang.String",
+      "description": "Server URL."
+    },
+    {
+      "name": "shared.openapi.servers[0].description",
+      "type": "java.lang.String",
+      "description": "Server description."
+    },
+    {
+      "name": "shared.openapi.groups[0].name",
+      "type": "java.lang.String",
+      "description": "Group name."
+    },
+    {
+      "name": "shared.openapi.groups[0].paths-to-match",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Ant-style paths to include."
+    },
+    {
+      "name": "shared.openapi.groups[0].packages-to-scan",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Base packages to scan."
+    }
+  ]
+}

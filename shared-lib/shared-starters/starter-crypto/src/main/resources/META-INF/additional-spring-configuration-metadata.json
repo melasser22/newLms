@@ -1,0 +1,58 @@
+{
+  "properties": [
+    {
+      "name": "shared.crypto.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Enable or disable Shared crypto auto-configuration."
+    },
+    {
+      "name": "shared.crypto.algorithm",
+      "type": "java.lang.String",
+      "defaultValue": "AES_GCM",
+      "description": "The crypto algorithm to use (e.g. AES_GCM)."
+    },
+    {
+      "name": "shared.crypto.key-provider",
+      "type": "java.lang.String",
+      "defaultValue": "in-memory",
+      "description": "Which KeyProvider to use (e.g. in-memory, vault, kms)."
+    },
+    {
+      "name": "shared.crypto.in-memory.active-kid",
+      "type": "java.lang.String",
+      "description": "The active key id used for encryption/signing."
+    },
+    {
+      "name": "shared.crypto.in-memory.keys",
+      "type": "java.util.List",
+      "description": "List of in-memory key definitions (kid + secret)."
+    },
+    {
+      "name": "shared.crypto.in-memory.keys[].kid",
+      "type": "java.lang.String",
+      "description": "The key identifier (KID)."
+    },
+    {
+      "name": "shared.crypto.in-memory.keys[].secret",
+      "type": "java.lang.String",
+      "description": "Base64-encoded secret for this key."
+    }
+  ],
+  "hints": [
+    {
+      "name": "shared.crypto.algorithm",
+      "values": [
+        { "value": "AES_GCM", "description": "AES-256 in Galois/Counter Mode" }
+      ]
+    },
+    {
+      "name": "shared.crypto.key-provider",
+      "values": [
+        { "value": "in-memory", "description": "Keys provided from application.yml" },
+        { "value": "vault", "description": "Keys managed by HashiCorp Vault" },
+        { "value": "kms", "description": "Keys from AWS KMS or GCP KMS" }
+      ]
+    }
+  ]
+}

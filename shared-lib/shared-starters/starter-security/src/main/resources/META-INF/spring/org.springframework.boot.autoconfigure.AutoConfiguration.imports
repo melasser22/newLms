@@ -1,0 +1,2 @@
+com.shared.starter_security.JwtDecoderAutoConfiguration
+com.shared.starter_security.SecurityAutoConfiguration

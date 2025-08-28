@@ -1,0 +1,38 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.lms</groupId>
+    <artifactId>shared-lib</artifactId>
+    <version>1.0.0</version>
+    <!-- You can omit relativePath; Maven resolves parent in reactor by default -->
+    <!-- <relativePath>../pom.xml</relativePath> -->
+  </parent>
+
+  <artifactId>shared-common</artifactId>
+  <packaging>jar</packaging>
+  <name>Shared Common</name>
+  <description>Shared core types and utilities</description>
+
+  <dependencies>
+    <!-- Only if you truly need Boot basics; keep optional so apps choose their stack -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+  
+    <dependency>
+    <groupId>net.logstash.logback</groupId>
+    <artifactId>logstash-logback-encoder</artifactId>
+  </dependency>
+  
+ <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+  </dependencies>
+</project>

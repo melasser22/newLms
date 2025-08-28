@@ -1,0 +1,4 @@
+com.shared.starter_core.config.CoreAutoConfiguration
+com.shared.starter_core.config.JacksonConfig
+com.shared.starter_core.config.ValidationConfig
+com.shared.starter_core.logging.LoggingAutoConfiguration

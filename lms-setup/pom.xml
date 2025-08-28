@@ -1,0 +1,261 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.3.3</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>com.lms</groupId>
+  <artifactId>lms-setup</artifactId>
+  <version>1.0.0</version>
+  <name>lms-setup</name>
+
+  <properties>
+    <java.version>21</java.version>
+
+    <!-- shared BOM version -->
+    <lms.shared.version>1.0.0</lms.shared.version>
+
+    <!-- MapStruct/Lombok versions used by the compiler plugin -->
+    <mapstruct.version>1.5.5.Final</mapstruct.version>
+    <lombok.version>1.18.30</lombok.version>
+    <lombok.mapstruct.binding.version>0.2.0</lombok.mapstruct.binding.version>
+
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  </properties>
+
+  <!-- Import shared BOM to pin internal starter & shared-lib versions -->
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.lms</groupId>
+        <artifactId>shared-bom</artifactId>
+        <version>${lms.shared.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <!-- Spring basics -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+
+    <!-- DB -->
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-postgresql</artifactId>
+    </dependency>
+
+    <!-- MapStruct runtime (processor is wired via compiler plugin) -->
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct</artifactId>
+    </dependency>
+
+    <!-- Lombok -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- shared-lib: common DTOs/exceptions/util -->
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>shared-common</artifactId>
+      <version>${lms.shared.version}</version>
+    </dependency>
+
+    <!-- shared starters (versions come from the BOM) -->
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-core</artifactId>
+            <version>${lms.shared.version}</version>
+
+    </dependency>
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-validation</artifactId>
+            <version>${lms.shared.version}</version>
+
+    </dependency>
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-data</artifactId>
+            <version>${lms.shared.version}</version>
+
+    </dependency>
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-redis</artifactId>
+            <version>${lms.shared.version}</version>
+
+    </dependency>
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-mapstruct</artifactId>
+            <version>${lms.shared.version}</version>
+
+    </dependency>
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-openapi</artifactId>
+            <version>${lms.shared.version}</version>
+
+    </dependency>
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-security</artifactId>
+            <version>${lms.shared.version}</version>
+
+    </dependency>
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-actuator</artifactId>
+            <version>${lms.shared.version}</version>
+
+    </dependency>
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-audit</artifactId>
+            <version>${lms.shared.version}</version>
+
+    </dependency>
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-headers</artifactId>
+            <version>${lms.shared.version}</version>
+
+    </dependency>
+
+    <!-- SpringDoc UI (kept versionless assuming your BOM manages it) -->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    </dependency>
+
+    <!-- Test -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.junit.vintage</groupId>
+          <artifactId>junit-vintage-engine</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-inline</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>3.13.0</version>
+      <configuration>
+        <release>${java.version}</release>
+      </configuration>
+      <executions>
+        <execution>
+          <id>compile</id>
+          <goals><goal>compile</goal></goals>
+          <configuration>
+            <annotationProcessorPaths>
+              <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+              </path>
+              <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-mapstruct-binding</artifactId>
+                <version>${lombok.mapstruct.binding.version}</version>
+              </path>
+              <path>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-processor</artifactId>
+                <version>${mapstruct.version}</version>
+              </path>
+            </annotationProcessorPaths>
+            <compilerArgs>
+              <arg>-Amapstruct.defaultComponentModel=spring</arg>
+              <arg>-Amapstruct.unmappedTargetPolicy=IGNORE</arg>
+            </compilerArgs>
+          </configuration>
+        </execution>
+
+        <execution>
+          <id>test-compile</id>
+          <goals><goal>testCompile</goal></goals>
+          <configuration>
+            <annotationProcessorPaths>
+              <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+              </path>
+              <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-mapstruct-binding</artifactId>
+                <version>${lombok.mapstruct.binding.version}</version>
+              </path>
+              <path>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-processor</artifactId>
+                <version>${mapstruct.version}</version>
+              </path>
+            </annotationProcessorPaths>
+            <compilerArgs>
+              <arg>-Amapstruct.defaultComponentModel=spring</arg>
+              <arg>-Amapstruct.unmappedTargetPolicy=IGNORE</arg>
+            </compilerArgs>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+  </plugins>
+</build>
+</project>

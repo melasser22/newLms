@@ -1,0 +1,266 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.lms</groupId>
+  <artifactId>shared-lib</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+  <name>Shared Library</name>
+  <description>Aggregator + parent; imports shared-bom and enforces repo-wide standards.</description>
+
+  <modules>
+    <module>shared-bom</module>
+    <module>shared-common</module>
+    <module>shared-lib-crypto</module>
+    <module>shared-starters</module>
+    <module>shared-test-support</module> 
+  </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <java.version>21</java.version>
+    <maven.compiler.release>${java.version}</maven.compiler.release>
+    <maven.min.version>3.9.6</maven.min.version>
+    <project.build.outputTimestamp>2025-01-01T00:00:00Z</project.build.outputTimestamp>
+
+    <!-- plugin versions -->
+    <plugin.compiler.version>3.13.0</plugin.compiler.version>
+    <plugin.surefire.version>3.3.0</plugin.surefire.version>
+    <plugin.failsafe.version>3.3.0</plugin.failsafe.version>
+    <plugin.enforcer.version>3.4.1</plugin.enforcer.version>
+    <plugin.jacoco.version>0.8.12</plugin.jacoco.version>
+    <plugin.versions.version>2.17.1</plugin.versions.version>
+    <plugin.flatten.version>1.6.0</plugin.flatten.version>
+    <plugin.jar.version>3.3.0</plugin.jar.version>
+    <plugin.resources.version>3.3.1</plugin.resources.version>
+    <plugin.install.version>3.1.2</plugin.install.version>
+    <plugin.deploy.version>3.1.2</plugin.deploy.version>
+    <plugin.clean.version>3.2.0</plugin.clean.version>     
+    <plugin.site.version>3.12.1</plugin.site.version>      
+		<!-- if any module uses Boot plugin -->
+    <spring.boot.version>3.3.3</spring.boot.version>
+  </properties>
+
+  <!-- Centralize dependency versions -->
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.lms</groupId>
+        <artifactId>shared-bom</artifactId>
+        <version>1.0.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>com.lms</groupId>
+        <artifactId>shared-common</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <!-- add other internal artifacts here when modules are enabled -->
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+      <plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-clean-plugin</artifactId> 
+  <version>${plugin.clean.version}</version>
+</plugin>
+
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-site-plugin</artifactId>
+  <version>${plugin.site.version}</version>
+</plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${plugin.compiler.version}</version>
+          <configuration>
+            <release>${maven.compiler.release}</release>
+            <encoding>${project.build.sourceEncoding}</encoding>
+            <parameters>true</parameters>
+            <compilerArgs>
+              <arg>-Xlint:deprecation</arg>
+              <arg>-Xlint:unchecked</arg>
+            </compilerArgs>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${plugin.surefire.version}</version>
+          <configuration>
+            <useModulePath>false</useModulePath>
+            <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+            <argLine>${argLine}</argLine>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>${plugin.failsafe.version}</version>
+          <executions>
+            <execution>
+              <id>integration-tests</id>
+              <goals><goal>integration-test</goal><goal>verify</goal></goals>
+              <configuration>
+                <includes>
+                  <include>**/*IT.java</include>
+                  <include>**/*ITCase.java</include>
+                </includes>
+                <argLine>${argLine}</argLine>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>versions-maven-plugin</artifactId>
+          <version>${plugin.versions.version}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>flatten-maven-plugin</artifactId>
+          <version>${plugin.flatten.version}</version>
+          <configuration>
+            <updatePomFile>true</updatePomFile>
+            <flattenMode>oss</flattenMode>
+          </configuration>
+          <executions>
+            <execution>
+              <id>flatten</id>
+              <phase>process-resources</phase>
+              <goals><goal>flatten</goal></goals>
+            </execution>
+            <execution>
+              <id>flatten-clean</id>
+              <phase>clean</phase>
+              <goals><goal>clean</goal></goals>
+            </execution>
+          </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${plugin.jar.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>${plugin.resources.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>${plugin.install.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>${plugin.deploy.version}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+          <version>${spring.boot.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <!-- Minimal, always-green hygiene checks (no bytecode rule) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>${plugin.enforcer.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.enforcer</groupId>
+            <artifactId>enforcer-rules</artifactId>
+            <version>${plugin.enforcer.version}</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>enforce-core-green</id>
+            <phase>validate</phase>
+            <goals><goal>enforce</goal></goals>
+            <configuration>
+              <fail>true</fail>
+              <rules>
+                <requireMavenVersion>
+                  <version>[${maven.min.version},)</version>
+                </requireMavenVersion>
+                <requireJavaVersion>
+                  <version>[${java.version},)</version>
+                </requireJavaVersion>
+                <requirePluginVersions/>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Make test plugin configs apply -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+      </plugin>
+
+      <!-- JaCoCo aggregate -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${plugin.jacoco.version}</version>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <goals><goal>prepare-agent</goal></goals>
+          </execution>
+          <execution>
+            <id>report-aggregate</id>
+            <phase>verify</phase>
+            <goals><goal>report-aggregate</goal></goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>ci</id>
+      <properties><maven.test.skip>true</maven.test.skip></properties>
+    </profile>
+    <profile>
+      <id>skip-its</id>
+      <properties><skipITs>true</skipITs></properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration><skipITs>${skipITs}</skipITs></configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>
