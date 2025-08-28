@@ -14,10 +14,10 @@ public class FeignHeaderInterceptor implements RequestInterceptor {
     if (!props.getPropagation().isEnabled()) return;
     for (String name : props.getPropagation().getInclude()) {
       String value = switch (name) {
-      case HeaderNames.CORRELATION_ID -> ContextManager.Header.getCorrelationId();
-      case HeaderNames.REQUEST_ID -> ContextManager.Header.getRequestId();
-      case HeaderNames.TENANT_ID -> ContextManager.Header.getTenantId();
-      case HeaderNames.USER_ID -> ContextManager.Header.getUserId();
+      case HeaderNames.CORRELATION_ID -> ContextManager.getCorrelationId();
+      case HeaderNames.REQUEST_ID -> ContextManager.getRequestId();
+      case HeaderNames.TENANT_ID -> ContextManager.Tenant.get();
+      case HeaderNames.USER_ID -> ContextManager.getUserId();
         default -> null;
       };
       if (value != null && !template.headers().containsKey(name)) {

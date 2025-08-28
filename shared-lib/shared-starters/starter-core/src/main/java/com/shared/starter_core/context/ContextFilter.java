@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.common.constants.HeaderNames;
+import com.common.context.ContextManager;
+import com.common.context.TraceContextUtil;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -66,9 +68,9 @@ public class ContextFilter extends OncePerRequestFilter {
         try {
             // ---- Propagate to thread-local holders used elsewhere in the stack
             if (tenantId != null) {
-                TenantContextHolder.setTenantId(tenantId);
+                ContextManager.Tenant.set(tenantId);
             }
-            TraceContextHolder.setTraceId(correlationId); // keep using the existing holder
+            TraceContextUtil.put(TraceContextUtil.TRACE_ID, correlationId);
 
             // ---- Enrich logging context (appears on every log line)
             putMdc(HeaderNames.TENANT_ID, tenantId);
@@ -81,8 +83,8 @@ public class ContextFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } finally {
             // ---- Always cleanup
-            TenantContextHolder.clear();
-            TraceContextHolder.clear();
+            ContextManager.Tenant.clear();
+            TraceContextUtil.clear();
             MDC.remove(HeaderNames.TENANT_ID);
             MDC.remove(HeaderNames.USER_ID);
             MDC.remove(HeaderNames.CORRELATION_ID);

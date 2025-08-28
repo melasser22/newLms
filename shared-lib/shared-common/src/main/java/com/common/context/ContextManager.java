@@ -120,182 +120,55 @@ public final class ContextManager {
         }
     }
 
-    // ==================== Header ====================
+    // ==================== Correlation ID ====================
+
+    public static void setCorrelationId(String id) {
+        CARRIER.setCorrelationId(id);
+    }
+
+    public static String getCorrelationId() {
+        return CARRIER.getCorrelationId();
+    }
+
+    public static void clearCorrelationId() {
+        CARRIER.clearCorrelationId();
+    }
+
+    // ==================== Request ID ====================
+
+    public static void setRequestId(String id) {
+        CARRIER.setRequestId(id);
+    }
+
+    public static String getRequestId() {
+        return CARRIER.getRequestId();
+    }
+
+    public static void clearRequestId() {
+        CARRIER.clearRequestId();
+    }
+
+    // ==================== User ID ====================
+
+    public static void setUserId(String id) {
+        CARRIER.setUserId(id);
+    }
+
+    public static String getUserId() {
+        return CARRIER.getUserId();
+    }
+
+    public static void clearUserId() {
+        CARRIER.clearUserId();
+    }
 
     /**
-     * Header context for correlation ID, request ID, tenant ID (header version), and user ID.
+     * Clear all header-related contexts: correlation, request, tenant and user.
      */
-    public static final class Header {
-
-        private Header() {
-            // nested type
-        }
-
-        // Correlation ID
-
-        public static void setCorrelationId(String id) {
-            CARRIER.setCorrelationId(id);
-        }
-
-        public static String getCorrelationId() {
-            return CARRIER.getCorrelationId();
-        }
-
-        public static void clearCorrelationId() {
-            CARRIER.clearCorrelationId();
-        }
-
-        public static CorrelationScope openCorrelationScope(String id) {
-            AutoCloseable ac = CARRIER.openCorrelationScope(id);
-            return new CorrelationScope(ac);
-        }
-
-        // Request ID
-
-        public static void setRequestId(String id) {
-            CARRIER.setRequestId(id);
-        }
-
-        public static String getRequestId() {
-            return CARRIER.getRequestId();
-        }
-
-        public static void clearRequestId() {
-            CARRIER.clearRequestId();
-        }
-
-        public static RequestScope openRequestScope(String id) {
-            AutoCloseable ac = CARRIER.openRequestScope(id);
-            return new RequestScope(ac);
-        }
-
-        // Tenant ID (header-level variant)
-
-        public static void setTenantId(String id) {
-            CARRIER.setTenantId(id);
-        }
-
-        public static String getTenantId() {
-            return CARRIER.getTenantId();
-        }
-
-        public static void clearTenantId() {
-            CARRIER.clearTenantId();
-        }
-
-        public static TenantScope openTenantScope(String id) {
-            AutoCloseable ac = CARRIER.openTenantScope(id);
-            return new TenantScope(ac);
-        }
-
-        // User ID
-
-        public static void setUserId(String id) {
-            CARRIER.setUserId(id);
-        }
-
-        public static String getUserId() {
-            return CARRIER.getUserId();
-        }
-
-        public static void clearUserId() {
-            CARRIER.clearUserId();
-        }
-
-        public static UserScope openUserScope(String id) {
-            AutoCloseable ac = CARRIER.openUserScope(id);
-            return new UserScope(ac);
-        }
-
-        /**
-         * Clear all header-related contexts.
-         */
-        public static void clear() {
-            CARRIER.clearCorrelationId();
-            CARRIER.clearRequestId();
-            CARRIER.clearTenantId();
-            CARRIER.clearUserId();
-        }
-
-        // scope wrappers
-        public static final class CorrelationScope implements AutoCloseable {
-            private final AutoCloseable inner;
-            private boolean closed;
-
-            private CorrelationScope(AutoCloseable inner) {
-                this.inner = inner;
-            }
-
-            @Override
-            public void close() {
-                if (closed) return;
-                try {
-                    inner.close();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-                closed = true;
-            }
-        }
-
-        public static final class RequestScope implements AutoCloseable {
-            private final AutoCloseable inner;
-            private boolean closed;
-
-            private RequestScope(AutoCloseable inner) {
-                this.inner = inner;
-            }
-
-            @Override
-            public void close() {
-                if (closed) return;
-                try {
-                    inner.close();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-                closed = true;
-            }
-        }
-
-        public static final class TenantScope implements AutoCloseable {
-            private final AutoCloseable inner;
-            private boolean closed;
-
-            private TenantScope(AutoCloseable inner) {
-                this.inner = inner;
-            }
-
-            @Override
-            public void close() {
-                if (closed) return;
-                try {
-                    inner.close();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-                closed = true;
-            }
-        }
-
-        public static final class UserScope implements AutoCloseable {
-            private final AutoCloseable inner;
-            private boolean closed;
-
-            private UserScope(AutoCloseable inner) {
-                this.inner = inner;
-            }
-
-            @Override
-            public void close() {
-                if (closed) return;
-                try {
-                    inner.close();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-                closed = true;
-            }
-        }
+    public static void clearHeaders() {
+        CARRIER.clearCorrelationId();
+        CARRIER.clearRequestId();
+        CARRIER.clearTenantId();
+        CARRIER.clearUserId();
     }
 }
