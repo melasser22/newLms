@@ -7,15 +7,22 @@ import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.UpdateTimestamp;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Entity
 @DynamicUpdate
+@Getter
+@Setter
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(
     name = "resources",
     uniqueConstraints = {
@@ -34,6 +41,7 @@ public class Resource implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "resource_id",  unique = true, nullable = false)
+    @EqualsAndHashCode.Include
     private Integer resourceId;
 
     @NotBlank
@@ -85,8 +93,6 @@ public class Resource implements Serializable {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public Resource() {}
-
     @PrePersist @PreUpdate
     private void normalize() {
         if (resourceCd != null) resourceCd = resourceCd.trim();
@@ -97,48 +103,7 @@ public class Resource implements Serializable {
         if (isActive == null) isActive = Boolean.TRUE;
     }
 
-    // getters/setters
-    public Integer getResourceId() { return resourceId; }
-    public void setResourceId(Integer resourceId) { this.resourceId = resourceId; }
-
-    public String getResourceCd() { return resourceCd; }
-    public void setResourceCd(String resourceCd) { this.resourceCd = resourceCd; }
-
-    public String getResourceEnNm() { return resourceEnNm; }
-    public void setResourceEnNm(String resourceEnNm) { this.resourceEnNm = resourceEnNm; }
-
-    public String getResourceArNm() { return resourceArNm; }
-    public void setResourceArNm(String resourceArNm) { this.resourceArNm = resourceArNm; }
-
-    public String getPath() { return path; }
-    public void setPath(String path) { this.path = path; }
-
-    public String getHttpMethod() { return httpMethod; }
-    public void setHttpMethod(String httpMethod) { this.httpMethod = httpMethod; }
-
-    public Integer getParentResourceId() { return parentResourceId; }
-    public void setParentResourceId(Integer parentResourceId) { this.parentResourceId = parentResourceId; }
-
-    public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean active) { isActive = active; }
-
-    public String getEnDescription() { return enDescription; }
-    public void setEnDescription(String enDescription) { this.enDescription = enDescription; }
-
-    public String getArDescription() { return arDescription; }
-    public void setArDescription(String arDescription) { this.arDescription = arDescription; }
-
     public Long getVersion() { return version; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
-
-    @Override public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Resource that)) return false;
-        return Objects.equals(resourceId, that.resourceId);
-    }
-    @Override public int hashCode() { return Objects.hash(resourceId); }
-    @Override public String toString() {
-        return "Resource{resourceId=" + resourceId + ", resourceCd='" + resourceCd + "'}";
-    }
 }

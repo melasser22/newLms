@@ -9,15 +9,22 @@ import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.UpdateTimestamp;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Entity
 @DynamicUpdate
+@Getter
+@Setter
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(
     name = "country",
     uniqueConstraints = {
@@ -36,6 +43,8 @@ public class Country implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "country_id", unique = true, nullable = false)
+    @EqualsAndHashCode.Include
+    @JsonProperty("countryId")
     private Integer countryId;
 
     @NotBlank
@@ -88,8 +97,6 @@ public class Country implements Serializable {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public Country() {}
-
     @PrePersist @PreUpdate
     private void normalize() {
         if (countryCd != null) countryCd = countryCd.trim();
@@ -101,49 +108,7 @@ public class Country implements Serializable {
         if (isActive == null) isActive = Boolean.TRUE;
     }
 
-    // getters/setters
-    @JsonProperty("countryId")
-    public Integer getCountryId() { return countryId; }
-    public void setCountryId(Integer countryId) { this.countryId = countryId; }
-
-    public String getCountryCd() { return countryCd; }
-    public void setCountryCd(String countryCd) { this.countryCd = countryCd; }
-
-    public String getCountryEnNm() { return countryEnNm; }
-    public void setCountryEnNm(String countryEnNm) { this.countryEnNm = countryEnNm; }
-
-    public String getCountryArNm() { return countryArNm; }
-    public void setCountryArNm(String countryArNm) { this.countryArNm = countryArNm; }
-
-    public String getDialingCode() { return dialingCode; }
-    public void setDialingCode(String dialingCode) { this.dialingCode = dialingCode; }
-
-    public String getNationalityEn() { return nationalityEn; }
-    public void setNationalityEn(String nationalityEn) { this.nationalityEn = nationalityEn; }
-
-    public String getNationalityAr() { return nationalityAr; }
-    public void setNationalityAr(String nationalityAr) { this.nationalityAr = nationalityAr; }
-
-    public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean active) { isActive = active; }
-
-    public String getEnDescription() { return enDescription; }
-    public void setEnDescription(String enDescription) { this.enDescription = enDescription; }
-
-    public String getArDescription() { return arDescription; }
-    public void setArDescription(String arDescription) { this.arDescription = arDescription; }
-
     public Long getVersion() { return version; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
-
-    @Override public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Country that)) return false;
-        return Objects.equals(countryId, that.countryId);
-    }
-    @Override public int hashCode() { return Objects.hash(countryId); }
-    @Override public String toString() {
-        return "Country{countryId=" + countryId + ", countryCd='" + countryCd + "'}";
-    }
 }
