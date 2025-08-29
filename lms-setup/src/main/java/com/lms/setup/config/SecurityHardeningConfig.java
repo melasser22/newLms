@@ -43,7 +43,7 @@ public class SecurityHardeningConfig {
                 .contentTypeOptions().and()
                 .httpStrictTransportSecurity(hstsConfig -> hstsConfig
                     .maxAgeInSeconds(31536000)
-                    .includeSubdomains(true)
+                    .includeSubDomains(true)
                     .preload(true)
                 )
                 .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
