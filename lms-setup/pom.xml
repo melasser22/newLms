@@ -160,6 +160,11 @@
     </dependency>
     <dependency>
       <groupId>com.lms</groupId>
+      <artifactId>starter-ratelimit</artifactId>
+        <version>${lms.shared.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.lms</groupId>
       <artifactId>shared-config</artifactId>
         <version>${lms.shared.version}</version>
     </dependency>

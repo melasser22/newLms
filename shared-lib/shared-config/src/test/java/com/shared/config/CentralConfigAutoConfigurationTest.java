@@ -7,8 +7,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(classes = CentralConfigAutoConfiguration.class)
-class CentralConfigAutoConfigurationTest extends IntegrationTestSupport {
+@SpringBootTest(
+	    classes = CentralConfigAutoConfiguration.class,
+	    properties = "spring.cloud.config.enabled=false"
+	)class CentralConfigAutoConfigurationTest extends IntegrationTestSupport {
 
     @Autowired
     private AppProperties props;

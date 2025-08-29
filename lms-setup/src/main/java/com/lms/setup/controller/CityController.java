@@ -1,61 +1,104 @@
 package com.lms.setup.controller;
 
 import com.common.dto.BaseResponse;
-import com.lms.setup.dto.CityDto;
+import com.lms.setup.model.City;
 import com.lms.setup.service.CityService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springdoc.core.annotations.ParameterObject;
+import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/setup/cities")
 @Validated
+@Tag(name = "City Management", description = "APIs for managing cities")
 public class CityController {
 
-  private final CityService service;
+    private final CityService cityService;
 
-  public CityController(CityService service) { this.service = service; }
+    public CityController(CityService cityService) {
+        this.cityService = cityService;
+    }
 
-  @PostMapping
-  public ResponseEntity<BaseResponse<CityDto>> create(@Valid @RequestBody CityDto request) {
-    return ResponseEntity.ok(service.add(request));
-  }
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create a new city", description = "Creates a new city with the provided details")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "City created successfully",
+            content = @Content(schema = @Schema(implementation = BaseResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "403", description = "Access denied"),
+        @ApiResponse(responseCode = "409", description = "City already exists")
+    })
+    public ResponseEntity<BaseResponse<City>> add(@Valid @RequestBody City body) {
+        return ResponseEntity.ok(cityService.add(body));
+    }
 
-  @PutMapping("/{id}")
-  public ResponseEntity<BaseResponse<CityDto>> update(@PathVariable Integer id,
-                                                      @Valid @RequestBody CityDto request) {
-    return ResponseEntity.ok(service.update(id, request));
-  }
+    @PutMapping("/{cityId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update an existing city", description = "Updates the city with the specified ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "City updated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "403", description = "Access denied"),
+        @ApiResponse(responseCode = "404", description = "City not found")
+    })
+    public ResponseEntity<BaseResponse<City>> update(
+            @Parameter(description = "ID of the city to update", required = true)
+            @PathVariable @Min(1) Integer cityId,
+            @Valid @RequestBody City body) {
+        return ResponseEntity.ok(cityService.update(cityId, body));
+    }
 
-  @DeleteMapping("/{id}")
-  public ResponseEntity<BaseResponse<Void>> delete(@PathVariable Integer id) {
-    return ResponseEntity.ok(service.delete(id));
-  }
+    @GetMapping("/{cityId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @Operation(summary = "Get city by ID", description = "Retrieves a city by its ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "City found successfully"),
+        @ApiResponse(responseCode = "403", description = "Access denied"),
+        @ApiResponse(responseCode = "404", description = "City not found")
+    })
+    public ResponseEntity<BaseResponse<City>> get(
+            @Parameter(description = "ID of the city to retrieve", required = true)
+            @PathVariable @Min(1) Integer cityId) {
+        return ResponseEntity.ok(cityService.get(cityId));
+    }
 
-  @GetMapping("/{id}")
-  public ResponseEntity<BaseResponse<CityDto>> get(@PathVariable Integer id) {
-    return ResponseEntity.ok(service.get(id));
-  }
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @Operation(summary = "List cities", description = "Retrieves a paginated list of cities with optional search")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Cities retrieved successfully"),
+        @ApiResponse(responseCode = "403", description = "Access denied")
+    })
+    public ResponseEntity<?> list(
+            @PageableDefault(size = 20) Pageable pageable,
+            @Parameter(description = "Search query for city names")
+            @RequestParam(required = false) String q,
+            @Parameter(description = "Whether to return all cities (ignores pagination)")
+            @RequestParam(required = false) boolean all) {
+        return ResponseEntity.ok(cityService.list(pageable, q, all));
+    }
 
-  @GetMapping
-  public ResponseEntity<BaseResponse<?>> list(
-      @ParameterObject
-      @PageableDefault(size = 20, sort = "cityEnNm", direction = Sort.Direction.ASC) Pageable pageable,
-      @RequestParam(name = "q", required = false) String q,
-      @RequestParam(name = "all", defaultValue = "false") boolean all
-  ) {
-    return ResponseEntity.ok(service.list(pageable, q, all));
-  }
-
-  @GetMapping("/countries/{countryId}/active")
-  public ResponseEntity<BaseResponse<List<CityDto>>> listActiveByCountry(@PathVariable Integer countryId) {
-    return ResponseEntity.ok(service.listActiveByCountry(countryId));
-  }
+    @GetMapping("/active")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @Operation(summary = "List active cities", description = "Retrieves all active cities")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Active cities retrieved successfully"),
+        @ApiResponse(responseCode = "403", description = "Access denied")
+    })
+    public ResponseEntity<?> listActive() {
+        return ResponseEntity.ok(cityService.listActive());
+    }
 }
