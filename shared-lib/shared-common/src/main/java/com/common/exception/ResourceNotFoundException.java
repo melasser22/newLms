@@ -28,13 +28,4 @@ public class ResourceNotFoundException extends NotFoundException {
         super(message);
     }
 
-    /**
-     * Create a ResourceNotFoundException with a custom message and details.
-     *
-     * @param message custom not-found message
-     * @param details more specific explanation
-     */
-    public ResourceNotFoundException(String message, String details) {
-        super(message, details);
-    }
 }
