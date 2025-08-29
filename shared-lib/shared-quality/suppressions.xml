@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+    <!-- Generated files -->
+    <suppress checks=".*" files=".*/target/.*"/>
+    <suppress checks=".*" files=".*/generated/.*"/>
+    <suppress checks=".*" files=".*/build/.*"/>
+    
+    <!-- MapStruct generated files -->
+    <suppress checks=".*" files=".*MapperImpl\.java"/>
+    
+    <!-- Lombok generated files -->
+    <suppress checks=".*" files=".*\$\$.*\.java"/>
+    
+    <!-- Test files -->
+    <suppress checks="MagicNumber" files=".*Test\.java"/>
+    <suppress checks="MagicNumber" files=".*IT\.java"/>
+    
+    <!-- Configuration files -->
+    <suppress checks=".*" files=".*Config\.java"/>
+    
+    <!-- DTOs and models -->
+    <suppress checks="EqualsHashCode" files=".*Dto\.java"/>
+    <suppress checks="EqualsHashCode" files=".*Entity\.java"/>
+    <suppress checks="EqualsHashCode" files=".*Model\.java"/>
+    
+    <!-- Constants -->
+    <suppress checks="MagicNumber" files=".*Constants\.java"/>
+    <suppress checks="MagicNumber" files=".*Enums\.java"/>
+</suppressions>
