@@ -92,8 +92,8 @@ class CountryControllerTest extends TestBase {
         // Given
         List<Country> countries = Arrays.asList(createTestCountry());
         Page<Country> page = new PageImpl<>(countries, PageRequest.of(0, 20), 1);
-        BaseResponse<Page<Country>> response = BaseResponse.success("Countries page", page);
-        when(countryService.list(any(Pageable.class), anyString(), anyBoolean())).thenReturn((BaseResponse<?>) response);
+        BaseResponse<?> response = BaseResponse.success("Countries page", page);
+        doReturn(response).when(countryService).list(any(Pageable.class), anyString(), anyBoolean());
 
         // When & Then
         mockMvc.perform(getRequest("/countries?page=0&size=20"))
