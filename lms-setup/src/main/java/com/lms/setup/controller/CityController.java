@@ -1,7 +1,7 @@
 package com.lms.setup.controller;
 
 import com.common.dto.BaseResponse;
-import com.lms.setup.model.City;
+import com.lms.setup.dto.CityDto;
 import com.lms.setup.service.CityService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,7 +41,7 @@ public class CityController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "409", description = "City already exists")
     })
-    public ResponseEntity<BaseResponse<City>> add(@Valid @RequestBody City body) {
+    public ResponseEntity<BaseResponse<CityDto>> add(@Valid @RequestBody CityDto body) {
         return ResponseEntity.ok(cityService.add(body));
     }
 
@@ -54,10 +54,10 @@ public class CityController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "404", description = "City not found")
     })
-    public ResponseEntity<BaseResponse<City>> update(
+    public ResponseEntity<BaseResponse<CityDto>> update(
             @Parameter(description = "ID of the city to update", required = true)
             @PathVariable @Min(1) Integer cityId,
-            @Valid @RequestBody City body) {
+            @Valid @RequestBody CityDto body) {
         return ResponseEntity.ok(cityService.update(cityId, body));
     }
 
@@ -69,7 +69,7 @@ public class CityController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "404", description = "City not found")
     })
-    public ResponseEntity<BaseResponse<City>> get(
+    public ResponseEntity<BaseResponse<CityDto>> get(
             @Parameter(description = "ID of the city to retrieve", required = true)
             @PathVariable @Min(1) Integer cityId) {
         return ResponseEntity.ok(cityService.get(cityId));
@@ -93,12 +93,14 @@ public class CityController {
 
     @GetMapping("/active")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @Operation(summary = "List active cities", description = "Retrieves all active cities")
+    @Operation(summary = "List active cities by country", description = "Retrieves all active cities for the given country")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Active cities retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<?> listActive() {
-        return ResponseEntity.ok(cityService.listActive());
+    public ResponseEntity<?> listActive(
+            @Parameter(description = "Country ID to filter cities", required = true)
+            @RequestParam @Min(1) Integer countryId) {
+        return ResponseEntity.ok(cityService.listActiveByCountry(countryId));
     }
 }
