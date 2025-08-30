@@ -203,5 +203,8 @@ logging:
     org.hibernate.orm.jdbc.bind: ERROR
     org.springframework.cache: ERROR
     org.springframework.cache.interceptor.CacheAspectSupport: ERROR
+debug: false
 
-debug: false 
+setup:
+  security:
+    public-access: true
