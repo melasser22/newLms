@@ -41,20 +41,28 @@ public class DatabaseConfig {
 
     @Bean
     @Primary
-    public DataSource dataSource(DataSourceProperties properties, HikariConfig hikariConfig) {
-        if (properties.getUrl() == null || properties.getUrl().isBlank()) {
-            // Fallback to in-memory H2 database when no external datasource is configured
-            hikariConfig.setJdbcUrl(
+    public DataSource dataSource(
+            DataSourceProperties properties, HikariConfig hikariConfig, Environment env) {
+        String jdbcUrl = properties.getUrl();
+        if (jdbcUrl == null || jdbcUrl.isBlank()) {
+            // Allow overriding via DB_URL env var as documented in README
+            jdbcUrl = env.getProperty(
+                    "DB_URL",
                     "jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH");
-            hikariConfig.setUsername("sa");
-            hikariConfig.setPassword("");
-            hikariConfig.setDriverClassName("org.h2.Driver");
+            hikariConfig.setUsername(env.getProperty("DB_USERNAME", "sa"));
+            hikariConfig.setPassword(env.getProperty("DB_PASSWORD", ""));
+            String driver = jdbcUrl.startsWith("jdbc:h2")
+                    ? "org.h2.Driver"
+                    : (properties.getDriverClassName() != null
+                            ? properties.getDriverClassName()
+                            : "org.postgresql.Driver");
+            hikariConfig.setDriverClassName(driver);
         } else {
-            hikariConfig.setJdbcUrl(properties.getUrl());
             hikariConfig.setUsername(properties.getUsername());
             hikariConfig.setPassword(properties.getPassword());
             hikariConfig.setDriverClassName(properties.getDriverClassName());
         }
+        hikariConfig.setJdbcUrl(jdbcUrl);
 
         // Enhanced connection pooling settings
         hikariConfig.setMaximumPoolSize(20);
