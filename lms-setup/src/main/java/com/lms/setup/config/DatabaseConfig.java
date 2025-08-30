@@ -75,7 +75,8 @@ public class DatabaseConfig {
     }
 
     @Bean
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory(            DataSource dataSource, Environment env, DataSourceProperties dataSourceProperties) {
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(     
+    		DataSource dataSource, Environment env, DataSourceProperties dataSourceProperties) {
 
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
