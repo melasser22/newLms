@@ -19,7 +19,12 @@
   <module name="FileTabCharacter">
     <property name="eachLine" value="true"/>
   </module>
-  
+
+  <!-- Line length -->
+  <module name="LineLength">
+    <property name="max" value="120"/>
+  </module>
+
   <module name="TreeWalker">
     <!-- Naming conventions -->
     <module name="ConstantName"/>
@@ -44,9 +49,6 @@
     </module>
     <module name="ParameterNumber">
       <property name="max" value="7"/>
-    </module>
-    <module name="LineLength">
-      <property name="max" value="120"/>
     </module>
     
     <!-- Whitespace -->
