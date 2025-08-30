@@ -16,7 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -36,7 +35,7 @@ class CityControllerTest {
 
     doReturn(resp)
         .when(cityService)
-        .list(any(Pageable.class), nullable(String.class), anyBoolean());
+        .list(any(Pageable.class), nullable(String.class));
 
     mockMvc.perform(get("/setup/cities").accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
@@ -51,7 +50,7 @@ class CityControllerTest {
     // Same broad stub covers q = null and any pageable/flag
     doReturn(resp)
         .when(cityService)
-        .list(any(Pageable.class), nullable(String.class), anyBoolean());
+        .list(any(Pageable.class), nullable(String.class));
 
     mockMvc.perform(get("/setup/cities").accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())

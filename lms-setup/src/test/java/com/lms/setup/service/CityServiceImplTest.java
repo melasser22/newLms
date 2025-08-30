@@ -39,7 +39,7 @@ class CityServiceImplTest {
                 .thenReturn(cityPage);
         when(mapper.toDtoPage(cityPage)).thenReturn(org.springframework.data.domain.Page.empty());
 
-        BaseResponse<?> resp = service.list(org.springframework.data.domain.Pageable.unpaged(), null, false);
+        BaseResponse<?> resp = service.list(org.springframework.data.domain.Pageable.unpaged(), null);
         assertNotNull(resp);
     }
 }
