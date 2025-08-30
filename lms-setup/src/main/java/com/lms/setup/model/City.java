@@ -2,10 +2,12 @@ package com.lms.setup.model;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.DynamicUpdate;
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @Entity
 @Table(
@@ -41,10 +43,18 @@ public class City {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "country_id", nullable = false)
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private Country country;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = Boolean.TRUE;
 
     public boolean isActive() { return Boolean.TRUE.equals(isActive); }
+
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "JPA entity reference is intentionally exposed")
+    public Country getCountry() { return country; }
+
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JPA entity reference is intentionally stored")
+    public void setCountry(final Country country) { this.country = country; }
 }

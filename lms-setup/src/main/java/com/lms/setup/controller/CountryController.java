@@ -3,6 +3,7 @@ package com.lms.setup.controller;
 import com.common.dto.BaseResponse;
 import com.lms.setup.model.Country;
 import com.lms.setup.service.CountryService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Country Management", description = "APIs for managing countries")
 public class CountryController {
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final CountryService countryService;
     
     public CountryController(CountryService countryService) { 

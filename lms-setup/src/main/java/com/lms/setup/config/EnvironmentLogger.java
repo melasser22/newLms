@@ -1,6 +1,7 @@
 package com.lms.setup.config;
 
 import com.shared.config.EnvironmentProperties;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EnvironmentLogger {
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected configuration is managed by Spring")
     private final EnvironmentProperties properties;
 
     @PostConstruct

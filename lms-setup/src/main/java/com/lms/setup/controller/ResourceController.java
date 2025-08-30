@@ -3,6 +3,7 @@ package com.lms.setup.controller;
 import com.common.dto.BaseResponse;
 import com.lms.setup.model.Resource;
 import com.lms.setup.service.ResourceService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Resource Management", description = "APIs for managing resources")
 public class ResourceController {
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final ResourceService resourceService;
 
     public ResourceController(ResourceService resourceService) {

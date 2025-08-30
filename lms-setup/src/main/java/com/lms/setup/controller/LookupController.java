@@ -3,6 +3,7 @@ package com.lms.setup.controller;
 import com.common.dto.BaseResponse;
 import com.lms.setup.model.Lookup;
 import com.lms.setup.service.LookupService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,6 +27,7 @@ import java.util.List;
 @Tag(name = "Lookup Management", description = "APIs for managing lookup values")
 public class LookupController {
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final LookupService lookupService;
 
     public LookupController(LookupService lookupService) {

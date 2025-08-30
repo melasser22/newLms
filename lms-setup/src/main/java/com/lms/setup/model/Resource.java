@@ -11,6 +11,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.Locale;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -94,12 +96,13 @@ public class Resource implements Serializable {
     private LocalDateTime updatedAt;
 
     @PrePersist @PreUpdate
+    @SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD", justification = "Called by JPA lifecycle")
     private void normalize() {
         if (resourceCd != null) resourceCd = resourceCd.trim();
         if (resourceEnNm != null) resourceEnNm = resourceEnNm.trim();
         if (resourceArNm != null) resourceArNm = resourceArNm.trim();
         if (path != null) path = path.trim();
-        if (httpMethod != null) httpMethod = httpMethod.trim().toUpperCase();
+        if (httpMethod != null) httpMethod = httpMethod.trim().toUpperCase(Locale.ROOT);
         if (isActive == null) isActive = Boolean.TRUE;
     }
 

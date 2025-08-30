@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 public class SetupServicesCatlog implements Serializable {
 
-	private static final Integer serialVersionUID = 1;
+        private static final long serialVersionUID = 1L;
 
 	// Catlog
 	public static final String SERVICES_PARENT_NAME = "/api/v1";

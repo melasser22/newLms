@@ -3,6 +3,7 @@ package com.lms.setup.controller;
 import com.common.dto.BaseResponse;
 import com.lms.setup.model.SystemParameter;
 import com.lms.setup.service.SystemParameterService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,6 +29,7 @@ import java.util.List;
 @Tag(name = "System Parameter Management", description = "APIs for managing system parameters")
 public class SystemParameterController {
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final SystemParameterService systemParameterService;
 
     public SystemParameterController(SystemParameterService systemParameterService) {
