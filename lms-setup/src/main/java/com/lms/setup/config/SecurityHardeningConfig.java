@@ -1,5 +1,6 @@
 package com.lms.setup.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,25 +20,32 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityHardeningConfig {
 
+    @Value("${setup.security.public-access:false}")
+    private boolean publicAccess;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/v3/api-docs/**").permitAll()
-                .requestMatchers("/swagger-ui/**").permitAll()
-                .requestMatchers("/swagger-ui.html").permitAll()
-                .requestMatchers("/health/**").permitAll()
-                .requestMatchers("/setup/countries/**").hasAnyRole("ADMIN", "USER")
-                .requestMatchers("/setup/cities/**").hasAnyRole("ADMIN", "USER")
-                .requestMatchers("/setup/lookups/**").hasAnyRole("ADMIN", "USER")
-                .requestMatchers("/setup/resources/**").hasAnyRole("ADMIN", "USER")
-                .requestMatchers("/setup/system-parameters/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
+            .authorizeHttpRequests(authz -> {
+                authz.requestMatchers("/actuator/**").permitAll();
+                authz.requestMatchers("/v3/api-docs/**").permitAll();
+                authz.requestMatchers("/swagger-ui/**").permitAll();
+                authz.requestMatchers("/swagger-ui.html").permitAll();
+                authz.requestMatchers("/health/**").permitAll();
+                if (publicAccess) {
+                    authz.anyRequest().permitAll();
+                } else {
+                    authz.requestMatchers("/setup/countries/**").hasAnyRole("ADMIN", "USER");
+                    authz.requestMatchers("/setup/cities/**").hasAnyRole("ADMIN", "USER");
+                    authz.requestMatchers("/setup/lookups/**").hasAnyRole("ADMIN", "USER");
+                    authz.requestMatchers("/setup/resources/**").hasAnyRole("ADMIN", "USER");
+                    authz.requestMatchers("/setup/system-parameters/**").hasRole("ADMIN");
+                    authz.anyRequest().authenticated();
+                }
+            })
             .headers(headers -> headers
                 .frameOptions().deny()
                 .contentTypeOptions().and()
