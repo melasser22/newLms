@@ -41,10 +41,19 @@ public class DatabaseConfig {
     @Bean
     @Primary
     public DataSource dataSource(DataSourceProperties properties, HikariConfig hikariConfig) {
-        hikariConfig.setJdbcUrl(properties.getUrl());
-        hikariConfig.setUsername(properties.getUsername());
-        hikariConfig.setPassword(properties.getPassword());
-        hikariConfig.setDriverClassName(properties.getDriverClassName());
+        if (properties.getUrl() == null || properties.getUrl().isBlank()) {
+            // Fallback to in-memory H2 database when no external datasource is configured
+            hikariConfig.setJdbcUrl(
+                    "jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH");
+            hikariConfig.setUsername("sa");
+            hikariConfig.setPassword("");
+            hikariConfig.setDriverClassName("org.h2.Driver");
+        } else {
+            hikariConfig.setJdbcUrl(properties.getUrl());
+            hikariConfig.setUsername(properties.getUsername());
+            hikariConfig.setPassword(properties.getPassword());
+            hikariConfig.setDriverClassName(properties.getDriverClassName());
+        }
 
         // Enhanced connection pooling settings
         hikariConfig.setMaximumPoolSize(20);
@@ -68,7 +77,7 @@ public class DatabaseConfig {
 
     @Bean
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(
-            DataSource dataSource, Environment env) {
+            DataSource dataSource, Environment env, DataSourceProperties dataSourceProperties) {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
         em.setPackagesToScan("com.lms.setup.model");
@@ -76,14 +85,19 @@ public class DatabaseConfig {
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         vendorAdapter.setGenerateDdl(false);
         vendorAdapter.setShowSql(false);
-        vendorAdapter.setDatabasePlatform("org.hibernate.dialect.PostgreSQLDialect");
+        String dialect = "org.hibernate.dialect.PostgreSQLDialect";
+        if (dataSourceProperties.getDriverClassName() != null
+                && dataSourceProperties.getDriverClassName().toLowerCase().contains("h2")) {
+            dialect = "org.hibernate.dialect.H2Dialect";
+        }
+        vendorAdapter.setDatabasePlatform(dialect);
         em.setJpaVendorAdapter(vendorAdapter);
 
         Properties properties = new Properties();
         
         // Core Hibernate settings
         properties.setProperty("hibernate.hbm2ddl.auto", "validate");
-        properties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
+        properties.setProperty("hibernate.dialect", dialect);
         properties.setProperty("hibernate.show_sql", "false");
         properties.setProperty("hibernate.format_sql", "true");
         properties.setProperty("hibernate.use_sql_comments", "false");
