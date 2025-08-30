@@ -20,6 +20,3 @@ shared:
   observability:
     application-name: lms-setup
 
-setup:
-  security:
-    public-access: false
