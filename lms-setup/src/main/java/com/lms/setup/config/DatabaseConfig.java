@@ -2,6 +2,7 @@ package com.lms.setup.config;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,34 +24,44 @@ public class DatabaseConfig {
 
     @Bean
     @Primary
-    @ConfigurationProperties(prefix = "spring.datasource.hikari")
-    public HikariConfig hikariConfig() {
-        HikariConfig config = new HikariConfig();
-        
-        // Enhanced connection pooling settings
-        config.setMaximumPoolSize(20);
-        config.setMinimumIdle(5);
-        config.setConnectionTimeout(30000);
-        config.setIdleTimeout(600000);
-        config.setMaxLifetime(1800000);
-        config.setLeakDetectionThreshold(60000);
-        
-        // Performance optimizations
-        config.setConnectionTestQuery("SELECT 1");
-        config.setValidationTimeout(5000);
-        config.setInitializationFailTimeout(-1);
-        
-        // Monitoring and metrics
-        config.setPoolName("LMS-HikariCP");
-        config.setRegisterMbeans(true);
-        
-        return config;
+    @ConfigurationProperties(prefix = "spring.datasource")
+    public DataSourceProperties dataSourceProperties() {
+        return new DataSourceProperties();
     }
 
     @Bean
     @Primary
-    public DataSource dataSource() {
-        return new HikariDataSource(hikariConfig());
+    @ConfigurationProperties(prefix = "spring.datasource.hikari")
+    public HikariConfig hikariConfig() {
+        return new HikariConfig();
+    }
+
+    @Bean
+    @Primary
+    public DataSource dataSource(DataSourceProperties properties, HikariConfig hikariConfig) {
+        hikariConfig.setJdbcUrl(properties.getUrl());
+        hikariConfig.setUsername(properties.getUsername());
+        hikariConfig.setPassword(properties.getPassword());
+        hikariConfig.setDriverClassName(properties.getDriverClassName());
+
+        // Enhanced connection pooling settings
+        hikariConfig.setMaximumPoolSize(20);
+        hikariConfig.setMinimumIdle(5);
+        hikariConfig.setConnectionTimeout(30000);
+        hikariConfig.setIdleTimeout(600000);
+        hikariConfig.setMaxLifetime(1800000);
+        hikariConfig.setLeakDetectionThreshold(60000);
+
+        // Performance optimizations
+        hikariConfig.setConnectionTestQuery("SELECT 1");
+        hikariConfig.setValidationTimeout(5000);
+        hikariConfig.setInitializationFailTimeout(-1);
+
+        // Monitoring and metrics
+        hikariConfig.setPoolName("LMS-HikariCP");
+        hikariConfig.setRegisterMbeans(true);
+
+        return new HikariDataSource(hikariConfig);
     }
 
     @Bean
