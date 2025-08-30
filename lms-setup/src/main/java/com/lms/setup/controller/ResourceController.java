@@ -34,7 +34,7 @@ public class ResourceController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "Create a new resource", description = "Creates a new resource with the provided details")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Resource created successfully",
@@ -48,7 +48,7 @@ public class ResourceController {
     }
 
     @PutMapping("/{resourceId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "Update an existing resource", description = "Updates the resource with the specified ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Resource updated successfully"),
@@ -64,7 +64,7 @@ public class ResourceController {
     }
 
     @GetMapping("/{resourceId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "Get resource by ID", description = "Retrieves a resource by its ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Resource found successfully"),
@@ -78,7 +78,7 @@ public class ResourceController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "List resources", description = "Retrieves a paginated list of resources with optional search")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Resources retrieved successfully"),
@@ -94,7 +94,7 @@ public class ResourceController {
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "List active resources", description = "Retrieves all active resources")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Active resources retrieved successfully"),

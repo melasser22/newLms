@@ -47,3 +47,7 @@ logging:
     org.hibernate.orm.jdbc.bind: WARN
     com.zaxxer.hikari: WARN
     org.flywaydb: OFF
+
+setup:
+  security:
+    enable-role-check: false

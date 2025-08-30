@@ -37,7 +37,7 @@ public class SystemParameterController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "Create a new system parameter", description = "Creates a new system parameter with the provided details")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameter created successfully",
@@ -51,7 +51,7 @@ public class SystemParameterController {
     }
 
     @PutMapping("/{paramId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "Update an existing system parameter", description = "Updates the system parameter with the specified ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameter updated successfully"),
@@ -67,7 +67,7 @@ public class SystemParameterController {
     }
 
     @GetMapping("/{paramId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "Get system parameter by ID", description = "Retrieves a system parameter by its ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameter found successfully"),
@@ -81,7 +81,7 @@ public class SystemParameterController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "List system parameters", description = "Retrieves a paginated list of system parameters with optional filtering")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameters retrieved successfully"),
@@ -97,7 +97,7 @@ public class SystemParameterController {
     }
 
     @GetMapping("/by-key/{paramKey}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "Get system parameter by key", description = "Retrieves a system parameter by its key")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameter found successfully"),
@@ -111,7 +111,7 @@ public class SystemParameterController {
     }
 
     @PostMapping("/by-keys")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "Get system parameters by keys", description = "Retrieves multiple system parameters by their keys")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameters retrieved successfully"),

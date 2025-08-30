@@ -35,7 +35,7 @@ public class LookupController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "Create a new lookup", description = "Creates a new lookup value with the provided details")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lookup created successfully",
@@ -49,7 +49,7 @@ public class LookupController {
     }
 
     @PutMapping("/{lookupItemId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "Update an existing lookup", description = "Updates the lookup with the specified ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lookup updated successfully"),
@@ -65,7 +65,7 @@ public class LookupController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "Get all lookups", description = "Retrieves all lookup values")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lookups retrieved successfully"),
@@ -76,7 +76,7 @@ public class LookupController {
     }
 
     @GetMapping("/group/{groupCode}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "Get lookups by group", description = "Retrieves all lookups of a specific group")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lookups retrieved successfully"),
@@ -89,7 +89,7 @@ public class LookupController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@roleChecker.hasEjadaOfficerRole(authentication)")
     @Operation(summary = "Get all lookups (alternative endpoint)", description = "Retrieves all lookup values")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lookups retrieved successfully"),
