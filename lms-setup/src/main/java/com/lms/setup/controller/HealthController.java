@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -25,7 +26,9 @@ import java.util.Map;
 @Slf4j
 public class HealthController {
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "DataSource is injected by Spring")
     private final DataSource dataSource;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "RedisTemplate is injected by Spring")
     private final RedisTemplate<String, Object> redisTemplate;
 
     @GetMapping("/custom")
@@ -55,7 +58,12 @@ public class HealthController {
         try {
             redisTemplate.opsForValue().get("health-check");
             healthStatus.put("redis", "UP");
-            healthStatus.put("redisHost", redisTemplate.getConnectionFactory().getConnection().getClientName());
+            var connectionFactory = redisTemplate.getConnectionFactory();
+            if (connectionFactory != null) {
+                try (var connection = connectionFactory.getConnection()) {
+                    healthStatus.put("redisHost", connection.getClientName());
+                }
+            }
         } catch (Exception e) {
             log.error("Redis health check failed", e);
             healthStatus.put("redis", "DOWN");
