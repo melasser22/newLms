@@ -179,13 +179,7 @@ shared:
     resource-server:
       enabled: true
       permit-all:
-        - /actuator/health
-        - /v3/api-docs/**
-        - /swagger-ui/**
-        - /auth/**
-        - /login
-        - /setup/cities
-        - /setup/**
+        - "/**"
       disable-csrf: true
       stateless: true
     roles-claim: roles
@@ -204,7 +198,3 @@ logging:
     org.springframework.cache: ERROR
     org.springframework.cache.interceptor.CacheAspectSupport: ERROR
 debug: false
-
-setup:
-  security:
-    public-access: true

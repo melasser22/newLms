@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -29,7 +30,11 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.util.StringUtils;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -45,6 +50,7 @@ import java.util.stream.Collectors;
 @AutoConfiguration
 @EnableConfigurationProperties(SharedSecurityProps.class)
 @ConditionalOnClass(SecurityFilterChain.class)
+@EnableMethodSecurity
 public class SecurityAutoConfiguration {
 
   /* ---------------------------------------------------
@@ -134,7 +140,8 @@ public class SecurityAutoConfiguration {
   public SecurityFilterChain defaultSecurity(HttpSecurity http,
                                              SharedSecurityProps props,
                                              JwtAuthenticationConverter jwtAuthConverter,
-                                             ObjectMapper objectMapper) throws Exception {
+                                             ObjectMapper objectMapper,
+                                             CorsConfigurationSource corsConfigurationSource) throws Exception {
 
     var rs = props.getResourceServer();
 
@@ -148,7 +155,8 @@ public class SecurityAutoConfiguration {
     // Build a final, de-duplicated list of permitAll patterns
     final List<String> permitAllFinal = buildPermitAll(rs);
 
-    http.authorizeHttpRequests(auth -> {
+    http.cors(cors -> cors.configurationSource(corsConfigurationSource))
+        .authorizeHttpRequests(auth -> {
           auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
           for (String p : permitAllFinal) {
             auth.requestMatchers(p).permitAll();
@@ -164,7 +172,20 @@ public class SecurityAutoConfiguration {
         )
         .formLogin(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable)
-        .logout(AbstractHttpConfigurer::disable);
+        .logout(AbstractHttpConfigurer::disable)
+        .headers(headers -> headers
+            .frameOptions().deny()
+            .contentTypeOptions().and()
+            .httpStrictTransportSecurity(hsts -> hsts
+                .maxAgeInSeconds(31536000)
+                .includeSubDomains(true)
+                .preload(true)
+            )
+            .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+            .permissionsPolicy(permissions -> permissions
+                .policy("geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()")
+            )
+        );
 
     // Propagate tenant from JWT claim (after JWT auth), if configured
     if (StringUtils.hasText(props.getTenantClaim())) {
@@ -172,6 +193,22 @@ public class SecurityAutoConfiguration {
     }
 
     return http.build();
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOriginPatterns(List.of("https://*.lms.com", "http://localhost:3000"));
+    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "X-Correlation-ID", "X-Tenant-Id"));
+    configuration.setExposedHeaders(Arrays.asList("X-Correlation-ID", "X-Tenant-Id"));
+    configuration.setAllowCredentials(true);
+    configuration.setMaxAge(3600L);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
   }
 
   /* ---------------------------------------------------

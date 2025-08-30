@@ -29,6 +29,12 @@
       <artifactId>shared-common</artifactId>
     </dependency>
 
+    <!-- Environment configuration properties -->
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>shared-config</artifactId>
+    </dependency>
+
     <!-- Lombok for logging and boilerplate reduction -->
     <dependency>
       <groupId>org.projectlombok</groupId>
