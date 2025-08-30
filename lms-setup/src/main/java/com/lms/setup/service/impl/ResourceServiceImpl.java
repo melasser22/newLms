@@ -4,6 +4,7 @@ import com.common.dto.BaseResponse;
 import com.lms.setup.model.Resource;
 import com.lms.setup.repository.ResourceRepository;
 import com.lms.setup.service.ResourceService;
+import com.common.sort.SortUtils;
 import com.shared.audit.starter.api.AuditAction;
 import com.shared.audit.starter.api.DataClass;
 import com.shared.audit.starter.api.annotations.Audited;
@@ -113,9 +114,11 @@ public class ResourceServiceImpl implements ResourceService {
     @Audited(action = AuditAction.READ, entity = "Resource", dataClass = DataClass.HEALTH, message = "List resources")
     public BaseResponse<?> list(Pageable pageable, String q, boolean all) {
         try {
-            Pageable pg = (pageable == null ? Pageable.unpaged() : pageable);
+            Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
+                    "resourceEnNm", "resourceEnNm", "resourceArNm", "resourceCd");
+            Pageable pg = (pageable == null ? Pageable.unpaged()
+                    : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
             if (all) {
-                Sort sort = pg.getSort().isSorted() ? pg.getSort() : Sort.by("resourceEnNm").ascending();
                 List<Resource> list;
                 if (q == null || q.isBlank()) {
                     list = resourceRepository.findAll(sort);
