@@ -41,19 +41,20 @@ public class DatabaseConfig {
     @Bean
     @Primary
     public DataSource dataSource(DataSourceProperties properties, HikariConfig hikariConfig) {
-    	  if (properties.getUrl() == null || properties.getUrl().isBlank()) {
-              // Fallback to in-memory H2 database when no external datasource is configured
-              hikariConfig.setJdbcUrl(
-                      "jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH");
-              hikariConfig.setUsername("sa");
-              hikariConfig.setPassword("");
-              hikariConfig.setDriverClassName("org.h2.Driver");
-          } else {
-              hikariConfig.setJdbcUrl(properties.getUrl());
-              hikariConfig.setUsername(properties.getUsername());
-              hikariConfig.setPassword(properties.getPassword());
-              hikariConfig.setDriverClassName(properties.getDriverClassName());
-          }
+        if (properties.getUrl() == null || properties.getUrl().isBlank()) {
+            // Fallback to in-memory H2 database when no external datasource is configured
+            hikariConfig.setJdbcUrl(
+                    "jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH");
+            hikariConfig.setUsername("sa");
+            hikariConfig.setPassword("");
+            hikariConfig.setDriverClassName("org.h2.Driver");
+        } else {
+            hikariConfig.setJdbcUrl(properties.getUrl());
+            hikariConfig.setUsername(properties.getUsername());
+            hikariConfig.setPassword(properties.getPassword());
+            hikariConfig.setDriverClassName(properties.getDriverClassName());
+        }
+
         // Enhanced connection pooling settings
         hikariConfig.setMaximumPoolSize(20);
         hikariConfig.setMinimumIdle(5);
@@ -75,9 +76,8 @@ public class DatabaseConfig {
     }
 
     @Bean
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory(     
-    		DataSource dataSource, Environment env, DataSourceProperties dataSourceProperties) {
-
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(
+            DataSource dataSource, Environment env, DataSourceProperties dataSourceProperties) {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
         em.setPackagesToScan("com.lms.setup.model");
@@ -89,8 +89,9 @@ public class DatabaseConfig {
         if (dataSourceProperties.getDriverClassName() != null
                 && dataSourceProperties.getDriverClassName().toLowerCase().contains("h2")) {
             dialect = "org.hibernate.dialect.H2Dialect";
-            }
-        vendorAdapter.setDatabasePlatform(dialect);        em.setJpaVendorAdapter(vendorAdapter);
+        }
+        vendorAdapter.setDatabasePlatform(dialect);
+        em.setJpaVendorAdapter(vendorAdapter);
 
         Properties properties = new Properties();
         
