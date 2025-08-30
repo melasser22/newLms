@@ -116,7 +116,8 @@ public class ResourceServiceImpl implements ResourceService {
         try {
             Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
                     "resourceEnNm", "resourceEnNm", "resourceArNm", "resourceCd");
-            Pageable pg = (pageable == null ? Pageable.unpaged()
+            Pageable pg = (pageable == null || !pageable.isPaged()
+                    ? Pageable.unpaged()
                     : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
             if (all) {
                 List<Resource> list;

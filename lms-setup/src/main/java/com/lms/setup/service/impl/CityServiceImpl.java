@@ -91,7 +91,8 @@ public class CityServiceImpl implements CityService {
         public BaseResponse<?> list(Pageable pageable, String q, boolean all) {
                 Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
                                 "cityEnNm", "cityEnNm", "cityArNm", "cityCd");
-                final Pageable pg = (pageable == null ? Pageable.unpaged()
+                final Pageable pg = (pageable == null || !pageable.isPaged()
+                                ? Pageable.unpaged()
                                 : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
 
                 if (all) {
