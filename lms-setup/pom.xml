@@ -159,11 +159,12 @@
             <version>${lms.shared.version}</version>
 
     </dependency>
-    <dependency>
+     <!-- DB <dependency>
       <groupId>com.lms</groupId>
       <artifactId>starter-observability</artifactId>
         <version>${lms.shared.version}</version>
     </dependency>
+    -->
     <dependency>
       <groupId>com.lms</groupId>
       <artifactId>starter-ratelimit</artifactId>
@@ -181,11 +182,11 @@
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
     </dependency>
 
-    <!-- Logging -->
+    <!-- Logging 
     <dependency>
       <groupId>io.opentelemetry.instrumentation</groupId>
       <artifactId>opentelemetry-logback-mdc-1.0</artifactId>
-    </dependency>
+    </dependency>-->
 
     <!-- Test -->
     <dependency>
