@@ -1,9 +1,9 @@
 spring:
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/lms?currentSchema=setup}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL:}
+    username: ${DB_USERNAME:}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:}
     hikari:
       pool-name: HikariPool-LMS
       maximum-pool-size: 10
@@ -193,15 +193,15 @@ shared:
 
 logging:
   level:
-    root: INFO
-    com.lms: TRACE
-    com.lms.audit.starter: TRACE
-    com.lms.audit.starter.core.dispatch: TRACE
-    com.lms.audit.starter.core.dispatch.sinks: TRACE
+    root: ERROR
+    com.lms: ERROR
+    com.lms.audit.starter: ERROR
+    com.lms.audit.starter.core.dispatch: ERROR
+    com.lms.audit.starter.core.dispatch.sinks: ERROR
     org.hibernate.tool.schema: DEBUG
     org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: INFO
-    org.springframework.cache: INFO
-    org.springframework.cache.interceptor.CacheAspectSupport: INFO
+    org.hibernate.orm.jdbc.bind: ERROR
+    org.springframework.cache: DEBUG
+    org.springframework.cache.interceptor.CacheAspectSupport: ERROR
 
-debug: true
+debug: false
