@@ -205,3 +205,7 @@ logging:
     org.springframework.cache.interceptor.CacheAspectSupport: ERROR
 
 debug: false
+
+setup:
+  security:
+    public-access: true
