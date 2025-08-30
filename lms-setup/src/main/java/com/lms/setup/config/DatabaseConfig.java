@@ -7,6 +7,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -65,7 +67,8 @@ public class DatabaseConfig {
     }
 
     @Bean
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(
+            DataSource dataSource, Environment env) {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
         em.setPackagesToScan("com.lms.setup.model");
@@ -99,9 +102,16 @@ public class DatabaseConfig {
         properties.setProperty("hibernate.hikari.minimumIdle", "5");
         
         // Second-level cache
-        properties.setProperty("hibernate.cache.use_second_level_cache", "true");
-        properties.setProperty("hibernate.cache.use_query_cache", "true");
-        properties.setProperty("hibernate.cache.region.factory_class", "org.hibernate.cache.jcache.JCacheRegionFactory");
+        if (!env.acceptsProfiles(Profiles.of("test"))) {
+            properties.setProperty("hibernate.cache.use_second_level_cache", "true");
+            properties.setProperty("hibernate.cache.use_query_cache", "true");
+            properties.setProperty(
+                    "hibernate.cache.region.factory_class",
+                    "org.hibernate.cache.jcache.JCacheRegionFactory");
+        } else {
+            properties.setProperty("hibernate.cache.use_second_level_cache", "false");
+            properties.setProperty("hibernate.cache.use_query_cache", "false");
+        }
         
         // Statistics and monitoring
         properties.setProperty("hibernate.generate_statistics", "false");
