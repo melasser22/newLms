@@ -42,6 +42,20 @@
       <optional>true</optional>
     </dependency>
 
+    <!-- Annotations used for FindBugs/SpotBugs -->
+    <dependency>
+      <groupId>com.github.spotbugs</groupId>
+      <artifactId>spotbugs-annotations</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- Spring's data access exceptions -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-tx</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <!-- Optional conveniences used by filters/handlers -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
