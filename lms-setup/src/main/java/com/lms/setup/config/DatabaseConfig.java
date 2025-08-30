@@ -46,9 +46,13 @@ public class DatabaseConfig {
         String jdbcUrl = properties.getUrl();
         if (jdbcUrl == null || jdbcUrl.isBlank()) {
             // Allow overriding via DB_URL env var as documented in README
-            jdbcUrl = env.getProperty(
-                    "DB_URL",
-                    "jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH");
+            String envJdbcUrl = env.getProperty("DB_URL");
+            if (envJdbcUrl == null || envJdbcUrl.isBlank()) {
+                jdbcUrl =
+                        "jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH";
+            } else {
+                jdbcUrl = envJdbcUrl;
+            }
             hikariConfig.setUsername(env.getProperty("DB_USERNAME", "sa"));
             hikariConfig.setPassword(env.getProperty("DB_PASSWORD", ""));
             String driver = jdbcUrl.startsWith("jdbc:h2")
