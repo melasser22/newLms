@@ -41,20 +41,34 @@ public class DatabaseConfig {
 
     @Bean
     @Primary
-    public DataSource dataSource(DataSourceProperties properties, HikariConfig hikariConfig) {
-        if (properties.getUrl() == null || properties.getUrl().isBlank()) {
-            // Fallback to in-memory H2 database when no external datasource is configured
-            hikariConfig.setJdbcUrl(
-                    "jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH");
-            hikariConfig.setUsername("sa");
-            hikariConfig.setPassword("");
+    public DataSource dataSource(
+            DataSourceProperties properties, HikariConfig hikariConfig, Environment env) {
+        String jdbcUrl = env.getProperty("DB_URL");
+        if (jdbcUrl == null || jdbcUrl.isBlank()) {
+            jdbcUrl = properties.getUrl();
+        }
+
+        if (jdbcUrl == null || jdbcUrl.isBlank()) {
+            jdbcUrl =
+                    "jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH";
+            hikariConfig.setUsername(env.getProperty("DB_USERNAME", "sa"));
+            hikariConfig.setPassword(env.getProperty("DB_PASSWORD", ""));
             hikariConfig.setDriverClassName("org.h2.Driver");
         } else {
-            hikariConfig.setJdbcUrl(properties.getUrl());
-            hikariConfig.setUsername(properties.getUsername());
-            hikariConfig.setPassword(properties.getPassword());
-            hikariConfig.setDriverClassName(properties.getDriverClassName());
+            hikariConfig.setUsername(
+                    env.getProperty("DB_USERNAME", properties.getUsername()));
+            hikariConfig.setPassword(
+                    env.getProperty("DB_PASSWORD", properties.getPassword()));
+            String driver = properties.getDriverClassName();
+            if (driver == null || driver.isBlank()) {
+                driver = jdbcUrl.startsWith("jdbc:h2")
+                        ? "org.h2.Driver"
+                        : "org.postgresql.Driver";
+            }
+            hikariConfig.setDriverClassName(driver);
         }
+
+        hikariConfig.setJdbcUrl(jdbcUrl);
 
         // Enhanced connection pooling settings
         hikariConfig.setMaximumPoolSize(20);
