@@ -1,5 +1,5 @@
 <!DOCTYPE module PUBLIC "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
-        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+        "configuration_1_3.dtd">
 <module name="Checker">
   <property name="charset" value="UTF-8"/>
   <property name="severity" value="warning"/>
@@ -19,7 +19,12 @@
   <module name="FileTabCharacter">
     <property name="eachLine" value="true"/>
   </module>
-  
+
+  <!-- Line length -->
+  <module name="LineLength">
+    <property name="max" value="120"/>
+  </module>
+
   <module name="TreeWalker">
     <!-- Naming conventions -->
     <module name="ConstantName"/>
@@ -44,9 +49,6 @@
     </module>
     <module name="ParameterNumber">
       <property name="max" value="7"/>
-    </module>
-    <module name="LineLength">
-      <property name="max" value="120"/>
     </module>
     
     <!-- Whitespace -->
