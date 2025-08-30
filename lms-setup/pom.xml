@@ -233,6 +233,7 @@
         <encoding>${project.build.sourceEncoding}</encoding>
         <consoleOutput>true</consoleOutput>
         <failOnViolation>false</failOnViolation>
+        <propertyExpansion>config_loc=${project.basedir}/../shared-lib/shared-quality</propertyExpansion>
       </configuration>
       <executions>
         <execution>
