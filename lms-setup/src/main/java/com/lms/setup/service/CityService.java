@@ -13,6 +13,6 @@ public interface CityService {
   BaseResponse<CityDto> update(Integer id, CityDto request);
   BaseResponse<Void>    delete(Integer id);
   BaseResponse<CityDto> get(Integer id);
-  public BaseResponse<?> list(Pageable pageable, String q, boolean all) ;
+  BaseResponse<?> list(Pageable pageable, String q);
   BaseResponse<List<CityDto>> listActiveByCountry(Integer countryId);
 }

@@ -72,6 +72,12 @@
       <artifactId>flyway-database-postgresql</artifactId>
     </dependency>
 
+    <!-- HikariCP support for Hibernate -->
+    <dependency>
+      <groupId>org.hibernate.orm</groupId>
+      <artifactId>hibernate-hikaricp</artifactId>
+    </dependency>
+
     <!-- MapStruct runtime (processor is wired via compiler plugin) -->
     <dependency>
       <groupId>org.mapstruct</groupId>
@@ -160,6 +166,11 @@
     </dependency>
     <dependency>
       <groupId>com.lms</groupId>
+      <artifactId>starter-ratelimit</artifactId>
+        <version>${lms.shared.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.lms</groupId>
       <artifactId>shared-config</artifactId>
         <version>${lms.shared.version}</version>
     </dependency>
@@ -168,6 +179,12 @@
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    </dependency>
+
+    <!-- Logging -->
+    <dependency>
+      <groupId>io.opentelemetry.instrumentation</groupId>
+      <artifactId>opentelemetry-logback-mdc-1.0</artifactId>
     </dependency>
 
     <!-- Test -->
@@ -216,6 +233,7 @@
         <encoding>${project.build.sourceEncoding}</encoding>
         <consoleOutput>true</consoleOutput>
         <failOnViolation>false</failOnViolation>
+        <propertyExpansion>config_loc=${project.basedir}/../shared-lib/shared-quality</propertyExpansion>
       </configuration>
       <executions>
         <execution>

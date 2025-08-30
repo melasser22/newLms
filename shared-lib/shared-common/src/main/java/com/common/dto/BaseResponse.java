@@ -8,7 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.util.Objects;
 
 /**
  * Standard response wrapper for all Shared APIs.
@@ -46,6 +45,7 @@ public class BaseResponse<T> {
                 .code("SUCCESS-200")
                 .message("Operation successful")
                 .data(data)
+                .timestamp(Instant.now())
                 .build();
     }
 
@@ -62,6 +62,7 @@ public class BaseResponse<T> {
                 .code("SUCCESS-200")
                 .message(message)
                 .data(data)
+                .timestamp(Instant.now())
                 .build();
     }
 
@@ -70,6 +71,7 @@ public class BaseResponse<T> {
                 .status(ApiStatus.ERROR)
                 .code(code)
                 .message(message)
+                .timestamp(Instant.now())
                 .build();
     }
 
@@ -79,6 +81,7 @@ public class BaseResponse<T> {
                 .code(code)
                 .message(message)
                 .data(data)
+                .timestamp(Instant.now())
                 .build();
     }
 
@@ -126,35 +129,8 @@ public class BaseResponse<T> {
                 .code(code)
                 .message(message)
                 .data(newData)
+                .timestamp(timestamp)
                 .build();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        BaseResponse<?> that = (BaseResponse<?>) o;
-        return status == that.status &&
-                Objects.equals(code, that.code) &&
-                Objects.equals(message, that.message) &&
-                Objects.equals(data, that.data) &&
-                Objects.equals(timestamp, that.timestamp);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(status, code, message, data, timestamp);
-    }
-
-    @Override
-    public String toString() {
-        return "BaseResponse{" +
-                "status=" + status +
-                ", code='" + code + '\'' +
-                ", message='" + message + '\'' +
-                ", data=" + data +
-                ", timestamp=" + timestamp +
-                '}';
     }
 
 }

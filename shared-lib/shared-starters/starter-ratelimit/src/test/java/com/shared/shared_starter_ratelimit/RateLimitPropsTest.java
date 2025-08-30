@@ -16,8 +16,9 @@ class RateLimitPropsTest {
         Map.of("shared.ratelimit.capacity", "10",
                "shared.ratelimit.refill-per-minute", "5",
                "shared.ratelimit.key-strategy", "ip"));
-    RateLimitProps props = Binder.get(source)
-        .bind("shared.ratelimit", RateLimitProps.class).get();
+    RateLimitProps props = new Binder(source)
+        .bind("shared.ratelimit", RateLimitProps.class)
+        .get();
     assertEquals(10, props.getCapacity());
     assertEquals(5, props.getRefillPerMinute());
     assertEquals("ip", props.getKeyStrategy());

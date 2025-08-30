@@ -1,20 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: lms-lookup
+  name: lms-setup
+  labels:
+    app: lms-setup
+    version: 1.0.0
 spec:
   replicas: 2
-  selector: { matchLabels: { app: lms-lookup } }
+  selector: 
+    matchLabels: 
+      app: lms-setup
   template:
-    metadata: { labels: { app: lms-lookup } }
+    metadata: 
+      labels: 
+        app: lms-setup
+        version: 1.0.0
     spec:
       containers:
         - name: app
-          image: your.registry/lms-lookup:1.0.0
-          ports: [{ containerPort: 8090 }]
+          image: your.registry/lms-setup:1.0.0
+          ports: [{ containerPort: 8080 }]
           env:
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres:5432/lms
+              value: jdbc:postgresql://postgres:5432/lms?currentSchema=setup
             - name: SPRING_DATASOURCE_USERNAME
               value: lms
             - name: SPRING_DATASOURCE_PASSWORD
@@ -23,3 +31,24 @@ spec:
               value: redis
             - name: SPRING_DATA_REDIS_PORT
               value: "6379"
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /core/actuator/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /core/actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10

@@ -51,14 +51,31 @@ public class ErrorResponse {
 
     // ===== Static builders =====
     public static ErrorResponse of(String code, String message) {
-        return ErrorResponse.builder().code(code).message(message).build();
+        return ErrorResponse.builder()
+                .code(code)
+                .message(message)
+                .timestamp(Instant.now())
+                .build();
     }
 
     public static ErrorResponse of(String code, String message, List<String> details, String traceId) {
-        return ErrorResponse.builder().code(code).message(message).details(details).traceId(traceId).build();
+        return ErrorResponse.builder()
+                .code(code)
+                .message(message)
+                .details(details)
+                .traceId(traceId)
+                .timestamp(Instant.now())
+                .build();
     }
 
     public static ErrorResponse of(String code, String message, List<String> details, String traceId, String tenantId) {
-        return ErrorResponse.builder().code(code).message(message).details(details).traceId(traceId).tenantId(tenantId).build();
+        return ErrorResponse.builder()
+                .code(code)
+                .message(message)
+                .details(details)
+                .traceId(traceId)
+                .tenantId(tenantId)
+                .timestamp(Instant.now())
+                .build();
     }
 }
