@@ -17,6 +17,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
+import java.util.Locale;
 import java.util.Properties;
 
 @Configuration
@@ -87,7 +88,10 @@ public class DatabaseConfig {
         vendorAdapter.setShowSql(false);
         String dialect = "org.hibernate.dialect.PostgreSQLDialect";
         if (dataSourceProperties.getDriverClassName() != null
-                && dataSourceProperties.getDriverClassName().toLowerCase().contains("h2")) {
+                && dataSourceProperties
+                        .getDriverClassName()
+                        .toLowerCase(Locale.ROOT)
+                        .contains("h2")) {
             dialect = "org.hibernate.dialect.H2Dialect";
         }
         vendorAdapter.setDatabasePlatform(dialect);

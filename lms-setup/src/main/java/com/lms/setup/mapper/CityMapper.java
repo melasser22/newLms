@@ -3,14 +3,16 @@ package com.lms.setup.mapper;
 import com.lms.setup.dto.CityDto;
 import com.lms.setup.model.City;
 import com.lms.setup.model.Country;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.mapstruct.InheritInverseConfiguration;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.InheritInverseConfiguration;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 
 import java.util.List;
 
+@SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "Generated implementation is safe")
 @Mapper(componentModel = "spring")
 public interface CityMapper {
 
