@@ -72,6 +72,12 @@
       <artifactId>flyway-database-postgresql</artifactId>
     </dependency>
 
+    <!-- HikariCP support for Hibernate -->
+    <dependency>
+      <groupId>org.hibernate.orm</groupId>
+      <artifactId>hibernate-hikaricp</artifactId>
+    </dependency>
+
     <!-- MapStruct runtime (processor is wired via compiler plugin) -->
     <dependency>
       <groupId>org.mapstruct</groupId>

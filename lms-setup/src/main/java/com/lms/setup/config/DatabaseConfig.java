@@ -96,7 +96,10 @@ public class DatabaseConfig {
         properties.setProperty("hibernate.connection.provider_disables_autocommit", "true");
         
         // Connection pooling
-        properties.setProperty("hibernate.connection.provider_class", "org.hibernate.hikari.internal.HikariConnectionProvider");
+        // Use the official Hibernate module for HikariCP
+        properties.setProperty(
+                "hibernate.connection.provider_class",
+                "org.hibernate.hikaricp.internal.HikariCPConnectionProvider");
         properties.setProperty("hibernate.hikari.connectionTimeout", "30000");
         properties.setProperty("hibernate.hikari.maximumPoolSize", "20");
         properties.setProperty("hibernate.hikari.minimumIdle", "5");
