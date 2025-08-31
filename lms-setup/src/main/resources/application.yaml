@@ -1,3 +1,8 @@
+spring:
+  application:
+    name: lms-setup
+  profiles:
+    active: dev
 server:
   port: 8080
   shutdown: graceful
@@ -10,12 +15,9 @@ server:
   error:
     include-message: always
     include-binding-errors: always
-spring:
-  application:
-    name: lms-setup
-  profiles:
-    active: dev
 
 shared:
   observability:
     application-name: lms-setup
+  security:
+    enable-role-check: true

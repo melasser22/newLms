@@ -13,6 +13,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -98,6 +99,7 @@ public class Country implements Serializable {
     private LocalDateTime updatedAt;
 
     @PrePersist @PreUpdate
+    @SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD", justification = "Called by JPA lifecycle")
     private void normalize() {
         if (countryCd != null) countryCd = countryCd.trim();
         if (countryEnNm != null) countryEnNm = countryEnNm.trim();

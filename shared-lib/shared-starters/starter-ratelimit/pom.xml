@@ -11,7 +11,7 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>shared-starter-ratelimit</artifactId>
+  <artifactId>starter-ratelimit</artifactId>
   <packaging>jar</packaging>
   <name>Shared Starter - Rate Limit</name>
   <description>Rate limiting auto-configuration (Redis-backed or in-memory), with optional web filters and metrics</description>

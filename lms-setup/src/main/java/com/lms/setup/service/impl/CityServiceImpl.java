@@ -9,6 +9,7 @@ import com.lms.setup.model.Country;
 import com.lms.setup.repository.CityRepository;
 import com.lms.setup.repository.CountryRepository;
 import com.lms.setup.service.CityService;
+import com.common.sort.SortUtils;
 import com.shared.audit.starter.api.AuditAction;
 import com.shared.audit.starter.api.DataClass;
 import com.shared.audit.starter.api.annotations.Audited;
@@ -88,10 +89,13 @@ public class CityServiceImpl implements CityService {
 	@Transactional(Transactional.TxType.SUPPORTS)
 	@Audited(action = AuditAction.READ, entity = "City", dataClass = DataClass.HEALTH, message = "List cities")
         public BaseResponse<?> list(Pageable pageable, String q, boolean all) {
-                final Pageable pg = (pageable == null ? Pageable.unpaged() : pageable);
+                Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
+                                "cityEnNm", "cityEnNm", "cityArNm", "cityCd");
+                final Pageable pg = (pageable == null || !pageable.isPaged()
+                                ? Pageable.unpaged()
+                                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
 
                 if (all) {
-                        var sort = pg.getSort().isSorted() ? pg.getSort() : Sort.by("cityEnNm").ascending();
                         var spec = CitySpecifications.nameContains(q); // null => no filter
                         var entities = cityRepo.findAll(spec, sort);
                         return BaseResponse.success("City list", mapper.toDtoList(entities));

@@ -1,7 +1,7 @@
 package com.common.dto;
 
+import com.common.context.TraceContextUtil;
 import com.common.enums.StatusEnums.ApiStatus;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,8 +34,8 @@ public class ErrorResponse {
     private List<String> details;
 
     /** Trace/Correlation ID (for logs/monitoring) */
-    @JsonIgnore
-    private String traceId;
+    @Builder.Default
+    private String traceId = TraceContextUtil.getTraceId();
 
     /** Tenant ID (multi-tenant awareness) */
     private String tenantId;
@@ -51,14 +51,31 @@ public class ErrorResponse {
 
     // ===== Static builders =====
     public static ErrorResponse of(String code, String message) {
-        return ErrorResponse.builder().code(code).message(message).build();
+        return ErrorResponse.builder()
+                .code(code)
+                .message(message)
+                .timestamp(Instant.now())
+                .build();
     }
 
     public static ErrorResponse of(String code, String message, List<String> details, String traceId) {
-        return ErrorResponse.builder().code(code).message(message).details(details).traceId(traceId).build();
+        return ErrorResponse.builder()
+                .code(code)
+                .message(message)
+                .details(details)
+                .traceId(traceId)
+                .timestamp(Instant.now())
+                .build();
     }
 
     public static ErrorResponse of(String code, String message, List<String> details, String traceId, String tenantId) {
-        return ErrorResponse.builder().code(code).message(message).details(details).traceId(traceId).tenantId(tenantId).build();
+        return ErrorResponse.builder()
+                .code(code)
+                .message(message)
+                .details(details)
+                .traceId(traceId)
+                .tenantId(tenantId)
+                .timestamp(Instant.now())
+                .build();
     }
 }

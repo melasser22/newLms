@@ -24,6 +24,13 @@
       <optional>true</optional>
     </dependency>
 
+    <!-- Spring Data utilities for Sort/Pageable support -->
+    <dependency>
+      <groupId>org.springframework.data</groupId>
+      <artifactId>spring-data-commons</artifactId>
+      <optional>true</optional>
+    </dependency>
+
   
     <dependency>
     <groupId>net.logstash.logback</groupId>

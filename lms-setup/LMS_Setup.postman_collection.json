@@ -1,0 +1,736 @@
+{
+  "info": {
+    "name": "LMS Setup API",
+    "_postman_id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0",
+    "description": "Collection for LMS Setup service APIs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:8080"},
+    {"key": "token", "value": ""}
+  ],
+  "item": [
+    {
+      "name": "Resource Management",
+      "item": [
+        {
+          "name": "Create Resource",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceCd\": \"USER_MGMT\",\n  \"resourceEnNm\": \"User Management\",\n  \"resourceArNm\": \"\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\",\n  \"path\": \"/users\",\n  \"httpMethod\": \"GET\",\n  \"parentResourceId\": null,\n  \"isActive\": true,\n  \"enDescription\": \"User management resource\",\n  \"arDescription\": \"\u0648\u0635\u0641\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/setup/resources",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","resources"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\",\n  \"message\": \"Operation successful\",\n  \"data\": {\n    \"resourceId\": 1,\n    \"resourceCd\": \"USER_MGMT\"\n  },\n  \"timestamp\": \"2024-01-01T00:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Resource",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceCd\": \"USER_MGMT\",\n  \"resourceEnNm\": \"User Management Updated\",\n  \"resourceArNm\": \"\u062a\u062d\u062f\u064a\u062b\",\n  \"path\": \"/users\",\n  \"httpMethod\": \"GET\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/setup/resources/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","resources","1"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\",\n  \"message\": \"Operation successful\",\n  \"data\": {\"resourceId\":1},\n  \"timestamp\": \"2024-01-01T00:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Resource",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/setup/resources/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","resources","1"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\",\n  \"data\": {\n    \"resourceId\": 1,\n    \"resourceCd\": \"USER_MGMT\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Resources",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/setup/resources?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","resources"],
+              "query": [
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "20"}
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\",\n  \"data\": {\"content\": []}\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Active Resources",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/setup/resources/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","resources","active"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\",\n  \"data\": []\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Lookup Management",
+      "item": [
+        {
+          "name": "Create Lookup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lookupItemId\": 1,\n  \"lookupItemCd\": \"STATUS_ACTIVE\",\n  \"lookupItemEnNm\": \"Active\",\n  \"lookupItemArNm\": \"\u0646\u0634\u0637\",\n  \"lookupGroupCode\": \"STATUS\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/setup/lookups",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","lookups"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\",\n  \"data\": {\"lookupItemId\":1}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Lookup",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lookupItemCd\": \"STATUS_ACTIVE\",\n  \"lookupItemEnNm\": \"Active Updated\",\n  \"lookupItemArNm\": \"\u0645\u062d\u062f\u062b\",\n  \"lookupGroupCode\": \"STATUS\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/setup/lookups/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","lookups","1"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Lookups",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/setup/lookups",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","lookups"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\",\n  \"data\": []\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Lookups by Group",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/setup/lookups/group/STATUS",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","lookups","group","STATUS"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\",\n  \"data\": []\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Lookups (Alt)",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/setup/lookups/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","lookups","all"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\",\n  \"data\": []\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "System Parameter Management",
+      "item": [
+        {
+          "name": "Create Parameter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paramKey\": \"MAX_USERS\",\n  \"paramValue\": \"100\",\n  \"description\": \"Maximum number of users\",\n  \"paramGroup\": \"USER\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/setup/system-parameters",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","system-parameters"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Parameter",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paramValue\": \"200\",\n  \"description\": \"Updated maximum users\",\n  \"paramGroup\": \"USER\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/setup/system-parameters/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","system-parameters","1"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Parameter",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/setup/system-parameters/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","system-parameters","1"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\",\n  \"data\": {\"paramKey\": \"MAX_USERS\", \"paramValue\": \"100\"}\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Parameters",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/setup/system-parameters?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","system-parameters"],
+              "query": [
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "20"}
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\",\n  \"data\": {\"content\": []}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Parameter by Key",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/setup/system-parameters/by-key/MAX_USERS",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","system-parameters","by-key","MAX_USERS"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\",\n  \"data\": {\"paramValue\": \"100\"}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Parameters by Keys",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  \"MAX_USERS\",\n  \"MIN_USERS\"\n]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/setup/system-parameters/by-keys",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","system-parameters","by-keys"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\",\n  \"data\": []\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Country Management",
+      "item": [
+        {
+          "name": "Create Country",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"countryCd\": \"USA\",\n  \"countryEnNm\": \"United States\",\n  \"countryArNm\": \"\u0627\u0644\u0648\u0644\u0627\u064a\u0627\u062a \u0627\u0644\u0645\u062a\u062d\u062f\u0629\",\n  \"dialingCode\": \"+1\",\n  \"nationalityEn\": \"American\",\n  \"nationalityAr\": \"\u0623\u0645\u0631\u064a\u0643\u064a\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/setup/countries",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","countries"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Country",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"countryEnNm\": \"United States Updated\",\n  \"countryArNm\": \"\u062a\u062d\u062f\u064a\u062b\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/setup/countries/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","countries","1"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Country",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/setup/countries/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","countries","1"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"code\": \"SUCCESS-200\",\n  \"data\": {\"countryCd\": \"USA\"}\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Countries",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/setup/countries?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","countries"],
+              "query": [
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "20"}
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"data\": {\"content\": []}\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Active Countries",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/setup/countries/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","countries","active"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"data\": []\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "City Management",
+      "item": [
+        {
+          "name": "Create City",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cityCd\": \"NYC\",\n  \"cityEnNm\": \"New York\",\n  \"cityArNm\": \"\u0646\u064a\u0648\u064a\u0648\u0631\u0643\",\n  \"isActive\": true,\n  \"countryId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/setup/cities",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","cities"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update City",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cityEnNm\": \"New York Updated\",\n  \"cityArNm\": \"\u0645\u062d\u062f\u062b\",\n  \"isActive\": true,\n  \"countryId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/setup/cities/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","cities","1"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get City",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/setup/cities/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","cities","1"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"data\": {\"cityCd\": \"NYC\"}\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Cities",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/setup/cities?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","cities"],
+              "query": [
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "20"}
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"data\": {\"content\": []}\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Active Cities by Country",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/setup/cities/active?countryId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup","cities","active"],
+              "query": [
+                {"key": "countryId", "value": "1"}
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"data\": []\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Custom Health Check",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/health/custom",
+              "host": ["{{baseUrl}}"],
+              "path": ["health","custom"]
+            }
+          },
+          "response": [
+            {
+              "name": "Example",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"UP\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Ping",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/health/ping",
+              "host": ["{{baseUrl}}"],
+              "path": ["health","ping"]
+            }
+          },
+          "response": [
+            {
+              "name": "Example",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"message\": \"pong\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Readiness Check",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/health/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["health","ready"]
+            }
+          },
+          "response": [
+            {
+              "name": "Example",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"READY\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Liveness Check",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/health/liveness",
+              "host": ["{{baseUrl}}"],
+              "path": ["health","liveness"]
+            }
+          },
+          "response": [
+            {
+              "name": "Example",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"ALIVE\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

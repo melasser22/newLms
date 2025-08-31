@@ -14,6 +14,9 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import com.common.sort.SortUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -100,13 +103,19 @@ public class SystemParameterServiceImpl implements SystemParameterService {
     @Audited(action = AuditAction.READ, entity = "SystemParameter", dataClass = DataClass.HEALTH, message = "List system parameters")
     public BaseResponse<Page<SystemParameter>> list(Pageable pageable, String group, Boolean onlyActive) {
         try {
+            Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
+                    "paramKey", "paramKey", "paramGroup", "paramValue");
+            Pageable pg = (pageable == null || !pageable.isPaged()
+                    ? Pageable.unpaged()
+                    : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
+
             Page<SystemParameter> page;
             if (Boolean.TRUE.equals(onlyActive)) {
-                page = systemParameterRepository.findByIsActiveTrue(pageable);
+                page = systemParameterRepository.findByIsActiveTrue(pg);
             } else if (group != null && !group.isBlank()) {
-                page = systemParameterRepository.findByParamGroupIgnoreCase(group, pageable);
+                page = systemParameterRepository.findByParamGroupIgnoreCase(group, pg);
             } else {
-                page = systemParameterRepository.findAll(pageable);
+                page = systemParameterRepository.findAll(pg);
             }
             return BaseResponse.success("System parameters page", page);
         } catch (Exception ex) {

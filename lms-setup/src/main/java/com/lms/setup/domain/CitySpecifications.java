@@ -4,6 +4,7 @@ import com.lms.setup.model.City;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
+import java.util.Locale;
 
 public final class CitySpecifications {
   private CitySpecifications() {}
@@ -14,7 +15,7 @@ public final class CitySpecifications {
 
   public static Specification<City> nameContains(String q) {
     if (!StringUtils.hasText(q)) return null; // will be ignored when combined
-    String like = "%" + q.trim().toLowerCase() + "%";
+    String like = "%" + q.trim().toLowerCase(Locale.ROOT) + "%";
     return (root, query, cb) -> {
       Predicate en = cb.like(cb.lower(root.get("cityEnNm")), like);
       Predicate ar = cb.like(cb.lower(root.get("cityArNm")), like);

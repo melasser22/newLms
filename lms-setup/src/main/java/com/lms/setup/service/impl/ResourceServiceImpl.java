@@ -4,6 +4,7 @@ import com.common.dto.BaseResponse;
 import com.lms.setup.model.Resource;
 import com.lms.setup.repository.ResourceRepository;
 import com.lms.setup.service.ResourceService;
+import com.common.sort.SortUtils;
 import com.shared.audit.starter.api.AuditAction;
 import com.shared.audit.starter.api.DataClass;
 import com.shared.audit.starter.api.annotations.Audited;
@@ -14,6 +15,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -109,18 +112,50 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Resource", dataClass = DataClass.HEALTH, message = "List resources")
-    public BaseResponse<Page<Resource>> list(Pageable pageable, String q) {
+    public BaseResponse<?> list(Pageable pageable, String q, boolean all) {
         try {
+            Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
+                    "resourceEnNm", "resourceEnNm", "resourceArNm", "resourceCd");
+            Pageable pg = (pageable == null || !pageable.isPaged()
+                    ? Pageable.unpaged()
+                    : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
+            if (all) {
+                List<Resource> list;
+                if (q == null || q.isBlank()) {
+                    list = resourceRepository.findAll(sort);
+                } else {
+                    list = resourceRepository
+                            .findByResourceEnNmContainingIgnoreCaseOrResourceArNmContainingIgnoreCase(q, q, PageRequest.of(0, Integer.MAX_VALUE, sort))
+                            .getContent();
+                }
+                return BaseResponse.success("Resources list", list);
+            }
+
             Page<Resource> page;
             if (q == null || q.isBlank()) {
-                page = resourceRepository.findAll(pageable);
+                page = resourceRepository.findAll(pg);
             } else {
-                page = resourceRepository.findByResourceEnNmContainingIgnoreCaseOrResourceArNmContainingIgnoreCase(q, q, pageable);
+                page = resourceRepository.findByResourceEnNmContainingIgnoreCaseOrResourceArNmContainingIgnoreCase(q, q, pg);
             }
             return BaseResponse.success("Resources page", page);
         } catch (Exception ex) {
             LOGGER.error("List resources failed", ex);
             return BaseResponse.error("ERR_RESOURCE_LIST", ex.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional(Transactional.TxType.SUPPORTS)
+    @Audited(action = AuditAction.READ, entity = "Resource", dataClass = DataClass.HEALTH, message = "List active resources")
+    public BaseResponse<List<Resource>> listActive() {
+        try {
+            List<Resource> list = resourceRepository
+                    .findByIsActiveTrue(Pageable.unpaged())
+                    .getContent();
+            return BaseResponse.success("Active resources", list);
+        } catch (Exception ex) {
+            LOGGER.error("List active resources failed", ex);
+            return BaseResponse.error("ERR_RESOURCE_LIST_ACTIVE", ex.getMessage());
         }
     }
 

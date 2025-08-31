@@ -72,6 +72,12 @@
       <artifactId>flyway-database-postgresql</artifactId>
     </dependency>
 
+    <!-- HikariCP support for Hibernate -->
+    <dependency>
+      <groupId>org.hibernate.orm</groupId>
+      <artifactId>hibernate-hikaricp</artifactId>
+    </dependency>
+
     <!-- MapStruct runtime (processor is wired via compiler plugin) -->
     <dependency>
       <groupId>org.mapstruct</groupId>
@@ -153,9 +159,15 @@
             <version>${lms.shared.version}</version>
 
     </dependency>
-    <dependency>
+     <!-- DB <dependency>
       <groupId>com.lms</groupId>
       <artifactId>starter-observability</artifactId>
+        <version>${lms.shared.version}</version>
+    </dependency>
+    -->
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-ratelimit</artifactId>
         <version>${lms.shared.version}</version>
     </dependency>
     <dependency>
@@ -169,6 +181,12 @@
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
     </dependency>
+
+    <!-- Logging 
+    <dependency>
+      <groupId>io.opentelemetry.instrumentation</groupId>
+      <artifactId>opentelemetry-logback-mdc-1.0</artifactId>
+    </dependency>-->
 
     <!-- Test -->
     <dependency>
@@ -190,7 +208,6 @@
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
@@ -203,6 +220,22 @@
       <version>${lms.shared.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency> 
+     <groupId>com.github.spotbugs</groupId>
+    <artifactId>spotbugs-annotations</artifactId>
+    </dependency><dependency>
+    <groupId>org.ehcache</groupId>
+    <artifactId>ehcache</artifactId>
+    </dependency>
+       <dependency>
+        <groupId>org.hibernate.orm</groupId>
+        <artifactId>hibernate-jcache</artifactId>
+      </dependency>
+      <dependency>
+        <groupId>javax.cache</groupId>
+        <artifactId>cache-api</artifactId>
+      </dependency>
+
   </dependencies>
 
   <build>
@@ -213,9 +246,10 @@
       <version>3.5.0</version>
       <configuration>
         <configLocation>../shared-lib/shared-quality/checkstyle.xml</configLocation>
-        <encoding>${project.build.sourceEncoding}</encoding>
         <consoleOutput>true</consoleOutput>
+        <encoding>${project.build.sourceEncoding}</encoding>
         <failOnViolation>false</failOnViolation>
+        <propertyExpansion>config_loc=${project.basedir}/../shared-lib/shared-quality</propertyExpansion>
       </configuration>
       <executions>
         <execution>

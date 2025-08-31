@@ -4,6 +4,7 @@ import com.common.dto.BaseResponse;
 import com.lms.setup.model.Country;
 import com.lms.setup.repository.CountryRepository;
 import com.lms.setup.service.CountryService;
+import com.common.sort.SortUtils;
 import com.shared.audit.starter.api.AuditAction;
 import com.shared.audit.starter.api.DataClass;
 import com.shared.audit.starter.api.annotations.Audited;
@@ -12,6 +13,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Sort;
 
@@ -79,24 +81,29 @@ public class CountryServiceImpl implements CountryService {
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Country", dataClass = DataClass.HEALTH, message = "List countries")
     public BaseResponse<?> list(Pageable pageable, String q, boolean all) {
+        Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
+                "countryEnNm", "countryEnNm", "countryArNm", "countryCd");
+        Pageable pg = (pageable == null || !pageable.isPaged()
+                ? Pageable.unpaged()
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
+
         if (all) {
             List<Country> list;
             if (q == null || q.isBlank()) {
-                list = countryRepository.findAll(Sort.by("countryEnNm").ascending());
+                list = countryRepository.findAll(sort);
             } else {
                 list = countryRepository
-                        .findByCountryEnNmContainingIgnoreCaseOrCountryArNmContainingIgnoreCase(q, q,
-                                Sort.by("countryEnNm").ascending());
+                        .findByCountryEnNmContainingIgnoreCaseOrCountryArNmContainingIgnoreCase(q, q, sort);
             }
             return BaseResponse.success("Countries list", list);
         }
 
         Page<Country> page;
         if (q == null || q.isBlank()) {
-            page = countryRepository.findAll(pageable);
+            page = countryRepository.findAll(pg);
         } else {
             page = countryRepository
-                    .findByCountryEnNmContainingIgnoreCaseOrCountryArNmContainingIgnoreCase(q, q, pageable);
+                    .findByCountryEnNmContainingIgnoreCaseOrCountryArNmContainingIgnoreCase(q, q, pg);
         }
         return BaseResponse.success("Countries page", page);
     }

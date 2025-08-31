@@ -1,6 +1,6 @@
 package com.shared.starter_core.web;
 
-import com.common.dto.ErrorResponse;
+import com.common.dto.BaseResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 
@@ -11,10 +11,9 @@ class GlobalExceptionHandlerTest {
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
     @Test
-    void handleOtherReturnsInternalServerError() {
-        ResponseEntity<ErrorResponse> resp = handler.handleOther(new RuntimeException("boom"));
+    void handleGenericReturnsInternalServerError() {
+        ResponseEntity<BaseResponse<?>> resp = handler.handleGeneric(new RuntimeException("boom"), null);
         assertEquals(500, resp.getStatusCode().value());
-        assertEquals("GLB-500", resp.getBody().getCode());
-        assertEquals("ERROR", resp.getBody().getStatus().name());
+        assertEquals("ERR_INTERNAL", resp.getBody().getCode());
     }
 }
