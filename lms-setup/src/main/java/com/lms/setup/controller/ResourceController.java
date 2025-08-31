@@ -18,18 +18,27 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/setup/resources")
 @Validated
 @Tag(name = "Resource Management", description = "APIs for managing resources")
-public class ResourceController {
+public final class ResourceController {
+
+    private static final int DEFAULT_PAGE_SIZE = 20;
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final ResourceService resourceService;
 
-    public ResourceController(ResourceService resourceService) {
+    public ResourceController(final ResourceService resourceService) {
         this.resourceService = resourceService;
     }
 
@@ -43,7 +52,7 @@ public class ResourceController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "409", description = "Resource already exists")
     })
-    public ResponseEntity<BaseResponse<Resource>> add(@Valid @RequestBody Resource body) {
+    public ResponseEntity<BaseResponse<Resource>> add(@Valid @RequestBody final Resource body) {
         return ResponseEntity.ok(resourceService.add(body));
     }
 
@@ -58,8 +67,8 @@ public class ResourceController {
     })
     public ResponseEntity<BaseResponse<Resource>> update(
             @Parameter(description = "ID of the resource to update", required = true)
-            @PathVariable @Min(1) Integer resourceId,
-            @Valid @RequestBody Resource body) {
+            @PathVariable @Min(1) final Integer resourceId,
+            @Valid @RequestBody final Resource body) {
         return ResponseEntity.ok(resourceService.update(resourceId, body));
     }
 
@@ -73,7 +82,7 @@ public class ResourceController {
     })
     public ResponseEntity<BaseResponse<Resource>> get(
             @Parameter(description = "ID of the resource to retrieve", required = true)
-            @PathVariable @Min(1) Integer resourceId) {
+            @PathVariable @Min(1) final Integer resourceId) {
         return ResponseEntity.ok(resourceService.get(resourceId));
     }
 
@@ -85,11 +94,11 @@ public class ResourceController {
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
     public ResponseEntity<?> list(
-            @PageableDefault(size = 20) Pageable pageable,
+            @PageableDefault(size = DEFAULT_PAGE_SIZE) final Pageable pageable,
             @Parameter(description = "Search query for resource names")
-            @RequestParam(required = false) String q,
+            @RequestParam(required = false) final String q,
             @Parameter(description = "Whether to return all resources (ignores pagination)")
-            @RequestParam(required = false) boolean all) {
+            @RequestParam(required = false) final boolean all) {
         return ResponseEntity.ok(resourceService.list(pageable, q, all));
     }
 
