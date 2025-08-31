@@ -1,7 +1,6 @@
 package com.shared.kafka_starter.core;
 
 import com.common.context.ContextManager;
-import com.common.context.TraceContextUtil;
 import java.time.Instant;
 
 public record EventEnvelope<T>(
@@ -9,7 +8,6 @@ public record EventEnvelope<T>(
     Instant timestamp,  // event time
     String tenantId,
     String correlationId,
-    String traceId,
     String schemaVersion,
     T data
 ) {
@@ -23,7 +21,6 @@ public record EventEnvelope<T>(
         Instant.now(),
         ContextManager.Tenant.get(),
         ContextManager.getCorrelationId(),
-        TraceContextUtil.getTraceId(),
         "1.0",
         data);
   }

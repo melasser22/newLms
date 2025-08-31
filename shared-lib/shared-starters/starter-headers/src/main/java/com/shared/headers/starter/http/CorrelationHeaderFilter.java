@@ -3,7 +3,6 @@ package com.shared.headers.starter.http;
 
 import com.shared.headers.starter.config.SharedHeadersProperties;
 import com.common.context.ContextManager;
-import com.common.context.TraceContextUtil;
 import com.shared.headers.starter.util.HeaderUtils;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,12 +59,6 @@ public class CorrelationHeaderFilter implements Filter {
       HeaderUtils.putMdc(kv);
     }
 
-    // Set in TraceContext for libraries relying on it
-    TraceContextUtil.put(TraceContextUtil.TRACE_ID, correlationId);
-    if (tenantId != null) {
-      TraceContextUtil.put(HeaderNames.TENANT_ID, tenantId);
-    }
-
     // Set in ThreadLocal Context
     ContextManager.setCorrelationId(correlationId);
     ContextManager.setRequestId(requestId);
@@ -83,7 +76,6 @@ public class CorrelationHeaderFilter implements Filter {
     } finally {
       // cleanup
       ContextManager.clearHeaders();
-      TraceContextUtil.clear();
       if (props.getMdc().isEnabled()) {
         MDC.remove("correlationId");
         MDC.remove("requestId");
