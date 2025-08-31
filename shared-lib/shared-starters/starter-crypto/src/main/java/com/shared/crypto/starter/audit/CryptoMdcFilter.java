@@ -9,9 +9,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.common.constants.HeaderNames;
+import com.common.context.CorrelationContextUtil;
 
 import java.io.IOException;
-import java.util.UUID;
 
 /**
  * Ensures MDC has a correlation id for all logs.
@@ -41,20 +41,11 @@ public class CryptoMdcFilter extends OncePerRequestFilter {
         String incomingTenant = headerOrNull(request, HeaderNames.TENANT_ID);
         String incomingUser = headerOrNull(request, HeaderNames.USER_ID);
 
-        // Prefer existing MDC (if upstream filter already set it)
-        boolean putCorrelation = false, putTenant = false, putUser = false;
+        // Initialize correlation and tenant context (generates new id if missing)
+        CorrelationContextUtil.init(incomingCorrelation, incomingTenant);
+        String correlationId = CorrelationContextUtil.getCorrelationId();
 
-        if (!StringUtils.hasText(MDC.get(HeaderNames.CORRELATION_ID))) {
-            String correlationId = StringUtils.hasText(incomingCorrelation) ? incomingCorrelation : genCorrelationId();
-            MDC.put(HeaderNames.CORRELATION_ID, correlationId);
-            putCorrelation = true;
-        }
-
-        if (!StringUtils.hasText(MDC.get(HeaderNames.TENANT_ID)) && StringUtils.hasText(incomingTenant)) {
-            MDC.put(HeaderNames.TENANT_ID, incomingTenant);
-            putTenant = true;
-        }
-
+        boolean putUser = false;
         if (!StringUtils.hasText(MDC.get(HeaderNames.USER_ID)) && StringUtils.hasText(incomingUser)) {
             MDC.put(HeaderNames.USER_ID, incomingUser);
             putUser = true;
@@ -62,13 +53,11 @@ public class CryptoMdcFilter extends OncePerRequestFilter {
 
         try {
             // Echo correlation id in response for client-side tracing
-            response.setHeader(HeaderNames.CORRELATION_ID, MDC.get(HeaderNames.CORRELATION_ID));
+            response.setHeader(HeaderNames.CORRELATION_ID, correlationId);
             chain.doFilter(request, response);
         } finally {
-            // Clean up only keys we added (don’t clobber upstream MDC)
-            if (putCorrelation)  MDC.remove(HeaderNames.CORRELATION_ID);
-            if (putTenant) MDC.remove(HeaderNames.TENANT_ID);
-            if (putUser)   MDC.remove(HeaderNames.USER_ID);
+            if (putUser) MDC.remove(HeaderNames.USER_ID);
+            CorrelationContextUtil.clear();
         }
     }
 
@@ -77,8 +66,4 @@ public class CryptoMdcFilter extends OncePerRequestFilter {
         return StringUtils.hasText(v) ? v.trim() : null;
     }
 
-    private static String genCorrelationId() {
-        // UUID v4 is fine for correlation; you can swap with ULID if preferred
-        return UUID.randomUUID().toString();
-    }
 }

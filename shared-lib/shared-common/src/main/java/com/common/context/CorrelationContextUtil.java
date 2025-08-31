@@ -9,10 +9,7 @@ import java.util.UUID;
  * Consolidated correlation context utility. This class lives in the {@code com.common.context}
  * package and should be used for putting and getting values from the SLF4J MDC.
  *
- * <p>It replaces the duplicate implementations previously found in
- * {@code com.common.logging.TraceContextUtil} and {@code com.common.util.TraceContextUtil}.
- * The old classes delegate to this implementation and are marked as deprecated to
- * preserve backward compatibility.</p>
+ * <p>All correlation handling should be done through this class.</p>
  */
 public final class CorrelationContextUtil {
 
