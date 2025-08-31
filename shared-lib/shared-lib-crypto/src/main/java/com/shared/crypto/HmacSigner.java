@@ -50,7 +50,7 @@ public final class HmacSigner {
     /** Constant-time verification of provided MAC bytes. */
     public boolean verify(byte[] data, byte[] expectedMac, SecretKey key) throws GeneralSecurityException {
         byte[] actual = sign(data, key);
-        return constantTimeEquals(actual, expectedMac);
+        return CryptoUtils.constantTimeEquals(actual, expectedMac);
     }
 
     /** Constant-time verification for Base64 strings. */
@@ -66,31 +66,6 @@ public final class HmacSigner {
     }
 
     /* ------------------ helpers ------------------ */
-
-    /**
-     * Constant‑time comparison of two byte arrays to prevent timing side‑channel attacks.
-     *
-     * <p>This implementation processes the full length of the longer array and
-     * incorporates array length differences into the result to avoid early exit.
-     * Missing bytes are treated as zero.</p>
-     *
-     * @param a first byte array
-     * @param b second byte array
-     * @return {@code true} if the arrays are equal in length and content
-     */
-    private static boolean constantTimeEquals(byte[] a, byte[] b) {
-        if (a == null || b == null) {
-            return false;
-        }
-        int max = Math.max(a.length, b.length);
-        int result = a.length ^ b.length; // incorporate length difference
-        for (int i = 0; i < max; i++) {
-            byte ba = i < a.length ? a[i] : 0;
-            byte bb = i < b.length ? b[i] : 0;
-            result |= (ba ^ bb);
-        }
-        return result == 0;
-    }
 
     private static String toHex(byte[] bytes) {
         StringBuilder sb = new StringBuilder(bytes.length * 2);
