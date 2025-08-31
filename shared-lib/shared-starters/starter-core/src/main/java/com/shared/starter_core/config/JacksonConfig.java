@@ -1,5 +1,6 @@
 package com.shared.starter_core.config;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,6 +8,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.PageImpl;
 
 @Configuration
 public class JacksonConfig {
@@ -31,6 +33,13 @@ public class JacksonConfig {
         // Exclude null fields from JSON output
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
+        // Avoid UnsupportedOperationException when serializing PageImpl#pageable
+        mapper.addMixIn(PageImpl.class, PageImplMixIn.class);
+
         return mapper;
     }
+
+    /** Mixin to ignore the "pageable" property of {@link PageImpl}. */
+    @JsonIgnoreProperties("pageable")
+    private interface PageImplMixIn {}
 }

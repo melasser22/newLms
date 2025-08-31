@@ -40,8 +40,7 @@ public class CryptoMdcFilter extends OncePerRequestFilter {
         String incomingCorrelation = headerOrNull(request, HeaderNames.CORRELATION_ID);
         String incomingTenant = headerOrNull(request, HeaderNames.TENANT_ID);
         String incomingUser = headerOrNull(request, HeaderNames.USER_ID);
-
-        // Initialize correlation and tenant context (generates new id if missing)
+ // Initialize correlation and tenant context (generates new id if missing)
         CorrelationContextUtil.init(incomingCorrelation, incomingTenant);
         String correlationId = CorrelationContextUtil.getCorrelationId();
 
@@ -52,8 +51,7 @@ public class CryptoMdcFilter extends OncePerRequestFilter {
         }
 
         try {
-            // Echo correlation id in response for client-side tracing
-            response.setHeader(HeaderNames.CORRELATION_ID, correlationId);
+            // Echo correlation id in response for client-side tracing  response.setHeader(HeaderNames.CORRELATION_ID, correlationId);
             chain.doFilter(request, response);
         } finally {
             if (putUser) MDC.remove(HeaderNames.USER_ID);

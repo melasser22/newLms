@@ -1,4 +1,5 @@
 package com.common.dto;
+import com.common.context.CorrelationContextUtil;
 
 import com.common.context.CorrelationContextUtil;
 import com.common.enums.StatusEnums.ApiStatus;
@@ -33,8 +34,9 @@ public class ErrorResponse {
     /** Optional detailed errors (e.g., field-level validation issues) */
     private List<String> details;
 
-    /** Correlation ID (for logs/monitoring) */
-    private String correlationId;
+    /** Correlation ID (for logs/monitoring) */ 
+   private String correlationId;
+
 
     /** Tenant ID (multi-tenant awareness) */
     private String tenantId;
@@ -45,11 +47,9 @@ public class ErrorResponse {
 
     @JsonProperty("correlationId")
     public String getCorrelationId() {
-        if (correlationId == null || correlationId.isBlank()) {
+      if (correlationId == null || correlationId.isBlank()) {
             correlationId = CorrelationContextUtil.getCorrelationId();
         }
-        return correlationId;
-    }
 
     // ===== Static builders =====
     public static ErrorResponse of(String code, String message) {

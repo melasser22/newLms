@@ -6,14 +6,15 @@ public class SetupServicesCatalog implements Serializable {
 
         private static final long serialVersionUID = 1L;
 
-	// Catlog
-	public static final String SERVICES_PARENT_NAME = "/api/v1";
+        // Catalog
+        public static final String SERVICES_PARENT_NAME = "/api/v1";
 
-	public static final String CORE = "/core";
-	
-	public static final String LOOKUP ="/lookup"; 
+        public static final String CORE = "/core";
 
-	// Services
+        public static final String LOOKUP = "/lookup";
+
+        // Services
+
 
 	public static final String GET_SYSTEM_PARAMETER_BY_MODULE_SERVICE = "/getSysParamsByModule";
 	public static final String GET_SYSTEM_PARAMETER_BY_NAME_SERVICE = "/getSystemParametersByNAME";

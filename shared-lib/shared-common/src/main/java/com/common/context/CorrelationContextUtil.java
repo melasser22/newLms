@@ -10,6 +10,7 @@ import java.util.UUID;
  * package and should be used for putting and getting values from the SLF4J MDC.
  *
  * <p>All correlation handling should be done through this class.</p>
+
  */
 public final class CorrelationContextUtil {
 
@@ -38,6 +39,7 @@ public final class CorrelationContextUtil {
 
     /**
      * Retrieve the current correlation identifier. If none exists in the MDC a new
+
      * identifier is generated, stored and returned. This guarantees that callers
      * always receive a non-null correlation id even if no filter initialized it.
      *
