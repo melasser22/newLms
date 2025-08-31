@@ -91,15 +91,19 @@ shared:
     correlation:
       header: X-Correlation-ID
       auto-generate: true
+      mandatory: true
     request:
       header: X-Request-ID
       auto-generate: true
+      mandatory: true
     tenant:
       header: X-Tenant-Id
       auto-generate: false
+      mandatory: false
     user:
       header: X-User-Id
       auto-generate: false
+      mandatory: false
     mdc:
       enabled: true
     security:

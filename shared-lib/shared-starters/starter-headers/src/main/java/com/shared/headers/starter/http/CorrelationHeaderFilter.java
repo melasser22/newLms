@@ -49,6 +49,23 @@ public class CorrelationHeaderFilter implements Filter {
       userId = HeaderUtils.uuid();
     }
 
+    if (correlationId == null && props.getCorrelation().isMandatory()) {
+      res.sendError(HttpServletResponse.SC_BAD_REQUEST, corrName + " header is required");
+      return;
+    }
+    if (requestId == null && props.getRequest().isMandatory()) {
+      res.sendError(HttpServletResponse.SC_BAD_REQUEST, reqName + " header is required");
+      return;
+    }
+    if (tenantId == null && props.getTenant().isMandatory()) {
+      res.sendError(HttpServletResponse.SC_BAD_REQUEST, tenName + " header is required");
+      return;
+    }
+    if (userId == null && props.getUser().isMandatory()) {
+      res.sendError(HttpServletResponse.SC_BAD_REQUEST, userName + " header is required");
+      return;
+    }
+
     // Set in MDC
     if (props.getMdc().isEnabled()) {
       var kv = new HashMap<String,String>();

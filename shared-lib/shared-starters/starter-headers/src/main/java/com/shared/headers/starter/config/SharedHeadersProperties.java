@@ -12,10 +12,10 @@ import java.util.List;
 public class SharedHeadersProperties {
   private boolean enabled = true;
 
-  private final Names correlation = new Names(HeaderNames.CORRELATION_ID, true);
-  private final Names request = new Names(HeaderNames.REQUEST_ID, true);
-  private final Names tenant = new Names(HeaderNames.TENANT_ID, false);
-  private final Names user = new Names(HeaderNames.USER_ID, false);
+  private final Names correlation = new Names(HeaderNames.CORRELATION_ID, true, true);
+  private final Names request = new Names(HeaderNames.REQUEST_ID, true, true);
+  private final Names tenant = new Names(HeaderNames.TENANT_ID, false, false);
+  private final Names user = new Names(HeaderNames.USER_ID, false, false);
 
   private final Mdc mdc = new Mdc();
   private final Security security = new Security();
@@ -37,6 +37,7 @@ public class SharedHeadersProperties {
   public static class Names {
     private String header;
     private boolean autoGenerate = false;
+    private boolean mandatory = false;
 
     public Names() {}
     public Names(String header) { this.header = header; }
@@ -44,12 +45,20 @@ public class SharedHeadersProperties {
       this.header = header;
       this.autoGenerate = autoGenerate;
     }
+    public Names(String header, boolean autoGenerate, boolean mandatory) {
+      this.header = header;
+      this.autoGenerate = autoGenerate;
+      this.mandatory = mandatory;
+    }
 
     public String getHeader() { return header; }
     public void setHeader(String header) { this.header = header; }
 
     public boolean isAutoGenerate() { return autoGenerate; }
     public void setAutoGenerate(boolean autoGenerate) { this.autoGenerate = autoGenerate; }
+
+    public boolean isMandatory() { return mandatory; }
+    public void setMandatory(boolean mandatory) { this.mandatory = mandatory; }
   }
 
   public static class Mdc {
