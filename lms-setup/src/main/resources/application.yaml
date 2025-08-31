@@ -3,6 +3,9 @@ spring:
     name: lms-setup
   profiles:
     active: dev
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 0
 server:
   port: 8080
   shutdown: graceful
