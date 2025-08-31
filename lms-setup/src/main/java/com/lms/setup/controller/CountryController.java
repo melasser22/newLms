@@ -93,9 +93,10 @@ public class CountryController {
             @PageableDefault(size = 20) Pageable pageable,
             @Parameter(description = "Search query for country names")
             @RequestParam(required = false) String q,
-            @Parameter(description = "Whether to return all countries (ignores pagination)")
-            @RequestParam(required = false) boolean all) {
-        return ResponseEntity.ok(countryService.list(pageable, q, all));
+            @Parameter(description = "Whether to retrieve all countries (ignores pagination)")
+            @RequestParam(name = "unpaged", defaultValue = "false") boolean unpaged) {
+        Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
+        return ResponseEntity.ok(countryService.list(effectivePageable, q, unpaged));
     }
 
     @GetMapping("/active")

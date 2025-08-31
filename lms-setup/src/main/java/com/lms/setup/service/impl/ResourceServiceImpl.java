@@ -120,14 +120,14 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Resource", dataClass = DataClass.HEALTH, message = "List resources")
-    public BaseResponse<Page<ResourceDto>> list(Pageable pageable, String q, boolean all) {
+    public BaseResponse<Page<ResourceDto>> list(Pageable pageable, String q, boolean unpaged) {
         try {
             Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
                     "resourceEnNm", "resourceEnNm", "resourceArNm", "resourceCd");
             Pageable pg = (pageable == null || !pageable.isPaged()
                     ? Pageable.unpaged()
                     : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
-            if (all) {
+            if (unpaged) {
                 List<Resource> list;
                 if (q == null || q.isBlank()) {
                     list = resourceRepository.findAll(sort);

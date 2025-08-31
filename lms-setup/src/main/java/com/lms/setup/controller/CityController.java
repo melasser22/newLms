@@ -90,9 +90,10 @@ public class CityController {
             @PageableDefault(size = 20) Pageable pageable,
             @Parameter(description = "Search query for city names")
             @RequestParam(required = false) String q,
-            @Parameter(description = "Whether to return all cities (ignores pagination)")
-            @RequestParam(required = false) boolean all) {
-        return ResponseEntity.ok(cityService.list(pageable, q, all));
+            @Parameter(description = "Whether to retrieve all cities (ignores pagination)")
+            @RequestParam(name = "unpaged", defaultValue = "false") boolean unpaged) {
+        Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
+        return ResponseEntity.ok(cityService.list(effectivePageable, q, unpaged));
     }
 
     @GetMapping("/active")

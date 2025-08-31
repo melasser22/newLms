@@ -91,14 +91,14 @@ public class CityServiceImpl implements CityService {
 	@Override
         @Transactional(Transactional.TxType.SUPPORTS)
         @Audited(action = AuditAction.READ, entity = "City", dataClass = DataClass.HEALTH, message = "List cities")
-        public BaseResponse<Page<CityDto>> list(Pageable pageable, String q, boolean all) {
+        public BaseResponse<Page<CityDto>> list(Pageable pageable, String q, boolean unpaged) {
                 Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
                                 "cityEnNm", "cityEnNm", "cityArNm", "cityCd");
                 final Pageable pg = (pageable == null || !pageable.isPaged()
                                 ? Pageable.unpaged()
                                 : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
 
-                if (all) {
+                if (unpaged) {
                         var spec = CitySpecifications.nameContains(q); // null => no filter
                         var entities = cityRepo.findAll(spec, sort);
                         return BaseResponse.success("City list", new PageImpl<>(mapper.toDtoList(entities)));

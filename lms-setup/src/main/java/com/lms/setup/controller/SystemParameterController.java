@@ -93,8 +93,11 @@ public class SystemParameterController {
             @Parameter(description = "Group filter for parameters")
             @RequestParam(required = false) String group,
             @Parameter(description = "Whether to return only active parameters")
-            @RequestParam(required = false) Boolean onlyActive) {
-        return ResponseEntity.ok(systemParameterService.list(pageable, group, onlyActive));
+            @RequestParam(required = false) Boolean onlyActive,
+            @Parameter(description = "Whether to retrieve all parameters (ignores pagination)")
+            @RequestParam(name = "unpaged", defaultValue = "false") boolean unpaged) {
+        Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
+        return ResponseEntity.ok(systemParameterService.list(effectivePageable, group, onlyActive));
     }
 
     @GetMapping("/by-key/{paramKey}")

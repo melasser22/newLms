@@ -15,7 +15,7 @@ public interface ResourceService {
 
     BaseResponse<ResourceDto> get(Integer resourceId);
 
-    BaseResponse<Page<ResourceDto>> list(Pageable pageable, String q, boolean all);
+    BaseResponse<Page<ResourceDto>> list(Pageable pageable, String q, boolean unpaged);
 
     BaseResponse<List<ResourceDto>> listActive();
 

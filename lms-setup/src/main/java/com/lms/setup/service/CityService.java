@@ -12,6 +12,6 @@ public interface CityService {
   BaseResponse<CityDto> update(Integer id, CityDto request);
   BaseResponse<Void>    delete(Integer id);
   BaseResponse<CityDto> get(Integer id);
-  BaseResponse<Page<CityDto>> list(Pageable pageable, String q, boolean all);
+  BaseResponse<Page<CityDto>> list(Pageable pageable, String q, boolean unpaged);
   BaseResponse<List<CityDto>> listActiveByCountry(Integer countryId);
 }
