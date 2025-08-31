@@ -50,7 +50,7 @@ class BaseResponseTest {
 
     @Test
     void mapTransformsPayloadPreservingMetadata() {
-        BaseResponse<String> original = BaseResponse.success("hello");
+        BaseResponse<String> original = BaseResponse.<String>success("hello");
 
         BaseResponse<Integer> mapped = original.map(String::length);
 
@@ -62,7 +62,7 @@ class BaseResponseTest {
 
     @Test
     void mapHandlesNullPayloadGracefully() {
-        BaseResponse<String> original = BaseResponse.success(null);
+        BaseResponse<String> original = BaseResponse.<String>success(null);
 
         BaseResponse<Integer> mapped = original.map(String::length);
 
