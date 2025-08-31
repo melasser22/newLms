@@ -3,12 +3,10 @@ package com.shared.starter_security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.stereotype.Component;
 
 /**
  * Evaluates whether the current user satisfies the required role.
  */
-@Component("roleChecker")
 @RequiredArgsConstructor
 public class RoleChecker {
 
