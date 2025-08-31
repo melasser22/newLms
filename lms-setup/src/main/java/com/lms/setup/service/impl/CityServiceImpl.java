@@ -93,7 +93,7 @@ public class CityServiceImpl implements CityService {
         @Audited(action = AuditAction.READ, entity = "City", dataClass = DataClass.HEALTH, message = "List cities")
         public BaseResponse<Page<CityDto>> list(Pageable pageable, String q, boolean unpaged) {
                 Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
-                                "cityEnNm", "cityEnNm", "cityArNm", "cityCd");
+                                "cityEnNm", "cityArNm", "cityCd");
                 final Pageable pg = (pageable == null || !pageable.isPaged()
                                 ? Pageable.unpaged()
                                 : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));

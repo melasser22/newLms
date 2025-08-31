@@ -123,7 +123,7 @@ public class ResourceServiceImpl implements ResourceService {
     public BaseResponse<Page<ResourceDto>> list(Pageable pageable, String q, boolean unpaged) {
         try {
             Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
-                    "resourceEnNm", "resourceEnNm", "resourceArNm", "resourceCd");
+                    "resourceEnNm", "resourceArNm", "resourceCd");
             Pageable pg = (pageable == null || !pageable.isPaged()
                     ? Pageable.unpaged()
                     : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));

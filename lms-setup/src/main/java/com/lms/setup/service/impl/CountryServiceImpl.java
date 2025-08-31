@@ -82,7 +82,7 @@ public class CountryServiceImpl implements CountryService {
     @Audited(action = AuditAction.READ, entity = "Country", dataClass = DataClass.HEALTH, message = "List countries")
     public BaseResponse<?> list(Pageable pageable, String q, boolean unpaged) {
         Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
-                "countryEnNm", "countryEnNm", "countryArNm", "countryCd");
+                "countryEnNm", "countryArNm", "countryCd");
         Pageable pg = (pageable == null || !pageable.isPaged()
                 ? Pageable.unpaged()
                 : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));

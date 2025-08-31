@@ -6,7 +6,9 @@ import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Utility methods for sanitising {@link Sort} and {@link Pageable} instances.
@@ -25,12 +27,14 @@ public final class SortUtils {
      *
      * @param sort            sort to sanitize
      * @param defaultProperty property to use when sort is empty or invalid
-     * @param allowedProps    properties allowed for sorting
+     * @param allowedProps    properties allowed for sorting; {@code defaultProperty}
+     *                        is always considered allowed
      * @return sanitized Sort never {@code null}
      */
     public static Sort sanitize(Sort sort, String defaultProperty, String... allowedProps) {
         Sort safeSort = sort == null ? Sort.unsorted() : sort;
-        List<String> allowed = Arrays.asList(allowedProps);
+        Set<String> allowed = new HashSet<>(Arrays.asList(allowedProps));
+        allowed.add(defaultProperty);
         List<Sort.Order> orders = new ArrayList<>();
         safeSort.stream()
                 .filter(order -> allowed.isEmpty() || allowed.contains(order.getProperty()))
