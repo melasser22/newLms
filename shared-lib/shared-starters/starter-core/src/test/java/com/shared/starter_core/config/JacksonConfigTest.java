@@ -1,5 +1,6 @@
 package com.shared.starter_core.config;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 
 import com.common.dto.BaseResponse;
