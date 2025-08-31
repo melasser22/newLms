@@ -1,7 +1,6 @@
 package com.shared.starter_core.config;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
+
 
 import com.common.dto.BaseResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,7 +17,6 @@ class JacksonConfigTest {
         ObjectMapper mapper = new JacksonConfig().objectMapper();
         Page<String> emptyPage = Page.<String>empty();
         BaseResponse<Page<String>> resp = BaseResponse.success("ok", emptyPage);
-
         assertThatNoException().isThrownBy(() -> mapper.writeValueAsString(resp));
         assertThat(mapper.writeValueAsString(resp)).doesNotContain("pageable");
     }

@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.MDC;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -36,9 +35,8 @@ public class JsonAccessDeniedHandler implements AccessDeniedHandler {
         request.getRequestURI()
     );
     body.setTenantId(ContextManager.Tenant.get());
-    body.setTraceId(firstNonBlank(
+    body.setCorrelationId(firstNonBlank(
         MDC.get(HeaderNames.CORRELATION_ID),
-        MDC.get(HeaderNames.TRACE_ID),
         request.getHeader(HeaderNames.CORRELATION_ID),
         request.getHeader(HeaderNames.REQUEST_ID)
     ));

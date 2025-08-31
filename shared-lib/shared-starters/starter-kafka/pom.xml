@@ -28,6 +28,12 @@
       <optional>true</optional>
     </dependency>
 
+    <!-- Shared utilities -->
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>shared-common</artifactId>
+    </dependency>
+
     <!-- Kafka -->
     <dependency>
       <groupId>org.springframework.kafka</groupId>

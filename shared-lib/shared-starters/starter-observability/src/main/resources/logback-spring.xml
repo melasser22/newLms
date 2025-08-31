@@ -7,7 +7,7 @@
         <loggerName/>
         <threadName/>
         <pattern>
-          <pattern>{"message":"%message","traceId":"%X{trace_id}","spanId":"%X{span_id}"}</pattern>
+          <pattern>{"message":"%message","correlationId":"%X{correlationId}","spanId":"%X{span_id}"}</pattern>
         </pattern>
         <mdc/>
       </providers>
