@@ -16,9 +16,9 @@ public final class LogMarkers {
         // utility class
     }
 
-    /** Trace markers (always attach traceId + tenantId) */
-    public static LogstashMarker trace(String traceId, String tenantId) {
-        LogstashMarker marker = Markers.append("traceId", traceId);
+    /** Correlation markers (always attach correlationId + tenantId) */
+    public static LogstashMarker correlation(String correlationId, String tenantId) {
+        LogstashMarker marker = Markers.append("correlationId", correlationId);
         if (tenantId != null && !tenantId.isBlank()) {
             marker = marker.and(Markers.append(HeaderNames.TENANT_ID, tenantId));
         }

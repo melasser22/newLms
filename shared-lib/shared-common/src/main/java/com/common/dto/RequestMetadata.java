@@ -16,8 +16,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RequestMetadata {
 
-    /** Unique request correlation ID (traceId) */
-    private String traceId;
+    /** Unique request correlation ID */
+    private String correlationId;
 
     /** Tenant identifier (for multi-tenancy) */
     private String tenantId;
