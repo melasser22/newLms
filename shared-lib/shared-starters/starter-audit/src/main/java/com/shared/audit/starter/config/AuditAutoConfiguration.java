@@ -12,6 +12,7 @@ import com.shared.audit.starter.core.dispatch.sinks.OutboxSink;
 import com.shared.audit.starter.core.dispatch.sinks.Sink;
 import com.shared.audit.starter.core.enrich.Enricher;
 import com.shared.audit.starter.core.enrich.HostEnricher;
+import com.shared.audit.starter.core.enrich.MdcHeaderEnricher;
 import com.shared.audit.starter.core.enrich.MdcTraceEnricher;
 import com.shared.audit.starter.core.enrich.RequestEnricher;
 import com.shared.audit.starter.core.enrich.SecurityEnricher;
@@ -167,6 +168,7 @@ public class AuditAutoConfiguration {
 
   @Bean @ConditionalOnMissingBean public MdcTraceEnricher mdcTraceEnricher() { return new MdcTraceEnricher(); }
   @Bean @ConditionalOnMissingBean public HostEnricher hostEnricher() { return new HostEnricher(); }
+  @Bean @ConditionalOnMissingBean public MdcHeaderEnricher mdcHeaderEnricher() { return new MdcHeaderEnricher(); }
 
   @Bean
   @ConditionalOnMissingBean

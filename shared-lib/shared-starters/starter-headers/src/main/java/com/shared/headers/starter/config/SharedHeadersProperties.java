@@ -11,12 +11,11 @@ import java.util.List;
 @ConfigurationProperties(prefix = "shared.headers")
 public class SharedHeadersProperties {
   private boolean enabled = true;
-  private boolean generateIfMissing = true;
 
-  private final Names correlation = new Names(HeaderNames.CORRELATION_ID);
-  private final Names request = new Names(HeaderNames.REQUEST_ID);
-  private final Names tenant = new Names(HeaderNames.TENANT_ID);
-  private final Names user = new Names(HeaderNames.USER_ID);
+  private final Names correlation = new Names(HeaderNames.CORRELATION_ID, true);
+  private final Names request = new Names(HeaderNames.REQUEST_ID, true);
+  private final Names tenant = new Names(HeaderNames.TENANT_ID, false);
+  private final Names user = new Names(HeaderNames.USER_ID, false);
 
   private final Mdc mdc = new Mdc();
   private final Security security = new Security();
@@ -25,8 +24,6 @@ public class SharedHeadersProperties {
 
   public boolean isEnabled() { return enabled; }
   public void setEnabled(boolean enabled) { this.enabled = enabled; }
-  public boolean isGenerateIfMissing() { return generateIfMissing; }
-  public void setGenerateIfMissing(boolean generateIfMissing) { this.generateIfMissing = generateIfMissing; }
 
   public Names getCorrelation() { return correlation; }
   public Names getRequest() { return request; }
@@ -39,10 +36,20 @@ public class SharedHeadersProperties {
 
   public static class Names {
     private String header;
+    private boolean autoGenerate = false;
+
     public Names() {}
     public Names(String header) { this.header = header; }
+    public Names(String header, boolean autoGenerate) {
+      this.header = header;
+      this.autoGenerate = autoGenerate;
+    }
+
     public String getHeader() { return header; }
     public void setHeader(String header) { this.header = header; }
+
+    public boolean isAutoGenerate() { return autoGenerate; }
+    public void setAutoGenerate(boolean autoGenerate) { this.autoGenerate = autoGenerate; }
   }
 
   public static class Mdc {

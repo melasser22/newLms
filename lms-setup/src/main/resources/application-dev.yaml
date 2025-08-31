@@ -88,15 +88,18 @@ shared:
       allowed-headers: "*"
   headers:
     enabled: true
-    generate-if-missing: true
     correlation:
       header: X-Correlation-ID
+      auto-generate: true
     request:
       header: X-Request-ID
+      auto-generate: true
     tenant:
       header: X-Tenant-Id
+      auto-generate: false
     user:
       header: X-User-Id
+      auto-generate: false
     mdc:
       enabled: true
     security:

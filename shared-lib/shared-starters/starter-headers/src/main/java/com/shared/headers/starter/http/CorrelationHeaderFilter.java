@@ -3,6 +3,7 @@ package com.shared.headers.starter.http;
 
 import com.shared.headers.starter.config.SharedHeadersProperties;
 import com.common.context.ContextManager;
+import com.common.context.TraceContextUtil;
 import com.shared.headers.starter.util.HeaderUtils;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,19 +37,33 @@ public class CorrelationHeaderFilter implements Filter {
     String tenantId = HeaderUtils.firstNonEmpty(req.getHeader(tenName));
     String userId = HeaderUtils.firstNonEmpty(req.getHeader(userName));
 
-    if (props.isGenerateIfMissing()) {
-      if (correlationId == null) correlationId = HeaderUtils.uuid();
-      if (requestId == null) requestId = HeaderUtils.uuid();
+    if (correlationId == null && props.getCorrelation().isAutoGenerate()) {
+      correlationId = HeaderUtils.uuid();
+    }
+    if (requestId == null && props.getRequest().isAutoGenerate()) {
+      requestId = HeaderUtils.uuid();
+    }
+    if (tenantId == null && props.getTenant().isAutoGenerate()) {
+      tenantId = HeaderUtils.uuid();
+    }
+    if (userId == null && props.getUser().isAutoGenerate()) {
+      userId = HeaderUtils.uuid();
     }
 
     // Set in MDC
     if (props.getMdc().isEnabled()) {
       var kv = new HashMap<String,String>();
-      kv.put( HeaderNames.CORRELATION_ID, correlationId);
+      kv.put(HeaderNames.CORRELATION_ID, correlationId);
       kv.put(HeaderNames.REQUEST_ID, requestId);
       if (tenantId != null) kv.put(HeaderNames.TENANT_ID, tenantId);
       if (userId != null) kv.put(HeaderNames.USER_ID, userId);
       HeaderUtils.putMdc(kv);
+    }
+
+    // Set in TraceContext for libraries relying on it
+    TraceContextUtil.put(TraceContextUtil.TRACE_ID, correlationId);
+    if (tenantId != null) {
+      TraceContextUtil.put(HeaderNames.TENANT_ID, tenantId);
     }
 
     // Set in ThreadLocal Context
@@ -60,12 +75,15 @@ public class CorrelationHeaderFilter implements Filter {
     // Echo back headers on response
     if (correlationId != null) res.setHeader(corrName, correlationId);
     if (requestId != null) res.setHeader(reqName, requestId);
+    if (tenantId != null) res.setHeader(tenName, tenantId);
+    if (userId != null) res.setHeader(userName, userId);
 
     try {
       chain.doFilter(request, response);
     } finally {
       // cleanup
-        ContextManager.clearHeaders();
+      ContextManager.clearHeaders();
+      TraceContextUtil.clear();
       if (props.getMdc().isEnabled()) {
         MDC.remove("correlationId");
         MDC.remove("requestId");
