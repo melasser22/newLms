@@ -1,8 +1,6 @@
 package com.common.dto;
-
 import com.common.context.CorrelationContextUtil;
 import com.common.enums.StatusEnums.ApiStatus;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
 import java.time.Instant;
 import java.util.function.Function;
@@ -39,8 +37,7 @@ public class BaseResponse<T> {
     /** Timestamp of response */
     @Builder.Default
     private Instant timestamp = Instant.now();
-
-    /** Correlation identifier for tracking across services */
+ /** Correlation identifier for tracking across services */
     @Builder.Default
     private String correlationId = CorrelationContextUtil.getCorrelationId();
 
@@ -48,7 +45,6 @@ public class BaseResponse<T> {
     public String getCorrelationId() {
         return correlationId;
     }
-
     // ===== Static builders (nice usability) =====
     public static <T> BaseResponse<T> success(T data) {
         return BaseResponse.<T>builder()

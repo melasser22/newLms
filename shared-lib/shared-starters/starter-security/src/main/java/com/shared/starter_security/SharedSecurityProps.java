@@ -55,9 +55,6 @@ public class SharedSecurityProps implements BaseStarterProperties {
   /** Prefix for role authorities mapped from rolesClaim. */
   private String rolePrefix = "ROLE_";
 
-  /** Master switch to enable or disable role checks in services. */
-  private boolean enableRoleCheck = true;
-
   // --------- Resource Server defaults ---------
   private ResourceServer resourceServer = new ResourceServer();
 

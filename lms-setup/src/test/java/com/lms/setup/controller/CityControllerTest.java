@@ -32,7 +32,7 @@ class CityControllerTest {
 
   @Test
   void list_ok() throws Exception {
-    BaseResponse<Page<CityDto>> resp = BaseResponse.success("ok", Page.<CityDto>empty());
+    BaseResponse<?> resp = BaseResponse.success("ok", Page.<CityDto>empty());
 
     doReturn(resp)
         .when(cityService)
@@ -46,7 +46,7 @@ class CityControllerTest {
 
   @Test
   void getCities_ok() throws Exception {
-    BaseResponse<Page<CityDto>> resp = BaseResponse.success("ok", Page.<CityDto>empty());
+    BaseResponse<?> resp = BaseResponse.success("ok", Page.<CityDto>empty());
 
     // Same broad stub covers q = null and any pageable/flag
     doReturn(resp)

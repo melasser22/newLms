@@ -168,7 +168,6 @@ public class AuditAutoConfiguration {
 
   @Bean @ConditionalOnMissingBean public MdcCorrelationEnricher mdcCorrelationEnricher() { return new MdcCorrelationEnricher(); }
   @Bean @ConditionalOnMissingBean public HostEnricher hostEnricher() { return new HostEnricher(); }
-  @Bean @ConditionalOnMissingBean public ContextHeaderEnricher contextHeaderEnricher() { return new ContextHeaderEnricher(); }
 
   @Bean
   @ConditionalOnMissingBean

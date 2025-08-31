@@ -105,8 +105,7 @@ public class SystemParameterServiceImpl implements SystemParameterService {
         try {
             Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
                     "paramKey", "paramKey", "paramGroup", "paramValue");
-            Pageable pg = (pageable == null || !pageable.isPaged()
-                    ? Pageable.unpaged()
+            Pageable pg = (pageable == null ? Pageable.unpaged()
                     : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
 
             Page<SystemParameter> page;

@@ -1,4 +1,4 @@
-package com.shared.starter_core.config;
+package com.lms.setup.config;
 
 import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.MeterRegistry;

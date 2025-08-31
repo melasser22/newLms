@@ -1,7 +1,8 @@
 package com.common.dto;
-
 import com.common.context.CorrelationContextUtil;
+
 import com.common.enums.StatusEnums.ApiStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,8 +33,7 @@ public class ErrorResponse {
 
     /** Optional detailed errors (e.g., field-level validation issues) */
     private List<String> details;
-
-    /** Correlation ID (for logs/monitoring) */
+/** Correlation ID (for logs/monitoring) */
     @Builder.Default
     private String correlationId = CorrelationContextUtil.getCorrelationId();
 
