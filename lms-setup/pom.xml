@@ -125,6 +125,11 @@
     </dependency>
     <dependency>
       <groupId>com.lms</groupId>
+      <artifactId>starter-health</artifactId>
+      <version>${lms.shared.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.lms</groupId>
       <artifactId>starter-mapstruct</artifactId>
             <version>${lms.shared.version}</version>
 

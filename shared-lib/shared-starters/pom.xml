@@ -26,6 +26,7 @@
     <dependency><groupId>com.lms</groupId><artifactId>starter-mapstruct</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>com.lms</groupId><artifactId>starter-headers</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>com.lms</groupId><artifactId>starter-actuator</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.lms</groupId><artifactId>starter-health</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>com.lms</groupId><artifactId>starter-validation</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>com.lms</groupId><artifactId>starter-audit</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>com.lms</groupId><artifactId>starter-crypto</artifactId><version>${project.version}</version></dependency>
@@ -45,6 +46,7 @@
     <module>starter-mapstruct</module>
     <module>starter-headers</module>
     <module>starter-actuator</module>
+    <module>starter-health</module>
     <module>starter-validation</module>
     <module>starter-audit</module>
     <module>starter-crypto</module>
