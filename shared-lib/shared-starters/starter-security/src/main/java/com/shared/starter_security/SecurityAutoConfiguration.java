@@ -54,6 +54,15 @@ import java.util.stream.Collectors;
 public class SecurityAutoConfiguration {
 
   /* ---------------------------------------------------
+   * RoleChecker : exposes @roleChecker for SpEL usage
+   * --------------------------------------------------- */
+  @Bean
+  @ConditionalOnMissingBean(RoleChecker.class)
+  public RoleChecker roleChecker(SharedSecurityProps props) {
+    return new RoleChecker(props);
+  }
+
+  /* ---------------------------------------------------
    * JwtAuthenticationConverter : roles/scopes mapping
    * --------------------------------------------------- */
   @Bean
