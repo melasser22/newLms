@@ -15,7 +15,7 @@ import jakarta.annotation.PostConstruct;
 
 /**
  * Auto-configures logging for Shared services:
- *  - Adds MDC traceId/tenantId (from CoreAutoConfiguration filters).
+ *  - Adds MDC correlationId/tenantId (from CoreAutoConfiguration filters).
  *  - Optionally enables JSON/Logstash output.
  */
 @AutoConfiguration
@@ -29,7 +29,7 @@ public class LoggingAutoConfiguration {
             if (ctx.getLogger("ROOT").getAppender("CONSOLE") == null) {
                 PatternLayoutEncoder ple = new PatternLayoutEncoder();
                 ple.setContext(ctx);
-                ple.setPattern("%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger - %msg %X{traceId} %X{tenantId}%n");
+                ple.setPattern("%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger - %msg %X{correlationId} %X{tenantId}%n");
                 ple.start();
 
                 ConsoleAppender<ILoggingEvent> consoleAppender = new ConsoleAppender<>();

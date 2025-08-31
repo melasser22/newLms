@@ -9,7 +9,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.common.constants.HeaderNames;
 import com.common.context.ContextManager;
-import com.common.context.TraceContextUtil;
+import com.common.context.CorrelationContextUtil;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -49,11 +49,10 @@ public class ContextFilter extends OncePerRequestFilter {
                 request.getHeader(HeaderNames.TENANT_ID),
                 request.getParameter(HeaderNames.TENANT_ID)           // optional fallback
         ));
-        String incomingTrace = trimToNull(firstNonNull(
-                request.getHeader(HeaderNames.CORRELATION_ID),
-                request.getHeader(HeaderNames.TRACE_ID)
-        ));
-        String correlationId = incomingTrace != null ? incomingTrace : UUID.randomUUID().toString();
+        String incomingCorrelation = trimToNull(
+                request.getHeader(HeaderNames.CORRELATION_ID)
+        );
+        String correlationId = incomingCorrelation != null ? incomingCorrelation : UUID.randomUUID().toString();
         String userId        = trimToNull(firstNonNull(
                 request.getHeader(HeaderNames.USER_ID),
                 (String) request.getAttribute(HeaderNames.USER_ID)  // some stacks set it as an attribute
@@ -70,7 +69,7 @@ public class ContextFilter extends OncePerRequestFilter {
             if (tenantId != null) {
                 ContextManager.Tenant.set(tenantId);
             }
-            TraceContextUtil.put(TraceContextUtil.TRACE_ID, correlationId);
+            CorrelationContextUtil.put(CorrelationContextUtil.CORRELATION_ID, correlationId);
 
             // ---- Enrich logging context (appears on every log line)
             putMdc(HeaderNames.TENANT_ID, tenantId);
@@ -84,7 +83,7 @@ public class ContextFilter extends OncePerRequestFilter {
         } finally {
             // ---- Always cleanup
             ContextManager.Tenant.clear();
-            TraceContextUtil.clear();
+            CorrelationContextUtil.clear();
             MDC.remove(HeaderNames.TENANT_ID);
             MDC.remove(HeaderNames.USER_ID);
             MDC.remove(HeaderNames.CORRELATION_ID);
