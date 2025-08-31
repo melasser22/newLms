@@ -1,4 +1,4 @@
-package com.lms.setup.config;
+package com.shared.starter_core.config;
 
 import com.shared.config.EnvironmentProperties;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -9,9 +9,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Logs basic environment information at startup using values supplied by
- * {@link EnvironmentProperties}. This demonstrates centralized configuration
- * consumption and makes it easy to verify which environment the service is
- * running in.
+ * {@link EnvironmentProperties}.
  */
 @Slf4j
 @Component

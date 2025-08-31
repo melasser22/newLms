@@ -1,6 +1,8 @@
 package com.lms.setup.service.impl;
 
 import com.common.dto.BaseResponse;
+import com.lms.setup.dto.ResourceDto;
+import com.lms.setup.mapper.ResourceMapper;
 import com.lms.setup.model.Resource;
 import com.lms.setup.repository.ResourceRepository;
 import com.lms.setup.service.ResourceService;
@@ -14,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -28,15 +31,17 @@ public class ResourceServiceImpl implements ResourceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceServiceImpl.class);
 
     private final ResourceRepository resourceRepository;
+    private final ResourceMapper mapper;
 
-    public ResourceServiceImpl(ResourceRepository resourceRepository) {
+    public ResourceServiceImpl(ResourceRepository resourceRepository, ResourceMapper mapper) {
         this.resourceRepository = resourceRepository;
+        this.mapper = mapper;
     }
 
     @Override
     @Audited(action = AuditAction.CREATE, entity = "Resource", dataClass = DataClass.HEALTH, message = "Create resource")
     @CacheEvict(cacheNames = {"resources:children"}, allEntries = true)
-    public BaseResponse<Resource> add(Resource request) {
+    public BaseResponse<ResourceDto> add(ResourceDto request) {
         try {
             if (request.getResourceCd() == null || request.getResourceCd().isBlank()) {
                 return BaseResponse.error("ERR_RESOURCE_CD_REQUIRED", "Resource code is required");
@@ -48,8 +53,9 @@ public class ResourceServiceImpl implements ResourceService {
                 resourceRepository.findByPathIgnoreCaseAndHttpMethodIgnoreCase(request.getPath(), request.getHttpMethod()).isPresent()) {
                 return BaseResponse.error("ERR_RESOURCE_DUP_ENDPOINT", "A resource with same path+method exists");
             }
-            Resource saved = resourceRepository.save(request);
-            return BaseResponse.success("Resource created", saved);
+            Resource entity = mapper.toEntity(request);
+            Resource saved = resourceRepository.save(entity);
+            return BaseResponse.success("Resource created", mapper.toDto(saved));
         } catch (Exception ex) {
             LOGGER.error("Add resource failed", ex);
             return BaseResponse.error("ERR_RESOURCE_ADD", ex.getMessage());
@@ -59,7 +65,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Audited(action = AuditAction.UPDATE, entity = "Resource", dataClass = DataClass.HEALTH, message = "Update resource")
     @CacheEvict(cacheNames = {"resources:children"}, allEntries = true)
-    public BaseResponse<Resource> update(Integer resourceId, Resource request) {
+    public BaseResponse<ResourceDto> update(Integer resourceId, ResourceDto request) {
         try {
             Resource existing = resourceRepository.findById(resourceId).orElse(null);
             if (existing == null) {
@@ -84,9 +90,11 @@ public class ResourceServiceImpl implements ResourceService {
             if (request.getHttpMethod() != null)  existing.setHttpMethod(request.getHttpMethod());
             if (request.getParentResourceId() != null) existing.setParentResourceId(request.getParentResourceId());
             if (request.getIsActive() != null)    existing.setIsActive(request.getIsActive());
+            if (request.getEnDescription() != null) existing.setEnDescription(request.getEnDescription());
+            if (request.getArDescription() != null) existing.setArDescription(request.getArDescription());
 
             Resource saved = resourceRepository.save(existing);
-            return BaseResponse.success("Resource updated", saved);
+            return BaseResponse.success("Resource updated", mapper.toDto(saved));
         } catch (IllegalStateException ise) {
             return BaseResponse.error("ERR_RESOURCE_DUP_ENDPOINT", ise.getMessage());
         } catch (Exception ex) {
@@ -98,10 +106,10 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Resource", dataClass = DataClass.HEALTH, message = "Get resource")
-    public BaseResponse<Resource> get(Integer resourceId) {
+    public BaseResponse<ResourceDto> get(Integer resourceId) {
         try {
             return resourceRepository.findById(resourceId)
-                    .map(r -> BaseResponse.success("Resource", r))
+                    .map(r -> BaseResponse.success("Resource", mapper.toDto(r)))
                     .orElseGet(() -> BaseResponse.error("ERR_RESOURCE_NOT_FOUND", "Resource not found"));
         } catch (Exception ex) {
             LOGGER.error("Get resource failed", ex);
@@ -112,11 +120,12 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Resource", dataClass = DataClass.HEALTH, message = "List resources")
-    public BaseResponse<?> list(Pageable pageable, String q, boolean all) {
+    public BaseResponse<Page<ResourceDto>> list(Pageable pageable, String q, boolean all) {
         try {
             Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
                     "resourceEnNm", "resourceEnNm", "resourceArNm", "resourceCd");
-            Pageable pg = (pageable == null ? Pageable.unpaged()
+            Pageable pg = (pageable == null || !pageable.isPaged()
+                    ? Pageable.unpaged()
                     : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
             if (all) {
                 List<Resource> list;
@@ -127,7 +136,7 @@ public class ResourceServiceImpl implements ResourceService {
                             .findByResourceEnNmContainingIgnoreCaseOrResourceArNmContainingIgnoreCase(q, q, PageRequest.of(0, Integer.MAX_VALUE, sort))
                             .getContent();
                 }
-                return BaseResponse.success("Resources list", list);
+                return BaseResponse.success("Resources list", new PageImpl<>(mapper.toDtoList(list)));
             }
 
             Page<Resource> page;
@@ -136,7 +145,7 @@ public class ResourceServiceImpl implements ResourceService {
             } else {
                 page = resourceRepository.findByResourceEnNmContainingIgnoreCaseOrResourceArNmContainingIgnoreCase(q, q, pg);
             }
-            return BaseResponse.success("Resources page", page);
+            return BaseResponse.success("Resources page", mapper.toDtoPage(page));
         } catch (Exception ex) {
             LOGGER.error("List resources failed", ex);
             return BaseResponse.error("ERR_RESOURCE_LIST", ex.getMessage());
@@ -146,12 +155,12 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Resource", dataClass = DataClass.HEALTH, message = "List active resources")
-    public BaseResponse<List<Resource>> listActive() {
+    public BaseResponse<List<ResourceDto>> listActive() {
         try {
             List<Resource> list = resourceRepository
                     .findByIsActiveTrue(Pageable.unpaged())
                     .getContent();
-            return BaseResponse.success("Active resources", list);
+            return BaseResponse.success("Active resources", mapper.toDtoList(list));
         } catch (Exception ex) {
             LOGGER.error("List active resources failed", ex);
             return BaseResponse.error("ERR_RESOURCE_LIST_ACTIVE", ex.getMessage());
@@ -167,9 +176,9 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Resource", dataClass = DataClass.HEALTH, message = "Children of resource")
-    public BaseResponse<List<Resource>> childrenOf(Integer parentResourceId) {
+    public BaseResponse<List<ResourceDto>> childrenOf(Integer parentResourceId) {
         try {
-            return BaseResponse.success("Children", childrenRaw(parentResourceId));
+            return BaseResponse.success("Children", mapper.toDtoList(childrenRaw(parentResourceId)));
         } catch (Exception ex) {
             LOGGER.error("List children resources failed", ex);
             return BaseResponse.error("ERR_RESOURCE_CHILDREN", ex.getMessage());

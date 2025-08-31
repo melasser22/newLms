@@ -88,15 +88,22 @@ shared:
       allowed-headers: "*"
   headers:
     enabled: true
-    generate-if-missing: true
     correlation:
       header: X-Correlation-ID
+      auto-generate: true
+      mandatory: true
     request:
       header: X-Request-ID
+      auto-generate: true
+      mandatory: true
     tenant:
       header: X-Tenant-Id
+      auto-generate: false
+      mandatory: false
     user:
       header: X-User-Id
+      auto-generate: false
+      mandatory: false
     mdc:
       enabled: true
     security:
@@ -179,17 +186,12 @@ shared:
     resource-server:
       enabled: true
       permit-all:
-        - /actuator/health
-        - /v3/api-docs/**
-        - /swagger-ui/**
-        - /auth/**
-        - /login
-        - /setup/cities
-        - /setup/**
+        - "/**"
       disable-csrf: true
       stateless: true
     roles-claim: roles
     tenant-claim: tenant
+    enable-role-check: false
 
 logging:
   level:
@@ -205,6 +207,3 @@ logging:
     org.springframework.cache.interceptor.CacheAspectSupport: ERROR
 debug: false
 
-setup:
-  security:
-    public-access: true
