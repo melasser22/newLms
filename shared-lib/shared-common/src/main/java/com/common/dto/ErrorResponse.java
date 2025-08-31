@@ -34,9 +34,9 @@ public class ErrorResponse {
     /** Optional detailed errors (e.g., field-level validation issues) */
     private List<String> details;
 
-    /** Correlation ID (for logs/monitoring) */
-    @Builder.Default
-    private String correlationId = CorrelationContextUtil.getCorrelationId();
+    /** Correlation ID (for logs/monitoring) */ 
+   private String correlationId;
+
 
     /** Tenant ID (multi-tenant awareness) */
     private String tenantId;
@@ -47,8 +47,9 @@ public class ErrorResponse {
 
     @JsonProperty("correlationId")
     public String getCorrelationId() {
-        return correlationId;
-    }
+      if (correlationId == null || correlationId.isBlank()) {
+            correlationId = CorrelationContextUtil.getCorrelationId();
+        }
 
     // ===== Static builders =====
     public static ErrorResponse of(String code, String message) {

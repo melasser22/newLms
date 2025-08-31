@@ -17,7 +17,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Set;
-import java.util.UUID;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -52,11 +51,14 @@ public class ContextFilter extends OncePerRequestFilter {
         String incomingCorrelation = trimToNull(
                 request.getHeader(HeaderNames.CORRELATION_ID)
         );
-        String correlationId = incomingCorrelation != null ? incomingCorrelation : UUID.randomUUID().toString();
         String userId        = trimToNull(firstNonNull(
                 request.getHeader(HeaderNames.USER_ID),
                 (String) request.getAttribute(HeaderNames.USER_ID)  // some stacks set it as an attribute
         ));
+
+        // Initialize correlation (generates a new one if missing) and tenant context
+        CorrelationContextUtil.init(incomingCorrelation, tenantId);
+        String correlationId = CorrelationContextUtil.getCorrelationId();
 
         // If you want hard enforcement for protected APIs, uncomment:
         // if (tenantId == null) {
@@ -69,8 +71,6 @@ public class ContextFilter extends OncePerRequestFilter {
             if (tenantId != null) {
                 ContextManager.Tenant.set(tenantId);
             }
-            CorrelationContextUtil.put(CorrelationContextUtil.CORRELATION_ID, correlationId);
-
             // ---- Enrich logging context (appears on every log line)
             putMdc(HeaderNames.TENANT_ID, tenantId);
             putMdc(HeaderNames.USER_ID, userId);
