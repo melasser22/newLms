@@ -1,1 +1,2 @@
+com.shared.redis.starter.config.CacheAutoConfiguration
 com.shared.redis.starter.config.RedisAutoConfiguration

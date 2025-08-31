@@ -1,22 +1,23 @@
 package com.lms.setup.service;
 
 import com.common.dto.BaseResponse;
-import com.lms.setup.model.Resource;
+import com.lms.setup.dto.ResourceDto;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface ResourceService {
 
-    BaseResponse<Resource> add(Resource request);
+    BaseResponse<ResourceDto> add(ResourceDto request);
 
-    BaseResponse<Resource> update(Integer resourceId, Resource request);
+    BaseResponse<ResourceDto> update(Integer resourceId, ResourceDto request);
 
-    BaseResponse<Resource> get(Integer resourceId);
+    BaseResponse<ResourceDto> get(Integer resourceId);
 
-    BaseResponse<?> list(Pageable pageable, String q, boolean all);
+    BaseResponse<Page<ResourceDto>> list(Pageable pageable, String q, boolean all);
 
-    BaseResponse<List<Resource>> listActive();
+    BaseResponse<List<ResourceDto>> listActive();
 
-    BaseResponse<List<Resource>> childrenOf(Integer parentResourceId);
+    BaseResponse<List<ResourceDto>> childrenOf(Integer parentResourceId);
 }
