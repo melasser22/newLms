@@ -91,9 +91,10 @@ public class ResourceController {
             @PageableDefault(size = 20) Pageable pageable,
             @Parameter(description = "Search query for resource names")
             @RequestParam(required = false) String q,
-            @Parameter(description = "Whether to return all resources (ignores pagination)")
-            @RequestParam(required = false) boolean all) {
-        return ResponseEntity.ok(resourceService.list(pageable, q, all));
+            @Parameter(description = "Whether to retrieve all resources (ignores pagination)")
+            @RequestParam(name = "unpaged", defaultValue = "false") boolean unpaged) {
+        Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
+        return ResponseEntity.ok(resourceService.list(effectivePageable, q, unpaged));
     }
 
     @GetMapping("/active")
