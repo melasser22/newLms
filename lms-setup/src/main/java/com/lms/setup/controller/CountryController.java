@@ -2,6 +2,7 @@ package com.lms.setup.controller;
 
 import com.common.dto.BaseResponse;
 import com.lms.setup.model.Country;
+import com.lms.setup.security.SetupAuthorized;
 import com.lms.setup.service.CountryService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,9 +19,10 @@ import jakarta.validation.constraints.Size;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/setup/countries")
@@ -36,7 +38,7 @@ public class CountryController {
     }
 
     @PostMapping
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "Create a new country", description = "Creates a new country with the provided details")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Country created successfully",
@@ -50,7 +52,7 @@ public class CountryController {
     }
 
     @PutMapping("/{countryId}")
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "Update an existing country", description = "Updates the country with the specified ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Country updated successfully"),
@@ -67,7 +69,7 @@ public class CountryController {
     }
 
     @GetMapping("/{countryId}")
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "Get country by ID", description = "Retrieves a country by its ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Country found successfully"),
@@ -81,7 +83,7 @@ public class CountryController {
     }
 
     @GetMapping
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "List countries", description = "Retrieves a paginated list of countries with optional search")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Countries retrieved successfully"),
@@ -90,20 +92,20 @@ public class CountryController {
     public ResponseEntity<?> list(
             @PageableDefault(size = 20) Pageable pageable,
             @Parameter(description = "Search query for country names")
-            @RequestParam(required = false) String q, 
+            @RequestParam(required = false) String q,
             @Parameter(description = "Whether to return all countries (ignores pagination)")
             @RequestParam(required = false) boolean all) {
         return ResponseEntity.ok(countryService.list(pageable, q, all));
     }
 
     @GetMapping("/active")
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "List active countries", description = "Retrieves all active countries")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Active countries retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<?> listActive() {
+    public ResponseEntity<BaseResponse<List<Country>>> listActive() {
         return ResponseEntity.ok(countryService.listActive());
     }
 }

@@ -2,6 +2,7 @@ package com.lms.setup.controller;
 
 import com.common.dto.BaseResponse;
 import com.lms.setup.dto.CityDto;
+import com.lms.setup.security.SetupAuthorized;
 import com.lms.setup.service.CityService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,10 +14,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,7 +35,7 @@ public class CityController {
     }
 
     @PostMapping
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "Create a new city", description = "Creates a new city with the provided details")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "City created successfully",
@@ -48,7 +49,7 @@ public class CityController {
     }
 
     @PutMapping("/{cityId}")
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "Update an existing city", description = "Updates the city with the specified ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "City updated successfully"),
@@ -64,7 +65,7 @@ public class CityController {
     }
 
     @GetMapping("/{cityId}")
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "Get city by ID", description = "Retrieves a city by its ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "City found successfully"),
@@ -78,13 +79,13 @@ public class CityController {
     }
 
     @GetMapping
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "List cities", description = "Retrieves a paginated list of cities with optional search")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Cities retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<?> list(
+    public ResponseEntity<BaseResponse<Page<CityDto>>> list(
             @PageableDefault(size = 20) Pageable pageable,
             @Parameter(description = "Search query for city names")
             @RequestParam(required = false) String q,
@@ -94,13 +95,13 @@ public class CityController {
     }
 
     @GetMapping("/active")
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "List active cities by country", description = "Retrieves all active cities for the given country")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Active cities retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<?> listActive(
+    public ResponseEntity<BaseResponse<List<CityDto>>> listActive(
             @Parameter(description = "Country ID to filter cities", required = true)
             @RequestParam @Min(1) Integer countryId) {
         return ResponseEntity.ok(cityService.listActiveByCountry(countryId));
