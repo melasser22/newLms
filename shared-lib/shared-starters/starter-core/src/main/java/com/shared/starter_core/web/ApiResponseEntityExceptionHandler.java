@@ -182,14 +182,13 @@ public class ApiResponseEntityExceptionHandler extends ResponseEntityExceptionHa
         // tenant
         err.setTenantId(ContextManager.Tenant.get());
 
-        // correlation id (prefer MDC "correlationId", then "traceId", then headers)
+        // correlation id (prefer MDC "correlationId", then headers)
         String cid = firstNonBlank(
                 MDC.get(HeaderNames.CORRELATION_ID),
-                MDC.get(HeaderNames.TRACE_ID),
                 header(req, HeaderNames.CORRELATION_ID),
                 header(req, HeaderNames.REQUEST_ID)
         );
-        err.setTraceId(cid);
+        err.setCorrelationId(cid);
     }
 
     private String header(WebRequest req, String name) {

@@ -15,6 +15,7 @@ public class SetupServicesCatalog implements Serializable {
 
         // Services
 
+
 	public static final String GET_SYSTEM_PARAMETER_BY_MODULE_SERVICE = "/getSysParamsByModule";
 	public static final String GET_SYSTEM_PARAMETER_BY_NAME_SERVICE = "/getSystemParametersByNAME";
 	public static final String GET_CITY_LIST_SERVICE = "/getCityList";
