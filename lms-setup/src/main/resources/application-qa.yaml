@@ -1,0 +1,203 @@
+spring:
+  datasource:
+    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=setup}"
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: HikariPool-LMS
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000        # 30s
+      connection-timeout: 300000 # 300s
+      max-lifetime: 1800000      # 30m
+
+  jpa:
+    open-in-view: false
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: setup
+        hbm2ddl.create_namespaces: true
+        format_sql: true
+        jdbc.time_zone: UTC
+
+  flyway:
+    enabled: false
+    baseline-on-migrate: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    client-id: lms-setup-qa
+    consumer:
+      group-id: lms-backend-qa
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        max.poll.interval.ms: 300000
+        max.poll.records: 500
+    producer:
+      acks: all
+      retries: 3
+      batch-size: 16384
+      compression-type: gzip
+      properties:
+        linger.ms: 5
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus,beans,conditions,configprops,loggers,threaddump
+  endpoint:
+    health:
+      show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    display-request-duration: true
+    filter: true
+    operationsSorter: method
+    tagsSorter: alpha
+
+shared:
+  core:
+    correlation:
+      header-name: X-Correlation-ID
+      generate-if-missing: true
+      echo-response-header: true
+    tenant:
+      enabled: true
+      header-name: X-Tenant-Id
+      query-param: tenantId
+      default-policy: REQUIRED
+      echo-response-header: true
+    cors:
+      enabled: true
+      allowed-origins: http://localhost:3000
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: "*"
+  headers:
+    enabled: true
+    generate-if-missing: true
+    correlation:
+      header: X-Correlation-ID
+    request:
+      header: X-Request-ID
+    tenant:
+      header: X-Tenant-Id
+    user:
+      header: X-User-Id
+    mdc:
+      enabled: true
+    security:
+      enabled: true
+      hsts:
+        enabled: true
+        max-age: 31536000
+        include-subdomains: true
+      frame-options: SAMEORIGIN
+      content-type-options: nosniff
+      referrer-policy: no-referrer
+      xss-protection: "0"
+    propagation:
+      enabled: true
+      include:
+        - X-Correlation-ID
+        - X-Request-ID
+        - X-Tenant-Id
+        - X-User-Id
+  audit:
+    enabled: true
+    web:
+      enabled: true
+      include-headers: true
+      track-bodies: true
+    aop:
+      enabled: true
+    dispatcher:
+      async: true
+    retention:
+      enabled: true
+      days: 90
+    masking:
+      enabled: true
+      fields-by-key:
+        - password
+        - secret
+        - token
+        - ssn
+    sinks:
+      db:
+        enabled: true
+        schema: setup
+        table: audit_logs
+      kafka:
+        enabled: false
+      otlp:
+        enabled: false
+      outbox:
+        enabled: false
+  openapi:
+    enabled: true
+    title: "LMS - Setup Service API"
+    description: "Setup service endpoints for tenant/platform configuration."
+    version: "1.0.0"
+    servers:
+      - http://localhost:8080/core
+    group:
+      name: setup
+      packages-to-scan:
+        - com.lms.setup
+    jwt-security: false
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 2s
+    key-prefix: lms
+    default-ttl: 600s
+    reactive: false
+  crypto:
+    algorithm: AES256_GCM
+    in-memory:
+      activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
+      keys:
+        local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
+  security:
+    mode: hs256
+    hs256:
+      secret: ${JWT_SECRET:dev-secret}
+    resource-server:
+      enabled: true
+      permit-all:
+        - "/**"
+      disable-csrf: true
+      stateless: true
+    roles-claim: roles
+    tenant-claim: tenant
+    enable-role-check: false
+
+logging:
+  level:
+    root: ERROR
+    com.lms: ERROR
+    com.lms.audit.starter: ERROR
+    com.lms.audit.starter.core.dispatch: ERROR
+    com.lms.audit.starter.core.dispatch.sinks: ERROR
+    org.hibernate.tool.schema: ERROR
+    org.hibernate.SQL: ERROR
+    org.hibernate.orm.jdbc.bind: ERROR
+    org.springframework.cache: ERROR
+    org.springframework.cache.interceptor.CacheAspectSupport: ERROR
+debug: false
+
