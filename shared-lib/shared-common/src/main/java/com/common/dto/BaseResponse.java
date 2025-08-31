@@ -41,11 +41,13 @@ public class BaseResponse<T> {
     private Instant timestamp = Instant.now();
 
     /** Correlation identifier for tracking across services */
-    @Builder.Default
-    private String correlationId = CorrelationContextUtil.getCorrelationId();
+    private String correlationId;
 
     @JsonProperty("correlationId")
     public String getCorrelationId() {
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = CorrelationContextUtil.getCorrelationId();
+        }
         return correlationId;
     }
 

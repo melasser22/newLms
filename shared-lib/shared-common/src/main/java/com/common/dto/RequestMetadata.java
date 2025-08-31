@@ -1,5 +1,6 @@
 package com.common.dto;
 
+import com.common.context.CorrelationContextUtil;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,4 +41,11 @@ public class RequestMetadata {
     /** Timestamp when request was received */
     @Builder.Default
     private Instant requestTime = Instant.now();
+
+    public String getCorrelationId() {
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = CorrelationContextUtil.getCorrelationId();
+        }
+        return correlationId;
+    }
 }

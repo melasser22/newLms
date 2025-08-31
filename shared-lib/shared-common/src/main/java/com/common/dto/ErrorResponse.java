@@ -34,8 +34,7 @@ public class ErrorResponse {
     private List<String> details;
 
     /** Correlation ID (for logs/monitoring) */
-    @Builder.Default
-    private String correlationId = CorrelationContextUtil.getCorrelationId();
+    private String correlationId;
 
     /** Tenant ID (multi-tenant awareness) */
     private String tenantId;
@@ -46,6 +45,9 @@ public class ErrorResponse {
 
     @JsonProperty("correlationId")
     public String getCorrelationId() {
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = CorrelationContextUtil.getCorrelationId();
+        }
         return correlationId;
     }
 
