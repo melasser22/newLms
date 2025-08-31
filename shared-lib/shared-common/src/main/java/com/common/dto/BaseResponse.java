@@ -37,21 +37,19 @@ public class BaseResponse<T> {
 
     /** Timestamp of response */
     @Builder.Default
-    private Instant timestamp = Instant.now();
- /** Correlation identifier for tracking across services */
+    private Instant timestamp = Instant.now(); 
+  /** Correlation identifier for tracking across services */
+
     @Builder.Default
     private String correlationId = CorrelationContextUtil.getCorrelationId();
- /** Trace identifier for correlation across services */
-    @Builder.Default
-    private String traceId = TraceContextUtil.getTraceId();
 
-    /**
-     * Alias for {@link #traceId} to support clients expecting a correlationId field.
-     */
     @JsonProperty("correlationId")
     public String getCorrelationId() {
-        return traceId;
-    }  // ===== Static builders (nice usability) =====
+        return correlationId;
+    }
+
+    // ===== Static builders (nice usability) =====
+
     public static <T> BaseResponse<T> success(T data) {
         return BaseResponse.<T>builder()
                 .status(ApiStatus.SUCCESS)

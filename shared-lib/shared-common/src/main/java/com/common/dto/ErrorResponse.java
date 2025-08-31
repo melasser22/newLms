@@ -1,7 +1,7 @@
 package com.common.dto;
 import com.common.context.CorrelationContextUtil;
 
-import com.common.context.TraceContextUtil;
+import com.common.context.CorrelationContextUtil;
 import com.common.enums.StatusEnums.ApiStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -32,10 +32,12 @@ public class ErrorResponse {
     private String message;
 
     /** Optional detailed errors (e.g., field-level validation issues) */
-    private List<String> details; 
-     /** Trace/Correlation ID (for logs/monitoring) */
+    private List<String> details;
+
+    /** Correlation ID (for logs/monitoring) */
     @Builder.Default
-    private String traceId = TraceContextUtil.getTraceId();
+    private String correlationId = CorrelationContextUtil.getCorrelationId();
+
     /** Tenant ID (multi-tenant awareness) */
     private String tenantId;
 

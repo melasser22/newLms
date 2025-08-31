@@ -39,11 +39,20 @@ public final class CorrelationContextUtil {
         }
     }
 
-    /**
-     * @return the current correlation identifier from MDC or {@code null}
+    /** 
+    * Retrieve the current correlation identifier. If none exists in the MDC a new
+     * identifier is generated, stored and returned. This guarantees that callers
+     * always receive a non-null correlation id even if no filter initialized it.
+     *
+     * @return the existing or newly generated correlation identifier
      */
     public static String getCorrelationId() {
-        return MDC.get(CORRELATION_ID);
+        String cid = MDC.get(CORRELATION_ID);
+        if (cid == null || cid.isBlank()) {
+            cid = UUID.randomUUID().toString();
+            MDC.put(CORRELATION_ID, cid);
+        }
+        return cid;
     }
 
     /**
