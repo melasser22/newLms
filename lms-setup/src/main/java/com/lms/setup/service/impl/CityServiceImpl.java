@@ -13,7 +13,6 @@ import com.common.sort.SortUtils;
 import com.shared.audit.starter.api.AuditAction;
 import com.shared.audit.starter.api.DataClass;
 import com.shared.audit.starter.api.annotations.Audited;
-import com.common.exception.ResourceNotFoundException;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +35,8 @@ public class CityServiceImpl implements CityService {
         @Transactional
         @CacheEvict(cacheNames = {"cities", "cities:byCountry"}, allEntries = true)
         public BaseResponse<CityDto> add(CityDto request) {
-                Country country = countryRepo.findById(request.getCountryId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Country", String.valueOf(request.getCountryId())));
+		Country country = countryRepo.findById(request.getCountryId())
+				.orElseThrow(() -> new IllegalArgumentException("Country not found"));
 
 		City entity = mapper.toEntity(request);
 		entity.setCountry(country);
@@ -49,8 +48,7 @@ public class CityServiceImpl implements CityService {
         @Transactional
         @CacheEvict(cacheNames = {"cities", "cities:byCountry"}, allEntries = true)
         public BaseResponse<CityDto> update(Integer id, CityDto request) {
-                City city = cityRepo.findById(id)
-                                .orElseThrow(() -> new ResourceNotFoundException("City", String.valueOf(id)));
+		City city = cityRepo.findById(id).orElseThrow(() -> new IllegalArgumentException("City not found"));
 
 		// update mutable fields
 		city.setCityCd(request.getCityCd());
@@ -59,8 +57,8 @@ public class CityServiceImpl implements CityService {
 		city.setIsActive(request.getIsActive());
 
 		if (!city.getCountry().getCountryId().equals(request.getCountryId())) {
-                        Country country = countryRepo.findById(request.getCountryId())
-                                        .orElseThrow(() -> new ResourceNotFoundException("Country", String.valueOf(request.getCountryId())));
+			Country country = countryRepo.findById(request.getCountryId())
+					.orElseThrow(() -> new IllegalArgumentException("Country not found"));
 			city.setCountry(country);
 		}
 
@@ -80,28 +78,26 @@ public class CityServiceImpl implements CityService {
 	}
 
 	@Override
-        @Transactional(Transactional.TxType.SUPPORTS)
+        @Transactional
         @Cacheable(cacheNames = "cities", key = "#id")
         public BaseResponse<CityDto> get(Integer id) {
-                City city = cityRepo.findById(id)
-                                .orElseThrow(() -> new ResourceNotFoundException("City", String.valueOf(id)));
+                City city = cityRepo.findById(id).orElseThrow(() -> new IllegalArgumentException("City not found"));
                 return BaseResponse.success("OK", mapper.toDto(city));
         }
 
 	@Override
-        @Transactional(Transactional.TxType.SUPPORTS)
-        @Audited(action = AuditAction.READ, entity = "City", dataClass = DataClass.HEALTH, message = "List cities")
-        public BaseResponse<Page<CityDto>> list(Pageable pageable, String q, boolean all) {
+	@Transactional(Transactional.TxType.SUPPORTS)
+	@Audited(action = AuditAction.READ, entity = "City", dataClass = DataClass.HEALTH, message = "List cities")
+        public BaseResponse<?> list(Pageable pageable, String q, boolean all) {
                 Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
                                 "cityEnNm", "cityEnNm", "cityArNm", "cityCd");
-                final Pageable pg = (pageable == null || !pageable.isPaged()
-                                ? Pageable.unpaged()
+                final Pageable pg = (pageable == null ? Pageable.unpaged()
                                 : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
 
                 if (all) {
                         var spec = CitySpecifications.nameContains(q); // null => no filter
                         var entities = cityRepo.findAll(spec, sort);
-                        return BaseResponse.success("City list", new PageImpl<>(mapper.toDtoList(entities)));
+                        return BaseResponse.success("City list", mapper.toDtoList(entities));
                 }
 
                 var spec = Specification.where(CitySpecifications.isActive()).and(CitySpecifications.nameContains(q));

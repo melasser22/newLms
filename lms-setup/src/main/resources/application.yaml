@@ -19,5 +19,7 @@ server:
 shared:
   observability:
     application-name: lms-setup
+
+setup:
   security:
-    enable-role-check: true
+    public-access: false

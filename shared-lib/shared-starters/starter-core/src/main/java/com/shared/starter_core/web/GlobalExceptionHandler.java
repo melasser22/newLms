@@ -1,131 +1,150 @@
 package com.shared.starter_core.web;
 
-import com.common.dto.BaseResponse;
-import com.common.exception.BusinessException;
-import com.common.exception.BusinessRuleException;
-import com.common.exception.NotFoundException;
-import com.common.exception.ResourceNotFoundException;
-import com.common.exception.ValidationException;
-import jakarta.validation.ConstraintViolationException;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
 
-/**
- * Global exception handler producing {@link BaseResponse} payloads.
- */
-@Slf4j
+import com.common.context.ContextManager;
+import com.common.context.TraceContextUtil;
+import com.common.dto.ErrorResponse;
+import com.common.exception.BusinessRuleException;
+import com.common.exception.NotFoundException;
+import com.common.exception.SharedException;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<BaseResponse<?>> handleResourceNotFound(NotFoundException ex, WebRequest request) {
-        log.warn("Resource not found: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(BaseResponse.error("ERR_RESOURCE_NOT_FOUND", ex.getMessage()));
+    // ---- Helpers -----------------------------------------------------------
+
+    private String currentTraceId() {
+        // Prefer correlationId from MDC
+        String cid = trimToNull(MDC.get("correlationId"));
+        if (cid != null) return cid;
+
+        String tid = trimToNull(MDC.get("traceId"));
+        if (tid != null) return tid;
+
+        // Or from context holder
+        return trimToNull(TraceContextUtil.getTraceId());
     }
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<BaseResponse<?>> handleSpecificResourceNotFound(ResourceNotFoundException ex, WebRequest request) {
-        log.warn("Specific resource not found: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(BaseResponse.error("ERR_RESOURCE_NOT_FOUND", ex.getMessage()));
+    private String currentTenantId() {
+        String t = trimToNull(ContextManager.Tenant.get());
+        if (t != null) return t;
+
+        return trimToNull(MDC.get("tenantId"));
     }
 
-    @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<BaseResponse<?>> handleValidation(ValidationException ex, WebRequest request) {
-        log.warn("Validation error: {}", ex.getMessage());
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_VALIDATION", ex.getMessage()));
+    private static String trimToNull(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
     }
 
-    @ExceptionHandler(BusinessRuleException.class)
-    public ResponseEntity<BaseResponse<?>> handleBusinessRule(BusinessRuleException ex, WebRequest request) {
-        log.warn("Business rule violation: {}", ex.getMessage());
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_BUSINESS_RULE", ex.getMessage()));
+    private String resolveCode(Throwable ex, String fallback) {
+        if (ex instanceof BusinessRuleException bre) {
+            try {
+                var m = BusinessRuleException.class.getMethod("getErrorCode");
+                Object code = m.invoke(bre);
+                if (code != null) return code.toString();
+            } catch (Exception ignore) {}
+        }
+        if (ex instanceof NotFoundException nfe) {
+            try {
+                var m = NotFoundException.class.getMethod("getErrorCode");
+                Object code = m.invoke(nfe);
+                if (code != null) return code.toString();
+            } catch (Exception ignore) {}
+        }
+        if (ex instanceof SharedException le) {
+            try {
+                var m = SharedException.class.getMethod("getErrorCode");
+                Object code = m.invoke(le);
+                if (code != null) return code.toString();
+            } catch (Exception ignore) {}
+        }
+        return fallback;
     }
 
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<BaseResponse<?>> handleBusiness(BusinessException ex, WebRequest request) {
-        log.warn("Business logic violation: {}", ex.getMessage());
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_BUSINESS_LOGIC", ex.getMessage()));
+    private ResponseEntity<ErrorResponse> respond(HttpStatus status, String code, String message, List<String> errors) {
+        String traceId = currentTraceId();
+        String tenantId = currentTenantId();
+        ErrorResponse body = ErrorResponse.of(code, message, errors, traceId, tenantId);
+        return ResponseEntity.status(status).body(body);
     }
+
+    // ---- Validation --------------------------------------------------------
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<BaseResponse<Map<String, String>>> handleValidationErrors(
-            MethodArgumentNotValidException ex, WebRequest request) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+        List<String> errors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(f -> f.getField() + ": " + f.getDefaultMessage())
+                .collect(Collectors.toList());
 
-        log.warn("Validation errors: {}", errors);
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_VALIDATION", "Validation failed with " + errors.size() + " errors"));
-    }
-
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<BaseResponse<?>> handleConstraintViolation(ConstraintViolationException ex, WebRequest request) {
-        log.warn("Constraint violation: {}", ex.getMessage());
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_CONSTRAINT_VIOLATION", "Constraint violation: " + ex.getMessage()));
+        return respond(HttpStatus.BAD_REQUEST, "GLB-400", "Invalid request", errors);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<BaseResponse<?>> handleTypeMismatch(MethodArgumentTypeMismatchException ex, WebRequest request) {
-        log.warn("Type mismatch: {}", ex.getMessage());
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_TYPE_MISMATCH", "Invalid parameter type for: " + ex.getName()));
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String message = "Invalid parameter: " + ex.getName();
+        return respond(HttpStatus.BAD_REQUEST, "GLB-400", message, List.of(message));
     }
 
-    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
-    public ResponseEntity<BaseResponse<?>> handleMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex, WebRequest request) {
-        log.warn("Message not readable: {}", ex.getMessage());
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_INVALID_REQUEST", "Invalid request body"));
+    // ---- Not Found ---------------------------------------------------------
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(NotFoundException ex) {
+        String code = resolveCode(ex, "GLB-404");
+        String message = (ex.getMessage() != null && !ex.getMessage().isBlank())
+                ? ex.getMessage() : "Resource not found";
+        return respond(HttpStatus.NOT_FOUND, code, message, List.of(message));
     }
 
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<BaseResponse<?>> handleDataIntegrityViolation(DataIntegrityViolationException ex, WebRequest request) {
-        log.error("Data integrity violation: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(BaseResponse.error("ERR_DATA_CONFLICT", "Data conflict occurred"));
+    // ---- Business Rule -----------------------------------------------------
+
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity<ErrorResponse> handleBusiness(BusinessRuleException ex) {
+        String code = resolveCode(ex, "GLB-400");
+        String message = (ex.getMessage() != null && !ex.getMessage().isBlank())
+                ? ex.getMessage() : "Business rule violated";
+        return respond(HttpStatus.BAD_REQUEST, code, message, List.of(message));
     }
 
-    @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<BaseResponse<?>> handleNoResourceFound(NoResourceFoundException ex, WebRequest request) {
-        log.warn("No resource found: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(BaseResponse.error("ERR_RESOURCE_NOT_FOUND", ex.getMessage()));
+    // ---- Generic Shared Exception ---------------------------------------------
+
+    @ExceptionHandler(SharedException.class)
+    public ResponseEntity<ErrorResponse> handleShared(SharedException ex) {
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        try {
+            var m = SharedException.class.getMethod("getHttpStatus");
+            Object s = m.invoke(ex);
+            if (s instanceof HttpStatus http) status = http;
+        } catch (Exception ignore) {}
+
+        String code = resolveCode(ex, "GLB-500");
+        String message = (ex.getMessage() != null && !ex.getMessage().isBlank())
+                ? ex.getMessage() : "Unexpected server error";
+        return respond(status, code, message, List.of(message));
     }
 
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<BaseResponse<?>> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
-        log.warn("Access denied: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(BaseResponse.error("ERR_ACCESS_DENIED", "Access denied"));
+    // ---- Fallback ----------------------------------------------------------
+
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotAllowed(org.springframework.web.HttpRequestMethodNotSupportedException ex) {
+        return respond(HttpStatus.METHOD_NOT_ALLOWED, "GLB-405", "HTTP method not allowed", List.of("HTTP method not allowed"));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<BaseResponse<?>> handleGeneric(Exception ex, WebRequest request) {
-        log.error("Unexpected error occurred", ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(BaseResponse.error("ERR_INTERNAL", "An unexpected error occurred"));
+    public ResponseEntity<ErrorResponse> handleOther(Exception ex) {
+        return respond(HttpStatus.INTERNAL_SERVER_ERROR, "GLB-500", "Unexpected server error", List.of("Unexpected server error"));
     }
 }

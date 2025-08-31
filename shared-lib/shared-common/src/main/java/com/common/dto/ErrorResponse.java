@@ -1,7 +1,7 @@
 package com.common.dto;
 
-import com.common.context.TraceContextUtil;
 import com.common.enums.StatusEnums.ApiStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,8 +34,8 @@ public class ErrorResponse {
     private List<String> details;
 
     /** Trace/Correlation ID (for logs/monitoring) */
-    @Builder.Default
-    private String traceId = TraceContextUtil.getTraceId();
+    @JsonIgnore
+    private String traceId;
 
     /** Tenant ID (multi-tenant awareness) */
     private String tenantId;

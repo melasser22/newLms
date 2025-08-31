@@ -2,7 +2,6 @@ package com.lms.setup.controller;
 
 import com.common.dto.BaseResponse;
 import com.lms.setup.model.SystemParameter;
-import com.lms.setup.security.SetupAuthorized;
 import com.lms.setup.service.SystemParameterService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,10 +14,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,7 +37,7 @@ public class SystemParameterController {
     }
 
     @PostMapping
-    @SetupAuthorized
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a new system parameter", description = "Creates a new system parameter with the provided details")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameter created successfully",
@@ -52,7 +51,7 @@ public class SystemParameterController {
     }
 
     @PutMapping("/{paramId}")
-    @SetupAuthorized
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update an existing system parameter", description = "Updates the system parameter with the specified ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameter updated successfully"),
@@ -68,7 +67,7 @@ public class SystemParameterController {
     }
 
     @GetMapping("/{paramId}")
-    @SetupAuthorized
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get system parameter by ID", description = "Retrieves a system parameter by its ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameter found successfully"),
@@ -82,13 +81,13 @@ public class SystemParameterController {
     }
 
     @GetMapping
-    @SetupAuthorized
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "List system parameters", description = "Retrieves a paginated list of system parameters with optional filtering")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameters retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<BaseResponse<Page<SystemParameter>>> list(
+    public ResponseEntity<?> list(
             @PageableDefault(size = 20) Pageable pageable,
             @Parameter(description = "Group filter for parameters")
             @RequestParam(required = false) String group,
@@ -98,7 +97,7 @@ public class SystemParameterController {
     }
 
     @GetMapping("/by-key/{paramKey}")
-    @SetupAuthorized
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get system parameter by key", description = "Retrieves a system parameter by its key")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameter found successfully"),
@@ -112,7 +111,7 @@ public class SystemParameterController {
     }
 
     @PostMapping("/by-keys")
-    @SetupAuthorized
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get system parameters by keys", description = "Retrieves multiple system parameters by their keys")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameters retrieved successfully"),
