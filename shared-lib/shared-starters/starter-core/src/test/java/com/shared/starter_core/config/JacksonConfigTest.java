@@ -18,7 +18,10 @@ class JacksonConfigTest {
         ObjectMapper mapper = new JacksonConfig().objectMapper();
         Page<String> emptyPage = Page.<String>empty();
         BaseResponse<Page<String>> resp = BaseResponse.success("ok", emptyPage);
-        assertThatNoException().isThrownBy(() -> mapper.writeValueAsString(resp));
-        assertThat(mapper.writeValueAsString(resp)).doesNotContain("pageable");
+
+        assertThatNoException().isThrownBy(() -> {
+            String json = mapper.writeValueAsString(resp);
+            assertThat(json).doesNotContain("pageable");
+        });
     }
 }
