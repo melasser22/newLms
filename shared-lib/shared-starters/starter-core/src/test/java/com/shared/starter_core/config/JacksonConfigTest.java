@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import com.common.dto.BaseResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 
@@ -14,7 +15,7 @@ import org.springframework.data.domain.Page;
 class JacksonConfigTest {
 
     @Test
-    void serializingBaseResponseWithUnpagedPageDoesNotFail() {
+    void serializingBaseResponseWithUnpagedPageDoesNotFail() throws JsonProcessingException {
         ObjectMapper mapper = new JacksonConfig().objectMapper();
         Page<String> emptyPage = Page.<String>empty();
         BaseResponse<Page<String>> resp = BaseResponse.success("ok", emptyPage);
