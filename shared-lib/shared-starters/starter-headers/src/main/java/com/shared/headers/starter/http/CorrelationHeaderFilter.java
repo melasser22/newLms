@@ -31,10 +31,15 @@ public class CorrelationHeaderFilter implements Filter {
     String tenName = props.getTenant().getHeader();
     String userName = props.getUser().getHeader();
 
-    String correlationId = HeaderUtils.firstNonEmpty(req.getHeader(corrName));
+    // Prefer any correlation id already present in the logging context
+    String correlationId = MDC.get(HeaderNames.CORRELATION_ID);
     String requestId = HeaderUtils.firstNonEmpty(req.getHeader(reqName));
     String tenantId = HeaderUtils.firstNonEmpty(req.getHeader(tenName));
     String userId = HeaderUtils.firstNonEmpty(req.getHeader(userName));
+
+    if (correlationId == null) {
+      correlationId = HeaderUtils.firstNonEmpty(req.getHeader(corrName));
+    }
 
     if (correlationId == null && props.getCorrelation().isAutoGenerate()) {
       correlationId = HeaderUtils.uuid();
@@ -91,10 +96,11 @@ public class CorrelationHeaderFilter implements Filter {
     try {
       chain.doFilter(request, response);
     } finally {
-      // cleanup
-      ContextManager.clearHeaders();
+      // Do not clear correlation id here so downstream filters (e.g. audit) can access it
+      ContextManager.clearRequestId();
+      ContextManager.Tenant.clear();
+      ContextManager.clearUserId();
       if (props.getMdc().isEnabled()) {
-        MDC.remove("correlationId");
         MDC.remove("requestId");
         MDC.remove("tenantId");
         MDC.remove("userId");
