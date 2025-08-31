@@ -1,6 +1,6 @@
 package com.common.dto;
 
-import com.common.context.TraceContextUtil;
+import com.common.context.CorrelationContextUtil;
 import com.common.enums.StatusEnums.ApiStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
@@ -40,16 +40,13 @@ public class BaseResponse<T> {
     @Builder.Default
     private Instant timestamp = Instant.now();
 
-    /** Trace identifier for correlation across services */
+    /** Correlation identifier for tracking across services */
     @Builder.Default
-    private String traceId = TraceContextUtil.getTraceId();
+    private String correlationId = CorrelationContextUtil.getCorrelationId();
 
-    /**
-     * Alias for {@link #traceId} to support clients expecting a correlationId field.
-     */
     @JsonProperty("correlationId")
     public String getCorrelationId() {
-        return traceId;
+        return correlationId;
     }
 
     // ===== Static builders (nice usability) =====

@@ -6,7 +6,7 @@ import org.slf4j.MDC;
 import java.util.UUID;
 
 /**
- * Consolidated trace context utility. This class lives in the {@code com.common.context}
+ * Consolidated correlation context utility. This class lives in the {@code com.common.context}
  * package and should be used for putting and getting values from the SLF4J MDC.
  *
  * <p>It replaces the duplicate implementations previously found in
@@ -14,36 +14,36 @@ import java.util.UUID;
  * The old classes delegate to this implementation and are marked as deprecated to
  * preserve backward compatibility.</p>
  */
-public final class TraceContextUtil {
+public final class CorrelationContextUtil {
 
-    /** MDC key for the trace identifier. */
-    public static final String TRACE_ID = "traceId";
+    /** MDC key for the correlation identifier. */
+    public static final String CORRELATION_ID = "correlationId";
 
-    private TraceContextUtil() {
+    private CorrelationContextUtil() {
         // utility class
     }
 
     /**
-     * Initialize trace context. Generates a UUID if no traceId is provided.
+     * Initialize correlation context. Generates a UUID if no correlation id is provided.
      *
-     * @param traceId  trace identifier (optional)
-     * @param tenantId tenant identifier (optional)
+     * @param correlationId correlation identifier (optional)
+     * @param tenantId      tenant identifier (optional)
      */
-    public static void init(String traceId, String tenantId) {
-        if (traceId == null || traceId.isBlank()) {
-            traceId = UUID.randomUUID().toString();
+    public static void init(String correlationId, String tenantId) {
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = UUID.randomUUID().toString();
         }
-        MDC.put(TRACE_ID, traceId);
+        MDC.put(CORRELATION_ID, correlationId);
         if (tenantId != null && !tenantId.isBlank()) {
             MDC.put(HeaderNames.TENANT_ID, tenantId);
         }
     }
 
     /**
-     * @return the current trace identifier from MDC or {@code null}
+     * @return the current correlation identifier from MDC or {@code null}
      */
-    public static String getTraceId() {
-        return MDC.get(TRACE_ID);
+    public static String getCorrelationId() {
+        return MDC.get(CORRELATION_ID);
     }
 
     /**
@@ -54,10 +54,10 @@ public final class TraceContextUtil {
     }
 
     /**
-     * Clear trace and tenant identifiers from MDC.
+     * Clear correlation and tenant identifiers from MDC.
      */
     public static void clear() {
-        MDC.remove(TRACE_ID);
+        MDC.remove(CORRELATION_ID);
         MDC.remove(HeaderNames.TENANT_ID);
     }
 

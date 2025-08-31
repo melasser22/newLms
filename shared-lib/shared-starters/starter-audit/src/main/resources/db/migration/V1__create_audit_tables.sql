@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS setup.audit_logs (
   sensitivity      text,
   resource_path    text,
   resource_method  text,
-  trace_id         text,
+  correlation_id   text,
   span_id          text,
   message          text,
   payload          jsonb NOT NULL
