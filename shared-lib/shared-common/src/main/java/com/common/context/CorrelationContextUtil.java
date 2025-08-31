@@ -39,8 +39,8 @@ public final class CorrelationContextUtil {
         }
     }
 
-    /**
-     * Retrieve the current correlation identifier. If none exists in the MDC a new
+    /** 
+    * Retrieve the current correlation identifier. If none exists in the MDC a new
      * identifier is generated, stored and returned. This guarantees that callers
      * always receive a non-null correlation id even if no filter initialized it.
      *
