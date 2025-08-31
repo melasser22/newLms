@@ -184,6 +184,7 @@ shared:
       stateless: true
     roles-claim: roles
     tenant-claim: tenant
+    enable-role-check: false
 
 logging:
   level:
@@ -198,3 +199,4 @@ logging:
     org.springframework.cache: ERROR
     org.springframework.cache.interceptor.CacheAspectSupport: ERROR
 debug: false
+

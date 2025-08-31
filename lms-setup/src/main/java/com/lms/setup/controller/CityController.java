@@ -34,7 +34,7 @@ public class CityController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
     @Operation(summary = "Create a new city", description = "Creates a new city with the provided details")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "City created successfully",
@@ -48,7 +48,7 @@ public class CityController {
     }
 
     @PutMapping("/{cityId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
     @Operation(summary = "Update an existing city", description = "Updates the city with the specified ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "City updated successfully"),
@@ -64,7 +64,7 @@ public class CityController {
     }
 
     @GetMapping("/{cityId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
     @Operation(summary = "Get city by ID", description = "Retrieves a city by its ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "City found successfully"),
@@ -78,7 +78,7 @@ public class CityController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
     @Operation(summary = "List cities", description = "Retrieves a paginated list of cities with optional search")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Cities retrieved successfully"),
@@ -94,7 +94,7 @@ public class CityController {
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
     @Operation(summary = "List active cities by country", description = "Retrieves all active cities for the given country")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Active cities retrieved successfully"),
