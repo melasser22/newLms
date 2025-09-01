@@ -33,6 +33,13 @@ public class CityServiceImpl implements CityService {
         private final CityMapper mapper;
         private final CacheManager cacheManager;
 
+        private void evictCache(String cacheName, Object key) {
+                var cache = cacheManager.getCache(cacheName);
+                if (cache != null) {
+                        cache.evict(key);
+                }
+        }
+
 	@Override
         @Transactional
         public BaseResponse<CityDto> add(CityDto request) {
@@ -42,7 +49,7 @@ public class CityServiceImpl implements CityService {
                 City entity = mapper.toEntity(request);
                 entity.setCountry(country);
                 City saved = cityRepo.save(entity);
-                cacheManager.getCache("cities:byCountry").evict(request.getCountryId());
+                evictCache("cities:byCountry", request.getCountryId());
                 return BaseResponse.success("City created", mapper.toDto(saved));
         }
 
@@ -65,9 +72,9 @@ public class CityServiceImpl implements CityService {
                 }
 
                 City saved = cityRepo.save(city);
-                cacheManager.getCache("cities").evict(id);
-                cacheManager.getCache("cities:byCountry").evict(oldCountryId);
-                cacheManager.getCache("cities:byCountry").evict(request.getCountryId());
+                evictCache("cities", id);
+                evictCache("cities:byCountry", oldCountryId);
+                evictCache("cities:byCountry", request.getCountryId());
                 return BaseResponse.success("City updated", mapper.toDto(saved));
         }
 
@@ -81,8 +88,8 @@ public class CityServiceImpl implements CityService {
                 }
                 Integer countryId = city.getCountry().getCountryId();
                 cityRepo.delete(city);
-                cacheManager.getCache("cities").evict(id);
-                cacheManager.getCache("cities:byCountry").evict(countryId);
+                evictCache("cities", id);
+                evictCache("cities:byCountry", countryId);
                 return BaseResponse.success("City deleted", null);
         }
 
