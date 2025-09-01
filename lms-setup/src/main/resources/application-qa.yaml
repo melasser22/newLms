@@ -42,6 +42,11 @@ spring:
       properties:
         linger.ms: 5
 
+  data:
+    redis:
+      repositories:
+        enabled: false
+
 management:
   endpoints:
     web:
