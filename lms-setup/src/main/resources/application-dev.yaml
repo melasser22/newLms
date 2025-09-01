@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=setup}"
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
       pool-name: HikariPool-LMS
@@ -24,9 +24,8 @@ spring:
         format_sql: true
         jdbc.time_zone: UTC
 
-
   flyway:
-    enabled: false
+    enabled: true
     baseline-on-migrate: true
 
   kafka:
@@ -185,20 +184,20 @@ shared:
     in-memory:
       activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
       keys:
-        local-dev-key: ${CRYPTO_LOCAL_DEV_KEY}
-    security:
-      mode: hs256
-      jwt:
-        secret: ${JWT_SECRET}
-        token-period: 15m
-      hs256:
-        secret: ${JWT_SECRET}
-      resource-server:
-        enabled: true
-        permit-all:
-          - "/actuator/health"
-        disable-csrf: false
-      stateless: true
+        local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
+  security:
+    mode: hs256
+    jwt:
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+      token-period: 15m
+    hs256:
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+    resource-server:
+      enabled: true
+      permit-all:
+        - "/**"
+      disable-csrf: false
+    stateless: true
     roles-claim: roles
     tenant-claim: tenant
     enable-role-check: false
@@ -215,5 +214,5 @@ logging:
     org.hibernate.orm.jdbc.bind: ERROR
     org.springframework.cache: ERROR
     org.springframework.cache.interceptor.CacheAspectSupport: ERROR
-debug: false
 
+debug: true
