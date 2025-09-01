@@ -4,6 +4,8 @@ import com.common.dto.BaseResponse;
 import com.lms.setup.model.Country;
 import com.lms.setup.security.SetupAuthorized;
 import com.lms.setup.service.CountryService;
+import com.shared.starter_core.tenant.RequireTenant;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -83,6 +85,7 @@ public class CountryController {
     }
 
     @GetMapping
+    @RequireTenant
     @SetupAuthorized
     @Operation(summary = "List countries", description = "Retrieves a paginated list of countries with optional search")
     @ApiResponses(value = {

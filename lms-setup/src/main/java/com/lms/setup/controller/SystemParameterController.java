@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/setup/system-parameters")
+@RequestMapping("/setup/systemParameters")
 @Validated
 @Tag(name = "System Parameter Management", description = "APIs for managing system parameters")
 public class SystemParameterController {

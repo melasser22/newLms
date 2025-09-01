@@ -37,6 +37,11 @@
 			<artifactId>spring-boot-actuator</artifactId>
 			<optional>true</optional>
 		</dependency>
+		
+		<dependency>
+  <groupId>org.hibernate.validator</groupId>
+  <artifactId>hibernate-validator</artifactId>
+</dependency>
 
 		<!-- Kafka (optional; only if CryptoAuditLoggerKafka is activated) -->
 		<dependency>
@@ -45,20 +50,20 @@
 			<optional>true</optional>
 		</dependency>
 
-                <!-- Depend on core shared utilities -->
+		<!-- Depend on core shared utilities -->
                 <dependency>
                         <groupId>com.lms</groupId>
                         <artifactId>shared-common</artifactId>
                 </dependency>
 
-                <!-- Jakarta Bean Validation annotations used by JwtTokenProperties -->
+		<!-- Jakarta Bean Validation annotations used by JwtTokenProperties -->
                 <dependency>
                         <groupId>jakarta.validation</groupId>
                         <artifactId>jakarta.validation-api</artifactId>
                         <optional>true</optional>
                 </dependency>
 
-                <!-- JWT support -->
+		<!-- JWT support -->
                 <dependency>
                         <groupId>io.jsonwebtoken</groupId>
                         <artifactId>jjwt-api</artifactId>
@@ -74,7 +79,7 @@
                         <scope>runtime</scope>
                 </dependency>
 
-                <!-- Testing: JUnit 5 -->
+		<!-- Testing: JUnit 5 -->
                 <dependency>
                         <groupId>org.junit.jupiter</groupId>
                         <artifactId>junit-jupiter</artifactId>

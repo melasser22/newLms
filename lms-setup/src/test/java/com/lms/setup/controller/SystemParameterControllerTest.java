@@ -36,7 +36,7 @@ class SystemParameterControllerTest {
                 .when(systemParameterService)
                 .list(any(Pageable.class), nullable(String.class), nullable(Boolean.class));
 
-        mockMvc.perform(get("/setup/system-parameters").accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/setup/systemParameters").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.message").value("ok"));
