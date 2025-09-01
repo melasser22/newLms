@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.MDC;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.common.context.TenantContext;
 
 /**
  * Servlet filter that populates {@link TenantContext} for each request.
@@ -26,7 +27,7 @@ public class TenantFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         Optional<UUID> tenantId = tenantResolver.resolveTenant(request);
         tenantId.ifPresent(id -> {
-            TenantContext.setTenantId(id);
+            TenantContext.set(id);
             MDC.put("tenantId", id.toString());
         });
         try {

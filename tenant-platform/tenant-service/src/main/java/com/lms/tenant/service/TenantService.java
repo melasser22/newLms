@@ -1,6 +1,6 @@
 package com.lms.tenant.service;
 
-import com.lms.tenant.config.TenantContext;
+import com.common.context.TenantContext;
 import com.lms.tenant.persistence.entity.Tenant;
 import com.lms.tenant.persistence.entity.TenantIntegrationKey;
 import com.lms.tenant.persistence.entity.enums.KeyStatus;
@@ -34,7 +34,7 @@ public class TenantService {
         tenantRepository.save(tenant);
 
         // create default integration key respecting RLS
-        TenantContext.setTenantId(tenant.getId());
+        TenantContext.set(tenant.getId());
         try {
             TenantIntegrationKey key = new TenantIntegrationKey();
             key.setId(UUID.randomUUID());

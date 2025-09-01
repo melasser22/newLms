@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import javax.sql.DataSource;
 import org.springframework.jdbc.datasource.DelegatingDataSource;
+import com.common.context.TenantContext;
 
 /**
  * Wraps {@link DataSource} connections to apply the current tenant using a PostgreSQL GUC variable.
@@ -33,7 +34,7 @@ public class TenantConnectionInterceptor extends DelegatingDataSource {
         if (connection == null) {
             return;
         }
-        var tenantId = TenantContext.getTenantId();
+        var tenantId = TenantContext.get();
         if (tenantId.isPresent()) {
             try (Statement statement = connection.createStatement()) {
                 statement.execute("SET LOCAL app.current_tenant = '" + tenantId.get() + "'");
