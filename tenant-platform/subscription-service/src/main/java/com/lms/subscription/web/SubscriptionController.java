@@ -2,12 +2,14 @@ package com.lms.subscription.web;
 
 import com.lms.subscription.core.SubscriptionService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/tenants")
+@Validated
 public class SubscriptionController {
 
     private final SubscriptionService service;

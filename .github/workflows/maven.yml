@@ -1,0 +1,21 @@
+name: Maven Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Build tenant platform
+        run: mvn -B -DskipTests=false verify -f tenant-platform/pom.xml
+      - name: Build setup service
+        run: mvn -B -DskipTests=false verify -f lms-setup/pom.xml

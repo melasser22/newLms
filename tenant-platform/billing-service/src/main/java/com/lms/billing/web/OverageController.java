@@ -2,6 +2,7 @@ package com.lms.billing.web;
 
 import com.lms.billing.core.BillingService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -10,6 +11,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/tenants/{tenantId}/overages")
+@Validated
 public class OverageController {
 
     private final BillingService service;
