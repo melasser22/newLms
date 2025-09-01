@@ -26,23 +26,29 @@ public class PolicyService {
         this.featurePolicy = featurePolicy;
         this.overagePort = overagePort;
     }
-
-    public UUID consumeOrOverage(UUID tenantId, String tierId, String feature, long delta) {
+    public PolicyResult consumeOrOverage(UUID tenantId, String feature, long totalUsage) {
         var sub = subscriptionQuery.loadActive(tenantId);
-        var eff = featurePolicy.effective(tierId, tenantId, feature);
+        var eff = featurePolicy.effective(sub.tierId(), tenantId, feature);
 
-        if (!eff.enabled()) return null;
-
-        long limit = eff.limit() == null ? Long.MAX_VALUE : eff.limit();
-        if (delta <= limit) return null;
-
-        if (!tenantSettings.isOverageEnabled(tenantId) || !eff.allowOverage()) {
-            return null;
+        if (!eff.enabled()) {
+            return new PolicyResult(Long.MAX_VALUE, null);
         }
 
-        long exceeded = delta - limit;
+        long limit = eff.limit() == null ? Long.MAX_VALUE : eff.limit();
+        if (totalUsage <= limit) {
+            return new PolicyResult(limit, null);
+        }
+
+        if (!tenantSettings.isOverageEnabled(tenantId) || !eff.allowOverage()) {
+            return new PolicyResult(limit, null);
+        }
+
+        long exceeded = totalUsage - limit;
         long price = eff.overageUnitPriceMinor() == null ? 0 : eff.overageUnitPriceMinor();
-        return overagePort.recordOverage(tenantId, sub.subscriptionId(), feature, exceeded, price,
+        var overageId = overagePort.recordOverage(tenantId, sub.subscriptionId(), feature, exceeded, price,
                 eff.overageCurrency(), Instant.now(), Instant.now(), null);
+        return new PolicyResult(limit, overageId);
     }
+
+    public record PolicyResult(long limit, UUID overageId) {}
 }
