@@ -1,5 +1,6 @@
 package com.common.dto;
 
+import com.common.context.ContextManager;
 import com.common.enums.StatusEnums.ApiStatus;
 import org.junit.jupiter.api.Test;
 
@@ -68,5 +69,13 @@ class BaseResponseTest {
 
         assertNull(mapped.getData());
         assertEquals(original.getCode(), mapped.getCode());
+    }
+
+    @Test
+    void tenantIdDefaultsFromContext() {
+        try (ContextManager.Tenant.Scope ignore = ContextManager.Tenant.openScope("tenantA")) {
+            BaseResponse<Void> r = new BaseResponse<>();
+            assertEquals("tenantA", r.getTenantId());
+        }
     }
 }

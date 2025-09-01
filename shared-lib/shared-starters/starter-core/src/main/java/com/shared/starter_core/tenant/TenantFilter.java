@@ -35,18 +35,16 @@ public class TenantFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws ServletException, IOException {
-
-        try {
-            String tenant = resolver.resolve(req);
-            if (tenant != null) {
-                ContextManager.Tenant.set(tenant);
-                if (cfg.isEchoResponseHeader()) {
-                    res.setHeader(cfg.getHeaderName(), tenant);
-                }
+        String tenant = resolver.resolve(req);
+        if (tenant != null) {
+            if (cfg.isEchoResponseHeader()) {
+                res.setHeader(cfg.getHeaderName(), tenant);
             }
+            try (ContextManager.Tenant.Scope ignored = ContextManager.Tenant.openScope(tenant)) {
+                chain.doFilter(req, res);
+            }
+        } else {
             chain.doFilter(req, res);
-        } finally {
-        	ContextManager.Tenant.clear();
         }
     }
 }
