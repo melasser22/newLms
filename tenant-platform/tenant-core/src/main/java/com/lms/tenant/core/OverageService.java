@@ -1,1 +1,28 @@
-package com.lms.tenant.core; import com.lms.tenant.core.dto.*; import com.lms.tenant.persistence.entity.*; import com.lms.tenant.persistence.repo.*; import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate; import org.springframework.stereotype.Service; import org.springframework.transaction.annotation.Transactional; import java.time.Instant; import java.util.Map; import java.util.UUID; @Service public class OverageService{ private final TenantOverageRepository repo; private final NamedParameterJdbcTemplate jdbc; public OverageService(TenantOverageRepository repo, NamedParameterJdbcTemplate jdbc){this.repo=repo;this.jdbc=jdbc;} @Transactional public OverageResponse record(UUID tenantId, UUID subscriptionId, RecordOverageRequest req){ Boolean enabled = jdbc.queryForObject("select true", Map.of(), Boolean.class); if(Boolean.FALSE.equals(enabled)) throw new IllegalStateException("Overage disabled for tenant"); TenantOverage o=new TenantOverage(); return new OverageResponse(UUID.randomUUID(), tenantId, req.featureKey(), req.quantity(), req.unitPriceMinor()==null?0L:req.unitPriceMinor(), req.currency()==null?"USD":req.currency(), req.occurredAt()==null?Instant.now():req.occurredAt(), req.periodStart(), req.periodEnd(), OverageStatus.RECORDED.name()); } }
+package com.lms.tenant.core;
+
+import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.util.UUID;
+
+@Service
+public class OverageService {
+    private final OveragePort overagePort;
+
+    public OverageService(OveragePort overagePort) {
+        this.overagePort = overagePort;
+    }
+
+    public UUID record(UUID tenantId,
+                       UUID subscriptionId,
+                       String featureKey,
+                       long quantity,
+                       long unitPriceMinor,
+                       String currency,
+                       Instant periodStart,
+                       Instant periodEnd,
+                       String idempotencyKey) {
+        return overagePort.recordOverage(tenantId, subscriptionId, featureKey, quantity,
+                unitPriceMinor, currency, periodStart, periodEnd, idempotencyKey);
+    }
+}
