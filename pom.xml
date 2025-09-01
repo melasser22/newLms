@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.2</version> <!-- Using a recent stable version as 3.5.2 is not yet released -->
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <groupId>com.lms.platform</groupId>
+    <artifactId>lms-platform</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>lms-platform</name>
+    <description>LMS Platform Mono-Repo</description>
+
+    <properties>
+        <java.version>21</java.version>
+        <spring-boot.version>3.3.2</spring-boot.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Shared Library versions (hypothetical) -->
+        <shared-lib.version>1.0.0</shared-lib.version>
+        <springdoc-openapi.version>2.5.0</springdoc-openapi.version>
+        <testcontainers.version>1.19.8</testcontainers.version>
+    </properties>
+
+    <modules>
+        <module>tenant-service</module>
+        <module>subscription-service</module>
+        <module>catalog-service</module>
+        <module>billing-service</module>
+        <module>policy-engine</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Hypothetical Shared Library BOM -->
+            <!--
+            <dependency>
+                <groupId>com.shared</groupId>
+                <artifactId>shared-bom</artifactId>
+                <version>${shared-lib.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            -->
+
+            <!-- Testcontainers BOM -->
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- API Documentation -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc-openapi.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+</project>
