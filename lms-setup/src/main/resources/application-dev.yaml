@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=setup}"
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       pool-name: HikariPool-LMS
@@ -180,19 +180,19 @@ shared:
     in-memory:
       activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
       keys:
-        local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
+        local-dev-key: ${CRYPTO_LOCAL_DEV_KEY}
     security:
       mode: hs256
       jwt:
-        secret: ${JWT_SECRET:dev-secret}
+        secret: ${JWT_SECRET}
         token-period: 15m
       hs256:
-        secret: ${JWT_SECRET:dev-secret}
+        secret: ${JWT_SECRET}
       resource-server:
         enabled: true
         permit-all:
-          - "/**"
-        disable-csrf: true
+          - "/actuator/health"
+        disable-csrf: false
       stateless: true
     roles-claim: roles
     tenant-claim: tenant

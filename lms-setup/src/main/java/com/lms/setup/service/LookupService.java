@@ -14,7 +14,9 @@ public interface LookupService {
     BaseResponse<Lookup> add(Lookup request);
 
     BaseResponse<Lookup> update(Integer lookupItemId, Lookup request);
-    
-    BaseResponse<List<Lookup>> getAllLookups();
+
+    default BaseResponse<List<Lookup>> getAllLookups() {
+        return getAll();
+    }
 
 }

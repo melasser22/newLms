@@ -44,6 +44,9 @@ public final class JsonUtils {
      * @throws RuntimeException if deserialization fails
      */
     public static <T> T fromJson(String json, Class<T> clazz) throws JsonSerializationException {
+        if (json == null) {
+            throw new IllegalArgumentException("json must not be null");
+        }
         try {
             return mapper.readValue(json, clazz);
         } catch (JsonProcessingException e) {
@@ -59,6 +62,9 @@ public final class JsonUtils {
      * {});
      */
     public static <T> T fromJson(String json, com.fasterxml.jackson.core.type.TypeReference<T> typeRef) throws JsonSerializationException {
+        if (json == null) {
+            throw new IllegalArgumentException("json must not be null");
+        }
         try {
             return mapper.readValue(json, typeRef);
         } catch (JsonProcessingException e) {
@@ -70,6 +76,6 @@ public final class JsonUtils {
      * Access to the underlying ObjectMapper for advanced use cases.
      */
     public static ObjectMapper mapper() {
-        return mapper;
+        return mapper.copy();
     }
 }
