@@ -30,6 +30,9 @@ public class JwtTokenService {
      * @return configured service
      */
     public static JwtTokenService withSecret(String secret, Duration defaultTtl) {
+        if (secret == null || secret.length() < 32) {
+            throw new IllegalArgumentException("secret must be at least 32 characters");
+        }
         SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         return new JwtTokenService(key, defaultTtl);
     }

@@ -46,7 +46,7 @@ public class LookupServiceImpl implements LookupService {
             return BaseResponse.success("Fetched all lookups", getAllRaw());
         } catch (Exception ex) {
             LOGGER.error("Exception while retrieving lookups", ex);
-            return BaseResponse.error("ERR_LOOKUP_ALL", ex.getMessage());
+            return BaseResponse.error("ERR_LOOKUP_ALL", "Failed to fetch lookups");
         }
     }
 
@@ -65,7 +65,7 @@ public class LookupServiceImpl implements LookupService {
             return BaseResponse.success("Fetched lookups by group", getByGroupRaw(groupCode));
         } catch (Exception ex) {
             LOGGER.error("Exception while retrieving lookups by group", ex);
-            return BaseResponse.error("ERR_LOOKUP_GROUP", ex.getMessage());
+            return BaseResponse.error("ERR_LOOKUP_GROUP", "Failed to fetch lookups by group");
         }
     }
 
@@ -87,7 +87,7 @@ public class LookupServiceImpl implements LookupService {
             return BaseResponse.success("Lookup created", saved);
         } catch (Exception ex) {
             LOGGER.error("Add lookup failed", ex);
-            return BaseResponse.error("ERR_LOOKUP_ADD", ex.getMessage());
+            return BaseResponse.error("ERR_LOOKUP_ADD", "Failed to create lookup");
         }
     }
 
@@ -114,15 +114,12 @@ public class LookupServiceImpl implements LookupService {
             return BaseResponse.success("Lookup updated", saved);
         } catch (Exception ex) {
             LOGGER.error("Update lookup failed", ex);
-            return BaseResponse.error("ERR_LOOKUP_UPDATE", ex.getMessage());
+            return BaseResponse.error("ERR_LOOKUP_UPDATE", "Failed to update lookup");
         }
     }
     
     @Override
     public BaseResponse<List<Lookup>> getAllLookups() {
-        List<Lookup> all = lookupRepository.findAll();
-        BaseResponse<List<Lookup>> resp = new BaseResponse<>();
-        resp.setData(all);
-        return resp;
+        return getAll();
     }
 }
