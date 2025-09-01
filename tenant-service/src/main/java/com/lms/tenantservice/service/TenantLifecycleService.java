@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -35,5 +36,14 @@ public class TenantLifecycleService {
                 .orElseThrow(() -> new EntityNotFoundException("Tenant not found"));
         tenant.setStatus(status);
         return tenantRepository.save(tenant);
+    }
+
+    public Tenant getTenant(UUID id) {
+        return tenantRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Tenant not found"));
+    }
+
+    public List<Tenant> listTenants() {
+        return tenantRepository.findAll();
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -23,6 +24,16 @@ public class TenantController {
     public ResponseEntity<Tenant> createTenant(@RequestBody @Valid CreateTenantRequest request) {
         Tenant created = tenantService.createTenant(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Tenant>> listTenants() {
+        return ResponseEntity.ok(tenantService.listTenants());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Tenant> getTenant(@PathVariable UUID id) {
+        return ResponseEntity.ok(tenantService.getTenant(id));
     }
 
     @PutMapping("/{id}/status/{status}")
