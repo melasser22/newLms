@@ -28,7 +28,7 @@ public class KafkaProducerConfig {
         JsonSerializer.ADD_TYPE_INFO_HEADERS, false
     );
     DefaultKafkaProducerFactory<String,Object> pf = new DefaultKafkaProducerFactory<>(cfg);
-    pf.addPostProcessor(rec -> {
+    pf.addRecordPostProcessor(rec -> {
       String cid = ContextManager.getCorrelationId();
       if (cid != null) {
         rec.headers().add(HeaderNames.CORRELATION_ID, cid.getBytes(java.nio.charset.StandardCharsets.UTF_8));

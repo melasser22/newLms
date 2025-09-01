@@ -72,7 +72,7 @@ public class KafkaConsumerConfig {
         var errorHandler = new DefaultErrorHandler(recoverer, backoff);
         factory.setCommonErrorHandler(errorHandler);
 
-        factory.setRecordInterceptor(record -> {
+        factory.setRecordInterceptor((record, consumer) -> {
             Headers headers = record.headers();
             var header = headers.lastHeader(HeaderNames.CORRELATION_ID);
             if (header != null) {
