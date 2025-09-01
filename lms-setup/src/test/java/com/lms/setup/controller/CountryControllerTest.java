@@ -3,6 +3,7 @@ package com.lms.setup.controller;
 import com.common.dto.BaseResponse;
 import com.lms.setup.TestBase;
 import com.lms.setup.model.Country;
+import com.lms.setup.dto.CountryDto;
 import com.lms.setup.service.CountryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -33,38 +34,40 @@ class CountryControllerTest extends TestBase {
     @WithMockUser(roles = "ADMIN")
     void add_shouldCreateCountry_whenValidRequest() throws Exception {
         // Given
+        CountryDto request = createTestCountryDto();
         Country country = createTestCountry();
         BaseResponse<Country> response = BaseResponse.success("Country created", country);
-        when(countryService.add(any(Country.class))).thenReturn(response);
+        when(countryService.add(any(CountryDto.class))).thenReturn(response);
 
         // When & Then
-        mockMvc.perform(postRequest("/countries", country))
+        mockMvc.perform(postRequest("/countries", request))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.message").value("Country created"))
                 .andExpect(jsonPath("$.data.countryCd").value("US"));
 
-        verify(countryService).add(any(Country.class));
+        verify(countryService).add(any(CountryDto.class));
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void update_shouldUpdateCountry_whenValidRequest() throws Exception {
         // Given
+        CountryDto request = createTestCountryDto();
         Country country = createTestCountry();
         country.setCountryId(1);
         BaseResponse<Country> response = BaseResponse.success("Country updated", country);
-        when(countryService.update(eq(1), any(Country.class))).thenReturn(response);
+        when(countryService.update(eq(1), any(CountryDto.class))).thenReturn(response);
 
         // When & Then
-        mockMvc.perform(putRequest("/countries/1", country))
+        mockMvc.perform(putRequest("/countries/1", request))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.message").value("Country updated"));
 
-        verify(countryService).update(eq(1), any(Country.class));
+        verify(countryService).update(eq(1), any(CountryDto.class));
     }
 
     @Test
@@ -145,7 +148,7 @@ class CountryControllerTest extends TestBase {
     @WithMockUser(roles = "USER")
     void add_shouldReturn403_whenUserNotAdmin() throws Exception {
         // When & Then
-        mockMvc.perform(postRequest("/countries", createTestCountry()))
+        mockMvc.perform(postRequest("/countries", createTestCountryDto()))
                 .andExpect(status().isForbidden());
     }
 
@@ -153,7 +156,7 @@ class CountryControllerTest extends TestBase {
     @WithMockUser(roles = "USER")
     void update_shouldReturn403_whenUserNotAdmin() throws Exception {
         // When & Then
-        mockMvc.perform(putRequest("/countries/1", createTestCountry()))
+        mockMvc.perform(putRequest("/countries/1", createTestCountryDto()))
                 .andExpect(status().isForbidden());
     }
 }

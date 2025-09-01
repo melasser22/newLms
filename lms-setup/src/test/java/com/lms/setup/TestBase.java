@@ -7,6 +7,7 @@ import com.lms.setup.model.City;
 import com.lms.setup.model.Lookup;
 import com.lms.setup.model.Resource;
 import com.lms.setup.model.SystemParameter;
+import com.lms.setup.dto.CountryDto;
 import com.lms.testsupport.IntegrationTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,20 @@ public abstract class TestBase extends IntegrationTestSupport {
         country.setEnDescription("United States of America");
         country.setArDescription("الولايات المتحدة الأمريكية");
         return country;
+    }
+
+    protected CountryDto createTestCountryDto() {
+        CountryDto dto = new CountryDto();
+        dto.setCountryCd("US");
+        dto.setCountryEnNm("United States");
+        dto.setCountryArNm("الولايات المتحدة");
+        dto.setDialingCode("+1");
+        dto.setNationalityEn("American");
+        dto.setNationalityAr("أمريكي");
+        dto.setIsActive(true);
+        dto.setEnDescription("United States of America");
+        dto.setArDescription("الولايات المتحدة الأمريكية");
+        return dto;
     }
 
     protected City createTestCity() {
