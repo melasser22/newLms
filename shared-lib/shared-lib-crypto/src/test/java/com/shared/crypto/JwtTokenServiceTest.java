@@ -16,8 +16,9 @@ class JwtTokenServiceTest {
 
     @Test
     void createTokenIncludesTenantAndRoles() {
-        SecretKey key = Keys.hmacShaKeyFor("01234567890123456789012345678901".getBytes(StandardCharsets.UTF_8));
-        JwtTokenService service = new JwtTokenService(key);
+        String secret = "01234567890123456789012345678901";
+        SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        JwtTokenService service = JwtTokenService.withSecret(secret);
         Map<String, Object> claims = Map.of("custom", "value");
         List<String> roles = List.of("admin", "user");
         String token = service.createToken("user", "tenant1", roles, claims, Duration.ofMinutes(5));
