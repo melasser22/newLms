@@ -24,6 +24,12 @@ public class Tenant {
     @Column(nullable = false)
     private TenantStatus status;
 
+    @Column(name = "tenant_slug", nullable = false, unique = true)
+    private String slug;
+
+    @Column(nullable = false)
+    private String name;
+
     @Column(name = "overage_enabled", nullable = false)
     private boolean overageEnabled = false;
 
@@ -41,6 +47,22 @@ public class Tenant {
 
     public void setStatus(TenantStatus status) {
         this.status = status;
+    }
+
+    public String getSlug() {
+        return slug;
+    }
+
+    public void setSlug(String slug) {
+        this.slug = slug;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public boolean isOverageEnabled() {

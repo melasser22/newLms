@@ -1,4 +1,4 @@
-package com.lms.tenant.core;
+package com.lms.tenant.service;
 
 import java.util.UUID;
 

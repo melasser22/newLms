@@ -3,11 +3,6 @@ spring:
     url: jdbc:postgresql://${POSTGRES_HOST:postgres}:5432/lms
     username: ${POSTGRES_USER:app_user}
     password: ${POSTGRES_PASSWORD:postgres}
-  redis:
-    host: ${REDIS_HOST:redis}
-    port: 6379
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
   flyway:
     locations: classpath:db/migration
   jpa:
