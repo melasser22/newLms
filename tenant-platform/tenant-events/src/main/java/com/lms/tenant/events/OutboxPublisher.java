@@ -1,0 +1,1 @@
+package com.acme.tenant.events; import org.springframework.scheduling.annotation.Scheduled; import org.springframework.stereotype.Component; @Component public class OutboxPublisher{ @Scheduled(fixedDelayString="PT1S") public void publish(){} }

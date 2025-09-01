@@ -1,0 +1,1 @@
+create table if not exists tenant_overage(overage_id uuid primary key, tenant_id uuid, feature_key text, quantity bigint, unit_price_minor bigint, currency text, occurred_at timestamptz, period_start timestamptz, period_end timestamptz, status text, idempotency_key text, metadata jsonb);

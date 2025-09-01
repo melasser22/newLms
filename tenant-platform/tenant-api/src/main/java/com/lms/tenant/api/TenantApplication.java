@@ -1,0 +1,1 @@
+package com.acme.tenant.api; import org.springframework.boot.autoconfigure.SpringBootApplication; import org.springframework.boot.SpringApplication; @SpringBootApplication(scanBasePackages="com.acme.tenant") public class TenantApplication{ public static void main(String[] args){ SpringApplication.run(TenantApplication.class,args);} }
