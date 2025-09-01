@@ -1,4 +1,4 @@
-package com.acme.tenant.config;
+package com.lms.tenant.config;
 import jakarta.servlet.*; import jakarta.servlet.http.*;
 import org.slf4j.MDC;
 import org.springframework.jdbc.core.JdbcTemplate;

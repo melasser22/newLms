@@ -1,4 +1,4 @@
-package com.acme.tenant.config;
+package com.lms.tenant.config;
 public final class TenantContext {
   private static final ThreadLocal<String> CURRENT = new ThreadLocal<>();
   private TenantContext() {}

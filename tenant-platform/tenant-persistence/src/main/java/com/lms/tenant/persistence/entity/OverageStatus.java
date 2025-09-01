@@ -1,1 +1,1 @@
-package com.acme.tenant.persistence.entity; public enum OverageStatus { RECORDED, INVOICED, CANCELED }
+package com.lms.tenant.persistence.entity; public enum OverageStatus { RECORDED, INVOICED, CANCELED }
