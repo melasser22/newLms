@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
-@SpringBootTest
+@SpringBootTest(classes = JwtTokenAutoConfiguration.class)
 @TestPropertySource(properties = {
         "shared.security.jwt.secret=01234567890123456789012345678901",
         "shared.security.jwt.token-period=PT5M"
