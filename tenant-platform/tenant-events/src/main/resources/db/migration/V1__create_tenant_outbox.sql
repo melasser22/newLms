@@ -1,9 +1,11 @@
 CREATE TABLE IF NOT EXISTS tenant_outbox (
-    id UUID PRIMARY KEY,
-    tenant_id UUID NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    tenant_id VARCHAR(64),
     type TEXT NOT NULL,
     payload JSONB NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    version BIGINT NOT NULL,
     available_at TIMESTAMPTZ NOT NULL,
     attempts INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL
