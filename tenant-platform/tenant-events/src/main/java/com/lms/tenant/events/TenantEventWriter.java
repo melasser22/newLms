@@ -2,18 +2,18 @@ package com.lms.tenant.events;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.sql.Timestamp;
+import com.lms.tenant.events.entity.TenantOutboxEvent;
+import com.lms.tenant.events.repo.TenantOutboxEventRepository;
 import java.time.Instant;
 import java.util.UUID;
-import org.springframework.jdbc.core.JdbcTemplate;
 
-/** Writes tenant events to the outbox table using JDBC. */
+/** Writes tenant events to the outbox table using JPA. */
 public class TenantEventWriter {
-    private final JdbcTemplate jdbc;
+    private final TenantOutboxEventRepository repository;
     private final ObjectMapper mapper;
 
-    public TenantEventWriter(JdbcTemplate jdbc, ObjectMapper mapper) {
-        this.jdbc = jdbc;
+    public TenantEventWriter(TenantOutboxEventRepository repository, ObjectMapper mapper) {
+        this.repository = repository;
         this.mapper = mapper;
     }
 
@@ -28,9 +28,11 @@ public class TenantEventWriter {
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Unable to serialize payload", e);
         }
-        jdbc.update(
-            "INSERT INTO tenant_outbox (id, tenant_id, type, payload, created_at, available_at, attempts, status) " +
-            "VALUES (?, ?, ?, cast(? as jsonb), now(), ?, 0, 'NEW')",
-            UUID.randomUUID(), tenantId, type, json, Timestamp.from(availableAt));
+        TenantOutboxEvent event = new TenantOutboxEvent();
+        event.setTenantId(tenantId.toString());
+        event.setType(type);
+        event.setPayload(json);
+        event.setAvailableAt(availableAt);
+        repository.save(event);
     }
 }
