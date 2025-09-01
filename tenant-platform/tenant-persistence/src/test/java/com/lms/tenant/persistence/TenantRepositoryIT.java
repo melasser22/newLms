@@ -38,6 +38,8 @@ class TenantRepositoryIT {
         tenant.setId(UUID.randomUUID());
         tenant.setStatus(TenantStatus.ACTIVE);
         tenant.setOverageEnabled(true);
+        tenant.setSlug("test-" + tenant.getId());
+        tenant.setName("Test Tenant");
 
         tenantRepository.save(tenant);
 
