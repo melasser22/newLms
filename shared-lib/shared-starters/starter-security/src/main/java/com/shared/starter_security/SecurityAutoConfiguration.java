@@ -223,18 +223,21 @@ public class SecurityAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public CorsConfigurationSource corsConfigurationSource() {
+  public CorsConfigurationSource corsConfigurationSource(SharedSecurityProps props) {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOriginPatterns(List.of("https://*.lms.com", "http://localhost:3000"));
+    List<String> origins = props.getResourceServer().getAllowedOrigins();
+    if (origins != null && !origins.isEmpty()) {
+      configuration.setAllowedOrigins(origins);
+    }
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(Arrays.asList(
         HeaderNames.AUTHORIZATION,
         HeaderNames.CONTENT_TYPE,
         "X-Requested-With",
         HeaderNames.CORRELATION_ID,
-        HeaderNames.TENANT_ID));
-    configuration.setExposedHeaders(Arrays.asList(HeaderNames.CORRELATION_ID, HeaderNames.TENANT_ID));
-    configuration.setAllowCredentials(true);
+        HeaderNames.X_TENANT_ID));
+    configuration.setExposedHeaders(Arrays.asList(HeaderNames.CORRELATION_ID, HeaderNames.X_TENANT_ID));
+    configuration.setAllowCredentials(false);
     configuration.setMaxAge(3600L);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

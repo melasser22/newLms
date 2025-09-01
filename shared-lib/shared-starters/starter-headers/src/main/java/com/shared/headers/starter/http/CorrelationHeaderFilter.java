@@ -12,13 +12,25 @@ import com.common.constants.HeaderNames;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 
 public class CorrelationHeaderFilter implements Filter {
 
-  private final SharedHeadersProperties props;
+  private static final List<String> LEGACY_HEADERS = List.of(
+      "X-Correlation-ID",
+      "X_CORRELATION_ID",
+      "correlation-id",
+      "correlationId",
+      "traceId",
+      "trace_id"
+  );
 
-  public CorrelationHeaderFilter(SharedHeadersProperties props) {
+  private final SharedHeadersProperties props;
+  private final boolean compatibilityEnabled;
+
+  public CorrelationHeaderFilter(SharedHeadersProperties props, boolean compatibilityEnabled) {
     this.props = props;
+    this.compatibilityEnabled = compatibilityEnabled;
   }
 
   @Override
@@ -39,6 +51,14 @@ public class CorrelationHeaderFilter implements Filter {
 
     if (correlationId == null) {
       correlationId = HeaderUtils.firstNonEmpty(req.getHeader(corrName));
+      if (correlationId == null && compatibilityEnabled) {
+        for (String legacy : LEGACY_HEADERS) {
+          correlationId = HeaderUtils.firstNonEmpty(req.getHeader(legacy));
+          if (correlationId != null) {
+            break;
+          }
+        }
+      }
     }
 
     if (correlationId == null && props.getCorrelation().isAutoGenerate()) {
@@ -76,7 +96,7 @@ public class CorrelationHeaderFilter implements Filter {
       var kv = new HashMap<String,String>();
       kv.put(HeaderNames.CORRELATION_ID, correlationId);
       kv.put(HeaderNames.REQUEST_ID, requestId);
-      if (tenantId != null) kv.put(HeaderNames.TENANT_ID, tenantId);
+      if (tenantId != null) kv.put(HeaderNames.X_TENANT_ID, tenantId);
       if (userId != null) kv.put(HeaderNames.USER_ID, userId);
       HeaderUtils.putMdc(kv);
     }
@@ -88,7 +108,10 @@ public class CorrelationHeaderFilter implements Filter {
     ContextManager.setUserId(userId);
 
     // Echo back headers on response
-    if (correlationId != null) res.setHeader(corrName, correlationId);
+    if (correlationId != null) {
+      res.setHeader(corrName, correlationId);
+      req.setAttribute(HeaderNames.CORRELATION_ID, correlationId);
+    }
     if (requestId != null) res.setHeader(reqName, requestId);
     if (tenantId != null) res.setHeader(tenName, tenantId);
     if (userId != null) res.setHeader(userName, userId);
@@ -101,9 +124,7 @@ public class CorrelationHeaderFilter implements Filter {
       ContextManager.Tenant.clear();
       ContextManager.clearUserId();
       if (props.getMdc().isEnabled()) {
-        MDC.remove("requestId");
-        MDC.remove("tenantId");
-        MDC.remove("userId");
+        HeaderUtils.clearMdc(HeaderNames.REQUEST_ID, HeaderNames.X_TENANT_ID, HeaderNames.USER_ID);
       }
     }
   }

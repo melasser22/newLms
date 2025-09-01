@@ -18,9 +18,9 @@ public final class LogMarkers {
 
     /** Correlation markers (always attach correlationId + tenantId) */
     public static LogstashMarker correlation(String correlationId, String tenantId) {
-        LogstashMarker marker = Markers.append("correlationId", correlationId);
+        LogstashMarker marker = Markers.append(HeaderNames.CORRELATION_ID, correlationId);
         if (tenantId != null && !tenantId.isBlank()) {
-            marker = marker.and(Markers.append(HeaderNames.TENANT_ID, tenantId));
+            marker = marker.and(Markers.append(HeaderNames.X_TENANT_ID, tenantId));
         }
         return marker;
     }
@@ -53,6 +53,6 @@ public final class LogMarkers {
 
     /** correlation marker */
     public static LogstashMarker correlation(String correlationId) {
-        return Markers.append("correlationId", correlationId);
+        return Markers.append(HeaderNames.CORRELATION_ID, correlationId);
     }
 }

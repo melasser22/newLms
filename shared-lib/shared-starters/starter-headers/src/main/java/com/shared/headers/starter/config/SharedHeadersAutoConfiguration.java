@@ -4,6 +4,7 @@ import com.shared.headers.starter.client.PropagateHeadersInterceptor;
 import com.shared.headers.starter.http.CorrelationHeaderFilter;
 import com.shared.headers.starter.http.SecurityHeadersFilter;
 import jakarta.servlet.Filter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -25,8 +26,9 @@ public class SharedHeadersAutoConfiguration {
   @Bean
   @ConditionalOnClass(Filter.class)
   @ConditionalOnMissingBean(name = "correlationHeaderFilter")
-  public CorrelationHeaderFilter correlationHeaderFilter(SharedHeadersProperties props) {
-    return new CorrelationHeaderFilter(props);
+  public CorrelationHeaderFilter correlationHeaderFilter(SharedHeadersProperties props,
+                                                        @Value("${correlation.header.compatibility.enabled:true}") boolean compatibility) {
+    return new CorrelationHeaderFilter(props, compatibility);
   }
 
   @Bean

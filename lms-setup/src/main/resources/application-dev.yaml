@@ -24,9 +24,8 @@ spring:
         format_sql: true
         jdbc.time_zone: UTC
 
-
   flyway:
-    enabled: false
+    enabled: true
     baseline-on-migrate: true
 
   kafka:
@@ -79,12 +78,12 @@ springdoc:
 shared:
   core:
     correlation:
-      header-name: X-Correlation-ID
+      header-name: X-Correlation-Id
       generate-if-missing: true
       echo-response-header: true
     tenant:
       enabled: true
-      header-name: X-Tenant-Id
+      header-name: x_tenant_id
       query-param: tenantId
       default-policy: OPTIONAL
       echo-response-header: true
@@ -96,7 +95,7 @@ shared:
   headers:
     enabled: true
     correlation:
-      header: X-Correlation-ID
+      header: X-Correlation-Id
       auto-generate: true
       mandatory: true
     request:
@@ -104,7 +103,7 @@ shared:
       auto-generate: true
       mandatory: true
     tenant:
-      header: X-Tenant-Id
+      header: x_tenant_id
       auto-generate: false
       mandatory: false
     user:
@@ -126,9 +125,9 @@ shared:
     propagation:
       enabled: true
       include:
-        - X-Correlation-ID
+        - X-Correlation-Id
         - X-Request-ID
-        - X-Tenant-Id
+        - x_tenant_id
         - X-User-Id
   audit:
     enabled: true
@@ -186,19 +185,19 @@ shared:
       activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
       keys:
         local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
-    security:
-      mode: hs256
-      jwt:
-        secret: ${JWT_SECRET:dev-secret}
-        token-period: 15m
-      hs256:
-        secret: ${JWT_SECRET:dev-secret}
-      resource-server:
-        enabled: true
-        permit-all:
-          - "/**"
-        disable-csrf: true
-      stateless: true
+  security:
+    mode: hs256
+    jwt:
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+      token-period: 15m
+    hs256:
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+    resource-server:
+      enabled: true
+      permit-all:
+        - "/**"
+      disable-csrf: false
+    stateless: true
     roles-claim: roles
     tenant-claim: tenant
     enable-role-check: false
@@ -215,5 +214,5 @@ logging:
     org.hibernate.orm.jdbc.bind: ERROR
     org.springframework.cache: ERROR
     org.springframework.cache.interceptor.CacheAspectSupport: ERROR
-debug: false
 
+debug: true

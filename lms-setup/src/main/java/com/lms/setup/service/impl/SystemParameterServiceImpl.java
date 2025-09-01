@@ -50,7 +50,7 @@ public class SystemParameterServiceImpl implements SystemParameterService {
             return BaseResponse.success("System parameter created", saved);
         } catch (Exception ex) {
             LOGGER.error("Add system parameter failed", ex);
-            return BaseResponse.error("ERR_PARAM_ADD", ex.getMessage());
+            return BaseResponse.error("ERR_PARAM_ADD", "Failed to create system parameter");
         }
     }
 
@@ -80,7 +80,7 @@ public class SystemParameterServiceImpl implements SystemParameterService {
             return BaseResponse.success("System parameter updated", saved);
         } catch (Exception ex) {
             LOGGER.error("Update system parameter failed", ex);
-            return BaseResponse.error("ERR_PARAM_UPDATE", ex.getMessage());
+            return BaseResponse.error("ERR_PARAM_UPDATE", "Failed to update system parameter");
         }
     }
 
@@ -94,7 +94,7 @@ public class SystemParameterServiceImpl implements SystemParameterService {
                     .orElseGet(() -> BaseResponse.error("ERR_PARAM_NOT_FOUND", "System parameter not found"));
         } catch (Exception ex) {
             LOGGER.error("Get system parameter failed", ex);
-            return BaseResponse.error("ERR_PARAM_GET", ex.getMessage());
+            return BaseResponse.error("ERR_PARAM_GET", "Failed to get system parameter");
         }
     }
 
@@ -120,7 +120,7 @@ public class SystemParameterServiceImpl implements SystemParameterService {
             return BaseResponse.success("System parameters page", page);
         } catch (Exception ex) {
             LOGGER.error("List system parameters failed", ex);
-            return BaseResponse.error("ERR_PARAM_LIST", ex.getMessage());
+            return BaseResponse.error("ERR_PARAM_LIST", "Failed to list system parameters");
         }
     }
 
@@ -141,16 +141,14 @@ public class SystemParameterServiceImpl implements SystemParameterService {
             return BaseResponse.success("Parameters", getByKeysRaw(keys));
         } catch (Exception ex) {
             LOGGER.error("Get system parameters by keys failed", ex);
-            return BaseResponse.error("ERR_PARAM_KEYS", ex.getMessage());
+            return BaseResponse.error("ERR_PARAM_KEYS", "Failed to get system parameters by keys");
         }
     }
     
     @Override
     public BaseResponse<SystemParameter> getByKey(String paramKey) {
-        Optional<SystemParameter> opt = systemParameterRepository.findByParamKey(paramKey);
-        BaseResponse<SystemParameter> resp = new BaseResponse<>();
-        resp.success(opt.isPresent());
-        resp.setData(opt.orElse(null));
-        return resp;
+        return systemParameterRepository.findByParamKey(paramKey)
+                .map(p -> BaseResponse.success("System parameter", p))
+                .orElseGet(() -> BaseResponse.error("ERR_PARAM_NOT_FOUND", "System parameter not found"));
     }
 }

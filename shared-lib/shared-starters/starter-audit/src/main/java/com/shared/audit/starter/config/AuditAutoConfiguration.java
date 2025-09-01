@@ -34,6 +34,9 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -48,6 +51,8 @@ import java.util.*;
     "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration"
 })
 public class AuditAutoConfiguration {
+
+  private static final Logger log = LoggerFactory.getLogger(AuditAutoConfiguration.class);
 
   // ---------- Core
 
@@ -353,7 +358,8 @@ public class AuditAutoConfiguration {
     try {
       Method m = target.getClass().getMethod(method);
       return m.invoke(target);
-    } catch (Exception ignored) {
+    } catch (Exception ex) {
+      log.debug("Failed to invoke {} on {}", method, target.getClass(), ex);
       return null;
     }
   }

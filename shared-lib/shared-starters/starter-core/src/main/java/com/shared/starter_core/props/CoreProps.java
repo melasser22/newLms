@@ -24,7 +24,7 @@ public class CoreProps implements BaseStarterProperties {
         private String headerName = HeaderNames.CORRELATION_ID; // "X-Correlation-Id"
 
         /** MDC key to store correlation id under */
-        private String mdcKey = "correlationId";
+        private String mdcKey = HeaderNames.CORRELATION_ID;
 
         /** Generate a UUID if the client did not send a correlation id */
         private boolean generateIfMissing = true;
@@ -49,11 +49,11 @@ public class CoreProps implements BaseStarterProperties {
         private boolean enabled = true;
 
         /** Header and query parameter names */
-        private String headerName = HeaderNames.TENANT_ID;   // "X-Tenant-Id"
+        private String headerName = HeaderNames.X_TENANT_ID;   // "x_tenant_id"
         private String queryParam = "tenantId";
 
         /** MDC key for logs */
-        private String mdcKey = "tenantId";
+        private String mdcKey = HeaderNames.X_TENANT_ID;
 
         /** Echo back the tenant in response header */
         private boolean echoResponseHeader = true;

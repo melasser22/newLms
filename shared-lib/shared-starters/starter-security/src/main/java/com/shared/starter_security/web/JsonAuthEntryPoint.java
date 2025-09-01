@@ -29,18 +29,19 @@ public class JsonAuthEntryPoint implements AuthenticationEntryPoint {
       throws IOException {
 
     ErrorResponse body = ErrorResponse.of(
-        ErrorCodes.AUTH_UNAUTHORIZED,                      // e.g., "ERR-401" or "ERR-UNAUTHORIZED"
-        safe(authException.getMessage(), "Unauthorized"),
-        List.of(),
-        request.getRequestURI()
+        ErrorCodes.AUTH_UNAUTHORIZED,
+        WebUtils.safe(authException.getMessage(), "Unauthorized"),
+        List.of()
     );
-    // enrich
     body.setTenantId(ContextManager.Tenant.get());
-    body.setCorrelationId(firstNonBlank(
+    String cid = WebUtils.firstNonBlank(
         MDC.get(HeaderNames.CORRELATION_ID),
         request.getHeader(HeaderNames.CORRELATION_ID),
         request.getHeader(HeaderNames.REQUEST_ID)
-    ));
+    );
+    if (cid != null) {
+      response.setHeader(HeaderNames.CORRELATION_ID, cid);
+    }
 
     response.setStatus(HttpStatus.UNAUTHORIZED.value());
     response.setContentType("application/json");
@@ -48,12 +49,4 @@ public class JsonAuthEntryPoint implements AuthenticationEntryPoint {
     mapper.writeValue(response.getWriter(), body);
   }
 
-  private static String safe(String s, String fallback) {
-    return (s == null || s.isBlank()) ? fallback : s;
-  }
-  private static String firstNonBlank(String... values) {
-    if (values == null) return null;
-    for (String v : values) if (v != null && !v.isBlank()) return v;
-    return null;
-  }
 }

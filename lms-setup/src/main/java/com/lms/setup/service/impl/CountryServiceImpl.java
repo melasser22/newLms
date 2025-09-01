@@ -2,6 +2,7 @@ package com.lms.setup.service.impl;
 
 import com.common.dto.BaseResponse;
 import com.lms.setup.model.Country;
+import com.lms.setup.dto.CountryDto;
 import com.lms.setup.repository.CountryRepository;
 import com.lms.setup.service.CountryService;
 import com.common.sort.SortUtils;
@@ -11,6 +12,7 @@ import com.shared.audit.starter.api.annotations.Audited;
 import jakarta.transaction.Transactional;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
@@ -31,22 +33,36 @@ public class CountryServiceImpl implements CountryService {
 
     @Override
     @Audited(action = AuditAction.CREATE, entity = "Country", dataClass = DataClass.HEALTH, message = "Create country")
-    @CacheEvict(cacheNames = {"countries", "countries:active"}, allEntries = true)
-    public BaseResponse<Country> add(Country request) {
-        if (request.getCountryCd() == null || request.getCountryCd().isBlank()) {
-            return BaseResponse.error("ERR_COUNTRY_CD_REQUIRED", "Country code is required");
-        }
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "countries", key = "#result.data.countryId", condition = "#result.isSuccess()"),
+            @CacheEvict(cacheNames = "countries:active", key = "'active'")
+    })
+    public BaseResponse<Country> add(CountryDto request) {
         if (countryRepository.existsByCountryCdIgnoreCase(request.getCountryCd())) {
             return BaseResponse.error("ERR_COUNTRY_DUP_CD", "Country code already exists");
         }
-        Country saved = countryRepository.save(request);
+        Country entity = new Country();
+        entity.setCountryCd(request.getCountryCd());
+        entity.setCountryEnNm(request.getCountryEnNm());
+        entity.setCountryArNm(request.getCountryArNm());
+        entity.setDialingCode(request.getDialingCode());
+        entity.setNationalityEn(request.getNationalityEn());
+        entity.setNationalityAr(request.getNationalityAr());
+        entity.setIsActive(request.getIsActive());
+        entity.setEnDescription(request.getEnDescription());
+        entity.setArDescription(request.getArDescription());
+
+        Country saved = countryRepository.save(entity);
         return BaseResponse.success("Country created", saved);
     }
 
     @Override
     @Audited(action = AuditAction.UPDATE, entity = "Country", dataClass = DataClass.HEALTH, message = "Update country")
-    @CacheEvict(cacheNames = {"countries", "countries:active"}, allEntries = true)
-    public BaseResponse<Country> update(Integer countryId, Country request) {
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "countries", key = "#countryId"),
+            @CacheEvict(cacheNames = "countries:active", key = "'active'")
+    })
+    public BaseResponse<Country> update(Integer countryId, CountryDto request) {
         Country existing = countryRepository.findById(countryId)
                 .orElse(null);
         if (existing == null) {
@@ -57,11 +73,15 @@ public class CountryServiceImpl implements CountryService {
             countryRepository.existsByCountryCdIgnoreCase(request.getCountryCd())) {
             return BaseResponse.error("ERR_COUNTRY_DUP_CD", "Country code already exists");
         }
-
-        if (request.getCountryCd() != null) existing.setCountryCd(request.getCountryCd());
-        if (request.getCountryEnNm() != null) existing.setCountryEnNm(request.getCountryEnNm());
-        if (request.getCountryArNm() != null) existing.setCountryArNm(request.getCountryArNm());
-        if (request.getIsActive() != null)   existing.setIsActive(request.getIsActive());
+        existing.setCountryCd(request.getCountryCd());
+        existing.setCountryEnNm(request.getCountryEnNm());
+        existing.setCountryArNm(request.getCountryArNm());
+        existing.setDialingCode(request.getDialingCode());
+        existing.setNationalityEn(request.getNationalityEn());
+        existing.setNationalityAr(request.getNationalityAr());
+        existing.setIsActive(request.getIsActive());
+        existing.setEnDescription(request.getEnDescription());
+        existing.setArDescription(request.getArDescription());
 
         Country saved = countryRepository.save(existing);
         return BaseResponse.success("Country updated", saved);

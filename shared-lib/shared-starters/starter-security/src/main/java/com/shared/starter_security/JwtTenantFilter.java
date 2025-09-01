@@ -33,7 +33,7 @@ class JwtTenantFilter extends HttpFilter {
                 if (tid != null) {
                         String tenant = String.valueOf(tid);
                         ContextManager.Tenant.set(tenant);
-                        response.setHeader(HeaderNames.TENANT_ID, tenant);
+                        response.setHeader(HeaderNames.X_TENANT_ID, tenant);
                 }
             }
             chain.doFilter(request, response);

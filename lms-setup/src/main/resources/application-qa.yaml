@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=setup}"
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       pool-name: HikariPool-LMS
@@ -77,12 +77,12 @@ springdoc:
 shared:
   core:
     correlation:
-      header-name: X-Correlation-ID
+      header-name: X-Correlation-Id
       generate-if-missing: true
       echo-response-header: true
     tenant:
       enabled: true
-      header-name: X-Tenant-Id
+      header-name: x_tenant_id
       query-param: tenantId
       default-policy: OPTIONAL
       echo-response-header: true
@@ -95,7 +95,7 @@ shared:
     enabled: true
 
     correlation:
-      header: X-Correlation-ID
+      header: X-Correlation-Id
       auto-generate: true
       mandatory: true
     request:
@@ -103,7 +103,7 @@ shared:
       auto-generate: true
       mandatory: true
     tenant:
-      header: X-Tenant-Id
+      header: x_tenant_id
       auto-generate: false
       mandatory: false
     user:
@@ -121,13 +121,13 @@ shared:
       frame-options: SAMEORIGIN
       content-type-options: nosniff
       referrer-policy: no-referrer
-      xss-protection: "0"
+      xss-protection: "1; mode=block"
     propagation:
       enabled: true
       include:
-        - X-Correlation-ID
+        - X-Correlation-Id
         - X-Request-ID
-        - X-Tenant-Id
+        - x_tenant_id
         - X-User-Id
   audit:
     enabled: true
@@ -186,18 +186,18 @@ shared:
     in-memory:
       activeKid: ${CRYPTO_ACTIVE_KID:local-qa-key}
       keys:
-        local-qa-key: ${CRYPTO_LOCAL_QA_KEY:Wb0Zf2K4z0vQpQKk8D7c3pQh7t3z+e5mQe2a3m2s1rQ=}
+        local-qa-key: ${CRYPTO_LOCAL_QA_KEY}
   security:
     mode: hs256
     jwt:
-      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+      secret: ${JWT_SECRET}
       token-period: 15m
     hs256:
-      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+      secret: ${JWT_SECRET}
     resource-server:
       enabled: true
       permit-all: ["/setup/systemParameters/**"]
-      disable-csrf: true
+      disable-csrf: false
     stateless: true
     roles-claim: roles
     tenant-claim: tenant

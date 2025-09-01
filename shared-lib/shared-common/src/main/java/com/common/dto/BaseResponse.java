@@ -1,6 +1,5 @@
 package com.common.dto;
 
-import com.common.context.CorrelationContextUtil;
 import com.common.context.ContextManager;
 import com.common.enums.StatusEnums.ApiStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -40,22 +39,8 @@ public class BaseResponse<T> {
     /** Timestamp of response */
     @Builder.Default
     private Instant timestamp = Instant.now();
-  /** Correlation identifier for tracking across services */
-
-    /** Correlation identifier for tracking across services */
-    private String correlationId;
-
     /** Tenant identifier for multi-tenancy */
     private String tenantId;
-
-    @JsonProperty("correlationId")
-    public String getCorrelationId() {
-        if (correlationId == null || correlationId.isBlank()) {
-            correlationId = CorrelationContextUtil.getCorrelationId();
-        }
-
-        return correlationId;
-    }
 
     @JsonProperty("tenantId")
     public String getTenantId() {
@@ -68,13 +53,7 @@ public class BaseResponse<T> {
     // ===== Static builders (nice usability) =====
 
     public static <T> BaseResponse<T> success(T data) {
-        return BaseResponse.<T>builder()
-                .status(ApiStatus.SUCCESS)
-                .code("SUCCESS-200")
-                .message("Operation successful")
-                .data(data)
-                .timestamp(Instant.now())
-                .build();
+        return build(ApiStatus.SUCCESS, "SUCCESS-200", "Operation successful", data);
     }
 
     /**
@@ -85,27 +64,20 @@ public class BaseResponse<T> {
      * @return a new BaseResponse with status SUCCESS
      */
     public static <T> BaseResponse<T> success(String message, T data) {
-        return BaseResponse.<T>builder()
-                .status(ApiStatus.SUCCESS)
-                .code("SUCCESS-200")
-                .message(message)
-                .data(data)
-                .timestamp(Instant.now())
-                .build();
+        return build(ApiStatus.SUCCESS, "SUCCESS-200", message, data);
     }
 
     public static <T> BaseResponse<T> error(String code, String message) {
-        return BaseResponse.<T>builder()
-                .status(ApiStatus.ERROR)
-                .code(code)
-                .message(message)
-                .timestamp(Instant.now())
-                .build();
+        return build(ApiStatus.ERROR, code, message, null);
     }
 
     public static <T> BaseResponse<T> warning(String code, String message, T data) {
+        return build(ApiStatus.WARNING, code, message, data);
+    }
+
+    private static <T> BaseResponse<T> build(ApiStatus status, String code, String message, T data) {
         return BaseResponse.<T>builder()
-                .status(ApiStatus.WARNING)
+                .status(status)
                 .code(code)
                 .message(message)
                 .data(data)
@@ -158,6 +130,7 @@ public class BaseResponse<T> {
                 .message(message)
                 .data(newData)
                 .timestamp(timestamp)
+                .tenantId(getTenantId())
                 .build();
     }
 

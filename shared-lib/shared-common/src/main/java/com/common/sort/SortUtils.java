@@ -20,6 +20,8 @@ public final class SortUtils {
     private SortUtils() {
     }
 
+    private static final int DEFAULT_PAGE_SIZE = 20;
+
     /**
      * Returns a safe {@link Sort}. If the supplied sort is {@code null},
      * unsorted or contains only unknown properties, a sort on
@@ -57,12 +59,10 @@ public final class SortUtils {
     public static Pageable sanitize(Pageable pageable, String defaultProperty, String... allowedProps) {
         if (pageable == null || pageable.isUnpaged()) {
             Sort sort = sanitize(Sort.unsorted(), defaultProperty, allowedProps);
-            if (pageable == null) {
-                return PageRequest.of(0, Integer.MAX_VALUE, sort);
-            }
-            return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+            return PageRequest.of(0, DEFAULT_PAGE_SIZE, sort);
         }
         Sort sort = sanitize(pageable.getSort(), defaultProperty, allowedProps);
-        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+        int size = pageable.getPageSize() > 0 ? pageable.getPageSize() : DEFAULT_PAGE_SIZE;
+        return PageRequest.of(pageable.getPageNumber(), size, sort);
     }
 }

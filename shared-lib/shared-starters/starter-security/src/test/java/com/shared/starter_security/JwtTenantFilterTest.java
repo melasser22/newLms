@@ -39,7 +39,7 @@ class JwtTenantFilterTest {
 
         filter.doFilter(req, res, chain);
 
-        assertEquals("acme", res.getHeader(HeaderNames.TENANT_ID));
+        assertEquals("acme", res.getHeader(HeaderNames.X_TENANT_ID));
         assertNull(ContextManager.Tenant.get());
     }
 }

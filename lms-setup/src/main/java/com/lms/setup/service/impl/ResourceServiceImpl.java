@@ -58,7 +58,7 @@ public class ResourceServiceImpl implements ResourceService {
             return BaseResponse.success("Resource created", mapper.toDto(saved));
         } catch (Exception ex) {
             LOGGER.error("Add resource failed", ex);
-            return BaseResponse.error("ERR_RESOURCE_ADD", ex.getMessage());
+            return BaseResponse.error("ERR_RESOURCE_ADD", "Failed to create resource");
         }
     }
 
@@ -99,7 +99,7 @@ public class ResourceServiceImpl implements ResourceService {
             return BaseResponse.error("ERR_RESOURCE_DUP_ENDPOINT", ise.getMessage());
         } catch (Exception ex) {
             LOGGER.error("Update resource failed", ex);
-            return BaseResponse.error("ERR_RESOURCE_UPDATE", ex.getMessage());
+            return BaseResponse.error("ERR_RESOURCE_UPDATE", "Failed to update resource");
         }
     }
 
@@ -113,7 +113,7 @@ public class ResourceServiceImpl implements ResourceService {
                     .orElseGet(() -> BaseResponse.error("ERR_RESOURCE_NOT_FOUND", "Resource not found"));
         } catch (Exception ex) {
             LOGGER.error("Get resource failed", ex);
-            return BaseResponse.error("ERR_RESOURCE_GET", ex.getMessage());
+            return BaseResponse.error("ERR_RESOURCE_GET", "Failed to get resource");
         }
     }
 
@@ -133,7 +133,7 @@ public class ResourceServiceImpl implements ResourceService {
                     list = resourceRepository.findAll(sort);
                 } else {
                     list = resourceRepository
-                            .findByResourceEnNmContainingIgnoreCaseOrResourceArNmContainingIgnoreCase(q, q, PageRequest.of(0, Integer.MAX_VALUE, sort))
+                            .findByResourceEnNmContainingIgnoreCaseOrResourceArNmContainingIgnoreCase(q, q, PageRequest.of(0, 1000, sort))
                             .getContent();
                 }
                 return BaseResponse.success("Resources list", new PageImpl<>(mapper.toDtoList(list)));
@@ -148,7 +148,7 @@ public class ResourceServiceImpl implements ResourceService {
             return BaseResponse.success("Resources page", mapper.toDtoPage(page));
         } catch (Exception ex) {
             LOGGER.error("List resources failed", ex);
-            return BaseResponse.error("ERR_RESOURCE_LIST", ex.getMessage());
+            return BaseResponse.error("ERR_RESOURCE_LIST", "Failed to list resources");
         }
     }
 
@@ -163,7 +163,7 @@ public class ResourceServiceImpl implements ResourceService {
             return BaseResponse.success("Active resources", mapper.toDtoList(list));
         } catch (Exception ex) {
             LOGGER.error("List active resources failed", ex);
-            return BaseResponse.error("ERR_RESOURCE_LIST_ACTIVE", ex.getMessage());
+            return BaseResponse.error("ERR_RESOURCE_LIST_ACTIVE", "Failed to list active resources");
         }
     }
 
@@ -181,7 +181,7 @@ public class ResourceServiceImpl implements ResourceService {
             return BaseResponse.success("Children", mapper.toDtoList(childrenRaw(parentResourceId)));
         } catch (Exception ex) {
             LOGGER.error("List children resources failed", ex);
-            return BaseResponse.error("ERR_RESOURCE_CHILDREN", ex.getMessage());
+            return BaseResponse.error("ERR_RESOURCE_CHILDREN", "Failed to list children resources");
         }
     }
 }

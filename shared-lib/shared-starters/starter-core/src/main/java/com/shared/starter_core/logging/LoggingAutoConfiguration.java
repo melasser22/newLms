@@ -4,6 +4,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
+import com.common.constants.HeaderNames;
 import net.logstash.logback.encoder.LogstashEncoder;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -29,7 +30,7 @@ public class LoggingAutoConfiguration {
             if (ctx.getLogger("ROOT").getAppender("CONSOLE") == null) {
                 PatternLayoutEncoder ple = new PatternLayoutEncoder();
                 ple.setContext(ctx);
-                ple.setPattern("%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger - %msg %X{correlationId} %X{tenantId}%n");
+                ple.setPattern("%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger - %msg %X{" + HeaderNames.CORRELATION_ID + "} %X{tenantId}%n");
                 ple.start();
 
                 ConsoleAppender<ILoggingEvent> consoleAppender = new ConsoleAppender<>();

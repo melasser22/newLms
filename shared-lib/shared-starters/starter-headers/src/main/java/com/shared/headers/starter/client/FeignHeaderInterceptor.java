@@ -16,7 +16,7 @@ public class FeignHeaderInterceptor implements RequestInterceptor {
       String value = switch (name) {
       case HeaderNames.CORRELATION_ID -> ContextManager.getCorrelationId();
       case HeaderNames.REQUEST_ID -> ContextManager.getRequestId();
-      case HeaderNames.TENANT_ID -> ContextManager.Tenant.get();
+      case HeaderNames.X_TENANT_ID -> ContextManager.Tenant.get();
       case HeaderNames.USER_ID -> ContextManager.getUserId();
         default -> null;
       };

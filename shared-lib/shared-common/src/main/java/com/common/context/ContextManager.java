@@ -15,7 +15,7 @@ public final class ContextManager {
     /**
      * The current context carrier.  Defaults to a thread‑local implementation.
      */
-    private static ContextCarrier CARRIER = new ThreadLocalContextCarrier();
+    private static volatile ContextCarrier CARRIER = new ThreadLocalContextCarrier();
 
     private ContextManager() {
         // utility class
@@ -113,7 +113,7 @@ public final class ContextManager {
                 try {
                     inner.close();
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("Failed to close context", e);
                 }
                 closed = true;
             }
