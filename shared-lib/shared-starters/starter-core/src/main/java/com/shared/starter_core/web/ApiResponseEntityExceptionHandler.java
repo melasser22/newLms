@@ -77,12 +77,8 @@ public class ApiResponseEntityExceptionHandler extends ResponseEntityExceptionHa
 
     // ---- Validation: binding errors on query/path params, form params ------------
 
-    @Override
-    protected ResponseEntity<Object> handleBindException(
-            BindException ex,
-            HttpHeaders headers,
-            HttpStatusCode status,
-            WebRequest request) {
+    @org.springframework.web.bind.annotation.ExceptionHandler(BindException.class)
+    public ResponseEntity<Object> handleBindException(BindException ex, WebRequest request) {
 
         List<String> details = ex.getFieldErrors()
                 .stream()
