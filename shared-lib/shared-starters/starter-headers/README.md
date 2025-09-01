@@ -9,3 +9,11 @@
 - Support Forwarded/Proxy headers when behind a reverse proxy.
 
 Add the dependency and you get consistent IDs and security headers across all services.
+
+## Usage
+```xml
+<dependency>
+  <groupId>com.lms</groupId>
+  <artifactId>starter-headers</artifactId>
+</dependency>
+```
