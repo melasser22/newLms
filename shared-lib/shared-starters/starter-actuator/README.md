@@ -7,3 +7,13 @@ Spring Boot Actuator starter with:
 - Http exchanges repository (optional)
 - Actuator-only security chain (optional)
 - Custom endpoint: /actuator/whoami
+
+## Usage
+Add the dependency:
+
+```xml
+<dependency>
+  <groupId>com.lms</groupId>
+  <artifactId>starter-actuator</artifactId>
+</dependency>
+```
