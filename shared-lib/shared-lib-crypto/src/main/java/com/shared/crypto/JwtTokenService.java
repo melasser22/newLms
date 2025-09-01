@@ -2,12 +2,12 @@ package com.shared.crypto;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Base64;
 import javax.crypto.SecretKey;
 
 /**
@@ -30,10 +30,14 @@ public class JwtTokenService {
      * @return configured service
      */
     public static JwtTokenService withSecret(String secret, Duration defaultTtl) {
-        if (secret == null || secret.length() < 32) {
-            throw new IllegalArgumentException("secret must be at least 32 characters");
+        if (secret == null) {
+            throw new IllegalArgumentException("secret must not be null");
         }
-        SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        byte[] keyBytes = Base64.getDecoder().decode(secret);
+        if (keyBytes.length < 32) {
+            throw new IllegalArgumentException("decoded secret must be at least 32 bytes");
+        }
+        SecretKey key = Keys.hmacShaKeyFor(keyBytes);
         return new JwtTokenService(key, defaultTtl);
     }
 

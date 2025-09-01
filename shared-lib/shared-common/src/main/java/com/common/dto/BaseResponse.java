@@ -68,13 +68,7 @@ public class BaseResponse<T> {
     // ===== Static builders (nice usability) =====
 
     public static <T> BaseResponse<T> success(T data) {
-        return BaseResponse.<T>builder()
-                .status(ApiStatus.SUCCESS)
-                .code("SUCCESS-200")
-                .message("Operation successful")
-                .data(data)
-                .timestamp(Instant.now())
-                .build();
+        return build(ApiStatus.SUCCESS, "SUCCESS-200", "Operation successful", data);
     }
 
     /**
@@ -85,27 +79,20 @@ public class BaseResponse<T> {
      * @return a new BaseResponse with status SUCCESS
      */
     public static <T> BaseResponse<T> success(String message, T data) {
-        return BaseResponse.<T>builder()
-                .status(ApiStatus.SUCCESS)
-                .code("SUCCESS-200")
-                .message(message)
-                .data(data)
-                .timestamp(Instant.now())
-                .build();
+        return build(ApiStatus.SUCCESS, "SUCCESS-200", message, data);
     }
 
     public static <T> BaseResponse<T> error(String code, String message) {
-        return BaseResponse.<T>builder()
-                .status(ApiStatus.ERROR)
-                .code(code)
-                .message(message)
-                .timestamp(Instant.now())
-                .build();
+        return build(ApiStatus.ERROR, code, message, null);
     }
 
     public static <T> BaseResponse<T> warning(String code, String message, T data) {
+        return build(ApiStatus.WARNING, code, message, data);
+    }
+
+    private static <T> BaseResponse<T> build(ApiStatus status, String code, String message, T data) {
         return BaseResponse.<T>builder()
-                .status(ApiStatus.WARNING)
+                .status(status)
                 .code(code)
                 .message(message)
                 .data(data)
@@ -158,6 +145,8 @@ public class BaseResponse<T> {
                 .message(message)
                 .data(newData)
                 .timestamp(timestamp)
+                .correlationId(getCorrelationId())
+                .tenantId(getTenantId())
                 .build();
     }
 
