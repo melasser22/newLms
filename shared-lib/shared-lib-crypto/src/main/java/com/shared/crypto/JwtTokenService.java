@@ -40,5 +40,6 @@ public class JwtTokenService {
                 .issuedAt(new Date())
                 .signWith(key, Jwts.SIG.HS256)
                 .compact();
+
     }
 }
