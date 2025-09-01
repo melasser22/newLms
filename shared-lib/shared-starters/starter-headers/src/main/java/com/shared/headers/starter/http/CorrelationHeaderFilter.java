@@ -101,9 +101,7 @@ public class CorrelationHeaderFilter implements Filter {
       ContextManager.Tenant.clear();
       ContextManager.clearUserId();
       if (props.getMdc().isEnabled()) {
-        MDC.remove("requestId");
-        MDC.remove("tenantId");
-        MDC.remove("userId");
+        HeaderUtils.clearMdc(HeaderNames.REQUEST_ID, HeaderNames.TENANT_ID, HeaderNames.USER_ID);
       }
     }
   }

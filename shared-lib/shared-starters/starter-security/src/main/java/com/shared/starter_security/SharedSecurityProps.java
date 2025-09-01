@@ -1,6 +1,7 @@
 package com.shared.starter_security;
 
 import com.shared.common.BaseStarterProperties;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -99,5 +100,8 @@ public class SharedSecurityProps implements BaseStarterProperties {
 
     /** Force stateless sessions for APIs. */
     private boolean stateless = true;
+
+    /** Allowed CORS origins. */
+    private List<String> allowedOrigins = List.of();
   }
 }

@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -48,6 +49,10 @@ public class ContextFilter extends OncePerRequestFilter {
                 request.getHeader(HeaderNames.TENANT_ID),
                 request.getParameter(HeaderNames.TENANT_ID)           // optional fallback
         ));
+        if (tenantId != null && !TENANT_PATTERN.matcher(tenantId).matches()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + HeaderNames.TENANT_ID);
+            return;
+        }
         String incomingCorrelation = trimToNull(
                 request.getHeader(HeaderNames.CORRELATION_ID)
         );
@@ -105,4 +110,6 @@ public class ContextFilter extends OncePerRequestFilter {
     private static void putMdc(String key, String value) {
         if (value != null) MDC.put(key, value);
     }
+
+    private static final Pattern TENANT_PATTERN = Pattern.compile("[A-Za-z0-9_-]{1,36}");
 }
