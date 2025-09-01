@@ -3,12 +3,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>com.lms</groupId>
-    <artifactId>lms-platform</artifactId>
-    <version>1.0.0</version>
+    <groupId>com.lms.tenant</groupId>
+    <artifactId>tenant-platform</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
-  <artifactId>tenant-service</artifactId>
-
+  <artifactId>subscription-service</artifactId>
   <dependencies>
     <dependency>
       <groupId>com.shared</groupId>
@@ -19,32 +18,12 @@
       <artifactId>shared-starter-data</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-jdbc</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.projectreactor.kafka</groupId>
-      <artifactId>reactor-kafka</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.shared</groupId>
-      <artifactId>shared-starter-openapi</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.shared</groupId>
-      <artifactId>shared-starter-actuator</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.shared</groupId>
-      <artifactId>shared-starter-redis</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.kafka</groupId>
-      <artifactId>spring-kafka</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jdbc</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -54,11 +33,6 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
