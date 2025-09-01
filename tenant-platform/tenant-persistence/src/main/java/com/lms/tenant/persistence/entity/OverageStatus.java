@@ -1,1 +1,0 @@
-package com.lms.tenant.persistence.entity; public enum OverageStatus { RECORDED, INVOICED, CANCELED }

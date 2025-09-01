@@ -1,10 +1,14 @@
 package com.lms.billing.core;
 
-import java.time.Instant;
+import com.shared.billing.api.OverageResponse;
+import com.shared.billing.api.RecordOverageRequest;
+
 import java.util.UUID;
 
+/**
+ * Port for persisting overage records.
+ */
 public interface OveragePort {
-    UUID recordOverage(UUID tenantId, UUID subscriptionId, String featureKey, long quantity,
-                       Long unitPriceMinor, String currency, Instant periodStart, Instant periodEnd,
-                       String idempotencyKey);
+
+    OverageResponse recordOverage(UUID tenantId, UUID subscriptionId, RecordOverageRequest request);
 }

@@ -1,6 +1,7 @@
 package com.lms.tenant.adapter;
 
 import com.lms.tenant.core.TenantSettingsPort;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Repository
+@ConditionalOnMissingBean(TenantSettingsPort.class)
 public class JdbcTenantSettingsAdapter implements TenantSettingsPort {
     private final NamedParameterJdbcTemplate jdbc;
 

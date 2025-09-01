@@ -3,6 +3,7 @@ create table if not exists tenant_subscription (
   tenant_id uuid not null,
   tier_id text,
   status text,
+  active boolean default true,
   seats int,
   currency text,
   period_start timestamptz,
@@ -31,3 +32,5 @@ alter table subscription_item enable row level security;
 
 create policy tenant_sub_policy on tenant_subscription using (tenant_id = current_setting('app.current_tenant', true)::uuid);
 create policy tenant_sub_item_policy on subscription_item using (subscription_id in (select subscription_id from tenant_subscription where tenant_id = current_setting('app.current_tenant', true)::uuid));
+
+create unique index if not exists ux_active_subscription on tenant_subscription (tenant_id) where active;

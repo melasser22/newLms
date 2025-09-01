@@ -16,4 +16,8 @@ public class CatalogService {
     public FeaturePolicyPort.EffectiveFeature effective(String tierId, UUID tenantId, String featureKey) {
         return port.effective(tierId, tenantId, featureKey);
     }
+
+    public void upsertOverride(UUID tenantId, String featureKey, FeaturePolicyPort.FeatureOverride override) {
+        port.upsertOverride(tenantId, featureKey, override);
+    }
 }
