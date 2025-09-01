@@ -1,0 +1,31 @@
+name: entitlement-ci
+on:
+  push:
+    paths:
+      - 'entitlement-service/**'
+  pull_request:
+    paths:
+      - 'entitlement-service/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+      - name: Build
+        run: mvn -f entitlement-service/pom.xml -B test package
+      - name: Build Docker image
+        if: env.DOCKERHUB_USERNAME != ''
+        run: |
+          docker build -t ${{ env.DOCKERHUB_USERNAME }}/entitlement-service:latest entitlement-service
+          echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ env.DOCKERHUB_USERNAME }} --password-stdin
+          docker push ${{ env.DOCKERHUB_USERNAME }}/entitlement-service:latest
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
