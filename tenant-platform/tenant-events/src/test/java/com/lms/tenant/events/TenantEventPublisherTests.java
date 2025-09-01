@@ -2,13 +2,14 @@ package com.lms.tenant.events;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.lms.tenant.events.entity.TenantOutboxEvent;
+import com.lms.tenant.events.repo.TenantOutboxEventRepository;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 @SpringBootTest(classes = TenantEventsAutoConfiguration.class)
 @TestPropertySource(properties = {
@@ -24,7 +25,7 @@ class TenantEventPublisherTests {
     TenantEventPublisher publisher;
 
     @Autowired
-    JdbcTemplate jdbc;
+    TenantOutboxEventRepository repository;
 
     @Test
     void insertAndPublishWithoutKafkaMarksSent() {
@@ -33,9 +34,8 @@ class TenantEventPublisherTests {
 
         publisher.publish();
 
-        String status = jdbc.queryForObject("select status from tenant_outbox", String.class);
-        Integer attempts = jdbc.queryForObject("select attempts from tenant_outbox", Integer.class);
-        assertThat(status).isEqualTo("SENT");
-        assertThat(attempts).isEqualTo(1);
+        TenantOutboxEvent event = repository.findAll().getFirst();
+        assertThat(event.getStatus()).isEqualTo(TenantOutboxEvent.Status.SENT);
+        assertThat(event.getAttempts()).isEqualTo(1);
     }
 }
