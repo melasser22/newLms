@@ -33,11 +33,63 @@
         <scope>import</scope>
       </dependency>
       <dependency>
-        <groupId>com.shared</groupId>
+        <groupId>com.lms</groupId>
         <artifactId>shared-bom</artifactId>
         <version>1.0.0</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+
+      <!-- Manage versions for internal modules so children can omit them -->
+      <dependency>
+        <groupId>com.lms.tenant</groupId>
+        <artifactId>tenant-persistence</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.lms.tenant</groupId>
+        <artifactId>tenant-config</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.lms.tenant</groupId>
+        <artifactId>tenant-events</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.lms.tenant</groupId>
+        <artifactId>tenant-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.lms.tenant</groupId>
+        <artifactId>tenant-service</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.lms.tenant</groupId>
+        <artifactId>subscription-service</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.lms.tenant</groupId>
+        <artifactId>catalog-service</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.lms.tenant</groupId>
+        <artifactId>billing-service</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.lms.tenant</groupId>
+        <artifactId>policy-service</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.lms.tenant</groupId>
+        <artifactId>tenant-api</artifactId>
+        <version>${project.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

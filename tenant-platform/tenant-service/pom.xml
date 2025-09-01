@@ -11,12 +11,16 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.shared</groupId>
-      <artifactId>shared-starter-web</artifactId>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.shared</groupId>
-      <artifactId>shared-starter-data</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-data</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -35,12 +39,12 @@
       <artifactId>tenant-config</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.shared</groupId>
-      <artifactId>shared-starter-openapi</artifactId>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-openapi</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.shared</groupId>
-      <artifactId>shared-starter-actuator</artifactId>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-actuator</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
