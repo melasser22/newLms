@@ -1,6 +1,5 @@
 package com.common.dto;
 
-import com.common.context.CorrelationContextUtil;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,9 +15,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RequestMetadata {
-
-    /** Unique request correlation ID */
-    private String correlationId;
 
     /** Tenant identifier (for multi-tenancy) */
     private String tenantId;
@@ -42,10 +38,4 @@ public class RequestMetadata {
     @Builder.Default
     private Instant requestTime = Instant.now();
 
-    public String getCorrelationId() {
-        if (correlationId == null || correlationId.isBlank()) {
-            correlationId = CorrelationContextUtil.getCorrelationId();
-        }
-        return correlationId;
-    }
 }

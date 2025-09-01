@@ -29,18 +29,19 @@ public class JsonAuthEntryPoint implements AuthenticationEntryPoint {
       throws IOException {
 
     ErrorResponse body = ErrorResponse.of(
-        ErrorCodes.AUTH_UNAUTHORIZED,                      // e.g., "ERR-401" or "ERR-UNAUTHORIZED"
+        ErrorCodes.AUTH_UNAUTHORIZED,
         WebUtils.safe(authException.getMessage(), "Unauthorized"),
-        List.of(),
-        request.getRequestURI()
+        List.of()
     );
-    // enrich
     body.setTenantId(ContextManager.Tenant.get());
-    body.setCorrelationId(WebUtils.firstNonBlank(
+    String cid = WebUtils.firstNonBlank(
         MDC.get(HeaderNames.CORRELATION_ID),
         request.getHeader(HeaderNames.CORRELATION_ID),
         request.getHeader(HeaderNames.REQUEST_ID)
-    ));
+    );
+    if (cid != null) {
+      response.setHeader(HeaderNames.CORRELATION_ID, cid);
+    }
 
     response.setStatus(HttpStatus.UNAUTHORIZED.value());
     response.setContentType("application/json");

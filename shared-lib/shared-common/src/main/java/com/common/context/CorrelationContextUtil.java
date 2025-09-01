@@ -15,7 +15,7 @@ import java.util.UUID;
 public final class CorrelationContextUtil {
 
     /** MDC key for the correlation identifier. */
-    public static final String CORRELATION_ID = "correlationId";
+    public static final String CORRELATION_ID = HeaderNames.CORRELATION_ID;
 
     private CorrelationContextUtil() {
         // utility class

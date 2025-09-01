@@ -29,17 +29,19 @@ public class JsonAccessDeniedHandler implements AccessDeniedHandler {
       throws IOException {
 
     ErrorResponse body = ErrorResponse.of(
-        ErrorCodes.AUTH_FORBIDDEN,                         // e.g., "ERR-403" or "ERR-FORBIDDEN"
+        ErrorCodes.AUTH_FORBIDDEN,
         WebUtils.safe(ex.getMessage(), "Forbidden"),
-        List.of(),
-        request.getRequestURI()
+        List.of()
     );
     body.setTenantId(ContextManager.Tenant.get());
-    body.setCorrelationId(WebUtils.firstNonBlank(
+    String cid = WebUtils.firstNonBlank(
         MDC.get(HeaderNames.CORRELATION_ID),
         request.getHeader(HeaderNames.CORRELATION_ID),
         request.getHeader(HeaderNames.REQUEST_ID)
-    ));
+    );
+    if (cid != null) {
+      response.setHeader(HeaderNames.CORRELATION_ID, cid);
+    }
 
     response.setStatus(HttpStatus.FORBIDDEN.value());
     response.setContentType("application/json");

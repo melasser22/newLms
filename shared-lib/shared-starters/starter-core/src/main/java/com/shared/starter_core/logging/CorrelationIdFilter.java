@@ -31,7 +31,7 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
             String[] skipPatterns
     ) {
         this.headerName = Objects.requireNonNullElse(headerName, HeaderNames.CORRELATION_ID);
-        this.mdcKey = Objects.requireNonNullElse(mdcKey, "correlationId");
+        this.mdcKey = Objects.requireNonNullElse(mdcKey, HeaderNames.CORRELATION_ID);
         this.generateIfMissing = generateIfMissing;
         this.echoResponseHeader = echoResponseHeader;
         this.skipPatterns = (skipPatterns != null && skipPatterns.length > 0)

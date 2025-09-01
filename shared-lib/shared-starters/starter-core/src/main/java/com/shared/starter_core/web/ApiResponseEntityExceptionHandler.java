@@ -69,8 +69,7 @@ public class ApiResponseEntityExceptionHandler extends ResponseEntityExceptionHa
         ErrorResponse body = ErrorResponse.of(
                 ErrorCodes.VALIDATION_ERROR,              // "ERR-VALIDATION"
                 "Validation failed",
-                details,
-                path(request)
+                details
         );
         enrich(body, request);
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
@@ -101,8 +100,7 @@ public class ApiResponseEntityExceptionHandler extends ResponseEntityExceptionHa
         ErrorResponse body = ErrorResponse.of(
                 ErrorCodes.VALIDATION_ERROR,
                 "Validation failed",
-                details,
-                path(request)
+                details
         );
         enrich(body, request);
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
@@ -120,8 +118,7 @@ public class ApiResponseEntityExceptionHandler extends ResponseEntityExceptionHa
         ErrorResponse body = ErrorResponse.of(
                 ErrorCodes.VALIDATION_ERROR,
                 "Validation failed",
-                details,
-                path(request)
+                details
         );
         enrich(body, request);
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
@@ -149,8 +146,7 @@ public class ApiResponseEntityExceptionHandler extends ResponseEntityExceptionHa
         ErrorResponse err = ErrorResponse.of(
                 code,
                 message,
-                List.of(),                 // you can add more details here if needed
-                path(request)
+                List.of()                 // you can add more details here if needed
         );
         enrich(err, request);
         return new ResponseEntity<>(err, status != null ? status : HttpStatus.INTERNAL_SERVER_ERROR);
@@ -182,26 +178,20 @@ public class ApiResponseEntityExceptionHandler extends ResponseEntityExceptionHa
         // tenant
         err.setTenantId(ContextManager.Tenant.get());
 
-        // correlation id (prefer MDC "correlationId", then headers)
         String cid = firstNonBlank(
                 MDC.get(HeaderNames.CORRELATION_ID),
                 header(req, HeaderNames.CORRELATION_ID),
                 header(req, HeaderNames.REQUEST_ID)
         );
-        err.setCorrelationId(cid);
+        if (req instanceof ServletWebRequest swr && cid != null) {
+            swr.getResponse().setHeader(HeaderNames.CORRELATION_ID, cid);
+        }
     }
 
     private String header(WebRequest req, String name) {
         if (req instanceof ServletWebRequest swr) {
             HttpServletRequest http = swr.getRequest();
             return http.getHeader(name);
-        }
-        return null;
-    }
-
-    private String path(WebRequest req) {
-        if (req instanceof ServletWebRequest swr) {
-            return swr.getRequest().getRequestURI();
         }
         return null;
     }

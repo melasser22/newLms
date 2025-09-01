@@ -79,7 +79,7 @@ springdoc:
 shared:
   core:
     correlation:
-      header-name: X-Correlation-ID
+      header-name: X-Correlation-Id
       generate-if-missing: true
       echo-response-header: true
     tenant:
@@ -96,7 +96,7 @@ shared:
   headers:
     enabled: true
     correlation:
-      header: X-Correlation-ID
+      header: X-Correlation-Id
       auto-generate: true
       mandatory: true
     request:
@@ -126,7 +126,7 @@ shared:
     propagation:
       enabled: true
       include:
-        - X-Correlation-ID
+        - X-Correlation-Id
         - X-Request-ID
         - x_tenant_id
         - X-User-Id

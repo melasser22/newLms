@@ -1,6 +1,8 @@
 package com.shared.kafka_starter.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.common.constants.HeaderNames;
+import com.common.context.ContextManager;
 import com.shared.kafka_starter.props.KafkaProperties;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -26,6 +28,13 @@ public class KafkaProducerConfig {
         JsonSerializer.ADD_TYPE_INFO_HEADERS, false
     );
     DefaultKafkaProducerFactory<String,Object> pf = new DefaultKafkaProducerFactory<>(cfg);
+    pf.addPostProcessor(rec -> {
+      String cid = ContextManager.getCorrelationId();
+      if (cid != null) {
+        rec.headers().add(HeaderNames.CORRELATION_ID, cid.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      }
+      return rec;
+    });
     if (props.isExactlyOnce()) {
       pf.setTransactionIdPrefix(props.getTxIdPrefix());
     }

@@ -24,7 +24,7 @@ public class CoreProps implements BaseStarterProperties {
         private String headerName = HeaderNames.CORRELATION_ID; // "X-Correlation-Id"
 
         /** MDC key to store correlation id under */
-        private String mdcKey = "correlationId";
+        private String mdcKey = HeaderNames.CORRELATION_ID;
 
         /** Generate a UUID if the client did not send a correlation id */
         private boolean generateIfMissing = true;
