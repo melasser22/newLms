@@ -24,6 +24,11 @@ spring:
         format_sql: true
         jdbc.time_zone: UTC
 
+
+  flyway:
+    enabled: false
+    baseline-on-migrate: true
+
   kafka:
     bootstrap-servers: localhost:9092
     client-id: lms-setup-dev

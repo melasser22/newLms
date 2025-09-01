@@ -23,7 +23,9 @@ spring:
         hbm2ddl.create_namespaces: true
         format_sql: true
         jdbc.time_zone: UTC
-
+  flyway:
+    enabled: false
+    baseline-on-migrate: true
   kafka:
     bootstrap-servers: localhost:9092
     client-id: lms-setup-qa
@@ -41,6 +43,7 @@ spring:
       compression-type: gzip
       properties:
         linger.ms: 5
+
 
   data:
     redis:
@@ -90,6 +93,7 @@ shared:
       allowed-headers: "*"
   headers:
     enabled: true
+
     correlation:
       header: X-Correlation-ID
       auto-generate: true
@@ -151,11 +155,12 @@ shared:
         schema: setup
         table: audit_logs
       kafka:
-        enabled: true
+        enabled: false
       otlp:
-        enabled: true
+        enabled: false
       outbox:
-        enabled: true
+        enabled: false
+
   openapi:
     enabled: true
     title: "LMS - Setup Service API"
@@ -167,6 +172,7 @@ shared:
       name: setup
       packages-to-scan:
         - com.lms.setup
+
     jwt-security: true
   redis:
     host: localhost
