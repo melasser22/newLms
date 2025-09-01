@@ -2,13 +2,12 @@ package com.shared.crypto;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import javax.crypto.SecretKey;
-import org.junit.jupiter.api.Test;
-
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import javax.crypto.SecretKey;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,8 +15,9 @@ class JwtTokenServiceTest {
 
     @Test
     void createTokenIncludesTenantAndRoles() {
-        String secret = "01234567890123456789012345678901";
-        SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        String secret = "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=";
+        byte[] keyBytes = Base64.getDecoder().decode(secret);
+        SecretKey key = Keys.hmacShaKeyFor(keyBytes);
         JwtTokenService service = JwtTokenService.withSecret(secret, null);
         Map<String, Object> claims = Map.of("custom", "value");
         List<String> roles = List.of("admin", "user");
