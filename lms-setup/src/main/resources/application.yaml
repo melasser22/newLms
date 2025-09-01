@@ -3,6 +3,10 @@ spring:
     name: lms-setup
   profiles:
     active: dev
+  data:
+    redis:
+      repositories:
+        enabled: false
   flyway:
     baseline-on-migrate: true
     baseline-version: 0
