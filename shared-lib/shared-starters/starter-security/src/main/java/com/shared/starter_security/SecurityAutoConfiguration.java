@@ -3,6 +3,7 @@ package com.shared.starter_security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shared.starter_security.web.JsonAccessDeniedHandler;
 import com.shared.starter_security.web.JsonAuthEntryPoint;
+import com.shared.starter_security.Role;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -69,6 +70,8 @@ public class SecurityAutoConfiguration {
   @ConditionalOnMissingBean
   public JwtAuthenticationConverter jwtAuthenticationConverter(SharedSecurityProps props) {
     var conv = new JwtAuthenticationConverter();
+    // Only allow roles defined in the Role enum
+    var validRoles = EnumSet.allOf(Role.class).stream().map(Enum::name).collect(Collectors.toSet());
     conv.setJwtGrantedAuthoritiesConverter(jwt -> {
       List<GrantedAuthority> out = new ArrayList<>();
 
@@ -77,11 +80,16 @@ public class SecurityAutoConfiguration {
       if (rolesObj instanceof Collection<?> coll) {
         for (Object r : coll) {
           String role = String.valueOf(r).trim();
-          if (!role.isEmpty()) out.add(new SimpleGrantedAuthority(props.getRolePrefix() + role));
+          if (!role.isEmpty() && validRoles.contains(role)) {
+            out.add(new SimpleGrantedAuthority(props.getRolePrefix() + role));
+          }
         }
       } else if (rolesObj instanceof String s && StringUtils.hasText(s)) {
         for (String role : s.split("[,\\s]+")) {
-          if (!role.isBlank()) out.add(new SimpleGrantedAuthority(props.getRolePrefix() + role.trim()));
+          String trimmed = role.trim();
+          if (!trimmed.isBlank() && validRoles.contains(trimmed)) {
+            out.add(new SimpleGrantedAuthority(props.getRolePrefix() + trimmed));
+          }
         }
       }
 
