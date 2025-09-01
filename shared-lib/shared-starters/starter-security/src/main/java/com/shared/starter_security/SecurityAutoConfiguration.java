@@ -41,11 +41,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.Map;
 
 /**
  * Default Resource Server security:
