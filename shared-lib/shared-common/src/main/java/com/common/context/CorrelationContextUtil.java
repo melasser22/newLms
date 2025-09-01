@@ -33,7 +33,7 @@ public final class CorrelationContextUtil {
         }
         MDC.put(CORRELATION_ID, correlationId);
         if (tenantId != null && !tenantId.isBlank()) {
-            MDC.put(HeaderNames.TENANT_ID, tenantId);
+            MDC.put(HeaderNames.X_TENANT_ID, tenantId);
         }
     }
 
@@ -58,7 +58,7 @@ public final class CorrelationContextUtil {
      * @return the current tenant identifier from MDC or {@code null}
      */
     public static String getTenantId() {
-        return MDC.get(HeaderNames.TENANT_ID);
+        return MDC.get(HeaderNames.X_TENANT_ID);
     }
 
     /**
@@ -66,7 +66,7 @@ public final class CorrelationContextUtil {
      */
     public static void clear() {
         MDC.remove(CORRELATION_ID);
-        MDC.remove(HeaderNames.TENANT_ID);
+        MDC.remove(HeaderNames.X_TENANT_ID);
     }
 
     /**

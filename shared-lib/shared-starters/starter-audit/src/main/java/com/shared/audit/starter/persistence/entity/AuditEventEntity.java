@@ -1,5 +1,6 @@
 package com.shared.audit.starter.persistence.entity;
 
+import com.common.constants.HeaderNames;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
@@ -10,7 +11,7 @@ public class AuditEventEntity {
   @Id
   private UUID id;
   @Column(name="ts_utc") private Instant tsUtc;
-  @Column(name="tenant_id") private String tenantId;
+  @Column(name = HeaderNames.X_TENANT_ID) private String xTenantId;
   @Column(name="actor_id") private String actorId;
   @Column(name="actor_username") private String actorUsername;
   @Column(name="action") private String action;

@@ -20,7 +20,7 @@ public final class LogMarkers {
     public static LogstashMarker correlation(String correlationId, String tenantId) {
         LogstashMarker marker = Markers.append("correlationId", correlationId);
         if (tenantId != null && !tenantId.isBlank()) {
-            marker = marker.and(Markers.append(HeaderNames.TENANT_ID, tenantId));
+            marker = marker.and(Markers.append(HeaderNames.X_TENANT_ID, tenantId));
         }
         return marker;
     }

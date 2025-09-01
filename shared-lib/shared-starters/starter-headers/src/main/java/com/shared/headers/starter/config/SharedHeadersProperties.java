@@ -14,7 +14,7 @@ public class SharedHeadersProperties {
 
   private final Names correlation = new Names(HeaderNames.CORRELATION_ID, true, true);
   private final Names request = new Names(HeaderNames.REQUEST_ID, true, true);
-  private final Names tenant = new Names(HeaderNames.TENANT_ID, false, false);
+  private final Names tenant = new Names(HeaderNames.X_TENANT_ID, false, false);
   private final Names user = new Names(HeaderNames.USER_ID, false, false);
 
   private final Mdc mdc = new Mdc();
@@ -128,7 +128,7 @@ public class SharedHeadersProperties {
 
   public static class Propagation {
     private boolean enabled = true;
-    private List<String> include = List.of(HeaderNames.CORRELATION_ID,HeaderNames.REQUEST_ID,HeaderNames.TENANT_ID,HeaderNames.USER_ID);
+    private List<String> include = List.of(HeaderNames.CORRELATION_ID,HeaderNames.REQUEST_ID,HeaderNames.X_TENANT_ID,HeaderNames.USER_ID);
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
     public List<String> getInclude() { return include; }

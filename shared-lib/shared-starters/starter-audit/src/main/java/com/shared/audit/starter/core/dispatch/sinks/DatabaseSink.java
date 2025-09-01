@@ -1,6 +1,7 @@
 // NEW VERSION – uses TransactionTemplate (REQUIRES_NEW)
 package com.shared.audit.starter.core.dispatch.sinks;
 
+import com.common.constants.HeaderNames;
 import com.shared.audit.starter.api.AuditEvent;
 import com.shared.audit.starter.util.JsonUtils;
 import com.common.exception.JsonSerializationException;
@@ -23,7 +24,7 @@ public class DatabaseSink implements Sink {
     this.table = (schema == null || schema.isBlank() ? "public" : schema) + "." + table;
     this.insertSql =
         "INSERT INTO " + this.table + " (" +
-        " id, ts_utc, tenant_id, actor_id, actor_username, action, entity_type, entity_id, outcome," +
+        " id, ts_utc, " + HeaderNames.X_TENANT_ID + ", actor_id, actor_username, action, entity_type, entity_id, outcome," +
         " data_class, sensitivity, resource_path, resource_method, correlation_id, span_id, message, payload) " +
         "VALUES (? , ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb))";
   }
