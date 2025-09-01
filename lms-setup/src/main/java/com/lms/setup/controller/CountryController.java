@@ -2,6 +2,7 @@ package com.lms.setup.controller;
 
 import com.common.dto.BaseResponse;
 import com.lms.setup.model.Country;
+import com.lms.setup.dto.CountryDto;
 import com.lms.setup.security.SetupAuthorized;
 import com.lms.setup.service.CountryService;
 import com.shared.starter_core.tenant.RequireTenant;
@@ -49,7 +50,7 @@ public class CountryController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "409", description = "Country code already exists")
     })
-    public ResponseEntity<BaseResponse<Country>> add(@Valid @RequestBody Country body) {
+    public ResponseEntity<BaseResponse<Country>> add(@Valid @RequestBody CountryDto body) {
         return ResponseEntity.ok(countryService.add(body));
     }
 
@@ -66,7 +67,7 @@ public class CountryController {
     public ResponseEntity<BaseResponse<Country>> update(
             @Parameter(description = "ID of the country to update", required = true)
             @PathVariable @Min(1) Integer countryId,
-            @Valid @RequestBody Country body) {
+            @Valid @RequestBody CountryDto body) {
         return ResponseEntity.ok(countryService.update(countryId, body));
     }
 

@@ -17,7 +17,7 @@ import com.common.exception.ResourceNotFoundException;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -29,55 +29,62 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CityServiceImpl implements CityService {
         private final CityRepository cityRepo;
-	private final CountryRepository countryRepo;
-	private final CityMapper mapper;
+        private final CountryRepository countryRepo;
+        private final CityMapper mapper;
+        private final CacheManager cacheManager;
 
 	@Override
         @Transactional
-        @CacheEvict(cacheNames = {"cities", "cities:byCountry"}, allEntries = true)
         public BaseResponse<CityDto> add(CityDto request) {
                 Country country = countryRepo.findById(request.getCountryId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Country", String.valueOf(request.getCountryId())));
 
-		City entity = mapper.toEntity(request);
-		entity.setCountry(country);
-		City saved = cityRepo.save(entity);
-		return BaseResponse.success("City created", mapper.toDto(saved));
-	}
+                City entity = mapper.toEntity(request);
+                entity.setCountry(country);
+                City saved = cityRepo.save(entity);
+                cacheManager.getCache("cities:byCountry").evict(request.getCountryId());
+                return BaseResponse.success("City created", mapper.toDto(saved));
+        }
 
 	@Override
         @Transactional
-        @CacheEvict(cacheNames = {"cities", "cities:byCountry"}, allEntries = true)
         public BaseResponse<CityDto> update(Integer id, CityDto request) {
                 City city = cityRepo.findById(id)
                                 .orElseThrow(() -> new ResourceNotFoundException("City", String.valueOf(id)));
+                Integer oldCountryId = city.getCountry().getCountryId();
 
-		// update mutable fields
-		city.setCityCd(request.getCityCd());
-		city.setCityEnNm(request.getCityEnNm());
-		city.setCityArNm(request.getCityArNm());
-		city.setIsActive(request.getIsActive());
+                city.setCityCd(request.getCityCd());
+                city.setCityEnNm(request.getCityEnNm());
+                city.setCityArNm(request.getCityArNm());
+                city.setIsActive(request.getIsActive());
 
-		if (!city.getCountry().getCountryId().equals(request.getCountryId())) {
+                if (!oldCountryId.equals(request.getCountryId())) {
                         Country country = countryRepo.findById(request.getCountryId())
                                         .orElseThrow(() -> new ResourceNotFoundException("Country", String.valueOf(request.getCountryId())));
-			city.setCountry(country);
-		}
+                        city.setCountry(country);
+                }
 
-		City saved = cityRepo.save(city);
-		return BaseResponse.success("City updated", mapper.toDto(saved));
-	}
+                City saved = cityRepo.save(city);
+                cacheManager.getCache("cities").evict(id);
+                cacheManager.getCache("cities:byCountry").evict(oldCountryId);
+                cacheManager.getCache("cities:byCountry").evict(request.getCountryId());
+                return BaseResponse.success("City updated", mapper.toDto(saved));
+        }
 
 	@Override
         @Transactional
-        @CacheEvict(cacheNames = {"cities", "cities:byCountry"}, allEntries = true)
         public BaseResponse<Void> delete(Integer id) {
-		if (!cityRepo.existsById(id)) {
-			return BaseResponse.error("CITY_NOT_FOUND", "City not found");
-		}
-		cityRepo.deleteById(id);
-		return BaseResponse.success("City deleted", null);
-	}
+                City city = cityRepo.findById(id)
+                                .orElse(null);
+                if (city == null) {
+                        return BaseResponse.error("CITY_NOT_FOUND", "City not found");
+                }
+                Integer countryId = city.getCountry().getCountryId();
+                cityRepo.delete(city);
+                cacheManager.getCache("cities").evict(id);
+                cacheManager.getCache("cities:byCountry").evict(countryId);
+                return BaseResponse.success("City deleted", null);
+        }
 
 	@Override
         @Transactional(Transactional.TxType.SUPPORTS)
@@ -99,7 +106,7 @@ public class CityServiceImpl implements CityService {
                                 : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
 
                 if (unpaged) {
-                        var spec = CitySpecifications.nameContains(q); // null => no filter
+                        var spec = Specification.where(CitySpecifications.isActive()).and(CitySpecifications.nameContains(q));
                         var entities = cityRepo.findAll(spec, sort);
                         return BaseResponse.success("City list", new PageImpl<>(mapper.toDtoList(entities)));
                 }
