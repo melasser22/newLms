@@ -18,7 +18,7 @@ import java.util.concurrent.Future;
 
 import org.apache.kafka.clients.consumer.ConsumerGroupMetadata;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
-import org.apache.kafka.clients.ClientInstanceId;
+import org.apache.kafka.common.Uuid;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -89,7 +89,7 @@ public class KafkaProducerConfig {
       }
 
       @Override
-      public ClientInstanceId clientInstanceId(Duration timeout) {
+      public Uuid clientInstanceId(Duration timeout) {
         return producer.clientInstanceId(timeout);
       }
 
