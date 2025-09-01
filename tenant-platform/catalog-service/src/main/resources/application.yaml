@@ -15,3 +15,7 @@ spring:
       ddl-auto: none
 server:
   port: 8080
+shared:
+  openapi:
+    title: Catalog Service
+    description: Feature catalog APIs
