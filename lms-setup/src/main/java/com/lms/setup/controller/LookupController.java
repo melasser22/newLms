@@ -2,6 +2,7 @@ package com.lms.setup.controller;
 
 import com.common.dto.BaseResponse;
 import com.lms.setup.model.Lookup;
+import com.lms.setup.security.SetupAuthorized;
 import com.lms.setup.service.LookupService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,9 +16,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class LookupController {
     }
 
     @PostMapping
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "Create a new lookup", description = "Creates a new lookup value with the provided details")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lookup created successfully",
@@ -49,7 +50,7 @@ public class LookupController {
     }
 
     @PutMapping("/{lookupItemId}")
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "Update an existing lookup", description = "Updates the lookup with the specified ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lookup updated successfully"),
@@ -65,7 +66,7 @@ public class LookupController {
     }
 
     @GetMapping
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "Get all lookups", description = "Retrieves all lookup values")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lookups retrieved successfully"),
@@ -76,7 +77,7 @@ public class LookupController {
     }
 
     @GetMapping("/group/{groupCode}")
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "Get lookups by group", description = "Retrieves all lookups of a specific group")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lookups retrieved successfully"),

@@ -1,6 +1,7 @@
 package com.common.dto;
 
-import com.common.context.TraceContextUtil;
+import com.common.context.CorrelationContextUtil;
+import com.common.context.ContextManager;
 import com.common.enums.StatusEnums.ApiStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
@@ -39,20 +40,33 @@ public class BaseResponse<T> {
     /** Timestamp of response */
     @Builder.Default
     private Instant timestamp = Instant.now();
+  /** Correlation identifier for tracking across services */
 
-    /** Trace identifier for correlation across services */
-    @Builder.Default
-    private String traceId = TraceContextUtil.getTraceId();
+    /** Correlation identifier for tracking across services */
+    private String correlationId;
 
-    /**
-     * Alias for {@link #traceId} to support clients expecting a correlationId field.
-     */
+    /** Tenant identifier for multi-tenancy */
+    private String tenantId;
+
     @JsonProperty("correlationId")
     public String getCorrelationId() {
-        return traceId;
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = CorrelationContextUtil.getCorrelationId();
+        }
+
+        return correlationId;
+    }
+
+    @JsonProperty("tenantId")
+    public String getTenantId() {
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = ContextManager.Tenant.get();
+        }
+        return tenantId;
     }
 
     // ===== Static builders (nice usability) =====
+
     public static <T> BaseResponse<T> success(T data) {
         return BaseResponse.<T>builder()
                 .status(ApiStatus.SUCCESS)

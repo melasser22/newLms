@@ -14,7 +14,7 @@
   <artifactId>starter-core</artifactId>
   <packaging>jar</packaging>
   <name>Shared Starter - Core</name>
-  <description>Common auto-configuration for Shared services (trace/tenant filters, CORS, MVC advice, etc.)</description>
+  <description>Common auto-configuration for Shared services (correlation/tenant filters, CORS, MVC advice, etc.)</description>
 
   <dependencies>
     <!-- Autoconfiguration infrastructure -->
@@ -65,6 +65,11 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.data</groupId>
+      <artifactId>spring-data-commons</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>

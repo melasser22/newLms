@@ -1,5 +1,6 @@
 package com.common.dto;
 
+import com.common.context.ContextManager;
 import com.common.enums.StatusEnums.ApiStatus;
 import org.junit.jupiter.api.Test;
 
@@ -50,7 +51,7 @@ class BaseResponseTest {
 
     @Test
     void mapTransformsPayloadPreservingMetadata() {
-        BaseResponse<String> original = BaseResponse.success("hello");
+        BaseResponse<String> original = BaseResponse.<String>success("hello");
 
         BaseResponse<Integer> mapped = original.map(String::length);
 
@@ -62,11 +63,19 @@ class BaseResponseTest {
 
     @Test
     void mapHandlesNullPayloadGracefully() {
-        BaseResponse<String> original = BaseResponse.success(null);
+        BaseResponse<String> original = BaseResponse.<String>success(null);
 
         BaseResponse<Integer> mapped = original.map(String::length);
 
         assertNull(mapped.getData());
         assertEquals(original.getCode(), mapped.getCode());
+    }
+
+    @Test
+    void tenantIdDefaultsFromContext() {
+        try (ContextManager.Tenant.Scope ignore = ContextManager.Tenant.openScope("tenantA")) {
+            BaseResponse<Void> r = new BaseResponse<>();
+            assertEquals("tenantA", r.getTenantId());
+        }
     }
 }

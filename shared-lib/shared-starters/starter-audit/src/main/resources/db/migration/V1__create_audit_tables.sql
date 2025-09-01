@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS setup.audit_logs (
   sensitivity      text,
   resource_path    text,
   resource_method  text,
-  trace_id         text,
+  correlation_id   text,
   span_id          text,
   message          text,
   payload          jsonb NOT NULL
@@ -23,3 +23,9 @@ CREATE TABLE IF NOT EXISTS setup.audit_logs (
 CREATE INDEX IF NOT EXISTS idx_audit_logs_ts    ON setup.audit_logs (ts_utc);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant ON setup.audit_logs (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON setup.audit_logs (entity_type, entity_id);
+
+CREATE TABLE  IF NOT EXISTS setup.audit_outbox (
+    id      UUID        PRIMARY KEY,
+    payload JSONB       NOT NULL,
+    status  VARCHAR(20) NOT NULL
+);

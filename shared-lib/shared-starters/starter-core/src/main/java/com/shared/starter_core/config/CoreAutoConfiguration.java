@@ -23,7 +23,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * Core Shared auto-configuration:
- *  - Registers ContextFilter (trace/tenant propagation)
+ *  - Registers ContextFilter (correlation/tenant propagation)
  *  - Registers CorrelationIdFilter (independent correlation id)
  *  - Registers Tenant resolver + filter + enforcement interceptor
  *  - Optional global CORS
@@ -36,7 +36,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class CoreAutoConfiguration {
 
   /* -------------------------------------------
-   *  Context (trace + tenant) filter
+   *  Context (correlation + tenant) filter
    *  - provide the Filter bean if missing
    *  - register it via FilterRegistrationBean under a DIFFERENT bean name
    * ------------------------------------------- */
@@ -168,7 +168,7 @@ public class CoreAutoConfiguration {
     public Tenant getTenant() { return tenant; }
     public Cors getCors() { return cors; }
 
-    /** Controls ContextFilter registration (trace + tenant). */
+    /** Controls ContextFilter registration (correlation + tenant). */
     public static class Context {
       /** Enable/disable ContextFilter */
       private boolean enabled = true;

@@ -1,6 +1,6 @@
 package com.common.dto;
 
-import com.common.context.TraceContextUtil;
+import com.common.context.CorrelationContextUtil;
 import com.common.enums.StatusEnums.ApiStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -33,9 +33,9 @@ public class ErrorResponse {
     /** Optional detailed errors (e.g., field-level validation issues) */
     private List<String> details;
 
-    /** Trace/Correlation ID (for logs/monitoring) */
-    @Builder.Default
-    private String traceId = TraceContextUtil.getTraceId();
+    /** Correlation ID (for logs/monitoring) */
+    private String correlationId;
+
 
     /** Tenant ID (multi-tenant awareness) */
     private String tenantId;
@@ -46,7 +46,10 @@ public class ErrorResponse {
 
     @JsonProperty("correlationId")
     public String getCorrelationId() {
-        return traceId;
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = CorrelationContextUtil.getCorrelationId();
+        }
+        return correlationId;
     }
 
     // ===== Static builders =====
@@ -58,22 +61,22 @@ public class ErrorResponse {
                 .build();
     }
 
-    public static ErrorResponse of(String code, String message, List<String> details, String traceId) {
+    public static ErrorResponse of(String code, String message, List<String> details, String correlationId) {
         return ErrorResponse.builder()
                 .code(code)
                 .message(message)
                 .details(details)
-                .traceId(traceId)
+                .correlationId(correlationId)
                 .timestamp(Instant.now())
                 .build();
     }
 
-    public static ErrorResponse of(String code, String message, List<String> details, String traceId, String tenantId) {
+    public static ErrorResponse of(String code, String message, List<String> details, String correlationId, String tenantId) {
         return ErrorResponse.builder()
                 .code(code)
                 .message(message)
                 .details(details)
-                .traceId(traceId)
+                .correlationId(correlationId)
                 .tenantId(tenantId)
                 .timestamp(Instant.now())
                 .build();

@@ -24,6 +24,7 @@ spring:
         format_sql: true
         jdbc.time_zone: UTC
 
+
   flyway:
     enabled: false
     baseline-on-migrate: true
@@ -45,6 +46,11 @@ spring:
       compression-type: gzip
       properties:
         linger.ms: 5
+
+  data:
+    redis:
+      repositories:
+        enabled: false
 
 management:
   endpoints:
@@ -89,15 +95,22 @@ shared:
       allowed-headers: "*"
   headers:
     enabled: true
-    generate-if-missing: true
     correlation:
       header: X-Correlation-ID
+      auto-generate: true
+      mandatory: true
     request:
       header: X-Request-ID
+      auto-generate: true
+      mandatory: true
     tenant:
       header: X-Tenant-Id
+      auto-generate: false
+      mandatory: false
     user:
       header: X-User-Id
+      auto-generate: false
+      mandatory: false
     mdc:
       enabled: true
     security:
@@ -173,15 +186,18 @@ shared:
       activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
       keys:
         local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
-  security:
-    mode: hs256
-    hs256:
-      secret: ${JWT_SECRET:dev-secret}
-    resource-server:
-      enabled: true
-      permit-all:
-        - "/**"
-      disable-csrf: true
+    security:
+      mode: hs256
+      jwt:
+        secret: ${JWT_SECRET:dev-secret}
+        token-period: 15m
+      hs256:
+        secret: ${JWT_SECRET:dev-secret}
+      resource-server:
+        enabled: true
+        permit-all:
+          - "/**"
+        disable-csrf: true
       stateless: true
     roles-claim: roles
     tenant-claim: tenant

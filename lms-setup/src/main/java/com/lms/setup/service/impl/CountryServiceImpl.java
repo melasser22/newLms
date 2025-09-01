@@ -80,14 +80,14 @@ public class CountryServiceImpl implements CountryService {
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Country", dataClass = DataClass.HEALTH, message = "List countries")
-    public BaseResponse<?> list(Pageable pageable, String q, boolean all) {
+    public BaseResponse<?> list(Pageable pageable, String q, boolean unpaged) {
         Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
-                "countryEnNm", "countryEnNm", "countryArNm", "countryCd");
+                "countryEnNm", "countryArNm", "countryCd");
         Pageable pg = (pageable == null || !pageable.isPaged()
                 ? Pageable.unpaged()
                 : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
 
-        if (all) {
+        if (unpaged) {
             List<Country> list;
             if (q == null || q.isBlank()) {
                 list = countryRepository.findAll(sort);

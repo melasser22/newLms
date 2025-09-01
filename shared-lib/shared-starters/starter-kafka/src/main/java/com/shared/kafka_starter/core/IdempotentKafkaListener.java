@@ -1,5 +1,6 @@
 package com.shared.kafka_starter.core;
 
+import com.common.constants.HeaderNames;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 
@@ -13,7 +14,7 @@ public abstract class IdempotentKafkaListener<T> {
   }
 
   public final void handle(ConsumerRecord<String, T> record) {
-	  String messageId = header(record, Headers.MESSAGE_ID);
+          String messageId = header(record, HeaderNames.MESSAGE_ID);
 	  if (messageId == null) {
 	    if (record.key() != null) {
 	      messageId = record.key();

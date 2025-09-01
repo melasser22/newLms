@@ -31,20 +31,50 @@ public class CorrelationHeaderFilter implements Filter {
     String tenName = props.getTenant().getHeader();
     String userName = props.getUser().getHeader();
 
-    String correlationId = HeaderUtils.firstNonEmpty(req.getHeader(corrName));
+    // Prefer any correlation id already present in the logging context
+    String correlationId = MDC.get(HeaderNames.CORRELATION_ID);
     String requestId = HeaderUtils.firstNonEmpty(req.getHeader(reqName));
     String tenantId = HeaderUtils.firstNonEmpty(req.getHeader(tenName));
     String userId = HeaderUtils.firstNonEmpty(req.getHeader(userName));
 
-    if (props.isGenerateIfMissing()) {
-      if (correlationId == null) correlationId = HeaderUtils.uuid();
-      if (requestId == null) requestId = HeaderUtils.uuid();
+    if (correlationId == null) {
+      correlationId = HeaderUtils.firstNonEmpty(req.getHeader(corrName));
+    }
+
+    if (correlationId == null && props.getCorrelation().isAutoGenerate()) {
+      correlationId = HeaderUtils.uuid();
+    }
+    if (requestId == null && props.getRequest().isAutoGenerate()) {
+      requestId = HeaderUtils.uuid();
+    }
+    if (tenantId == null && props.getTenant().isAutoGenerate()) {
+      tenantId = HeaderUtils.uuid();
+    }
+    if (userId == null && props.getUser().isAutoGenerate()) {
+      userId = HeaderUtils.uuid();
+    }
+
+    if (correlationId == null && props.getCorrelation().isMandatory()) {
+      res.sendError(HttpServletResponse.SC_BAD_REQUEST, corrName + " header is required");
+      return;
+    }
+    if (requestId == null && props.getRequest().isMandatory()) {
+      res.sendError(HttpServletResponse.SC_BAD_REQUEST, reqName + " header is required");
+      return;
+    }
+    if (tenantId == null && props.getTenant().isMandatory()) {
+      res.sendError(HttpServletResponse.SC_BAD_REQUEST, tenName + " header is required");
+      return;
+    }
+    if (userId == null && props.getUser().isMandatory()) {
+      res.sendError(HttpServletResponse.SC_BAD_REQUEST, userName + " header is required");
+      return;
     }
 
     // Set in MDC
     if (props.getMdc().isEnabled()) {
       var kv = new HashMap<String,String>();
-      kv.put( HeaderNames.CORRELATION_ID, correlationId);
+      kv.put(HeaderNames.CORRELATION_ID, correlationId);
       kv.put(HeaderNames.REQUEST_ID, requestId);
       if (tenantId != null) kv.put(HeaderNames.TENANT_ID, tenantId);
       if (userId != null) kv.put(HeaderNames.USER_ID, userId);
@@ -60,14 +90,17 @@ public class CorrelationHeaderFilter implements Filter {
     // Echo back headers on response
     if (correlationId != null) res.setHeader(corrName, correlationId);
     if (requestId != null) res.setHeader(reqName, requestId);
+    if (tenantId != null) res.setHeader(tenName, tenantId);
+    if (userId != null) res.setHeader(userName, userId);
 
     try {
       chain.doFilter(request, response);
     } finally {
-      // cleanup
-        ContextManager.clearHeaders();
+      // Do not clear correlation id here so downstream filters (e.g. audit) can access it
+      ContextManager.clearRequestId();
+      ContextManager.Tenant.clear();
+      ContextManager.clearUserId();
       if (props.getMdc().isEnabled()) {
-        MDC.remove("correlationId");
         MDC.remove("requestId");
         MDC.remove("tenantId");
         MDC.remove("userId");

@@ -104,7 +104,7 @@ public class SystemParameterServiceImpl implements SystemParameterService {
     public BaseResponse<Page<SystemParameter>> list(Pageable pageable, String group, Boolean onlyActive) {
         try {
             Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
-                    "paramKey", "paramKey", "paramGroup", "paramValue");
+                    "paramKey", "paramGroup", "paramValue");
             Pageable pg = (pageable == null || !pageable.isPaged()
                     ? Pageable.unpaged()
                     : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));

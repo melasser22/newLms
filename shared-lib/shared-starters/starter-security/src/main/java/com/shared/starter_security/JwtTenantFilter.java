@@ -1,6 +1,7 @@
 package com.shared.starter_security;
 
 import com.common.context.ContextManager;
+import com.common.constants.HeaderNames;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpFilter;
@@ -30,12 +31,14 @@ class JwtTenantFilter extends HttpFilter {
                 Jwt jwt = jwtAuth.getToken();
                 Object tid = jwt.getClaims().get(tenantClaim);
                 if (tid != null) {
-                	ContextManager.Tenant.set((String.valueOf(tid)));
+                        String tenant = String.valueOf(tid);
+                        ContextManager.Tenant.set(tenant);
+                        response.setHeader(HeaderNames.TENANT_ID, tenant);
                 }
             }
             chain.doFilter(request, response);
         } finally {
-        	ContextManager.Tenant.clear();
+                ContextManager.Tenant.clear();
         }
     }
 }

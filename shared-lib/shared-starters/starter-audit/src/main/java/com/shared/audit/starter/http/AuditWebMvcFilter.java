@@ -2,6 +2,7 @@ package com.shared.audit.starter.http;
 
 import com.shared.audit.starter.api.AuditAction;
 import com.shared.audit.starter.api.AuditEvent;
+import com.shared.audit.starter.api.AuditOutcome;
 import com.shared.audit.starter.api.AuditService;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -96,6 +97,7 @@ public class AuditWebMvcFilter implements Filter {
 
     AuditEvent.Builder builder = AuditEvent.builder()
         .action(AuditAction.ACCESS)
+        .outcome(outcomeForStatus(res.getStatus()))
         .resource("path", req.getRequestURI())
         .resource("method", req.getMethod())
         .resource("query", Objects.toString(req.getQueryString(), ""));
@@ -128,6 +130,7 @@ public class AuditWebMvcFilter implements Filter {
 
     AuditEvent.Builder builder = AuditEvent.builder()
         .action(AuditAction.ACCESS)
+        .outcome(outcomeForStatus(res.getStatus()))
         .resource("path", req.getRequestURI())
         .resource("method", req.getMethod())
         .resource("query", Objects.toString(req.getQueryString(), ""));
@@ -157,6 +160,10 @@ public class AuditWebMvcFilter implements Filter {
     meta.put("port", req.getServerPort());
     meta.put("userAgent", Objects.toString(req.getHeader("User-Agent"), ""));
     return meta;
+  }
+
+  private AuditOutcome outcomeForStatus(int status) {
+    return status >= 400 ? AuditOutcome.FAILURE : AuditOutcome.SUCCESS;
   }
 
   private boolean shouldAudit(HttpServletRequest req) {

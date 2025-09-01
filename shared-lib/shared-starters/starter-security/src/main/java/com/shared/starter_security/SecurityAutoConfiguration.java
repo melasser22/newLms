@@ -1,8 +1,11 @@
 package com.shared.starter_security;
 
+import com.common.constants.HeaderNames;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shared.starter_security.Role;
 import com.shared.starter_security.web.JsonAccessDeniedHandler;
 import com.shared.starter_security.web.JsonAuthEntryPoint;
+import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -11,8 +14,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -35,10 +38,17 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.Map;
 
 /**
  * Default Resource Server security:
@@ -69,6 +79,8 @@ public class SecurityAutoConfiguration {
   @ConditionalOnMissingBean
   public JwtAuthenticationConverter jwtAuthenticationConverter(SharedSecurityProps props) {
     var conv = new JwtAuthenticationConverter();
+    // Only allow roles defined in the Role enum
+    var validRoles = EnumSet.allOf(Role.class).stream().map(Enum::name).collect(Collectors.toSet());
     conv.setJwtGrantedAuthoritiesConverter(jwt -> {
       List<GrantedAuthority> out = new ArrayList<>();
 
@@ -77,11 +89,16 @@ public class SecurityAutoConfiguration {
       if (rolesObj instanceof Collection<?> coll) {
         for (Object r : coll) {
           String role = String.valueOf(r).trim();
-          if (!role.isEmpty()) out.add(new SimpleGrantedAuthority(props.getRolePrefix() + role));
+          if (!role.isEmpty() && validRoles.contains(role)) {
+            out.add(new SimpleGrantedAuthority(props.getRolePrefix() + role));
+          }
         }
       } else if (rolesObj instanceof String s && StringUtils.hasText(s)) {
         for (String role : s.split("[,\\s]+")) {
-          if (!role.isBlank()) out.add(new SimpleGrantedAuthority(props.getRolePrefix() + role.trim()));
+          String trimmed = role.trim();
+          if (!trimmed.isBlank() && validRoles.contains(trimmed)) {
+            out.add(new SimpleGrantedAuthority(props.getRolePrefix() + trimmed));
+          }
         }
       }
 
@@ -210,8 +227,13 @@ public class SecurityAutoConfiguration {
     CorsConfiguration configuration = new CorsConfiguration();
     configuration.setAllowedOriginPatterns(List.of("https://*.lms.com", "http://localhost:3000"));
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "X-Correlation-ID", "X-Tenant-Id"));
-    configuration.setExposedHeaders(Arrays.asList("X-Correlation-ID", "X-Tenant-Id"));
+    configuration.setAllowedHeaders(Arrays.asList(
+        HeaderNames.AUTHORIZATION,
+        HeaderNames.CONTENT_TYPE,
+        "X-Requested-With",
+        HeaderNames.CORRELATION_ID,
+        HeaderNames.TENANT_ID));
+    configuration.setExposedHeaders(Arrays.asList(HeaderNames.CORRELATION_ID, HeaderNames.TENANT_ID));
     configuration.setAllowCredentials(true);
     configuration.setMaxAge(3600L);
 

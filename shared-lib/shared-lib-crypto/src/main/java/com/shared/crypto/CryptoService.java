@@ -5,7 +5,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-    import java.util.Base64;
+import java.util.Base64;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -111,7 +111,7 @@ public final class CryptoService {
         public Builder encryptionKey(byte[] keyBytes) {
             Objects.requireNonNull(keyBytes, "keyBytes");
             byte[] cloned = keyBytes.clone(); // defensive copy
-            validateAesKeyLength(cloned);
+            CryptoUtils.validateKeyLength(cloned, 16, 24, 32);
             final SecretKey key = new SecretKeySpec(cloned, "AES");
             this.encKeySupplier = () -> key;
             return this;
@@ -119,7 +119,7 @@ public final class CryptoService {
 
         /** Provide a static AES key via Base64. */
         public Builder encryptionKeyFromBase64(String base64) {
-            byte[] decoded = safeBase64Decode(base64, "AES encryption key (Base64)");
+            byte[] decoded = CryptoUtils.safeBase64Decode(base64, "AES encryption key (Base64)");
             return encryptionKey(decoded);
         }
 
@@ -140,7 +140,7 @@ public final class CryptoService {
 
         /** Provide a static HMAC key via Base64. */
         public Builder macKeyFromBase64(String base64) {
-            byte[] decoded = safeBase64Decode(base64, "HMAC key (Base64)");
+            byte[] decoded = CryptoUtils.safeBase64Decode(base64, "HMAC key (Base64)");
             return macKey(decoded);
         }
 
@@ -163,22 +163,5 @@ public final class CryptoService {
             return new CryptoService(facade, encKeySupplier, macKeySupplier);
         }
 
-        private static void validateAesKeyLength(byte[] key) {
-            int len = key.length;
-            if (len != 16 && len != 24 && len != 32) {
-                throw new IllegalArgumentException(
-                    "Invalid AES key length: " + len + " bytes. Expected 16/24/32 for AES-128/192/256."
-                );
-            }
-        }
-
-        private static byte[] safeBase64Decode(String base64, String what) {
-            Objects.requireNonNull(base64, what + " must not be null");
-            try {
-                return Base64.getDecoder().decode(base64.getBytes(StandardCharsets.US_ASCII));
-            } catch (IllegalArgumentException ex) {
-                throw new IllegalArgumentException("Invalid Base64 for " + what + ": " + ex.getMessage(), ex);
-            }
-        }
     }
 }

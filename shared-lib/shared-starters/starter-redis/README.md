@@ -24,3 +24,11 @@ Beans:
 - `RedisTemplate<String,String>` (named: `stringRedisTemplate`)
 - `RedisCacheManager` (with TTL & prefix)
 - Optional Spring Session via `@EnableRedisHttpSession` when on classpath
+
+## Usage
+```xml
+<dependency>
+  <groupId>com.lms</groupId>
+  <artifactId>starter-redis</artifactId>
+</dependency>
+```

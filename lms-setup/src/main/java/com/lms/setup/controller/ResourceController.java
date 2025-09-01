@@ -1,7 +1,8 @@
 package com.lms.setup.controller;
 
 import com.common.dto.BaseResponse;
-import com.lms.setup.model.Resource;
+import com.lms.setup.dto.ResourceDto;
+import com.lms.setup.security.SetupAuthorized;
 import com.lms.setup.service.ResourceService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,12 +14,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/setup/resources")
@@ -34,7 +37,7 @@ public class ResourceController {
     }
 
     @PostMapping
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "Create a new resource", description = "Creates a new resource with the provided details")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Resource created successfully",
@@ -43,12 +46,12 @@ public class ResourceController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "409", description = "Resource already exists")
     })
-    public ResponseEntity<BaseResponse<Resource>> add(@Valid @RequestBody Resource body) {
+    public ResponseEntity<BaseResponse<ResourceDto>> add(@Valid @RequestBody ResourceDto body) {
         return ResponseEntity.ok(resourceService.add(body));
     }
 
     @PutMapping("/{resourceId}")
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "Update an existing resource", description = "Updates the resource with the specified ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Resource updated successfully"),
@@ -56,51 +59,52 @@ public class ResourceController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "404", description = "Resource not found")
     })
-    public ResponseEntity<BaseResponse<Resource>> update(
+    public ResponseEntity<BaseResponse<ResourceDto>> update(
             @Parameter(description = "ID of the resource to update", required = true)
             @PathVariable @Min(1) Integer resourceId,
-            @Valid @RequestBody Resource body) {
+            @Valid @RequestBody ResourceDto body) {
         return ResponseEntity.ok(resourceService.update(resourceId, body));
     }
 
     @GetMapping("/{resourceId}")
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "Get resource by ID", description = "Retrieves a resource by its ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Resource found successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "404", description = "Resource not found")
     })
-    public ResponseEntity<BaseResponse<Resource>> get(
+    public ResponseEntity<BaseResponse<ResourceDto>> get(
             @Parameter(description = "ID of the resource to retrieve", required = true)
             @PathVariable @Min(1) Integer resourceId) {
         return ResponseEntity.ok(resourceService.get(resourceId));
     }
 
     @GetMapping
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "List resources", description = "Retrieves a paginated list of resources with optional search")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Resources retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<?> list(
+    public ResponseEntity<BaseResponse<Page<ResourceDto>>> list(
             @PageableDefault(size = 20) Pageable pageable,
             @Parameter(description = "Search query for resource names")
             @RequestParam(required = false) String q,
-            @Parameter(description = "Whether to return all resources (ignores pagination)")
-            @RequestParam(required = false) boolean all) {
-        return ResponseEntity.ok(resourceService.list(pageable, q, all));
+            @Parameter(description = "Whether to retrieve all resources (ignores pagination)")
+            @RequestParam(name = "unpaged", defaultValue = "false") boolean unpaged) {
+        Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
+        return ResponseEntity.ok(resourceService.list(effectivePageable, q, unpaged));
     }
 
     @GetMapping("/active")
-    @PreAuthorize("@roleChecker.hasRole(authentication, T(com.shared.starter_security.Role).EJADA_OFFICER, T(com.shared.starter_security.Role).TENANT_ADMIN, T(com.shared.starter_security.Role).TENANT_OFFICER)")
+    @SetupAuthorized
     @Operation(summary = "List active resources", description = "Retrieves all active resources")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Active resources retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<?> listActive() {
+    public ResponseEntity<BaseResponse<List<ResourceDto>>> listActive() {
         return ResponseEntity.ok(resourceService.listActive());
     }
 }

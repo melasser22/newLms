@@ -1,7 +1,7 @@
 package com.shared.crypto;
 
 import javax.crypto.SecretKey;
-    import java.security.GeneralSecurityException;
+import java.security.GeneralSecurityException;
 import java.util.Objects;
 import java.util.function.Supplier;
 

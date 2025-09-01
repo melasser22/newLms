@@ -14,7 +14,7 @@ spring:
 
   jpa:
     open-in-view: false
-    show-sql: true
+    show-sql: true              
     hibernate:
       ddl-auto: update
     properties:
@@ -23,11 +23,9 @@ spring:
         hbm2ddl.create_namespaces: true
         format_sql: true
         jdbc.time_zone: UTC
-
   flyway:
     enabled: false
     baseline-on-migrate: true
-
   kafka:
     bootstrap-servers: localhost:9092
     client-id: lms-setup-qa
@@ -45,6 +43,12 @@ spring:
       compression-type: gzip
       properties:
         linger.ms: 5
+
+
+  data:
+    redis:
+      repositories:
+        enabled: false
 
 management:
   endpoints:
@@ -80,7 +84,7 @@ shared:
       enabled: true
       header-name: X-Tenant-Id
       query-param: tenantId
-      default-policy: REQUIRED
+      default-policy: OPTIONAL
       echo-response-header: true
     cors:
       enabled: true
@@ -89,15 +93,23 @@ shared:
       allowed-headers: "*"
   headers:
     enabled: true
-    generate-if-missing: true
+
     correlation:
       header: X-Correlation-ID
+      auto-generate: true
+      mandatory: true
     request:
       header: X-Request-ID
+      auto-generate: true
+      mandatory: true
     tenant:
       header: X-Tenant-Id
+      auto-generate: false
+      mandatory: false
     user:
       header: X-User-Id
+      auto-generate: false
+      mandatory: false
     mdc:
       enabled: true
     security:
@@ -148,6 +160,7 @@ shared:
         enabled: false
       outbox:
         enabled: false
+
   openapi:
     enabled: true
     title: "LMS - Setup Service API"
@@ -159,7 +172,8 @@ shared:
       name: setup
       packages-to-scan:
         - com.lms.setup
-    jwt-security: false
+
+    jwt-security: true
   redis:
     host: localhost
     port: 6379
@@ -170,34 +184,32 @@ shared:
   crypto:
     algorithm: AES256_GCM
     in-memory:
-      activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
+      activeKid: ${CRYPTO_ACTIVE_KID:local-qa-key}
       keys:
-        local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
+        local-qa-key: ${CRYPTO_LOCAL_QA_KEY:Wb0Zf2K4z0vQpQKk8D7c3pQh7t3z+e5mQe2a3m2s1rQ=}
   security:
     mode: hs256
+    jwt:
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+      token-period: 15m
     hs256:
-      secret: ${JWT_SECRET:dev-secret}
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
     resource-server:
       enabled: true
-      permit-all:
-        - "/**"
+      permit-all: ["/setup/systemParameters/**"]
       disable-csrf: true
-      stateless: true
+    stateless: true
     roles-claim: roles
     tenant-claim: tenant
-    enable-role-check: false
+    enable-role-check: true
 
 logging:
   level:
-    root: ERROR
-    com.lms: ERROR
-    com.lms.audit.starter: ERROR
-    com.lms.audit.starter.core.dispatch: ERROR
-    com.lms.audit.starter.core.dispatch.sinks: ERROR
-    org.hibernate.tool.schema: ERROR
-    org.hibernate.SQL: ERROR
-    org.hibernate.orm.jdbc.bind: ERROR
+    root: INFO                
+    com.lms: INFO
+    org.hibernate.SQL: INFO   
+    org.hibernate.orm.jdbc.bind: INFO
     org.springframework.cache: ERROR
     org.springframework.cache.interceptor.CacheAspectSupport: ERROR
-debug: false
 
+debug: false

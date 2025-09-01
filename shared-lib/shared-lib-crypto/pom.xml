@@ -37,6 +37,11 @@
 			<artifactId>spring-boot-actuator</artifactId>
 			<optional>true</optional>
 		</dependency>
+		
+		<dependency>
+  <groupId>org.hibernate.validator</groupId>
+  <artifactId>hibernate-validator</artifactId>
+</dependency>
 
 		<!-- Kafka (optional; only if CryptoAuditLoggerKafka is activated) -->
 		<dependency>
@@ -46,18 +51,46 @@
 		</dependency>
 
 		<!-- Depend on core shared utilities -->
-		<dependency>
-			<groupId>com.lms</groupId>
-			<artifactId>shared-common</artifactId>
-		</dependency>
+                <dependency>
+                        <groupId>com.lms</groupId>
+                        <artifactId>shared-common</artifactId>
+                </dependency>
+
+		<!-- Jakarta Bean Validation annotations used by JwtTokenProperties -->
+                <dependency>
+                        <groupId>jakarta.validation</groupId>
+                        <artifactId>jakarta.validation-api</artifactId>
+                        <optional>true</optional>
+                </dependency>
+
+		<!-- JWT support -->
+                <dependency>
+                        <groupId>io.jsonwebtoken</groupId>
+                        <artifactId>jjwt-api</artifactId>
+                </dependency>
+                <dependency>
+                        <groupId>io.jsonwebtoken</groupId>
+                        <artifactId>jjwt-impl</artifactId>
+                        <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                        <groupId>io.jsonwebtoken</groupId>
+                        <artifactId>jjwt-jackson</artifactId>
+                        <scope>runtime</scope>
+                </dependency>
 
 		<!-- Testing: JUnit 5 -->
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter</artifactId>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+                <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter</artifactId>
+                        <scope>test</scope>
+                </dependency>
+                <dependency>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-starter-test</artifactId>
+                        <scope>test</scope>
+                </dependency>
+        </dependencies>
 
 	<build>
 		<plugins>
