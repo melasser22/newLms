@@ -29,3 +29,5 @@ shared:
     application-name: lms-setup
   security:
     enable-role-check: true
+    jwt:
+      token-period: 15m

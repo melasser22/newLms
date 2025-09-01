@@ -1,6 +1,7 @@
 package com.shared.crypto;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -12,8 +13,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
-@SpringBootTest(classes = JwtTokenAutoConfiguration.class)
-@TestPropertySource(properties = "shared.security.jwt.secret=01234567890123456789012345678901")
+@SpringBootTest
+@TestPropertySource(properties = {
+        "shared.security.jwt.secret=01234567890123456789012345678901",
+        "shared.security.jwt.token-period=PT5M"
+})
 class JwtTokenAutoConfigurationTest {
 
     @Autowired
@@ -25,5 +29,6 @@ class JwtTokenAutoConfigurationTest {
         SecretKey key = Keys.hmacShaKeyFor("01234567890123456789012345678901".getBytes(StandardCharsets.UTF_8));
         Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
         assertEquals("alice", claims.getSubject());
+        assertNotNull(claims.getExpiration());
     }
 }

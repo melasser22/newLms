@@ -16,9 +16,11 @@ import javax.crypto.SecretKey;
 public class JwtTokenService {
 
     private final SecretKey key;
+    private final Duration defaultTtl;
 
-    private JwtTokenService(SecretKey key) {
+    private JwtTokenService(SecretKey key, Duration defaultTtl) {
         this.key = key;
+        this.defaultTtl = defaultTtl;
     }
 
     /**
@@ -27,9 +29,9 @@ public class JwtTokenService {
      * @param secret the HMAC secret
      * @return configured service
      */
-    public static JwtTokenService withSecret(String secret) {
+    public static JwtTokenService withSecret(String secret, Duration defaultTtl) {
         SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        return new JwtTokenService(key);
+        return new JwtTokenService(key, defaultTtl);
     }
 
     /**
@@ -39,12 +41,14 @@ public class JwtTokenService {
      * @return signed JWT token
      */
     public String generateToken(String subject) {
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(subject)
                 .issuedAt(new Date())
-                .signWith(key, Jwts.SIG.HS256)
-                .compact();
-
+                .signWith(key, Jwts.SIG.HS256);
+        if (defaultTtl != null) {
+            builder.expiration(Date.from(Instant.now().plus(defaultTtl)));
+        }
+        return builder.compact();
     }
 
     /**
@@ -73,8 +77,9 @@ public class JwtTokenService {
         if (extraClaims != null && !extraClaims.isEmpty()) {
             extraClaims.forEach(builder::claim);
         }
-        if (ttl != null) {
-            builder.expiration(Date.from(Instant.now().plus(ttl)));
+        Duration effectiveTtl = ttl != null ? ttl : defaultTtl;
+        if (effectiveTtl != null) {
+            builder.expiration(Date.from(Instant.now().plus(effectiveTtl)));
         }
         return builder.compact();
     }
