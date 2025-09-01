@@ -1,5 +1,7 @@
 package com.common.dto;
+
 import com.common.context.CorrelationContextUtil;
+import com.common.context.ContextManager;
 import com.common.enums.StatusEnums.ApiStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
@@ -37,11 +39,14 @@ public class BaseResponse<T> {
 
     /** Timestamp of response */
     @Builder.Default
-    private Instant timestamp = Instant.now(); 
+    private Instant timestamp = Instant.now();
   /** Correlation identifier for tracking across services */
 
     /** Correlation identifier for tracking across services */
     private String correlationId;
+
+    /** Tenant identifier for multi-tenancy */
+    private String tenantId;
 
     @JsonProperty("correlationId")
     public String getCorrelationId() {
@@ -50,6 +55,14 @@ public class BaseResponse<T> {
         }
 
         return correlationId;
+    }
+
+    @JsonProperty("tenantId")
+    public String getTenantId() {
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = ContextManager.Tenant.get();
+        }
+        return tenantId;
     }
 
     // ===== Static builders (nice usability) =====
