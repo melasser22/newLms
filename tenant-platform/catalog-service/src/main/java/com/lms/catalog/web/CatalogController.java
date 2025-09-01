@@ -1,6 +1,7 @@
 package com.lms.catalog.web;
 
 import com.lms.catalog.core.CatalogService;
+import com.lms.catalog.core.FeaturePolicyPort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,9 +18,9 @@ public class CatalogController {
     }
 
     @GetMapping("/effective")
-    public ResponseEntity<?> effective(@RequestParam String tierId,
-                                       @RequestParam UUID tenantId,
-                                       @RequestParam String featureKey) {
+    public ResponseEntity<FeaturePolicyPort.EffectiveFeature> effective(@RequestParam String tierId,
+                                                                        @RequestParam UUID tenantId,
+                                                                        @RequestParam String featureKey) {
         return ResponseEntity.ok(service.effective(tierId, tenantId, featureKey));
     }
 }
