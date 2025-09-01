@@ -20,6 +20,10 @@ public class TenantResolverFilter extends OncePerRequestFilter {
     try { jdbc.execute("select set_config('app.current_tenant', '" + tid + "', true)"); chain.doFilter(req, res); }
     finally { TenantContext.clear(); MDC.remove("tenant_id"); }
   }
+  @Override
+  protected boolean shouldNotFilter(HttpServletRequest req) {
+    return "POST".equalsIgnoreCase(req.getMethod()) && "/tenants".equals(req.getRequestURI());
+  }
   private String extract(HttpServletRequest req) {
     String host = req.getHeader("host");
     if (host != null) { Matcher m = SUBDOMAIN.matcher(host); if (m.find()) return m.group(1); }
