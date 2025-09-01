@@ -15,7 +15,7 @@ class JwtDecoderAutoConfigurationTest {
     contextRunner.run(context -> {
       assertThat(context).hasFailed();
       assertThat(context.getStartupFailure())
-          .hasCauseInstanceOf(IllegalArgumentException.class)
+          .hasRootCauseInstanceOf(IllegalArgumentException.class)
           .hasMessageContaining("shared.security.hs256.secret");
     });
   }
@@ -25,7 +25,7 @@ class JwtDecoderAutoConfigurationTest {
     contextRunner.withPropertyValues("shared.security.mode=jwks").run(context -> {
       assertThat(context).hasFailed();
       assertThat(context.getStartupFailure())
-          .hasCauseInstanceOf(IllegalArgumentException.class)
+          .hasRootCauseInstanceOf(IllegalArgumentException.class)
           .hasMessageContaining("shared.security.jwks.uri");
     });
   }
