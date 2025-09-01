@@ -1,1 +1,0 @@
-create table if not exists feature(feature_key text primary key);

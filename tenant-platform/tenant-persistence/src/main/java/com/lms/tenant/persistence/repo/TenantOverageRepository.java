@@ -1,1 +1,0 @@
-package com.lms.tenant.persistence.repo; import com.lms.tenant.persistence.entity.*; import org.springframework.data.jpa.repository.*; import java.time.Instant; import java.util.*; public interface TenantOverageRepository extends JpaRepository<TenantOverage,UUID>{ List<TenantOverage> findByTenantIdAndOccurredAtBetween(UUID tenantId, Instant from, Instant to); }
