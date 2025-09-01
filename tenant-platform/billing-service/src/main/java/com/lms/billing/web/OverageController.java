@@ -1,16 +1,17 @@
 package com.lms.billing.web;
 
 import com.lms.billing.core.BillingService;
-import org.springframework.http.ResponseEntity;
+import com.shared.billing.api.OverageResponse;
+import com.shared.billing.api.OverageService;
+import com.shared.billing.api.RecordOverageRequest;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/tenants/{tenantId}/overages")
 @Validated
-public class OverageController {
+public class OverageController implements OverageService {
 
     private final BillingService service;
 

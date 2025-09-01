@@ -1,5 +1,6 @@
 package com.lms.tenant.config;
 
+import com.common.context.TenantContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,7 +27,7 @@ public class TenantFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         Optional<UUID> tenantId = tenantResolver.resolveTenant(request);
         tenantId.ifPresent(id -> {
-            TenantContext.setTenantId(id);
+            TenantContext.set(id);
             MDC.put("tenantId", id.toString());
         });
         try {

@@ -6,10 +6,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
-import java.time.Instant;
 import java.util.UUID;
 
 @RestController
@@ -22,11 +20,6 @@ public class PolicyController {
     this.service = service;
   }
 
-  @GetMapping("/entitlements")
-  public ResponseEntity<PolicyService.Entitlements> entitlements(@PathVariable UUID tenantId) {
-    return ResponseEntity.ok(service.effective(tenantId));
-  }
-
   @PostMapping("/features/{featureKey}/consume")
   public ResponseEntity<PolicyService.EnforcementResult> consume(
       @PathVariable UUID tenantId,
@@ -36,8 +29,6 @@ public class PolicyController {
         tenantId,
         featureKey,
         req.delta(),
-        req.periodStart(),
-        req.periodEnd(),
         () -> req.currentUsage(),
         req.idempotencyKey());
     return ResponseEntity.ok(result);
@@ -46,7 +37,5 @@ public class PolicyController {
   public record ConsumeRequest(
       @Positive long delta,
       @PositiveOrZero long currentUsage,
-      @NotNull Instant periodStart,
-      @NotNull Instant periodEnd,
       String idempotencyKey) {}
 }

@@ -1,9 +1,10 @@
 package com.lms.policy;
 
-import com.lms.billing.core.OveragePort;
 import com.lms.catalog.core.FeaturePolicyPort;
 import com.lms.subscription.core.SubscriptionQueryPort;
 import com.lms.tenant.core.TenantSettingsPort;
+import com.lms.billing.core.OveragePort;
+import com.shared.billing.api.RecordOverageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -26,6 +27,7 @@ public class PolicyService {
         this.featurePolicy = featurePolicy;
         this.overagePort = overagePort;
     }
+
     public PolicyResult consumeOrOverage(UUID tenantId, String feature, long totalUsage) {
         var sub = subscriptionQuery.loadActive(tenantId);
         var eff = featurePolicy.effective(sub.tierId(), tenantId, feature);
@@ -45,9 +47,18 @@ public class PolicyService {
 
         long exceeded = totalUsage - limit;
         long price = eff.overageUnitPriceMinor() == null ? 0 : eff.overageUnitPriceMinor();
-        var overageId = overagePort.recordOverage(tenantId, sub.subscriptionId(), feature, exceeded, price,
-                eff.overageCurrency(), Instant.now(), Instant.now(), null);
-        return new PolicyResult(limit, overageId);
+        var req = new RecordOverageRequest(
+                feature,
+                exceeded,
+                price,
+                eff.overageCurrency(),
+                Instant.now(),
+                Instant.now(),
+                Instant.now(),
+                null,
+                null);
+        var response = overagePort.recordOverage(tenantId, sub.subscriptionId(), req);
+        return new PolicyResult(limit, response.overageId());
     }
 
     public record PolicyResult(long limit, UUID overageId) {}
