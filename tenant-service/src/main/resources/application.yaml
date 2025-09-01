@@ -1,0 +1,113 @@
+# Default properties (applied to all profiles)
+spring:
+  application:
+    name: tenant-service
+  jpa:
+    hibernate:
+      ddl-auto: validate # We use Flyway for schema management
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write_dates_as_timestamps: false
+    deserialization:
+      fail_on_unknown_properties: false
+  main:
+    allow-bean-definition-overriding: true # In case shared-starters provide conflicting beans
+
+server:
+  port: 8080
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+  api-docs:
+    path: /api-docs
+  paths-to-match:
+    - /tenants/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+---
+# Local profile (for docker-compose)
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:postgresql://postgres:5432/lms_db
+    username: lms_user
+    password: lms_password
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+
+logging:
+  level:
+    root: INFO
+    com.lms.tenant: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+---
+# Test profile (for integration tests with Testcontainers)
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    # URL will be provided dynamically by Testcontainers
+    url: jdbc:tc:postgresql:16-alpine:///testdb
+    username: test
+    password: test
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+  flyway:
+    enabled: true
+
+---
+# Prod profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:lms_db}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  flyway:
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+
+logging:
+  level:
+    root: INFO
+    com.lms.tenant: INFO
+  pattern:
+    json:
+      # Using JSON log format for production
+      type: json
+      exception-stack-trace: true
+      include-logger-name: true
+      include-log-level: true
+      include-thread-name: true
+      include-mdc: true
