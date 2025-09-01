@@ -4,6 +4,8 @@ import com.lms.billing.core.OveragePort;
 import com.lms.catalog.core.FeaturePolicyPort;
 import com.lms.subscription.core.SubscriptionQueryPort;
 import com.lms.tenant.core.TenantSettingsPort;
+import com.shared.billing.api.OverageResponse;
+import com.shared.billing.api.RecordOverageRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -43,10 +45,11 @@ class PolicyControllerTest {
         var eff = new FeaturePolicyPort.EffectiveFeature(true, 100L, true, 1L, "USD");
         when(featurePolicy.effective("basic", tenantId, "emails")).thenReturn(eff);
         UUID overageId = UUID.randomUUID();
-        when(overagePort.recordOverage(eq(tenantId), eq(sub.subscriptionId()), eq("emails"), eq(15L), any(), eq("USD"), any(), any(), isNull()))
-                .thenReturn(overageId);
+        when(overagePort.recordOverage(eq(tenantId), eq(sub.subscriptionId()), any(RecordOverageRequest.class)))
+                .thenReturn(new OverageResponse(overageId, tenantId, "emails", 15L, 1L, "USD",
+                        Instant.now(), Instant.now(), Instant.now(), "RECORDED"));
 
-        var request = new PolicyController.ConsumeRequest("emails", 20L, null, null, null);
+        var request = new PolicyController.ConsumeRequest("emails", 20L, Instant.now().minusSeconds(60), Instant.now(), null);
         var response = controller.consume(tenantId, request);
 
         assertTrue(response.allowed());
