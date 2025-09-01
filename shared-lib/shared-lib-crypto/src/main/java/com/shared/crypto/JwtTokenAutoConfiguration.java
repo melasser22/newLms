@@ -10,6 +10,6 @@ public class JwtTokenAutoConfiguration {
 
     @Bean
     public JwtTokenService jwtTokenService(JwtTokenProperties props) {
-        return JwtTokenService.withSecret(props.getSecret());
+        return JwtTokenService.withSecret(props.getSecret(), props.getTokenPeriod());
     }
 }

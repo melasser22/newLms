@@ -51,3 +51,6 @@ logging:
 shared:
   security:
     enable-role-check: false
+    jwt:
+      secret: test-secret
+      token-period: 5m

@@ -176,15 +176,18 @@ shared:
       activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
       keys:
         local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
-  security:
-    mode: hs256
-    hs256:
-      secret: ${JWT_SECRET:dev-secret}
-    resource-server:
-      enabled: true
-      permit-all:
-        - "/**"
-      disable-csrf: true
+    security:
+      mode: hs256
+      jwt:
+        secret: ${JWT_SECRET:dev-secret}
+        token-period: 15m
+      hs256:
+        secret: ${JWT_SECRET:dev-secret}
+      resource-server:
+        enabled: true
+        permit-all:
+          - "/**"
+        disable-csrf: true
       stateless: true
     roles-claim: roles
     tenant-claim: tenant
