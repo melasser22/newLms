@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import javax.sql.DataSource;
 import org.springframework.jdbc.datasource.DelegatingDataSource;
+import com.common.context.TenantContext;
 
 /**
  * Wraps {@link DataSource} connections to apply the current tenant using a PostgreSQL GUC variable.

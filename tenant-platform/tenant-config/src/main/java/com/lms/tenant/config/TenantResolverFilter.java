@@ -1,6 +1,5 @@
 package com.lms.tenant.config;
 
-import com.common.context.TenantContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,6 +12,7 @@ import org.slf4j.MDC;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.common.context.TenantContext;
 
 /**
  * Resolves tenant identifiers from the incoming request and stores them in the

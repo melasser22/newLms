@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.MDC;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.common.context.TenantContext;
 
 /**
  * Servlet filter that populates {@link TenantContext} for each request.
