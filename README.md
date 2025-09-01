@@ -1,9 +1,10 @@
 # Learning Management System (LMS)
 
-This repository houses two primary components:
+This repository houses several components:
 
 - **shared-lib** – a collection of reusable Spring Boot starter modules and utilities.
 - **lms-setup** – a Spring Boot microservice for reference lookups and tenant/platform configuration.
+- **tenant-persistence** – central JPA entities, repositories, and Flyway migrations for the tenant domain.
 
 ## Getting Started
 
