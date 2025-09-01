@@ -2,15 +2,19 @@ package com.lms.tenant.api;
 
 import com.lms.tenant.core.PolicyService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.time.Instant;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/tenants/{tenantId}")
+@Validated
 public class PolicyController {
   private final PolicyService service;
 
@@ -40,8 +44,8 @@ public class PolicyController {
   }
 
   public record ConsumeRequest(
-      long delta,
-      long currentUsage,
+      @Positive long delta,
+      @PositiveOrZero long currentUsage,
       @NotNull Instant periodStart,
       @NotNull Instant periodEnd,
       String idempotencyKey) {}

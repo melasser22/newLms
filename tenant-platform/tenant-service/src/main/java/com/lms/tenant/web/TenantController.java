@@ -2,12 +2,14 @@ package com.lms.tenant.web;
 
 import com.lms.tenant.core.TenantService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/tenants")
+@Validated
 public class TenantController {
 
     private final TenantService service;
