@@ -76,7 +76,7 @@ public class CorrelationHeaderFilter implements Filter {
       var kv = new HashMap<String,String>();
       kv.put(HeaderNames.CORRELATION_ID, correlationId);
       kv.put(HeaderNames.REQUEST_ID, requestId);
-      if (tenantId != null) kv.put(HeaderNames.TENANT_ID, tenantId);
+      if (tenantId != null) kv.put(HeaderNames.X_TENANT_ID, tenantId);
       if (userId != null) kv.put(HeaderNames.USER_ID, userId);
       HeaderUtils.putMdc(kv);
     }
@@ -101,7 +101,7 @@ public class CorrelationHeaderFilter implements Filter {
       ContextManager.Tenant.clear();
       ContextManager.clearUserId();
       if (props.getMdc().isEnabled()) {
-        HeaderUtils.clearMdc(HeaderNames.REQUEST_ID, HeaderNames.TENANT_ID, HeaderNames.USER_ID);
+        HeaderUtils.clearMdc(HeaderNames.REQUEST_ID, HeaderNames.X_TENANT_ID, HeaderNames.USER_ID);
       }
     }
   }

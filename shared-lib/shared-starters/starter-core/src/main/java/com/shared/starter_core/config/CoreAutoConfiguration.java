@@ -215,11 +215,11 @@ public class CoreAutoConfiguration {
       private boolean enabled = true;
 
       /** Header and query parameter names */
-      private String headerName = HeaderNames.TENANT_ID;   // "X-Tenant-Id"
+      private String headerName = HeaderNames.X_TENANT_ID;   // "x_tenant_id"
       private String queryParam = "tenantId";
 
       /** MDC key for logs */
-      private String mdcKey = HeaderNames.TENANT_ID;
+      private String mdcKey = HeaderNames.X_TENANT_ID;
 
       /** Echo back the tenant in response header */
       private boolean echoResponseHeader = true;
@@ -276,7 +276,7 @@ public class CoreAutoConfiguration {
       private String[] allowedOrigins = new String[]{"*"};
       private String[] allowedMethods = new String[]{"GET","POST","PUT","PATCH","DELETE","OPTIONS"};
       private String[] allowedHeaders = new String[]{"*"};
-      private String[] exposedHeaders = new String[]{HeaderNames.CORRELATION_ID, HeaderNames.TENANT_ID};
+      private String[] exposedHeaders = new String[]{HeaderNames.CORRELATION_ID, HeaderNames.X_TENANT_ID};
       private boolean allowCredentials = false;
       private long maxAgeSeconds = 3600;
 

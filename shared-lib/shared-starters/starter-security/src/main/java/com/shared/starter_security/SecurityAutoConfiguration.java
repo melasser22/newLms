@@ -235,8 +235,8 @@ public class SecurityAutoConfiguration {
         HeaderNames.CONTENT_TYPE,
         "X-Requested-With",
         HeaderNames.CORRELATION_ID,
-        HeaderNames.TENANT_ID));
-    configuration.setExposedHeaders(Arrays.asList(HeaderNames.CORRELATION_ID, HeaderNames.TENANT_ID));
+        HeaderNames.X_TENANT_ID));
+    configuration.setExposedHeaders(Arrays.asList(HeaderNames.CORRELATION_ID, HeaderNames.X_TENANT_ID));
     configuration.setAllowCredentials(false);
     configuration.setMaxAge(3600L);
 

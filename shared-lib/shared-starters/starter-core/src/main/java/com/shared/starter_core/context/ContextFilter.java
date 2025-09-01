@@ -46,11 +46,11 @@ public class ContextFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         String tenantId      = trimToNull(firstNonNull(
-                request.getHeader(HeaderNames.TENANT_ID),
-                request.getParameter(HeaderNames.TENANT_ID)           // optional fallback
+                request.getHeader(HeaderNames.X_TENANT_ID),
+                request.getParameter(HeaderNames.X_TENANT_ID)           // optional fallback
         ));
         if (tenantId != null && !TENANT_PATTERN.matcher(tenantId).matches()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + HeaderNames.TENANT_ID);
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + HeaderNames.X_TENANT_ID);
             return;
         }
         String incomingCorrelation = trimToNull(
@@ -77,7 +77,7 @@ public class ContextFilter extends OncePerRequestFilter {
                 ContextManager.Tenant.set(tenantId);
             }
             // ---- Enrich logging context (appears on every log line)
-            putMdc(HeaderNames.TENANT_ID, tenantId);
+            putMdc(HeaderNames.X_TENANT_ID, tenantId);
             putMdc(HeaderNames.USER_ID, userId);
             putMdc(HeaderNames.CORRELATION_ID, correlationId);
 
@@ -89,7 +89,7 @@ public class ContextFilter extends OncePerRequestFilter {
             // ---- Always cleanup
             ContextManager.Tenant.clear();
             CorrelationContextUtil.clear();
-            MDC.remove(HeaderNames.TENANT_ID);
+            MDC.remove(HeaderNames.X_TENANT_ID);
             MDC.remove(HeaderNames.USER_ID);
             MDC.remove(HeaderNames.CORRELATION_ID);
         }

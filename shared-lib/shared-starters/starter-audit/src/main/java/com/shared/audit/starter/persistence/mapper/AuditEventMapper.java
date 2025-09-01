@@ -12,7 +12,7 @@ public final class AuditEventMapper {
     try {
       var idF = AuditEventEntity.class.getDeclaredField("id"); idF.setAccessible(true); idF.set(en, e.getEventId());
       var tsF = AuditEventEntity.class.getDeclaredField("tsUtc"); tsF.setAccessible(true); tsF.set(en, e.getTimestamp());
-      var tF  = AuditEventEntity.class.getDeclaredField("tenantId"); tF.setAccessible(true); tF.set(en, e.getTenantId());
+      var tF  = AuditEventEntity.class.getDeclaredField("xTenantId"); tF.setAccessible(true); tF.set(en, e.getTenantId());
       var aF  = AuditEventEntity.class.getDeclaredField("actorId"); aF.setAccessible(true); aF.set(en, e.getActor()==null?null:e.getActor().id());
       var auF = AuditEventEntity.class.getDeclaredField("actorUsername"); auF.setAccessible(true); auF.set(en, e.getActor()==null?null:e.getActor().username());
       var acF = AuditEventEntity.class.getDeclaredField("action"); acF.setAccessible(true); acF.set(en, e.getAction().name());

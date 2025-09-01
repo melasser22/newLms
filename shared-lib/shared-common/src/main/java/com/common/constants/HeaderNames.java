@@ -16,7 +16,11 @@ public final class HeaderNames {
     public static final String REFRESH_TOKEN = "X-Refresh-Token";
 
     // 🏢 Multi-tenancy
-    public static final String TENANT_ID = "X-Tenant-Id";
+    /**
+     * Canonical tenant identifier header. All services should read/write this
+     * header only and avoid using any legacy variants.
+     */
+    public static final String X_TENANT_ID = "x_tenant_id";
     public static final String TENANT_KEY = "X-Tenant-Key";
     public static final String MESSAGE_ID = "x-msg-id";
 

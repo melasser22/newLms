@@ -82,7 +82,7 @@ shared:
       echo-response-header: true
     tenant:
       enabled: true
-      header-name: X-Tenant-Id
+      header-name: x_tenant_id
       query-param: tenantId
       default-policy: OPTIONAL
       echo-response-header: true
@@ -103,7 +103,7 @@ shared:
       auto-generate: true
       mandatory: true
     tenant:
-      header: X-Tenant-Id
+      header: x_tenant_id
       auto-generate: false
       mandatory: false
     user:
@@ -127,7 +127,7 @@ shared:
       include:
         - X-Correlation-ID
         - X-Request-ID
-        - X-Tenant-Id
+        - x_tenant_id
         - X-User-Id
   audit:
     enabled: true

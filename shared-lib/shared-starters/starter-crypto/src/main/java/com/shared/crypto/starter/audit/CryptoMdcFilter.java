@@ -24,7 +24,7 @@ import java.io.IOException;
  *
  * Default header names (override in your gateway if needed):
  *  - X-Correlation-Id
- *  - HeaderNames.TENANT_ID
+ *  - HeaderNames.X_TENANT_ID
  *  - X-User-Id
  */
 public class CryptoMdcFilter extends OncePerRequestFilter {
@@ -38,7 +38,7 @@ public class CryptoMdcFilter extends OncePerRequestFilter {
 
         // Read incoming headers
         String incomingCorrelation = headerOrNull(request, HeaderNames.CORRELATION_ID);
-        String incomingTenant = headerOrNull(request, HeaderNames.TENANT_ID);
+        String incomingTenant = headerOrNull(request, HeaderNames.X_TENANT_ID);
         String incomingUser = headerOrNull(request, HeaderNames.USER_ID);
  // Initialize correlation and tenant context (generates new id if missing)
         CorrelationContextUtil.init(incomingCorrelation, incomingTenant);

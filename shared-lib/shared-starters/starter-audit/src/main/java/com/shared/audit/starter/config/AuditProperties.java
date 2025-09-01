@@ -154,7 +154,7 @@ public class AuditProperties {
   }
 
   public static class Tenant {
-    private String header = HeaderNames.TENANT_ID;
+    private String header = HeaderNames.X_TENANT_ID;
     private boolean required = true;
     public String getHeader() { return header; }
     public void setHeader(String header) { this.header = header; }
