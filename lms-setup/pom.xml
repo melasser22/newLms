@@ -241,6 +241,11 @@
         <artifactId>cache-api</artifactId>
       </dependency>
 
+      <dependency>
+      	<groupId>com.lms</groupId>
+      	<artifactId>shared-lib-crypto</artifactId>
+      <version>${lms.shared.version}</version>
+      </dependency>
   </dependencies>
 
   <build>

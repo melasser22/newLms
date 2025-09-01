@@ -2,7 +2,7 @@ spring:
   application:
     name: lms-setup
   profiles:
-    active: dev
+    active: qa
   flyway:
     baseline-on-migrate: true
     baseline-version: 0

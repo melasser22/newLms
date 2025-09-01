@@ -86,7 +86,10 @@
       <artifactId>reactor-core</artifactId>
       <optional>true</optional>
     </dependency>
-
+    <dependency>
+    <groupId>org.apache.kafka</groupId>
+    <artifactId>kafka-clients</artifactId>
+    </dependency>
     <!-- Build-time metadata (compile-only, non-transitive) -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

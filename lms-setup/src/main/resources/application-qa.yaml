@@ -14,7 +14,7 @@ spring:
 
   jpa:
     open-in-view: false
-    show-sql: true
+    show-sql: true              
     hibernate:
       ddl-auto: update
     properties:
@@ -146,11 +146,11 @@ shared:
         schema: setup
         table: audit_logs
       kafka:
-        enabled: false
+        enabled: true
       otlp:
-        enabled: false
+        enabled: true
       outbox:
-        enabled: false
+        enabled: true
   openapi:
     enabled: true
     title: "LMS - Setup Service API"
@@ -175,34 +175,30 @@ shared:
     in-memory:
       activeKid: ${CRYPTO_ACTIVE_KID:local-qa-key}
       keys:
-        local-qa-key: ${CRYPTO_LOCAL_QA_KEY}
-    security:
-      mode: hs256
-      jwt:
-        secret: ${JWT_SECRET}
-        token-period: 15m
-      hs256:
-        secret: ${JWT_SECRET}
-      resource-server:
-        enabled: true
-        permit-all: []
-        disable-csrf: true
-      stateless: true
+        local-qa-key: ${CRYPTO_LOCAL_QA_KEY:Wb0Zf2K4z0vQpQKk8D7c3pQh7t3z+e5mQe2a3m2s1rQ=}
+  security:
+    mode: hs256
+    jwt:
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+      token-period: 15m
+    hs256:
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+    resource-server:
+      enabled: true
+      permit-all: ["/setup/systemParameters/**"]
+      disable-csrf: true
+    stateless: true
     roles-claim: roles
     tenant-claim: tenant
-    enable-role-check: false
+    enable-role-check: true
 
 logging:
   level:
-    root: ERROR
-    com.lms: ERROR
-    com.lms.audit.starter: ERROR
-    com.lms.audit.starter.core.dispatch: ERROR
-    com.lms.audit.starter.core.dispatch.sinks: ERROR
-    org.hibernate.tool.schema: ERROR
-    org.hibernate.SQL: ERROR
-    org.hibernate.orm.jdbc.bind: ERROR
+    root: INFO                
+    com.lms: INFO
+    org.hibernate.SQL: INFO   
+    org.hibernate.orm.jdbc.bind: INFO
     org.springframework.cache: ERROR
     org.springframework.cache.interceptor.CacheAspectSupport: ERROR
-debug: false
 
+debug: false
