@@ -1,3 +1,0 @@
-com.lms.tenant.core.config.CoreAutoConfiguration
-com.lms.tenant.core.shared.SharedIntegrationConfig
-com.lms.tenant.core.fallback.JdbcFallbackConfig

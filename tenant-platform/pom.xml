@@ -12,6 +12,11 @@
     <module>tenant-core</module>
     <module>tenant-events</module>
     <module>tenant-api</module>
+    <module>policy-service</module>
+    <module>tenant-service</module>
+    <module>subscription-service</module>
+    <module>catalog-service</module>
+    <module>billing-service</module>
   </modules>
   <properties>
     <java.version>21</java.version>
