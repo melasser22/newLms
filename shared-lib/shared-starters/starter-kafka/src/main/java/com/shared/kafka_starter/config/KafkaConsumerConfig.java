@@ -1,7 +1,10 @@
 package com.shared.kafka_starter.config;
 
+import com.common.constants.HeaderNames;
+import com.common.context.ContextManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shared.kafka_starter.props.KafkaProperties;
+import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -68,6 +71,17 @@ public class KafkaConsumerConfig {
 
         var errorHandler = new DefaultErrorHandler(recoverer, backoff);
         factory.setCommonErrorHandler(errorHandler);
+
+        factory.setRecordInterceptor(record -> {
+            Headers headers = record.headers();
+            var header = headers.lastHeader(HeaderNames.CORRELATION_ID);
+            if (header != null) {
+                String cid = new String(header.value(), java.nio.charset.StandardCharsets.UTF_8);
+                ContextManager.setCorrelationId(cid);
+                org.slf4j.MDC.put(HeaderNames.CORRELATION_ID, cid);
+            }
+            return record;
+        });
 
         return factory;
     }

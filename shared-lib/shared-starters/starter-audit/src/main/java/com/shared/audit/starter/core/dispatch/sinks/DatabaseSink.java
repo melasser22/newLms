@@ -56,8 +56,8 @@ public class DatabaseSink implements Sink {
             e.getSensitivity() == null ? null : e.getSensitivity().name(),
             e.getResource().getOrDefault("path", null),
             e.getResource().getOrDefault("method", null),
-            e.getMetadata().getOrDefault("correlationId", null),
-            e.getMetadata().getOrDefault("spanId", null),
+            e.getMetadata().getOrDefault(HeaderNames.CORRELATION_ID, null),
+            null,
             e.getMessage(),
             payload
         );

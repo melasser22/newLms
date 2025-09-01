@@ -1,8 +1,6 @@
 package com.common.dto;
 
-import com.common.context.CorrelationContextUtil;
 import com.common.enums.StatusEnums.ApiStatus;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,24 +31,12 @@ public class ErrorResponse {
     /** Optional detailed errors (e.g., field-level validation issues) */
     private List<String> details;
 
-    /** Correlation ID (for logs/monitoring) */
-    private String correlationId;
-
-
     /** Tenant ID (multi-tenant awareness) */
     private String tenantId;
 
     /** Timestamp of error */
     @Builder.Default
     private Instant timestamp = Instant.now();
-
-    @JsonProperty("correlationId")
-    public String getCorrelationId() {
-        if (correlationId == null || correlationId.isBlank()) {
-            correlationId = CorrelationContextUtil.getCorrelationId();
-        }
-        return correlationId;
-    }
 
     // ===== Static builders =====
     public static ErrorResponse of(String code, String message) {
@@ -61,22 +47,20 @@ public class ErrorResponse {
                 .build();
     }
 
-    public static ErrorResponse of(String code, String message, List<String> details, String correlationId) {
+    public static ErrorResponse of(String code, String message, List<String> details) {
         return ErrorResponse.builder()
                 .code(code)
                 .message(message)
                 .details(details)
-                .correlationId(correlationId)
                 .timestamp(Instant.now())
                 .build();
     }
 
-    public static ErrorResponse of(String code, String message, List<String> details, String correlationId, String tenantId) {
+    public static ErrorResponse of(String code, String message, List<String> details, String tenantId) {
         return ErrorResponse.builder()
                 .code(code)
                 .message(message)
                 .details(details)
-                .correlationId(correlationId)
                 .tenantId(tenantId)
                 .timestamp(Instant.now())
                 .build();

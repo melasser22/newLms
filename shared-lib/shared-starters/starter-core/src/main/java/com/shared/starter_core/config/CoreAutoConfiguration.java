@@ -185,7 +185,7 @@ public class CoreAutoConfiguration {
     public static class Correlation {
       private boolean enabled = true;
       private String headerName = HeaderNames.CORRELATION_ID; // "X-Correlation-Id"
-      private String mdcKey = "correlationId";
+      private String mdcKey = HeaderNames.CORRELATION_ID;
       private boolean generateIfMissing = true;
       private boolean echoResponseHeader = true;
       private int order = Integer.MIN_VALUE + 5; // effectively Ordered.HIGHEST_PRECEDENCE
