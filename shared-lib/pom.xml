@@ -43,7 +43,7 @@
     <plugin.clean.version>3.2.0</plugin.clean.version>     
     <plugin.site.version>3.12.1</plugin.site.version>      
 		<!-- if any module uses Boot plugin -->
-    <spring.boot.version>3.3.3</spring.boot.version>
+    <spring.boot.version>3.5.5</spring.boot.version>
   </properties>
 
   <!-- Centralize dependency versions -->

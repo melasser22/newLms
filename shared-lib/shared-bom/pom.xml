@@ -12,11 +12,11 @@
 
   <properties>
     <!-- Platforms -->
-    <spring.boot.version>3.3.3</spring.boot.version>
+    <spring.boot.version>3.5.5</spring.boot.version>
     <spring.cloud.version>2024.0.2</spring.cloud.version> <!-- 2024.0.3 is not on Central -->
 
     <!-- Libraries not fully managed by Boot -->
-    <flyway.version>10.17.1</flyway.version>
+    <flyway.version>11.11.2</flyway.version>
 
     <!-- Observability / Testing -->
     <otel.version>1.45.0</otel.version>
@@ -29,7 +29,7 @@
     <!-- DB & misc -->
     <postgres.version>42.7.4</postgres.version>
     <hibernate.types.version>2.21.1</hibernate.types.version>
-    <jackson.version>2.17.2</jackson.version>
+    <jackson.version>2.19.2</jackson.version>
 
     <!-- Security / resilience -->
     <jjwt.version>0.13.0</jjwt.version> <!-- per jjwt install guide -->
