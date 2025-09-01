@@ -1,0 +1,23 @@
+package com.lms.subscription.web;
+
+import com.lms.subscription.core.SubscriptionService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/tenants")
+public class SubscriptionController {
+
+    private final SubscriptionService service;
+
+    public SubscriptionController(SubscriptionService service) {
+        this.service = service;
+    }
+
+    @GetMapping("/{tenantId}/subscription/active")
+    public ResponseEntity<?> active(@PathVariable UUID tenantId) {
+        return ResponseEntity.ok(service.active(tenantId));
+    }
+}
