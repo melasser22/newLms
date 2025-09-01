@@ -10,16 +10,16 @@
   <artifactId>policy-service</artifactId>
   <dependencies>
     <dependency>
-      <groupId>com.shared</groupId>
-      <artifactId>shared-starter-core</artifactId>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.shared</groupId>
-      <artifactId>shared-starter-security</artifactId>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-security</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.shared</groupId>
-      <artifactId>shared-starter-web</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
