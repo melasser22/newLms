@@ -3,11 +3,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>com.lms</groupId>
-    <artifactId>lms-platform</artifactId>
-    <version>1.0.0</version>
+    <groupId>com.lms.tenant</groupId>
+    <artifactId>tenant-platform</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
-  <artifactId>subscription-service</artifactId>
+  <artifactId>billing-service</artifactId>
   <dependencies>
     <dependency>
       <groupId>com.shared</groupId>
