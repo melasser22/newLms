@@ -1,6 +1,2 @@
-ALTER TABLE tenant_integration_key ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY tenant_integration_key_tenant_isolation
-    ON tenant_integration_key
-    USING (tenant_id = current_setting('app.current_tenant', true)::uuid);
-
+-- No-op migration for databases without row-level security support (e.g., H2)
+-- PostgreSQL-specific version located in V2__rls_and_policies__postgresql.sql
