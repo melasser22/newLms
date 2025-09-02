@@ -8,15 +8,19 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
-@SpringBootTest(classes = TenantEventsAutoConfiguration.class)
+@SpringBootTest(classes = TenantEventPublisherTests.TestApplication.class)
 @TestPropertySource(properties = {
     "spring.datasource.url=jdbc:h2:mem:test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
     "spring.task.scheduling.enabled=false"
 })
 class TenantEventPublisherTests {
+
+    @SpringBootApplication
+    static class TestApplication {}
 
     @Autowired
     TenantEventWriter writer;
