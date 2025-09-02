@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tenant
+    username: postgres
+    password: postgres
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
+server:
+  port: 8080
+shared:
+  core:
+    correlation:
+      header-name: X-Correlation-Id
+      generate-if-missing: true
+      echo-response-header: true
+    tenant:
+      enabled: true
+      header-name: x_tenant_id
+      query-param: tenantId
+      default-policy: OPTIONAL
+      echo-response-header: true
