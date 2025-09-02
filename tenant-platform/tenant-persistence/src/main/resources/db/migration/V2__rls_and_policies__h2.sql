@@ -1,2 +1,0 @@
--- No-op migration for databases without row-level security support (e.g., H2)
--- PostgreSQL-specific version located in V2__rls_and_policies__postgresql.sql
