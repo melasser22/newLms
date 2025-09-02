@@ -20,9 +20,10 @@ public class CatalogController {
     }
 
     @GetMapping("/effective")
-    public ResponseEntity<FeaturePolicyPort.EffectiveFeature> effective(@RequestParam String tierId,
-                                                                        @RequestParam UUID tenantId,
-                                                                        @RequestParam String featureKey) {
+    public ResponseEntity<FeaturePolicyPort.EffectiveFeature> effective(
+            @RequestParam("tierId") String tierId,
+            @RequestParam("tenantId") UUID tenantId,
+            @RequestParam("featureKey") String featureKey) {
         return ResponseEntity.ok(service.effective(tierId, tenantId, featureKey));
     }
 }
