@@ -10,7 +10,7 @@ Utilities for integration tests using Testcontainers.
 Add the dependency to test scope:
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>shared-test-support</artifactId>
   <scope>test</scope>
 </dependency>

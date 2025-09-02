@@ -2,8 +2,8 @@
   "groups": [
     {
       "name": "shared.openapi",
-      "type": "com.shared.openapi.starter.config.SharedOpenApiProperties",
-      "sourceType": "com.shared.openapi.starter.config.SharedOpenApiProperties"
+      "type": "com.ejada.openapi.starter.config.SharedOpenApiProperties",
+      "sourceType": "com.ejada.openapi.starter.config.SharedOpenApiProperties"
     }
   ],
   "properties": [

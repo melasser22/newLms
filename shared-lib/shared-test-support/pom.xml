@@ -5,7 +5,7 @@
 
   <!-- Inherit dependencyManagement from the root aggregator (which imports shared-bom) -->
   <parent>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>shared-lib</artifactId>
   <version>1.0.0</version>
   <relativePath>../pom.xml</relativePath>

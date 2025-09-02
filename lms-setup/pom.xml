@@ -10,7 +10,7 @@
     <relativePath/>
   </parent>
 
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>lms-setup</artifactId>
   <version>1.0.0</version>
   <name>lms-setup</name>
@@ -34,7 +34,7 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.lms</groupId>
+        <groupId>com.ejada</groupId>
         <artifactId>shared-bom</artifactId>
         <version>${lms.shared.version}</version>
         <type>pom</type>
@@ -93,90 +93,90 @@
 
     <!-- shared-lib: common DTOs/exceptions/util -->
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>shared-common</artifactId>
       <version>${lms.shared.version}</version>
     </dependency>
 
     <!-- shared starters (versions come from the BOM) -->
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-core</artifactId>
             <version>${lms.shared.version}</version>
 
     </dependency>
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-validation</artifactId>
             <version>${lms.shared.version}</version>
 
     </dependency>
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-data</artifactId>
             <version>${lms.shared.version}</version>
 
     </dependency>
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-redis</artifactId>
             <version>${lms.shared.version}</version>
 
     </dependency>
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-health</artifactId>
       <version>${lms.shared.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-mapstruct</artifactId>
             <version>${lms.shared.version}</version>
 
     </dependency>
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-openapi</artifactId>
             <version>${lms.shared.version}</version>
 
     </dependency>
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-security</artifactId>
             <version>${lms.shared.version}</version>
 
     </dependency>
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-actuator</artifactId>
             <version>${lms.shared.version}</version>
 
     </dependency>
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-audit</artifactId>
             <version>${lms.shared.version}</version>
 
     </dependency>
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-headers</artifactId>
             <version>${lms.shared.version}</version>
 
     </dependency>
      <!-- DB <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-observability</artifactId>
         <version>${lms.shared.version}</version>
     </dependency>
     -->
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-ratelimit</artifactId>
         <version>${lms.shared.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>shared-config</artifactId>
         <version>${lms.shared.version}</version>
     </dependency>
@@ -220,7 +220,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>shared-test-support</artifactId>
       <version>${lms.shared.version}</version>
       <scope>test</scope>
@@ -242,7 +242,7 @@
       </dependency>
 
       <dependency>
-      	<groupId>com.lms</groupId>
+      	<groupId>com.ejada</groupId>
       	<artifactId>shared-lib-crypto</artifactId>
       <version>${lms.shared.version}</version>
       </dependency>

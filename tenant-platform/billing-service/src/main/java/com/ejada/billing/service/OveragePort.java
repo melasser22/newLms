@@ -1,0 +1,15 @@
+package com.ejada.billing.service;
+
+
+import java.util.UUID;
+
+import com.ejada.billing.dto.OverageResponse;
+import com.ejada.billing.dto.RecordOverageRequest;
+
+/**
+ * Port for persisting overage records.
+ */
+public interface OveragePort {
+
+    OverageResponse recordOverage(UUID tenantId, UUID subscriptionId, RecordOverageRequest request);
+}

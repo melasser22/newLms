@@ -5,7 +5,7 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      pool-name: HikariPool-LMS
+      pool-name: HikariPool-Ejada
       maximum-pool-size: 10
       minimum-idle: 2
       idle-timeout: 30000        # 30s
@@ -163,7 +163,7 @@ shared:
 
   openapi:
     enabled: true
-    title: "LMS - Setup Service API"
+    title: "Ejada - Setup Service API"
     description: "Setup service endpoints for tenant/platform configuration."
     version: "1.0.0"
     servers:
@@ -171,7 +171,7 @@ shared:
     group:
       name: setup
       packages-to-scan:
-        - com.lms.setup
+        - com.ejada.setup
 
     jwt-security: true
   redis:
@@ -206,7 +206,7 @@ shared:
 logging:
   level:
     root: INFO                
-    com.lms: INFO
+    com.ejada: INFO
     org.hibernate.SQL: INFO   
     org.hibernate.orm.jdbc.bind: INFO
     org.springframework.cache: ERROR

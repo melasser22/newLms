@@ -1,6 +1,6 @@
 # starter-core
 
-Fundamental web infrastructure for LMS services.
+Fundamental web infrastructure for Ejada services.
 
 ## Use cases
 - Global exception handling and standardized API responses.
@@ -13,7 +13,7 @@ Add the dependency:
 
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>starter-core</artifactId>
 </dependency>
 ```

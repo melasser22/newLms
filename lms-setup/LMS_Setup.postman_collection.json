@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "LMS Setup API",
+    "name": "Ejada Setup API",
     "_postman_id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0",
-    "description": "Collection for LMS Setup service APIs.",
+    "description": "Collection for Ejada Setup service APIs.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

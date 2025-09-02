@@ -2,16 +2,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>com.lms.tenant</groupId>
+    <groupId>com.ejada.tenant</groupId>
     <artifactId>tenant-platform</artifactId>
     <version>1.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>tenant-config</artifactId>
   <dependencies>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-core</artifactId></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-headers</artifactId></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-core</artifactId></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-headers</artifactId></dependency>
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>shared-common</artifactId>
     </dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>

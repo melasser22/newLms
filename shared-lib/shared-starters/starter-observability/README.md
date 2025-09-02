@@ -10,7 +10,7 @@ Sets up logging and metrics using Micrometer and OpenTelemetry.
 ## Usage
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>starter-observability</artifactId>
 </dependency>
 ```

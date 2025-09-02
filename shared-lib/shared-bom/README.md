@@ -1,6 +1,6 @@
 # shared-bom
 
-Bill of Materials (BOM) providing aligned dependency versions for LMS services.
+Bill of Materials (BOM) providing aligned dependency versions for Ejada services.
 
 ## Use cases
 - Keep dependency versions consistent across modules.
@@ -14,7 +14,7 @@ Import the BOM in your project's `dependencyManagement` section:
 <dependencyManagement>
   <dependencies>
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>shared-bom</artifactId>
       <version>1.0.0</version>
       <type>pom</type>

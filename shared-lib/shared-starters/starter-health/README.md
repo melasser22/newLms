@@ -1,6 +1,6 @@
 # Shared Starter - Health
 
-Provides generic health endpoints for LMS services.
+Provides generic health endpoints for Ejada services.
 
 ## Use cases
 - Standard `/health` checks for databases and dependencies.
@@ -10,7 +10,7 @@ Add the dependency:
 
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>starter-health</artifactId>
 </dependency>
 ```

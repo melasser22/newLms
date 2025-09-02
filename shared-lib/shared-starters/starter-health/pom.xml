@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.lms</groupId>
+    <groupId>com.ejada</groupId>
     <artifactId>shared-starter</artifactId>
     <version>1.0.0</version>
     <relativePath>../pom.xml</relativePath>
@@ -14,7 +14,7 @@
   <artifactId>starter-health</artifactId>
   <packaging>jar</packaging>
   <name>Shared Starter - Health</name>
-  <description>Generic health check controller for LMS services.</description>
+  <description>Generic health check controller for Ejada services.</description>
 
   <dependencies>
     <dependency>
@@ -79,7 +79,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>com.shared.starter.health</Automatic-Module-Name>
+              <Automatic-Module-Name>com.ejada.starter.health</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>

@@ -3,12 +3,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>shared-bom</artifactId>
   <version>1.0.0</version>
   <packaging>pom</packaging>
   <name>Shared BOM</name>
-  <description>Centralized dependency management for LMS modules</description>
+  <description>Centralized dependency management for Ejada modules</description>
 
   <properties>
     <!-- Platforms -->

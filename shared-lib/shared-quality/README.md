@@ -1,6 +1,6 @@
 # shared-quality
 
-Centralized Checkstyle and quality configuration for LMS projects.
+Centralized Checkstyle and quality configuration for Ejada projects.
 
 ## Use cases
 - Enforce consistent code style across repositories.

@@ -11,7 +11,7 @@ Convenience auto-configuration for Kafka producers and consumers.
 ## Usage
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>starter-kafka</artifactId>
 </dependency>
 ```

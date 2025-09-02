@@ -39,7 +39,7 @@ spring:
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
       - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
       # IMPORTANT: custom starter package has underscore:
-      - com.shared.starter_security.SecurityAutoConfiguration
+      - com.ejada.starter_security.SecurityAutoConfiguration
 
 logging:
   level:

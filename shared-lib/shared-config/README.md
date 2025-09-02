@@ -10,7 +10,7 @@ Auto-configuration that exposes environment and application properties.
 ## Usage
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>shared-config</artifactId>
 </dependency>
 ```

@@ -1,6 +1,6 @@
 # Tenant Platform
 
-Combined platform containing shared tenant components and LMS microservices.
+Combined platform containing shared tenant components and Ejada microservices.
 
 ## Services
 | Service | Description |

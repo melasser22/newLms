@@ -1,2 +1,2 @@
-com.shared.actuator.starter.config.SharedActuatorAutoConfiguration
-com.shared.actuator.starter.config.SharedActuatorSecurityAutoConfiguration
+com.ejada.actuator.starter.config.SharedActuatorAutoConfiguration
+com.ejada.actuator.starter.config.SharedActuatorSecurityAutoConfiguration

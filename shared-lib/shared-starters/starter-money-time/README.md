@@ -12,7 +12,7 @@ A pragmatic starter that makes **money** and **time** first‑class:
 
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>starter-money-time</artifactId>
   <version>1.0.0</version>
 </dependency>

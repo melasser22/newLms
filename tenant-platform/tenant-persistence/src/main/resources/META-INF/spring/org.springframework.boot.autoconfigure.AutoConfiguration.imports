@@ -1,2 +1,2 @@
-com.lms.tenant.persistence.TenantPersistenceAutoConfiguration
+com.ejada.tenant.persistence.TenantPersistenceAutoConfiguration
 

@@ -13,7 +13,7 @@ Add the dependency:
 
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>starter-actuator</artifactId>
 </dependency>
 ```

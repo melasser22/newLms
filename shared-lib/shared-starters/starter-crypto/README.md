@@ -10,7 +10,7 @@ Auto-configures crypto services and metrics.
 ## Usage
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>starter-crypto</artifactId>
 </dependency>
 ```

@@ -11,7 +11,7 @@ JPA and data-layer helpers with multi-tenancy support.
 ## Usage
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>starter-data</artifactId>
 </dependency>
 ```

@@ -10,7 +10,7 @@ Cryptography utilities and JWT token support.
 ## Usage
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>shared-lib-crypto</artifactId>
 </dependency>
 ```
