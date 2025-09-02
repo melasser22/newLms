@@ -38,7 +38,11 @@ public class TenantConnectionInterceptor extends DelegatingDataSource {
         var tenantId = TenantContext.get();
         if (tenantId.isPresent()) {
             try (Statement statement = connection.createStatement()) {
-                statement.execute("SET LOCAL app.current_tenant = '" + tenantId.get() + "'");
+                // Use a regular SET to ensure the tenant identifier persists for the
+                // lifetime of the connection. This avoids issues where SET LOCAL could
+                // be cleared before a transaction starts (e.g. with auto-commit
+                // connections) which resulted in the tenant not being propagated.
+                statement.execute("SET app.current_tenant = '" + tenantId.get() + "'");
             }
         }
     }
