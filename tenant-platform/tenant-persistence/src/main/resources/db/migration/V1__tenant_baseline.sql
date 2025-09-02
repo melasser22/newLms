@@ -13,7 +13,7 @@ CREATE TABLE tenant_integration_key (
     id UUID PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenant(id),
     name VARCHAR(255) NOT NULL,
-    key VARCHAR(255) NOT NULL,
+    key_value VARCHAR(255) NOT NULL,
     status key_status NOT NULL DEFAULT 'ACTIVE'
 );
 
