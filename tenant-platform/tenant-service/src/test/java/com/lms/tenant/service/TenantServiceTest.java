@@ -28,6 +28,8 @@ class TenantServiceTest {
 
     @BeforeEach
     void setUp() {
+        keyRepository.deleteAll();
+        tenantRepository.deleteAll();
         tenantService = new TenantService(tenantRepository, keyRepository, Mockito.mock(TenantSettingsPort.class));
     }
 
