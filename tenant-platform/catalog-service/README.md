@@ -15,3 +15,10 @@
 ## Events
 - **Publishes:** PolicyChanged (base or override changes).
 - **Consumes:** TenantCreated (optional: seed defaults).
+
+## Folder Conventions
+- `adapter` – inbound/outbound adapters.
+- `controller` – REST API controllers.
+- `repository` – Spring Data repositories.
+- `entity`, `service` – core domain logic.
+- Tests mirror this structure under `src/test/java` and store config in `src/test/resources`.

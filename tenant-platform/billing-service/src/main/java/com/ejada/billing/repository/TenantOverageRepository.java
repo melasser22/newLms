@@ -1,4 +1,4 @@
-package com.ejada.billing.repo;
+package com.ejada.billing.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

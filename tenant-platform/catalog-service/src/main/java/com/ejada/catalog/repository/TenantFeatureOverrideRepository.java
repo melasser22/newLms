@@ -1,4 +1,4 @@
-package com.ejada.catalog.repo;
+package com.ejada.catalog.repository;
 
 import com.ejada.catalog.entity.TenantFeatureOverrideEntity;
 import com.ejada.catalog.entity.TenantFeatureOverrideId;
