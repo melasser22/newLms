@@ -11,5 +11,5 @@ import org.springframework.context.annotation.Import;
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(name = "org.springframework.web.servlet.resource.NoResourceFoundException")
 @Import(NoResourceFoundExceptionHandler.class)
-class NoResourceFoundHandlerConfiguration {
+public class NoResourceFoundHandlerConfiguration {
 }
