@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -23,7 +24,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootTest(classes = {TenantConfigAutoConfiguration.class, TenantConfigAutoConfigurationTest.TestController.class})
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc(addFilters = true)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class TenantConfigAutoConfigurationTest {
 
@@ -49,6 +50,7 @@ class TenantConfigAutoConfigurationTest {
     private MockMvc mockMvc;
 
     @Test
+    @WithMockUser
     void setsCurrentTenant() throws Exception {
         String tenantId = UUID.randomUUID().toString();
         mockMvc.perform(get("/current-tenant").header(TenantResolver.TENANT_HEADER, tenantId))
