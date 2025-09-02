@@ -27,7 +27,7 @@ public class TenantConfigAutoConfiguration {
     }
 
     @Bean
-    public BeanPostProcessor tenantDataSourcePostProcessor() {
+    public static BeanPostProcessor tenantDataSourcePostProcessor() {
         return new BeanPostProcessor() {
             @Override
             public Object postProcessAfterInitialization(Object bean, String beanName) {
