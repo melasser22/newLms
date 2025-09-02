@@ -1,11 +1,11 @@
-package com.ejada.billing.adapters;
+package com.ejada.billing.infrastructure.adapters;
 
-import com.ejada.billing.dto.OverageResponse;
-import com.ejada.billing.dto.RecordOverageRequest;
-import com.ejada.billing.entity.TenantOverage;
-import com.ejada.billing.enums.OverageStatus;
-import com.ejada.billing.repo.TenantOverageRepository;
-import com.ejada.billing.service.OveragePort;
+import com.ejada.billing.domain.dtos.OverageResponse;
+import com.ejada.billing.domain.dtos.RecordOverageRequest;
+import com.ejada.billing.domain.entities.TenantOverage;
+import com.ejada.billing.domain.enums.OverageStatus;
+import com.ejada.billing.infrastructure.repositories.TenantOverageRepository;
+import com.ejada.billing.application.ports.OveragePort;
 import com.ejada.common.exception.JsonSerializationException;
 import com.ejada.common.json.JsonUtils;
 import org.springframework.stereotype.Component;

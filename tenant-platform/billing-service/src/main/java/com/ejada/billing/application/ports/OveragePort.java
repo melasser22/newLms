@@ -1,10 +1,10 @@
-package com.ejada.billing.service;
+package com.ejada.billing.application.ports;
 
 
 import java.util.UUID;
 
-import com.ejada.billing.dto.OverageResponse;
-import com.ejada.billing.dto.RecordOverageRequest;
+import com.ejada.billing.domain.dtos.OverageResponse;
+import com.ejada.billing.domain.dtos.RecordOverageRequest;
 
 /**
  * Port for persisting overage records.

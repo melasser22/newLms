@@ -1,4 +1,4 @@
-package com.ejada.billing.dto;
+package com.ejada.billing.domain.dtos;
 
 import java.time.Instant;
 import java.util.Map;

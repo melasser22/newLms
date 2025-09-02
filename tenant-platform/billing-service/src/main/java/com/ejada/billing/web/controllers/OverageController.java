@@ -1,9 +1,8 @@
-package com.ejada.billing.controller;
+package com.ejada.billing.web.controllers;
 
-import com.ejada.billing.dto.OverageResponse;
-import com.ejada.billing.dto.RecordOverageRequest;
-import com.ejada.billing.service.BillingService;
-import com.ejada.billing.service.OverageService;
+import com.ejada.billing.domain.dtos.OverageResponse;
+import com.ejada.billing.domain.dtos.RecordOverageRequest;
+import com.ejada.billing.application.services.BillingService;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;

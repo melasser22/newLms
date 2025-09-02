@@ -1,10 +1,10 @@
-package com.ejada.billing.entity;
+package com.ejada.billing.domain.entities;
 
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.ejada.billing.enums.OverageStatus;
+import com.ejada.billing.domain.enums.OverageStatus;
 
 /**
  * JPA entity representing an overage recorded for a tenant.

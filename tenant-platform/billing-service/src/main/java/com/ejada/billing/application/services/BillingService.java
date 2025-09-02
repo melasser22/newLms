@@ -1,10 +1,11 @@
-package com.ejada.billing.service;
+package com.ejada.billing.application.services;
 
 
 import org.springframework.stereotype.Service;
 
-import com.ejada.billing.dto.OverageResponse;
-import com.ejada.billing.dto.RecordOverageRequest;
+import com.ejada.billing.application.ports.OveragePort;
+import com.ejada.billing.domain.dtos.OverageResponse;
+import com.ejada.billing.domain.dtos.RecordOverageRequest;
 
 import java.util.UUID;
 
@@ -12,7 +13,6 @@ import java.util.UUID;
 public class BillingService {
 
     private final OveragePort port;
-
     public BillingService(OveragePort port) {
         this.port = port;
     }

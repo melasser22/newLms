@@ -1,4 +1,4 @@
-package com.ejada.billing.enums;
+package com.ejada.billing.domain.enums;
 
 /**
  * Status of an overage record.

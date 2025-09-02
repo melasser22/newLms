@@ -1,11 +1,10 @@
-package com.ejada.billing.web;
+package com.ejada.billing.web.controllers;
 
-import com.ejada.billing.dto.OverageResponse;
-import com.ejada.billing.dto.RecordOverageRequest;
-import com.ejada.billing.service.BillingService;
+import com.ejada.billing.domain.dtos.OverageResponse;
+import com.ejada.billing.domain.dtos.RecordOverageRequest;
+import com.ejada.billing.application.services.BillingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;

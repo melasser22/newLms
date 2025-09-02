@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-import com.ejada.billing.repo.TenantOverageRepository;
+import com.ejada.billing.infrastructure.repositories.TenantOverageRepository;
 
 /**
  * Verifies that the Spring application context can start without requiring

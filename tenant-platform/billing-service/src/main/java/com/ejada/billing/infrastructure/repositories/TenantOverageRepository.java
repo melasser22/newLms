@@ -1,8 +1,8 @@
-package com.ejada.billing.repo;
+package com.ejada.billing.infrastructure.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.ejada.billing.entity.TenantOverage;
+import com.ejada.billing.domain.entities.TenantOverage;
 
 import java.util.Optional;
 import java.util.UUID;
