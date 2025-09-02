@@ -1,6 +1,7 @@
 package com.common.starter.core.exception;
 
 import com.shared.starter_core.web.GlobalExceptionHandler;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
@@ -10,6 +11,7 @@ import org.springframework.context.annotation.Import;
  * consistent exception mapping across applications.
  */
 @Configuration(proxyBeanMethods = false)
+@ConditionalOnClass(name = "org.springframework.http.HttpStatusCode")
 @Import(GlobalExceptionHandler.class)
 public class CoreExceptionAutoConfiguration {
 }
