@@ -53,6 +53,10 @@ public class TenantService {
         return tenantRepository.findById(tenantId).orElse(null);
     }
 
+    public long getTotalTenantsByStatus(TenantStatus status) {
+        return tenantRepository.countByStatus(status);
+    }
+
     public void setOverage(UUID tenantId, boolean enabled) {
         settingsPort.setOverageEnabled(tenantId, enabled);
     }
