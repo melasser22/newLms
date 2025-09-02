@@ -30,7 +30,7 @@ public class TenantIntegrationKey {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(name = "key_value", nullable = false)
     private String key;
 
     @Enumerated(EnumType.STRING)
