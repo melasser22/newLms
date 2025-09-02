@@ -89,6 +89,11 @@
       <artifactId>spring-boot-starter-actuator</artifactId>
       <optional>true</optional>
     </dependency>
+    <!-- Core Micrometer APIs used by PerformanceConfig -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-core</artifactId>
+    </dependency>
 
     <!-- Jackson JavaTime (opt-in) -->
     <dependency>
