@@ -31,7 +31,7 @@ public class TenantEventPublisher {
         this.properties = properties;
     }
 
-    @Scheduled(fixedDelayString = "#{@tenantEventsProperties.pollInterval.toMillis()}")
+    @Scheduled(fixedDelayString = "${tenant.events.poll-interval:5s}")
     @Transactional
     public void publish() {
         List<TenantOutboxEvent> rows = repository.findByStatusAndAvailableAtLessThanEqualOrderById(
