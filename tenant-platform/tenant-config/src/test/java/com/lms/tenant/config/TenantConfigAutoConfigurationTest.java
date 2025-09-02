@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -59,8 +60,8 @@ class TenantConfigAutoConfigurationTest {
     static class TestController {
         private final JdbcTemplate jdbcTemplate;
 
-        TestController(JdbcTemplate jdbcTemplate) {
-            this.jdbcTemplate = jdbcTemplate;
+        TestController(DataSource dataSource) {
+            this.jdbcTemplate = new JdbcTemplate(dataSource);
         }
 
         @GetMapping("/current-tenant")
