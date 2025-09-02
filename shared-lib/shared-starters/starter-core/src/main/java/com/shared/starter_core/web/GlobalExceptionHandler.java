@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -105,13 +104,6 @@ public class GlobalExceptionHandler {
         log.error("Data integrity violation: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(BaseResponse.error("ERR_DATA_CONFLICT", "Data conflict occurred"));
-    }
-
-    @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<BaseResponse<?>> handleNoResourceFound(NoResourceFoundException ex, WebRequest request) {
-        log.warn("No resource found: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(BaseResponse.error("ERR_RESOURCE_NOT_FOUND", ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
