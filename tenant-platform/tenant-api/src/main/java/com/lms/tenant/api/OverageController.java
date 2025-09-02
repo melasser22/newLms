@@ -25,6 +25,13 @@ public class OverageController {
             @PathVariable UUID tenantId,
             @RequestParam(required = false) UUID subscriptionId,
             @Valid @RequestBody RecordOverageRequest req) {
-        return ResponseEntity.ok(service.record(tenantId, subscriptionId, req));
+        long unitPrice = req.unitPriceMinor() == null ? 0L : req.unitPriceMinor();
+        var id = service.record(tenantId, subscriptionId, req.featureKey(),
+                req.quantity(), unitPrice, req.currency(),
+                req.periodStart(), req.periodEnd(), req.idempotencyKey());
+        var res = new OverageResponse(id, tenantId, req.featureKey(), req.quantity(),
+                unitPrice, req.currency(), req.occurredAt(),
+                req.periodStart(), req.periodEnd(), "RECORDED");
+        return ResponseEntity.ok(res);
     }
 }

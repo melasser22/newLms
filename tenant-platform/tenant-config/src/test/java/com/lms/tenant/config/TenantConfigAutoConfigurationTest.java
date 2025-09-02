@@ -31,7 +31,7 @@ class TenantConfigAutoConfigurationTest {
     @DynamicPropertySource
     static void postgresProperties(DynamicPropertyRegistry registry) throws IOException {
         postgres = EmbeddedPostgres.start();
-        registry.add("spring.datasource.url", () -> postgres.getJdbcUrl());
+        registry.add("spring.datasource.url", () -> postgres.getJdbcUrl("postgres", "postgres"));
         registry.add("spring.datasource.username", () -> "postgres");
         registry.add("spring.datasource.password", () -> "postgres");
         registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
