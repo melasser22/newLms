@@ -41,7 +41,7 @@ class TenantControllerIT {
     @Test
     void toggleOverageFlag() {
         CreateTenantRequest create = new CreateTenantRequest("acme", "Acme Corp");
-        ResponseEntity<TenantResponse> createResp = restTemplate.postForEntity(url("/tenants"), create, TenantResponse.class);
+        ResponseEntity<TenantResponse> createResp = restTemplate.postForEntity(url("/api/tenants"), create, TenantResponse.class);
         assertThat(createResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         UUID tenantId = createResp.getBody().id();
 
@@ -49,10 +49,10 @@ class TenantControllerIT {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<ToggleOverageRequest> toggleEntity = new HttpEntity<>(toggle, headers);
-        ResponseEntity<Void> toggleResp = restTemplate.exchange(url("/tenants/" + tenantId + "/overage-enabled"), HttpMethod.PUT, toggleEntity, Void.class);
+        ResponseEntity<Void> toggleResp = restTemplate.exchange(url("/api/tenants/" + tenantId + "/overage"), HttpMethod.PATCH, toggleEntity, Void.class);
         assertThat(toggleResp.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
 
-        ResponseEntity<TenantResponse> getResp = restTemplate.getForEntity(url("/tenants/" + tenantId), TenantResponse.class);
+        ResponseEntity<TenantResponse> getResp = restTemplate.getForEntity(url("/api/tenants/" + tenantId), TenantResponse.class);
         assertThat(getResp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(getResp.getBody().overageEnabled()).isTrue();
     }

@@ -39,6 +39,10 @@
       <artifactId>tenant-config</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.lms.tenant</groupId>
+      <artifactId>tenant-events</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.lms</groupId>
       <artifactId>starter-openapi</artifactId>
     </dependency>
