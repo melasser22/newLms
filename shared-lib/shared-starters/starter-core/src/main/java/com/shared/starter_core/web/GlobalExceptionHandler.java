@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -113,13 +112,6 @@ public class GlobalExceptionHandler {
         log.warn("No resource found: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(BaseResponse.error("ERR_RESOURCE_NOT_FOUND", ex.getMessage()));
-    }
-
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<BaseResponse<?>> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
-        log.warn("Access denied: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(BaseResponse.error("ERR_ACCESS_DENIED", "Access denied"));
     }
 
     @ExceptionHandler(Exception.class)
