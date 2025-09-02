@@ -1,2 +1,3 @@
 com.common.starter.core.exception.CoreExceptionAutoConfiguration
 com.shared.starter_core.config.CoreExtrasAutoConfiguration
+com.shared.starter_core.config.PerformanceConfig
