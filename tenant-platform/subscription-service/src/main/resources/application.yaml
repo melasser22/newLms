@@ -9,7 +9,7 @@ spring:
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
   flyway:
-    locations: classpath:db/migration,classpath:db/migration/{vendor}
+    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
   jpa:
     hibernate:
       ddl-auto: none

@@ -4,7 +4,7 @@ spring:
     username: ${POSTGRES_USER:app_user}
     password: ${POSTGRES_PASSWORD:postgres}
   flyway:
-    locations: classpath:db/migration,classpath:db/migration/{vendor}
+    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
   jpa:
     hibernate:
       ddl-auto: none
