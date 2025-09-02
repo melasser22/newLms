@@ -1,13 +1,11 @@
 package com.shared.starter_observability;
 
 import io.micrometer.core.instrument.MeterRegistry;
-
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.Tracer;
-
 import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import io.opentelemetry.api.GlobalOpenTelemetry;
-
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -27,8 +25,13 @@ public class ObservabilityAutoConfiguration {
     }
 
     @Bean
-    public Tracer tracer() {
-        return GlobalOpenTelemetry.getTracer("shared-starter");
+    public OpenTelemetry openTelemetry() {
+        return GlobalOpenTelemetry.get();
+    }
+
+    @Bean
+    public Tracer tracer(OpenTelemetry openTelemetry) {
+        return openTelemetry.getTracer("shared-starter");
     }
 
     @ConfigurationProperties(prefix = "shared.observability")
