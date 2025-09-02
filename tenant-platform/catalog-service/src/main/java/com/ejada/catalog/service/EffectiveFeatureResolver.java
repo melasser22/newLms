@@ -2,8 +2,8 @@ package com.ejada.catalog.service;
 
 import com.ejada.catalog.entity.TenantFeatureOverrideEntity;
 import com.ejada.catalog.entity.TierFeatureLimitEntity;
-import com.ejada.catalog.repo.TenantFeatureOverrideRepository;
-import com.ejada.catalog.repo.TierFeatureLimitRepository;
+import com.ejada.catalog.repository.TenantFeatureOverrideRepository;
+import com.ejada.catalog.repository.TierFeatureLimitRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Component;
@@ -14,25 +14,24 @@ import java.util.UUID;
 @Transactional
 public class EffectiveFeatureResolver implements FeaturePolicyPort {
 
-    private final TierFeatureLimitRepository tierRepo;
-    private final TenantFeatureOverrideRepository overrideRepo;
+    private final TierFeatureLimitRepository tierRepository;
+    private final TenantFeatureOverrideRepository overrideRepository;
     private final EntityManager entityManager;
 
-    public EffectiveFeatureResolver(TierFeatureLimitRepository tierRepo,
-                                    TenantFeatureOverrideRepository overrideRepo,
+    public EffectiveFeatureResolver(TierFeatureLimitRepository tierRepository, TenantFeatureOverrideRepository overrideRepository,
                                     EntityManager entityManager) {
-        this.tierRepo = tierRepo;
-        this.overrideRepo = overrideRepo;
+        this.tierRepository = tierRepository;
+        this.overrideRepository = overrideRepository;
         this.entityManager = entityManager;
     }
 
     @Override
     public EffectiveFeature effective(String tierId, UUID tenantId, String featureKey) {
         setTenant(tenantId);
-        TierFeatureLimitEntity base = tierRepo.findByIdTierIdAndIdFeatureKey(tierId, featureKey)
+        TierFeatureLimitEntity base = tierRepository.findByIdTierIdAndIdFeatureKey(tierId, featureKey)
                 .orElseThrow();
         TenantFeatureOverrideEntity override =
-                overrideRepo.findByIdTenantIdAndIdFeatureKey(tenantId, featureKey).orElse(null);
+                overrideRepository.findByIdTenantIdAndIdFeatureKey(tenantId, featureKey).orElse(null);
         boolean enabled = override != null && override.getEnabled() != null ? override.getEnabled() : Boolean.TRUE.equals(base.getEnabled());
         Long limit = override != null && override.getLimitValue() != null ? override.getLimitValue() : base.getLimitValue();
         boolean allowOverage = override != null && override.getAllowOverageOverride() != null ? override.getAllowOverageOverride() : Boolean.TRUE.equals(base.getAllowOverage());
@@ -44,7 +43,7 @@ public class EffectiveFeatureResolver implements FeaturePolicyPort {
     @Override
     public void upsertOverride(UUID tenantId, String featureKey, FeatureOverride override) {
         setTenant(tenantId);
-        overrideRepo.upsert(tenantId, featureKey, override.enabled(), override.limit(),
+        overrideRepository.upsert(tenantId, featureKey, override.enabled(), override.limit(),
                 override.allowOverage(), override.overageUnitPriceMinor(), override.overageCurrency());
     }
 

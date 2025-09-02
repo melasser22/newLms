@@ -1,11 +1,11 @@
 package com.ejada.policy;
 
-import com.ejada.billing.core.OveragePort;
-import com.ejada.catalog.core.FeaturePolicyPort;
+import com.ejada.billing.dto.OverageResponse;
+import com.ejada.billing.dto.RecordOverageRequest;
+import com.ejada.billing.service.OveragePort;
+import com.ejada.catalog.service.FeaturePolicyPort;
 import com.ejada.subscription.core.SubscriptionQueryPort;
 import com.ejada.tenant.core.TenantSettingsPort;
-import com.shared.billing.api.OverageResponse;
-import com.shared.billing.api.RecordOverageRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

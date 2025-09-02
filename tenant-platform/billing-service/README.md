@@ -19,3 +19,10 @@
 ## Events
 - **Publishes:** UsageRecorded, OverageRecorded, DailyUsageSummaryReady.
 - **Consumes:** SubscriptionChanged (align periods), PolicyChanged (optional, price context).
+
+## Folder Conventions
+- `adapter` – outbound integrations (e.g., JPA implementations).
+- `controller` – REST controllers and API contracts.
+- `repository` – Spring Data repositories.
+- `dto`, `entity`, `service`, `enums` – domain models and logic.
+- Tests mirror the same package structure under `src/test/java` and use `src/test/resources` for configuration.

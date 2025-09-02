@@ -1,10 +1,11 @@
 package com.ejada.policy;
 
-import com.ejada.catalog.core.FeaturePolicyPort;
 import com.ejada.subscription.core.SubscriptionQueryPort;
 import com.ejada.tenant.core.TenantSettingsPort;
-import com.ejada.billing.core.OveragePort;
-import com.shared.billing.api.RecordOverageRequest;
+import com.ejada.billing.dto.RecordOverageRequest;
+import com.ejada.billing.service.OveragePort;
+import com.ejada.catalog.service.FeaturePolicyPort;
+
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;

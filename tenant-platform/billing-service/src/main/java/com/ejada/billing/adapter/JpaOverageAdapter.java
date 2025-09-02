@@ -1,10 +1,10 @@
-package com.ejada.billing.adapters;
+package com.ejada.billing.adapter;
 
 import com.ejada.billing.dto.OverageResponse;
 import com.ejada.billing.dto.RecordOverageRequest;
 import com.ejada.billing.entity.TenantOverage;
 import com.ejada.billing.enums.OverageStatus;
-import com.ejada.billing.repo.TenantOverageRepository;
+import com.ejada.billing.repository.TenantOverageRepository;
 import com.ejada.billing.service.OveragePort;
 import com.ejada.common.exception.JsonSerializationException;
 import com.ejada.common.json.JsonUtils;
@@ -21,17 +21,17 @@ import java.util.UUID;
 @Component
 public class JpaOverageAdapter implements OveragePort {
 
-    private final TenantOverageRepository repo;
+    private final TenantOverageRepository repository;
 
-    public JpaOverageAdapter(TenantOverageRepository repo) {
-        this.repo = repo;
+    public JpaOverageAdapter(TenantOverageRepository repository) {
+        this.repository = repository;
     }
 
     @Override
     @Transactional
     public OverageResponse recordOverage(UUID tenantId, UUID subscriptionId, RecordOverageRequest request) {
         if (request.idempotencyKey() != null) {
-            return repo.findByTenantIdAndIdempotencyKey(tenantId, request.idempotencyKey())
+            return repository.findByTenantIdAndIdempotencyKey(tenantId, request.idempotencyKey())
                     .map(this::toResponse)
                     .orElseGet(() -> saveNew(tenantId, subscriptionId, request));
         }
@@ -57,7 +57,7 @@ public class JpaOverageAdapter implements OveragePort {
         } catch (JsonSerializationException e) {
             throw new RuntimeException(e);
         }
-        TenantOverage saved = repo.save(o);
+        TenantOverage saved = repository.save(o);
         return toResponse(saved);
     }
 
