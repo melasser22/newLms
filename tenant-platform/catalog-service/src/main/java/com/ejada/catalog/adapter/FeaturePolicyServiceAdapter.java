@@ -1,7 +1,7 @@
 package com.ejada.catalog.adapter;
 
-import com.ejada.catalog.core.FeaturePolicyPort;
-import com.ejada.catalog.core.FeaturePolicyService;
+import com.ejada.catalog.service.FeaturePolicyPort;
+import com.ejada.catalog.service.FeaturePolicyService;
 
 import org.springframework.stereotype.Service;
 

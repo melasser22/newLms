@@ -1,7 +1,7 @@
 package com.ejada.catalog.controller;
 
-import com.ejada.catalog.core.CatalogService;
-import com.ejada.catalog.core.FeaturePolicyPort;
+import com.ejada.catalog.service.CatalogService;
+import com.ejada.catalog.service.FeaturePolicyPort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;

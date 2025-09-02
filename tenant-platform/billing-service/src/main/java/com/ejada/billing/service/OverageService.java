@@ -23,8 +23,8 @@ public interface OverageService {
      */
     @PostMapping
     OverageResponse record(
-            @PathVariable UUID tenantId,
-            @RequestParam(required = false) UUID subscriptionId,
+            @PathVariable("tenantId") UUID tenantId,
+            @RequestParam(value = "subscriptionId", required = false) UUID subscriptionId,
             @RequestBody RecordOverageRequest request);
 }
 

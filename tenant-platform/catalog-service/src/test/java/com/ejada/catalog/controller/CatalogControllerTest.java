@@ -1,10 +1,8 @@
-package com.ejada.catalog.web;
+package com.ejada.catalog.controller;
 
-import com.ejada.catalog.controller.CatalogController;
-import com.ejada.catalog.core.CatalogService;
-import com.ejada.catalog.core.FeaturePolicyPort;
+import com.ejada.catalog.service.CatalogService;
+import com.ejada.catalog.service.FeaturePolicyPort;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;

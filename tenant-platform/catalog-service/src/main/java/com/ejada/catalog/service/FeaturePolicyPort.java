@@ -1,4 +1,4 @@
-package com.ejada.catalog.core;
+package com.ejada.catalog.service;
 
 import java.util.UUID;
 

@@ -1,4 +1,4 @@
-package com.ejada.catalog.core;
+package com.ejada.catalog.service;
 
 import org.springframework.stereotype.Service;
 
