@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.UUID;
 
@@ -30,7 +31,12 @@ class TenantServiceTest {
     void setUp() {
         keyRepository.deleteAll();
         tenantRepository.deleteAll();
-        tenantService = new TenantService(tenantRepository, keyRepository, Mockito.mock(TenantSettingsPort.class));
+        tenantService = new TenantService(
+                tenantRepository,
+                keyRepository,
+                Mockito.mock(TenantSettingsPort.class),
+                Mockito.mock(ApplicationEventPublisher.class)
+        );
     }
 
     @Test
