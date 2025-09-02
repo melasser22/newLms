@@ -14,7 +14,17 @@ class PolicyServiceTest {
     void withinLimit() {
         FeaturePolicyPort fp = (tierId, tenantId, featureKey) -> new FeaturePolicyPort.EffectiveFeature(true, 10L, false, null, "USD");
         SubscriptionPort sp = tenantId -> new SubscriptionPort.ActiveSubscription(UUID.randomUUID(), "tier", Instant.EPOCH, Instant.EPOCH.plusSeconds(100));
-        TenantSettingsPort tp = tenantId -> true;
+        TenantSettingsPort tp = new TenantSettingsPort() {
+            @Override
+            public boolean isOverageEnabled(UUID tenantId) {
+                return true;
+            }
+
+            @Override
+            public void setOverageEnabled(UUID tenantId, boolean enabled) {
+                // no-op for tests
+            }
+        };
         OveragePort op = (tenantId1, subscriptionId, featureKey, quantity, unitPriceMinor, currency, periodStart, periodEnd, idempotencyKey) -> {
             fail("overage should not be recorded");
             return null;
@@ -30,7 +40,17 @@ class PolicyServiceTest {
     void exceededWithOverage() {
         FeaturePolicyPort fp = (tierId, tenantId, featureKey) -> new FeaturePolicyPort.EffectiveFeature(true, 10L, true, 100L, "USD");
         SubscriptionPort sp = tenantId -> new SubscriptionPort.ActiveSubscription(UUID.randomUUID(), "tier", Instant.EPOCH, Instant.EPOCH.plusSeconds(100));
-        TenantSettingsPort tp = tenantId -> true;
+        TenantSettingsPort tp = new TenantSettingsPort() {
+            @Override
+            public boolean isOverageEnabled(UUID tenantId) {
+                return true;
+            }
+
+            @Override
+            public void setOverageEnabled(UUID tenantId, boolean enabled) {
+                // no-op for tests
+            }
+        };
         AtomicReference<UUID> recorded = new AtomicReference<>();
         OveragePort op = (tenantId1, subscriptionId, featureKey, quantity, unitPriceMinor, currency, periodStart, periodEnd, idempotencyKey) -> {
             recorded.set(UUID.randomUUID());
@@ -51,7 +71,17 @@ class PolicyServiceTest {
     void exceededBlocked() {
         FeaturePolicyPort fp = (tierId, tenantId, featureKey) -> new FeaturePolicyPort.EffectiveFeature(true, 10L, true, 100L, "USD");
         SubscriptionPort sp = tenantId -> new SubscriptionPort.ActiveSubscription(UUID.randomUUID(), "tier", Instant.EPOCH, Instant.EPOCH.plusSeconds(100));
-        TenantSettingsPort tp = tenantId -> false; // tenant does not allow overage
+        TenantSettingsPort tp = new TenantSettingsPort() {
+            @Override
+            public boolean isOverageEnabled(UUID tenantId) {
+                return false; // tenant does not allow overage
+            }
+
+            @Override
+            public void setOverageEnabled(UUID tenantId, boolean enabled) {
+                // no-op for tests
+            }
+        };
         OveragePort op = (tenantId1, subscriptionId, featureKey, quantity, unitPriceMinor, currency, periodStart, periodEnd, idempotencyKey) -> {
             fail("overage should not be recorded when disabled");
             return null;
