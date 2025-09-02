@@ -7,6 +7,8 @@ import com.lms.tenant.persistence.entity.enums.KeyStatus;
 import com.lms.tenant.persistence.entity.enums.TenantStatus;
 import com.lms.tenant.persistence.repository.TenantIntegrationKeyRepository;
 import com.lms.tenant.persistence.repository.TenantRepository;
+import com.lms.tenant.events.TenantOverageToggledEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -16,13 +18,16 @@ public class TenantService {
     private final TenantRepository tenantRepository;
     private final TenantIntegrationKeyRepository keyRepository;
     private final TenantSettingsPort settingsPort;
+    private final ApplicationEventPublisher eventPublisher;
 
     public TenantService(TenantRepository tenantRepository,
                          TenantIntegrationKeyRepository keyRepository,
-                         TenantSettingsPort settingsPort) {
+                         TenantSettingsPort settingsPort,
+                         ApplicationEventPublisher eventPublisher) {
         this.tenantRepository = tenantRepository;
         this.keyRepository = keyRepository;
         this.settingsPort = settingsPort;
+        this.eventPublisher = eventPublisher;
     }
 
     public Tenant createTenant(String slug, String name) {
@@ -59,5 +64,6 @@ public class TenantService {
 
     public void setOverage(UUID tenantId, boolean enabled) {
         settingsPort.setOverageEnabled(tenantId, enabled);
+        eventPublisher.publishEvent(new TenantOverageToggledEvent(tenantId, enabled));
     }
 }

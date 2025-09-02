@@ -12,7 +12,7 @@ import java.net.URI;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/tenants")
+@RequestMapping("/api/tenants")
 public class TenantController {
     private final TenantService tenantService;
 
@@ -24,7 +24,7 @@ public class TenantController {
     public ResponseEntity<TenantResponse> create(@RequestBody CreateTenantRequest request) {
         Tenant tenant = tenantService.createTenant(request.slug(), request.name());
         TenantResponse response = new TenantResponse(tenant.getId(), tenant.getSlug(), tenant.getName(), tenant.isOverageEnabled());
-        return ResponseEntity.created(URI.create("/tenants/" + tenant.getId())).body(response);
+        return ResponseEntity.created(URI.create("/api/tenants/" + tenant.getId())).body(response);
     }
 
     @GetMapping("/{tenantId}")
@@ -37,7 +37,7 @@ public class TenantController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{tenantId}/overage-enabled")
+    @PatchMapping("/{tenantId}/overage")
     public ResponseEntity<Void> toggleOverage(@PathVariable UUID tenantId, @RequestBody ToggleOverageRequest request) {
         tenantService.setOverage(tenantId, request.enabled());
         return ResponseEntity.accepted().build();
