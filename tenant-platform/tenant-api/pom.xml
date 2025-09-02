@@ -16,6 +16,10 @@
       <artifactId>tenant-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-core</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
@@ -24,8 +28,8 @@
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.springdoc</groupId>
-      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <groupId>com.lms</groupId>
+      <artifactId>starter-openapi</artifactId>
     </dependency>
   </dependencies>
 </project>
