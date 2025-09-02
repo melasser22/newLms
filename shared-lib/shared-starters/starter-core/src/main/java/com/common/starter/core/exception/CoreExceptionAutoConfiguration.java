@@ -1,6 +1,7 @@
 package com.common.starter.core.exception;
 
 import com.shared.starter_core.web.GlobalExceptionHandler;
+import com.shared.starter_core.web.NoResourceFoundHandlerConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -12,6 +13,6 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(name = "org.springframework.http.HttpStatusCode")
-@Import(GlobalExceptionHandler.class)
+@Import({GlobalExceptionHandler.class, NoResourceFoundHandlerConfiguration.class})
 public class CoreExceptionAutoConfiguration {
 }
