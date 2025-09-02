@@ -4,6 +4,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
-@Import({EnvironmentLogger.class, PerformanceConfig.class})
+@Import(EnvironmentLogger.class)
 public class CoreExtrasAutoConfiguration {
 }

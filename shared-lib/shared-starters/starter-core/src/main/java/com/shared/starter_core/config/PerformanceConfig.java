@@ -10,9 +10,19 @@ import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 
 @Configuration
 @EnableAspectJAutoProxy
+@ConditionalOnClass(name = {
+        "io.micrometer.core.instrument.MeterRegistry",
+        "io.micrometer.core.aop.TimedAspect",
+        "io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics",
+        "io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics",
+        "io.micrometer.core.instrument.binder.jvm.JvmGcMetrics",
+        "io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics",
+        "io.micrometer.core.instrument.binder.system.ProcessorMetrics"
+})
 public class PerformanceConfig {
 
     @Bean
