@@ -1,9 +1,17 @@
 spring:
   profiles:
     active: dev
-  datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:postgres}:5432/lms?currentSchema=entity
-    username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:postgres}
 server:
   port: 8080
+shared:
+  core:
+    correlation:
+      header-name: X-Correlation-Id
+      generate-if-missing: true
+      echo-response-header: true
+    tenant:
+      enabled: true
+      header-name: x_tenant_id
+      query-param: tenantId
+      default-policy: OPTIONAL
+      echo-response-header: true
