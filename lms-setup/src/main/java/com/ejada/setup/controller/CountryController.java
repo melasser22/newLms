@@ -22,6 +22,7 @@ import jakarta.validation.constraints.Size;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,6 +43,7 @@ public class CountryController {
 
     @PostMapping
     @SetupAuthorized
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a new country", description = "Creates a new country with the provided details")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Country created successfully",
@@ -56,6 +58,7 @@ public class CountryController {
 
     @PutMapping("/{countryId}")
     @SetupAuthorized
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update an existing country", description = "Updates the country with the specified ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Country updated successfully"),
