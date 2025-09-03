@@ -16,7 +16,7 @@
     <spring.cloud.version>2024.0.2</spring.cloud.version> <!-- 2024.0.3 is not on Central -->
 
     <!-- Libraries not fully managed by Boot -->
-    <flyway.version>11.11.2</flyway.version>
+    <flyway.version>11.8.2</flyway.version>
 
     <!-- Observability / Testing -->
     <otel.version>1.45.0</otel.version>
