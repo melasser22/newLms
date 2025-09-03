@@ -1,9 +1,9 @@
 package com.ejada.billing.controller;
 
 import com.ejada.billing.controller.OverageController;
-import com.ejada.billing.dto.OverageResponse;
-import com.ejada.billing.dto.RecordOverageRequest;
 import com.ejada.billing.service.BillingService;
+import com.ejada.tenant.core.dto.OverageResponse;
+import com.ejada.tenant.core.dto.RecordOverageRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

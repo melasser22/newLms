@@ -3,8 +3,8 @@ package com.ejada.billing.service;
 
 import org.springframework.stereotype.Service;
 
-import com.ejada.billing.dto.OverageResponse;
-import com.ejada.billing.dto.RecordOverageRequest;
+import com.ejada.tenant.core.dto.OverageResponse;
+import com.ejada.tenant.core.dto.RecordOverageRequest;
 
 import java.util.UUID;
 
