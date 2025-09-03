@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=setup}"
+    url: "${DB_URL:jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=setup}"
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
@@ -27,7 +27,7 @@ spring:
     enabled: false
     baseline-on-migrate: true
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: 127.0.0.1:9092
     client-id: lms-setup-qa
     consumer:
       group-id: lms-backend-qa
@@ -88,7 +88,7 @@ shared:
       echo-response-header: true
     cors:
       enabled: true
-      allowed-origins: http://localhost:3000
+      allowed-origins: http://127.0.0.1:3000
       allowed-methods: GET,POST,PUT,DELETE,OPTIONS
       allowed-headers: "*"
   headers:
@@ -167,7 +167,7 @@ shared:
     description: "Setup service endpoints for tenant/platform configuration."
     version: "1.0.0"
     servers:
-      - http://localhost:8080/core
+      - http://127.0.0.1:8080/core
     group:
       name: setup
       packages-to-scan:
@@ -175,7 +175,7 @@ shared:
 
     jwt-security: true
   redis:
-    host: localhost
+    host: 127.0.0.1
     port: 6379
     timeout: 2s
     key-prefix: lms

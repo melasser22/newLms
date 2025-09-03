@@ -1,17 +1,19 @@
 spring:
-  profiles:
-    active: dev
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/lms
+    username: postgres
+    password: postgres
+  redis:
+    host: 127.0.0.1
+    port: 6379
+  kafka:
+    bootstrap-servers: 127.0.0.1:9092
   flyway:
+    enabled: true
     locations: classpath:db/migration/common,classpath:db/migration/{vendor}
-  jpa:
-    hibernate:
-      ddl-auto: none
 server:
   port: 8080
 shared:
-  openapi:
-    title: Catalog Service
-    description: Feature catalog APIs
   core:
     correlation:
       header-name: X-Correlation-Id

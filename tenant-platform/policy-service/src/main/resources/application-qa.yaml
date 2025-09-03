@@ -1,17 +1,11 @@
 spring:
-  profiles:
-    active: dev
-  flyway:
-    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
-  jpa:
-    hibernate:
-      ddl-auto: none
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/lms
+    username: postgres
+    password: postgres
 server:
   port: 8080
 shared:
-  openapi:
-    title: Catalog Service
-    description: Feature catalog APIs
   core:
     correlation:
       header-name: X-Correlation-Id
