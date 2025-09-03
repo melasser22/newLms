@@ -25,10 +25,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.ejada.starter_security.RoleChecker;
 import com.ejada.starter_security.SharedSecurityProps;
@@ -203,34 +199,22 @@ class CountryControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     void add_shouldReturn403_whenUserNotAdmin() throws Exception {
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(new UsernamePasswordAuthenticationToken(
-                "user", "password", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-        SecurityContextHolder.setContext(context);
-
         mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createTestCountryDto())))
                 .andExpect(status().isForbidden());
-
-        SecurityContextHolder.clearContext();
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     void update_shouldReturn403_whenUserNotAdmin() throws Exception {
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(new UsernamePasswordAuthenticationToken(
-                "user", "password", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-        SecurityContextHolder.setContext(context);
-
         mockMvc.perform(put(BASE_URL + "/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createTestCountryDto())))
                 .andExpect(status().isForbidden());
-
-        SecurityContextHolder.clearContext();
     }
 }
