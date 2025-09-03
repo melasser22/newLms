@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.aop.AopAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.method.MethodSecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -42,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @WithMockUser(roles = {"ADMIN", "USER"})
 @Import(CountryControllerTest.TestSecurityConfig.class)
-@ImportAutoConfiguration({AopAutoConfiguration.class, MethodSecurityAutoConfiguration.class})
+@ImportAutoConfiguration(AopAutoConfiguration.class)
 class CountryControllerTest {
 
     private static final String BASE_URL = "/setup/countries";
