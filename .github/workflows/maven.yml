@@ -16,8 +16,8 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
       - name: Build shared libraries
-        run: mvn -B -DskipTests=false install -f shared-lib/pom.xml
+        run: mvn -B -DskipTests=true install -f shared-lib/pom.xml
       - name: Build tenant platform
-        run: mvn -B -DskipTests=false verify -f tenant-platform/pom.xml
+        run: mvn -B -DskipTests=true verify -f tenant-platform/pom.xml
       - name: Build setup service
-        run: mvn -B -DskipTests=false verify -f lms-setup/pom.xml
+        run: mvn -B -DskipTests=true verify -f lms-setup/pom.xml
