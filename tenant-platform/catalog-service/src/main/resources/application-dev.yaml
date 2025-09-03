@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/lms
+    url: jdbc:postgresql://localhost:5432/lms?currentSchema=entity
     username: postgres
     password: postgres
   redis:

@@ -13,7 +13,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * requires a PostgreSQL database, so we supply one using Testcontainers.
  */
 @SpringBootTest
-@Testcontainers(disabledWithoutDocker = true)
+@Testcontainers(disabledWithoutDocker = false)
 class SubscriptionServiceApplicationTests {
 
     @Container

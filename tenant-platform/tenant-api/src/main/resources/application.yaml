@@ -2,7 +2,7 @@ spring:
   profiles:
     active: dev
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:postgres}:5432/lms
+    url: jdbc:postgresql://${POSTGRES_HOST:postgres}:5432/lms?currentSchema=entity
     username: ${POSTGRES_USER:postgres}
     password: ${POSTGRES_PASSWORD:postgres}
   redis:
