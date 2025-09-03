@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.ejada.billing.dto.OverageResponse;
+import com.ejada.tenant.core.dto.OverageResponse;
 import com.ejada.tenant.core.dto.RecordOverageRequest;
 
 import java.util.UUID;

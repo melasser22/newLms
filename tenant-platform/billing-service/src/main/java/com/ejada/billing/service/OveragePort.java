@@ -3,7 +3,7 @@ package com.ejada.billing.service;
 
 import java.util.UUID;
 
-import com.ejada.billing.dto.OverageResponse;
+import com.ejada.tenant.core.dto.OverageResponse;
 import com.ejada.tenant.core.dto.RecordOverageRequest;
 
 /**

@@ -1,6 +1,6 @@
 package com.ejada.billing.adapter;
 
-import com.ejada.billing.dto.OverageResponse;
+import com.ejada.tenant.core.dto.OverageResponse;
 import com.ejada.tenant.core.dto.RecordOverageRequest;
 import com.ejada.billing.entity.TenantOverage;
 import com.ejada.billing.enums.OverageStatus;
