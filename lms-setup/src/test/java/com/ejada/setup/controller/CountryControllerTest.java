@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = CountryController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @WithMockUser(roles = {"ADMIN", "USER"})
 class CountryControllerTest {
@@ -134,17 +134,17 @@ class CountryControllerTest {
         List<Country> countries = Arrays.asList(createTestCountry());
         Page<Country> page = new PageImpl<>(countries, PageRequest.of(0, 20), 1);
         BaseResponse<?> response = BaseResponse.success("Countries page", page);
-        doReturn(response).when(countryService).list(any(Pageable.class), anyString(), anyBoolean());
+        doReturn(response).when(countryService).list(any(Pageable.class), nullable(String.class), anyBoolean());
 
         mockMvc.perform(get(BASE_URL + "?page=0&size=20")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.content").isArray())
                 .andExpect(jsonPath("$.data.totalElements").value(1));
 
-        verify(countryService).list(any(Pageable.class), anyString(), anyBoolean());
+        verify(countryService).list(any(Pageable.class), nullable(String.class), anyBoolean());
     }
 
     @Test
