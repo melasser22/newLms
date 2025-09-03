@@ -57,6 +57,27 @@ services:
       timeout: 5s
       retries: 20
 
+  setup-service:
+    build: ../lms-setup
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: lms
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      SHARED_REDIS_HOST: redis
+      SHARED_REDIS_PORT: 6379
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "8085:8080"
+
   tenant-service:
     build: ./tenant-service
     depends_on:
