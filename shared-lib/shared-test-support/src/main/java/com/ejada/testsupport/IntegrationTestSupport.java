@@ -19,12 +19,12 @@ public abstract class IntegrationTestSupport {
     /** Single reusable Postgres container for all tests. */
     @Container
     protected static final PostgreSQLContainer<?> POSTGRES =
-            new PostgreSQLContainer<>("postgres:15-alpine");
+            new PostgreSQLContainer<>("postgres:16");
 
     /** Lightweight Redis container. */
     @Container
     protected static final GenericContainer<?> REDIS =
-            new GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
+            new GenericContainer<>("redis:7").withExposedPorts(6379);
 
     @DynamicPropertySource
     static void registerProps(DynamicPropertyRegistry registry) {
