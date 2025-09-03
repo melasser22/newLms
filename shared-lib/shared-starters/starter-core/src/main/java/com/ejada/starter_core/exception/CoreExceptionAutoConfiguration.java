@@ -2,6 +2,7 @@ package com.ejada.starter_core.exception;
 
 import com.ejada.starter_core.web.GlobalExceptionHandler;
 import com.ejada.starter_core.web.NoResourceFoundHandlerConfiguration;
+import com.ejada.starter_core.web.SecurityExceptionHandler;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -13,6 +14,6 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(name = "org.springframework.http.HttpStatusCode")
-@Import({GlobalExceptionHandler.class, NoResourceFoundHandlerConfiguration.class})
+@Import({GlobalExceptionHandler.class, NoResourceFoundHandlerConfiguration.class, SecurityExceptionHandler.class})
 public class CoreExceptionAutoConfiguration {
 }
