@@ -10,14 +10,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.ejada.starter_security.RoleChecker;
+import com.ejada.starter_security.SharedSecurityProps;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @WithMockUser(roles = {"ADMIN", "USER"})
+@Import(CountryControllerTest.TestSecurityConfig.class)
 class CountryControllerTest {
 
     private static final String BASE_URL = "/setup/countries";
@@ -39,6 +47,13 @@ class CountryControllerTest {
     @Autowired ObjectMapper objectMapper;
 
     @MockBean CountryService countryService;
+
+    @TestConfiguration
+    @EnableMethodSecurity
+    static class TestSecurityConfig {
+        @Bean SharedSecurityProps sharedSecurityProps() { return new SharedSecurityProps(); }
+        @Bean RoleChecker roleChecker(SharedSecurityProps props) { return new RoleChecker(props); }
+    }
 
     private Country createTestCountry() {
         Country country = new Country();
