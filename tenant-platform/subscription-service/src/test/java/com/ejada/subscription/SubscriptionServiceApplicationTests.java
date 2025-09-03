@@ -1,5 +1,6 @@
 package com.ejada.subscription;
 
+import com.ejada.tenant.subscription.SubscriptionServiceApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -12,7 +13,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * Simple smoke test that verifies the Spring context can start. The application
  * requires a PostgreSQL database, so we supply one using Testcontainers.
  */
-@SpringBootTest
+@SpringBootTest(classes = SubscriptionServiceApplication.class)
 @Testcontainers(disabledWithoutDocker = false)
 class SubscriptionServiceApplicationTests {
 
