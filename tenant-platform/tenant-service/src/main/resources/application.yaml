@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: dev
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:postgres}:5432/tenant
     username: ${POSTGRES_USER:postgres}
