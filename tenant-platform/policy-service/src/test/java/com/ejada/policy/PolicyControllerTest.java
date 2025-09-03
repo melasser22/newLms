@@ -1,11 +1,8 @@
 package com.ejada.policy;
 
-import com.ejada.tenant.core.dto.OverageResponse;
-import com.ejada.tenant.core.dto.RecordOverageRequest;
-import com.ejada.billing.service.OveragePort;
-import com.ejada.tenant.core.dto.RecordOverageRequest;
-import com.ejada.catalog.service.FeaturePolicyPort;
-import com.ejada.subscription.core.SubscriptionQueryPort;
+import com.ejada.tenant.core.FeaturePolicyPort;
+import com.ejada.tenant.core.OveragePort;
+import com.ejada.tenant.core.SubscriptionPort;
 import com.ejada.tenant.core.TenantSettingsPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +22,7 @@ class PolicyControllerTest {
     @Mock
     TenantSettingsPort tenantSettings;
     @Mock
-    SubscriptionQueryPort subscriptionQuery;
+    SubscriptionPort subscriptionPort;
     @Mock
     FeaturePolicyPort featurePolicy;
     @Mock
@@ -35,20 +32,20 @@ class PolicyControllerTest {
 
     @Test
     void recordsOverageWhenLimitExceeded() {
-        var service = new PolicyService(tenantSettings, subscriptionQuery, featurePolicy, overagePort);
+        var service = new PolicyService(tenantSettings, subscriptionPort, featurePolicy, overagePort);
         var controller = new PolicyController(service, usageReader);
 
         UUID tenantId = UUID.randomUUID();
         when(usageReader.currentUsage(eq(tenantId), eq("emails"), any(), any())).thenReturn(95L);
         when(tenantSettings.isOverageEnabled(tenantId)).thenReturn(true);
-        var sub = new SubscriptionQueryPort.ActiveSubscription(UUID.randomUUID(), "basic", Instant.now(), Instant.now());
-        when(subscriptionQuery.loadActive(tenantId)).thenReturn(sub);
+        var sub = new SubscriptionPort.ActiveSubscription(UUID.randomUUID(), "basic", Instant.now(), Instant.now());
+        when(subscriptionPort.activeSubscription(tenantId)).thenReturn(sub);
         var eff = new FeaturePolicyPort.EffectiveFeature(true, 100L, true, 1L, "USD");
         when(featurePolicy.effective("basic", tenantId, "emails")).thenReturn(eff);
         UUID overageId = UUID.randomUUID();
-        when(overagePort.recordOverage(eq(tenantId), eq(sub.subscriptionId()), any(RecordOverageRequest.class)))
-                .thenReturn(new OverageResponse(overageId, tenantId, "emails", 15L, 1L, "USD",
-                        Instant.now(), Instant.now(), Instant.now(), "RECORDED"));
+        when(overagePort.recordOverage(eq(tenantId), eq(sub.subscriptionId()), eq("emails"), eq(15L), eq(1L),
+                eq("USD"), any(Instant.class), any(Instant.class), isNull()))
+                .thenReturn(overageId);
 
         var request = new PolicyController.ConsumeRequest("emails", 20L, Instant.now().minusSeconds(60), Instant.now(), null);
         var response = controller.consume(tenantId, request);
