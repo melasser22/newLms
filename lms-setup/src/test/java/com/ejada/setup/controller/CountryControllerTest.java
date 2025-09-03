@@ -10,14 +10,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.ejada.starter_security.RoleChecker;
+import com.ejada.starter_security.SharedSecurityProps;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,9 +35,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = CountryController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @WithMockUser(roles = {"ADMIN", "USER"})
+@Import(CountryControllerTest.TestSecurityConfig.class)
 class CountryControllerTest {
 
     private static final String BASE_URL = "/setup/countries";
@@ -39,6 +47,13 @@ class CountryControllerTest {
     @Autowired ObjectMapper objectMapper;
 
     @MockBean CountryService countryService;
+
+    @TestConfiguration
+    @EnableMethodSecurity
+    static class TestSecurityConfig {
+        @Bean SharedSecurityProps sharedSecurityProps() { return new SharedSecurityProps(); }
+        @Bean RoleChecker roleChecker(SharedSecurityProps props) { return new RoleChecker(props); }
+    }
 
     private Country createTestCountry() {
         Country country = new Country();
@@ -134,17 +149,17 @@ class CountryControllerTest {
         List<Country> countries = Arrays.asList(createTestCountry());
         Page<Country> page = new PageImpl<>(countries, PageRequest.of(0, 20), 1);
         BaseResponse<?> response = BaseResponse.success("Countries page", page);
-        doReturn(response).when(countryService).list(any(Pageable.class), anyString(), anyBoolean());
+        doReturn(response).when(countryService).list(any(Pageable.class), nullable(String.class), anyBoolean());
 
         mockMvc.perform(get(BASE_URL + "?page=0&size=20")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.content").isArray())
                 .andExpect(jsonPath("$.data.totalElements").value(1));
 
-        verify(countryService).list(any(Pageable.class), anyString(), anyBoolean());
+        verify(countryService).list(any(Pageable.class), nullable(String.class), anyBoolean());
     }
 
     @Test
