@@ -18,7 +18,7 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
 
 @AutoConfiguration
 @EnableConfigurationProperties(SharedHeadersProperties.class)
-@PropertySource("classpath:/com/shared/headers/starter/headers-defaults.properties")
+@PropertySource("classpath:/com/ejada/headers/starter/headers-defaults.properties")
 @ConditionalOnProperty(prefix = "shared.headers", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class SharedHeadersAutoConfiguration {
 
