@@ -42,7 +42,6 @@ public class CountryController {
     }
 
     @PostMapping
-    @SetupAuthorized
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a new country", description = "Creates a new country with the provided details")
     @ApiResponses(value = {
@@ -57,7 +56,6 @@ public class CountryController {
     }
 
     @PutMapping("/{countryId}")
-    @SetupAuthorized
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update an existing country", description = "Updates the country with the specified ID")
     @ApiResponses(value = {
