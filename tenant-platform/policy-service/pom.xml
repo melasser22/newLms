@@ -44,26 +44,6 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.ejada.tenant</groupId>
-      <artifactId>billing-service</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.ejada.tenant</groupId>
-      <artifactId>catalog-service</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.ejada.tenant</groupId>
-      <artifactId>subscription-service</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.ejada.tenant</groupId>
-      <artifactId>tenant-service</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
