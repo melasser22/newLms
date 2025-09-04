@@ -1,16 +1,15 @@
 spring:
   profiles:
     active: dev
-  flyway:
-    enabled: true
-    default-schema: entity
-    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
-    ignore-migration-patterns: "versioned:1"
+
   jpa:
     hibernate:
       ddl-auto: none
+    open-in-view: false
+
 server:
   port: 8080
+
 shared:
   core:
     correlation:

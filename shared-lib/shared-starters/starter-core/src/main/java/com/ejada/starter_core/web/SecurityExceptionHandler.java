@@ -3,6 +3,8 @@ package com.ejada.starter_core.web;
 import com.ejada.common.dto.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -16,6 +18,8 @@ import org.springframework.web.context.request.WebRequest;
  */
 @Slf4j
 @RestControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE) 
+
 @ConditionalOnClass({AccessDeniedException.class, AuthorizationDeniedException.class})
 public class SecurityExceptionHandler {
 
