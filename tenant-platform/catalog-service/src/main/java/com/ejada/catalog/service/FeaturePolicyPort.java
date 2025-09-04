@@ -2,6 +2,10 @@ package com.ejada.catalog.service;
 
 import java.util.UUID;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
+
 /**
  * Port exposing feature policy operations.
  */
@@ -18,8 +22,8 @@ public interface FeaturePolicyPort {
                             String overageCurrency) { }
 
     record FeatureOverride(Boolean enabled,
-                           Long limit,
+                           @PositiveOrZero Long limit,
                            Boolean allowOverage,
-                           Long overageUnitPriceMinor,
-                           String overageCurrency) { }
+                           @PositiveOrZero Long overageUnitPriceMinor,
+                           @NotBlank @Size(max = 3) String overageCurrency) { }
 }
