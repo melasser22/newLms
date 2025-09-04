@@ -2,6 +2,7 @@ package com.ejada.catalog.controller;
 
 import com.ejada.catalog.service.CatalogService;
 import com.ejada.catalog.service.FeaturePolicyPort;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -24,7 +25,7 @@ public class TenantFeatureOverrideController {
     @PutMapping("/{featureKey}/override")
     public ResponseEntity<Void> override(@PathVariable UUID tenantId,
                                          @PathVariable String featureKey,
-                                         @RequestBody FeaturePolicyPort.FeatureOverride override) {
+                                         @Valid @RequestBody FeaturePolicyPort.FeatureOverride override) {
         service.upsertOverride(tenantId, featureKey, override);
         return ResponseEntity.noContent().build();
     }
