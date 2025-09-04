@@ -14,6 +14,14 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(name = "org.springframework.http.HttpStatusCode")
-@Import({GlobalExceptionHandler.class, NoResourceFoundHandlerConfiguration.class, SecurityExceptionHandler.class})
+@Import({GlobalExceptionHandler.class, NoResourceFoundHandlerConfiguration.class})
 public class CoreExceptionAutoConfiguration {
+
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnClass(name = {
+            "org.springframework.security.access.AccessDeniedException",
+            "org.springframework.security.authorization.AuthorizationDeniedException"})
+    @Import(SecurityExceptionHandler.class)
+    static class SecurityHandlerConfiguration {
+    }
 }

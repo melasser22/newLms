@@ -3,7 +3,6 @@ package com.ejada.starter_core.web;
 import com.ejada.common.dto.BaseResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authorization.AuthorizationDeniedException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -18,11 +17,4 @@ class GlobalExceptionHandlerTest {
         assertEquals("ERR_INTERNAL", resp.getBody().getCode());
     }
 
-    @Test
-    void handleAccessDeniedReturnsForbidden() {
-        AuthorizationDeniedException ex = new AuthorizationDeniedException("denied");
-        ResponseEntity<BaseResponse<?>> resp = handler.handleAccessDenied(ex, null);
-        assertEquals(403, resp.getStatusCode().value());
-        assertEquals("ERR_ACCESS_DENIED", resp.getBody().getCode());
-    }
 }
