@@ -5,6 +5,9 @@ spring:
     enabled: true
     default-schema: tenant_subscription
     schemas: tenant_subscription
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    clean-disabled: true
     locations: classpath:db/migration/common,classpath:db/migration/{vendor}
   jpa:
     hibernate:

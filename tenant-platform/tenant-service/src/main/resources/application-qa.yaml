@@ -1,11 +1,11 @@
 spring:
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/lms
+    url: jdbc:postgresql://127.0.0.1:5432/lms?currentSchema=tenant_core
     username: postgres
     password: postgres
   flyway:
     enabled: true
-    default-schema: entity
+    default-schema: tenant_core
     locations: classpath:db/migration/common,classpath:db/migration/{vendor}
 server:
   port: 8080

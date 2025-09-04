@@ -6,6 +6,9 @@ spring:
     enabled: true
     default-schema: tenant_billing
     schemas: tenant_billing
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    clean-disabled: true
 
   jpa:
     hibernate:
