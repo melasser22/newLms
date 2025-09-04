@@ -15,6 +15,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
+import com.ejada.crypto.starter.InMemoryKeyProviderAutoConfiguration;
+
 import com.ejada.crypto.AesGcmCrypto;
 import com.ejada.crypto.CryptoAlgorithm;
 import com.ejada.crypto.CryptoFacade;
@@ -28,7 +30,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-@AutoConfiguration
+@AutoConfiguration(after = InMemoryKeyProviderAutoConfiguration.class)
 @EnableConfigurationProperties(CryptoProperties.class)
 @ConditionalOnClass({CryptoFacade.class, CryptoAlgorithm.class})
 @ConditionalOnProperty(prefix = "shared.crypto", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -89,8 +91,7 @@ public class CryptoAutoConfiguration {
    * fallback should be skipped to avoid bean name collisions.</p>
    */
   @Bean
-  @ConditionalOnMissingBean(HmacSigner.class)
-  @ConditionalOnMissingBean(InMemoryKeyProviderAutoConfiguration.KeyProvider.class)
+  @ConditionalOnMissingBean({HmacSigner.class, InMemoryKeyProviderAutoConfiguration.KeyProvider.class})
   public HmacSigner hmacSigner() {
     return new HmacSigner(); // HmacSHA256 helper for legacy usage
   }
