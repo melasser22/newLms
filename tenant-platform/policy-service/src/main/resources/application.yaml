@@ -6,6 +6,9 @@ spring:
     enabled: true
     default-schema: tenant_policy
     schemas: tenant_policy
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    clean-disabled: true
 server:
   port: 8080
 shared:
