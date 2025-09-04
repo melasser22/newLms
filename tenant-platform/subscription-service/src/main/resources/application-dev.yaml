@@ -9,9 +9,9 @@ spring:
   kafka:
     bootstrap-servers: 127.0.0.1:9092
   flyway:
-	enabled: true
-		default-schema: entity
-		    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
+    enabled: true
+    default-schema: entity
+    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
 server:
   port: 8080
 shared:

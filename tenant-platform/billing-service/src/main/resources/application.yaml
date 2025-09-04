@@ -2,8 +2,8 @@ spring:
   profiles:
     active: dev
   flyway:
-	enabled: true
-	default-schema: entity
+    enabled: true
+    default-schema: entity
     locations: classpath:db/migration/common,classpath:db/migration/{vendor}
   jpa:
     hibernate:
