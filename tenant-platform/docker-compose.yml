@@ -1,64 +1,133 @@
 version: '3.8'
 
+x-health-defaults: &health_defaults
+  interval: 10s
+  timeout: 5s
+  retries: 10
+  start_period: 15s
+
+x-restart: &restart_policy
+  restart: unless-stopped
+
+x-resources-light: &resources_light
+  deploy:
+    resources:
+      limits:
+        memory: 1g
+      reservations:
+        memory: 256m
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  pgdata:
+  zkdata:
+  zklog:
+  kafkadata:
+
 services:
   postgres:
     image: postgres:16
+    <<: *restart_policy
+    <<: *resources_light
     environment:
       POSTGRES_DB: lms
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      TZ: Asia/Riyadh
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d lms"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+      <<: *health_defaults
+    networks:
+      backend:
+        aliases: [postgres]
 
   redis:
     image: redis:7
+    <<: *restart_policy
+    <<: *resources_light
+    command: ["redis-server", "--appendonly", "yes"]
     ports:
       - "6379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+      # non-zero exit on failure
+      test: ["CMD-SHELL", "redis-cli -h 127.0.0.1 ping | grep -q PONG"]
+      <<: *health_defaults
+    networks:
+      backend:
+        aliases: [redis]
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
+    <<: *restart_policy
+    <<: *resources_light
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 3000
+      ZOOKEEPER_SYNC_LIMIT: 2
+      # KAFKA_OPTS: "-Dzookeeper.4lw.commands.whitelist=srvr,ruok,stat,wchs,wchp,conf,cons,envi"
+      # ZOOKEEPER_4LW_COMMANDS_WHITELIST: "srvr,ruok,stat,wchs,wchp,conf,cons,envi"
+    ports:
+      - "2181:2181"
+    volumes:
+      - zkdata:/var/lib/zookeeper/data
+      - zklog:/var/lib/zookeeper/log
     healthcheck:
-      test: ["CMD-SHELL", "echo ruok | nc -w 2 127.0.0.1 2181 | grep imok || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      test: ["CMD-SHELL", "echo srvr | nc -w 2 127.0.0.1 2181 | grep -q 'Mode:'"]
+      <<: *health_defaults
+      # test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/commands/srvr | grep -q 'Mode:'"]
+    networks:
+      backend:
+        aliases: [zookeeper]
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
+    <<: *restart_policy
+    <<: *resources_light
     depends_on:
       zookeeper:
         condition: service_healthy
     environment:
+      TZ: Asia/Riyadh
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_BROKER_ID: 1
+
+      # Two listeners: one for containers (9092), one for host (29092)
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://127.0.0.1:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+      # sensible defaults
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_RETENTION_HOURS: 168           # 7 days
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824      # 1 GiB
+      KAFKA_MESSAGE_MAX_BYTES: 20971520        # 20 MiB
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 20971520
+      KAFKA_HEAP_OPTS: "-Xms512m -Xmx1024m"
     ports:
-      - "9092:9092"   # host → Kafka (PLAINTEXT_HOST)
+      - "9092:9092"     # in-cluster via kafka:9092
+      - "29092:29092"   # from host via localhost:29092
+    volumes:
+      - kafkadata:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD-SHELL", "kafka-topics --bootstrap-server 127.0.0.1:9092 --list >/dev/null 2>&1 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server 127.0.0.1:29092 --list >/dev/null 2>&1"]
+      <<: *health_defaults
+    networks:
+      backend:
+        aliases: [kafka]
 
   setup-service:
     build: ../lms-setup
+    <<: *restart_policy
     depends_on:
       postgres:
         condition: service_healthy
@@ -67,6 +136,7 @@ services:
       kafka:
         condition: service_healthy
     environment:
+      TZ: Asia/Riyadh
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: lms
@@ -77,9 +147,12 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
       - "8085:8080"
+    networks:
+      backend:
 
   tenant-service:
     build: ./tenant-service
+    <<: *restart_policy
     depends_on:
       postgres:
         condition: service_healthy
@@ -88,6 +161,7 @@ services:
       kafka:
         condition: service_healthy
     environment:
+      TZ: Asia/Riyadh
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -96,48 +170,59 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
       - "8081:8080"
+    networks:
+      backend:
 
   subscription-service:
     build: ./subscription-service
+    <<: *restart_policy
     depends_on:
       postgres:
         condition: service_healthy
       kafka:
         condition: service_healthy
     environment:
+      TZ: Asia/Riyadh
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
       - "8082:8080"
+    networks:
+      backend:
 
   catalog-service:
     build: ./catalog-service
+    <<: *restart_policy
     depends_on:
       postgres:
         condition: service_healthy
     environment:
+      TZ: Asia/Riyadh
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
     ports:
       - "8083:8080"
+    networks:
+      backend:
 
   billing-service:
     build: ./billing-service
+    <<: *restart_policy
     depends_on:
       postgres:
         condition: service_healthy
       kafka:
         condition: service_healthy
     environment:
+      TZ: Asia/Riyadh
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
       - "8084:8080"
-
-volumes:
-  pgdata:
+    networks:
+      backend:
