@@ -14,3 +14,7 @@ spring:
     locations: classpath:db/migration/common,classpath:db/migration/{vendor}
 server:
   port: 8080
+shared:
+  openapi:
+    title: Tenant API
+    description: Admin gateway APIs
