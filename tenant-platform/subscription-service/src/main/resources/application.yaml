@@ -3,7 +3,8 @@ spring:
     active: dev
   flyway:
     enabled: true
-    default-schema: entity
+    default-schema: tenant_subscription
+    schemas: tenant_subscription
     locations: classpath:db/migration/common,classpath:db/migration/{vendor}
   jpa:
     hibernate:

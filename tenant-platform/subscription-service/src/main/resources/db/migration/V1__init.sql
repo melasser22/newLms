@@ -1,4 +1,6 @@
-create table if not exists tenant_subscription (
+create schema if not exists tenant_subscription;
+
+create table if not exists tenant_subscription.subscription (
   subscription_id uuid primary key,
   tenant_id uuid not null,
   tier_id text,
@@ -19,18 +21,18 @@ create table if not exists tenant_subscription (
   updated_at timestamptz default now()
 );
 
-create table if not exists subscription_item (
+create table if not exists tenant_subscription.subscription_item (
   item_id uuid primary key,
-  subscription_id uuid references tenant_subscription(subscription_id),
+  subscription_id uuid references tenant_subscription.subscription(subscription_id),
   feature_key text,
   quantity bigint,
   unique(subscription_id, feature_key)
 );
 
-alter table tenant_subscription enable row level security;
-alter table subscription_item enable row level security;
+alter table tenant_subscription.subscription enable row level security;
+alter table tenant_subscription.subscription_item enable row level security;
 
-create policy tenant_sub_policy on tenant_subscription using (tenant_id = current_setting('app.current_tenant', true)::uuid);
-create policy tenant_sub_item_policy on subscription_item using (subscription_id in (select subscription_id from tenant_subscription where tenant_id = current_setting('app.current_tenant', true)::uuid));
+create policy tenant_sub_policy on tenant_subscription.subscription using (tenant_id = current_setting('app.current_tenant', true)::uuid);
+create policy tenant_sub_item_policy on tenant_subscription.subscription_item using (subscription_id in (select subscription_id from tenant_subscription.subscription where tenant_id = current_setting('app.current_tenant', true)::uuid));
 
-create unique index if not exists ux_active_subscription on tenant_subscription (tenant_id) where active;
+create unique index if not exists ux_active_subscription on tenant_subscription.subscription (tenant_id) where active;

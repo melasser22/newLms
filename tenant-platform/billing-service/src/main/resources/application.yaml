@@ -2,6 +2,11 @@ spring:
   profiles:
     active: dev
 
+  flyway:
+    enabled: true
+    default-schema: tenant_billing
+    schemas: tenant_billing
+
   jpa:
     hibernate:
       ddl-auto: none

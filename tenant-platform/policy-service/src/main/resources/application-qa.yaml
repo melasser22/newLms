@@ -1,8 +1,12 @@
 spring:
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/lms
+    url: jdbc:postgresql://127.0.0.1:5432/lms?currentSchema=tenant_policy
     username: postgres
     password: postgres
+  flyway:
+    enabled: true
+    default-schema: tenant_policy
+    schemas: tenant_policy
 server:
   port: 8080
 shared:
