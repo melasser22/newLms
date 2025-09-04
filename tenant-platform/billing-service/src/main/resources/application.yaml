@@ -5,6 +5,7 @@ spring:
     enabled: true
     default-schema: entity
     locations: classpath:db/migration/common,classpath:db/migration/{vendor}
+    ignore-migration-patterns: 1:ignored
   jpa:
     hibernate:
       ddl-auto: none
