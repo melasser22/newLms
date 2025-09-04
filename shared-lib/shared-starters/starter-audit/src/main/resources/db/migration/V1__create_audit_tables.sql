@@ -1,5 +1,5 @@
--- Flyway: V1__create_audit_tables.sql
-CREATE TABLE IF NOT EXISTS setup.audit_logs (
+-- Tables are created in the default schema configured for Flyway.
+CREATE TABLE IF NOT EXISTS audit_logs (
   id               text PRIMARY KEY,
   ts_utc           timestamptz NOT NULL,
   x_tenant_id      text,
@@ -19,12 +19,11 @@ CREATE TABLE IF NOT EXISTS setup.audit_logs (
   payload          jsonb NOT NULL
 );
 
--- helpful indexes
-CREATE INDEX IF NOT EXISTS idx_audit_logs_ts    ON setup.audit_logs (ts_utc);
-CREATE INDEX IF NOT EXISTS idx_audit_logs_x_tenant ON setup.audit_logs (x_tenant_id);
-CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON setup.audit_logs (entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_ts    ON audit_logs (ts_utc);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_x_tenant ON audit_logs (x_tenant_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs (entity_type, entity_id);
 
-CREATE TABLE  IF NOT EXISTS setup.audit_outbox (
+CREATE TABLE  IF NOT EXISTS audit_outbox (
     id      UUID        PRIMARY KEY,
     payload JSONB       NOT NULL,
     status  VARCHAR(20) NOT NULL
