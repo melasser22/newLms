@@ -180,7 +180,7 @@ shared:
     default-ttl: 600s
     reactive: false
   crypto:
-    algorithm: AES256_GCM
+    algorithm: AES_GCM
     in-memory:
       activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
       keys:

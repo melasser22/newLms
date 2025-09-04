@@ -10,26 +10,16 @@
   <artifactId>catalog-service</artifactId>
   <dependencies>
     <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>starter-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>starter-data</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
-      <version>${flyway.version}</version>
     </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-database-postgresql</artifactId>
-      <version>${flyway.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
     <dependency>
       <groupId>org.postgresql</groupId>
@@ -38,43 +28,6 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>starter-validation</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>starter-openapi</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>starter-actuator</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>starter-security</artifactId>
-    </dependency>
-    <!-- Observability starter temporarily disabled: logback configuration
-         in this starter requires OpenTelemetry libraries that are not
-         currently on the classpath, causing startup failures. -->
-    <!--
-    <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>starter-observability</artifactId>
-    </dependency>
-    -->
-    <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>starter-resilience</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>starter-headers</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>starter-health</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
