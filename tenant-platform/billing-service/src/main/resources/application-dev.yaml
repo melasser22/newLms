@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/lms?currentSchema=entity
+    url: jdbc:postgresql://127.0.0.1:5432/lms?currentSchema=tenant_billing
     username: postgres
     password: postgres
 
@@ -13,7 +13,8 @@ spring:
 
   flyway:
     enabled: true
-    default-schema: entity
+    default-schema: tenant_billing
+    schemas: tenant_billing
     create-schemas: true
     baseline-on-migrate: true
     validate-on-migrate: true

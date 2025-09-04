@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/lms
+    url: jdbc:postgresql://127.0.0.1:5432/lms?currentSchema=tenant_subscription
     username: postgres
     password: postgres
   redis:
@@ -10,7 +10,8 @@ spring:
     bootstrap-servers: 127.0.0.1:9092
   flyway:
     enabled: true
-    default-schema: entity
+    default-schema: tenant_subscription
+    schemas: tenant_subscription
     locations: classpath:db/migration/common,classpath:db/migration/{vendor}
 server:
   port: 8080

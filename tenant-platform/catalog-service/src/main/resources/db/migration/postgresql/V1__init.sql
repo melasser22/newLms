@@ -1,9 +1,11 @@
-create table if not exists feature (
+create schema if not exists tenant_catalog;
+
+create table if not exists tenant_catalog.feature (
   feature_key text primary key,
   description text
 );
 
-create table if not exists product_tier (
+create table if not exists tenant_catalog.product_tier (
   tier_id text primary key,
   name text,
   description text,
@@ -15,8 +17,8 @@ create table if not exists product_tier (
 );
 
 create table if not exists tier_feature_limit (
-  tier_id text references product_tier(tier_id),
-  feature_key text references feature(feature_key),
+  tier_id text references tenant_catalog.product_tier(tier_id),
+  feature_key text references tenant_catalog.feature(feature_key),
   enabled boolean,
   limit_value bigint,
   allow_overage boolean default false,
@@ -25,7 +27,7 @@ create table if not exists tier_feature_limit (
   primary key (tier_id, feature_key)
 );
 
-create table if not exists tenant_feature_override (
+create table if not exists tenant_catalog.tenant_feature_override (
   tenant_id uuid,
   feature_key text,
   enabled boolean,
@@ -36,5 +38,5 @@ create table if not exists tenant_feature_override (
   primary key (tenant_id, feature_key)
 );
 
-alter table tenant_feature_override enable row level security;
-create policy tenant_override_policy on tenant_feature_override using (tenant_id = current_setting('app.current_tenant', true)::uuid);
+alter table tenant_catalog.tenant_feature_override enable row level security;
+create policy tenant_override_policy on tenant_catalog.tenant_feature_override using (tenant_id = current_setting('app.current_tenant', true)::uuid);
