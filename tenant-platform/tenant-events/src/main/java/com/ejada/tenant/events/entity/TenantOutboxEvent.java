@@ -12,7 +12,7 @@ import java.time.Instant;
  * JPA entity representing a pending tenant event stored in the outbox.
  */
 @Entity
-@Table(name = "tenant_outbox")
+@Table(name = "tenant_outbox",schema = "tenant_core")
 public class TenantOutboxEvent extends TenantBaseEntity {
 
     @Column(nullable = false)
