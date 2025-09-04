@@ -1,4 +1,4 @@
-CREATE INDEX idx_tenant_integration_key_tenant_id ON tenant_core.tenant_integration_key (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_tenant_integration_key_tenant_id ON tenant_core.tenant_integration_key (tenant_id);
 
 -- optional demo seed
 INSERT INTO tenant_core.tenant (id, name, status, overage_enabled)
