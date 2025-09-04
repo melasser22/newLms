@@ -16,7 +16,7 @@ create table if not exists tenant_catalog.product_tier (
   updated_at timestamptz default now()
 );
 
-create table if not exists tier_feature_limit (
+create table if not exists tenant_catalog.tier_feature_limit (
   tier_id text references tenant_catalog.product_tier(tier_id),
   feature_key text references tenant_catalog.feature(feature_key),
   enabled boolean,

@@ -35,4 +35,3 @@ alter table tenant_subscription.subscription_item enable row level security;
 create policy tenant_sub_policy on tenant_subscription.subscription using (tenant_id = current_setting('app.current_tenant', true)::uuid);
 create policy tenant_sub_item_policy on tenant_subscription.subscription_item using (subscription_id in (select subscription_id from tenant_subscription.subscription where tenant_id = current_setting('app.current_tenant', true)::uuid));
 
-create unique index if not exists ux_active_subscription on tenant_subscription.subscription (tenant_id) where active;
