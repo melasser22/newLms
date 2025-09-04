@@ -81,9 +81,16 @@ public class CryptoAutoConfiguration {
     return facade;
   }
 
-  /** Convenience HMAC signer bean (shared lib), if someone wants to inject it directly. */
+  /** Convenience HMAC signer bean (shared lib), if someone wants to inject it directly.
+   *
+   * <p>This bean is only created when no other {@code HmacSigner} is present and no
+   * {@link InMemoryKeyProviderAutoConfiguration.KeyProvider} is registered. When the
+   * in-memory key provider is active, a more advanced signer is supplied there and this
+   * fallback should be skipped to avoid bean name collisions.</p>
+   */
   @Bean
-  @ConditionalOnMissingBean
+  @ConditionalOnMissingBean(HmacSigner.class)
+  @ConditionalOnMissingBean(InMemoryKeyProviderAutoConfiguration.KeyProvider.class)
   public HmacSigner hmacSigner() {
     return new HmacSigner(); // HmacSHA256 helper for legacy usage
   }
