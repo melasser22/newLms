@@ -35,7 +35,12 @@ public class FlywayRepairStrategy {
      */
     @Bean
     public FlywayConfigurationCustomizer ignoreMissingMigrationsCustomizer() {
-        return configuration -> configuration.ignoreMigrationPatterns("1:ignored");
+        // Ignore migrations that exist in the schema history table but are
+        // no longer present on disk (e.g. when early migrations were
+        // renumbered). Flyway expects the pattern format
+        // "<type>:<state>", so "*:missing" ignores all migration types
+        // that are marked as missing.
+        return configuration -> configuration.ignoreMigrationPatterns("*:missing");
     }
 }
 
