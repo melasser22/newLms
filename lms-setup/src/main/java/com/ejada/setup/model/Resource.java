@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.UpdateTimestamp;
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -85,14 +86,17 @@ public class Resource implements Serializable {
 
     @Version
     @Column(name = "version", nullable = false)
+    @Setter(AccessLevel.NONE)
     private Long version;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
+    @Setter(AccessLevel.NONE)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
+    @Setter(AccessLevel.NONE)
     private LocalDateTime updatedAt;
 
     @PrePersist @PreUpdate
@@ -106,7 +110,4 @@ public class Resource implements Serializable {
         if (isActive == null) isActive = Boolean.TRUE;
     }
 
-    public Long getVersion() { return version; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
 }
