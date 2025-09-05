@@ -1,30 +1,19 @@
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/lms
-    username: postgres
-    password: postgres
-  redis:
-    host: localhost
-    port: 6379
-  kafka:
-    bootstrap-servers: localhost:9092
-  flyway:
-    enabled: true
-    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
-  data:
-    redis:
-      repositories:
-        enabled: false
+#spring:
+ # datasource:
+ #   url: jdbc:postgresql://localhost:5432/lms
+ #   username: postgres
+ #   password: postgres
+ # redis:
+ #   host: localhost
+ #   port: 6379
+#  kafka:
+#    bootstrap-servers: localhost:9092
+#  flyway:
+ #   enabled: true
+ #   locations: classpath:db/migration/common,classpath:db/migration/{vendor}
+ # data:
+ #   redis:
+  #    repositories:
+ #       enabled: false
 
-management:
-  endpoints:
-    web:
-      base-path: /actuator
-      exposure:
-        include: "*"
-  endpoint:
-    health:
-      show-details: always
-  tracing:
-    sampling:
-      probability: 1.0
+

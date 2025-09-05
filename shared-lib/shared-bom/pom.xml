@@ -276,6 +276,11 @@
         <artifactId>starter-mapstruct</artifactId>
         <version>${project.version}</version>
       </dependency>
+       <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>starter-audit</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <!-- Test utilities -->
       <dependency>

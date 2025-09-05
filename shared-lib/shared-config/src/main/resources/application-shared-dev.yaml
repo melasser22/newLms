@@ -1,10 +1,26 @@
 server:
   servlet:
     context-path: /
+error:
+ include-message: always
+ include-binding-errors: always
+ include-stacktrace: on_param
 spring:
   mvc:
     log-request-details: true
 
+management:
+ endpoints:
+  web:
+   base-path: /actuator
+   exposure:
+   include: "*"
+ endpoint:
+  health:
+   show-details: always
+ tracing:
+  sampling:
+   probability: 1.0
 shared:
   security:
     resource-server:
@@ -30,8 +46,4 @@ logging:
     org.springframework.validation: DEBUG
     com.ejada: DEBUG
 
-server:
-  error:
-    include-message: always
-    include-binding-errors: always
-    include-stacktrace: on_param
+

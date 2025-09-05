@@ -5,8 +5,8 @@ spring:
     active: dev
   flyway:
     enabled: true
-    default-schema: catalog
-    schemas: catalog
+    default-schema: setup
+    schemas: setup
     baseline-on-migrate: true
     baseline-version: 0
     validate-on-migrate: true

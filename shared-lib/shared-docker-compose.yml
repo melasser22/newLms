@@ -1,0 +1,131 @@
+version: '3.8'
+
+# ===== Common Anchors =====
+x-health-defaults: &health_defaults
+  interval: 10s
+  timeout: 5s
+  retries: 10
+  start_period: 15s
+
+x-restart: &restart_policy
+  restart: unless-stopped
+
+x-resources-light: &resources_light
+  deploy:
+    resources:
+      limits:
+        memory: 1g
+      reservations:
+        memory: 256m
+
+# ===== Networks =====
+networks:
+  backend:
+    driver: bridge
+
+# ===== Volumes =====
+volumes:
+  pgdata:
+  zkdata:
+  zklog:
+  kafkadata:
+
+# ===== Core Infrastructure Services =====
+services:
+  postgres:
+    image: postgres:16
+    <<: [*restart_policy, *resources_light]
+    environment:
+      POSTGRES_DB: shared
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      TZ: Asia/Riyadh
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      <<: *health_defaults
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shared"]
+    networks:
+      backend:
+        aliases: [postgres]
+
+  redis:
+    image: redis:7
+    <<: [*restart_policy, *resources_light]
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["6379:6379"]
+    healthcheck:
+      <<: *health_defaults
+      test: ["CMD-SHELL", "redis-cli -h localhost ping | grep -q PONG"]
+    networks:
+      backend:
+        aliases: [redis]
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    <<: [*restart_policy, *resources_light]
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 3000
+      ZOOKEEPER_SYNC_LIMIT: 2
+    ports: ["2181:2181"]
+    volumes:
+      - zkdata:/var/lib/zookeeper/data
+      - zklog:/var/lib/zookeeper/log
+    healthcheck:
+      <<: *health_defaults
+      test: ["CMD-SHELL", "echo srvr | nc -w 2 localhost 2181 | grep -q 'Mode:'"]
+    networks:
+      backend:
+        aliases: [zookeeper]
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    <<: [*restart_policy, *resources_light]
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      TZ: Asia/Riyadh
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_MESSAGE_MAX_BYTES: 20971520
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 20971520
+      KAFKA_HEAP_OPTS: "-Xms512m -Xmx1024m"
+    ports: ["9092:9092", "29092:29092"]
+    volumes:
+      - kafkadata:/var/lib/kafka/data
+    healthcheck:
+      <<: *health_defaults
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:29092 --list >/dev/null 2>&1"]
+    networks:
+      backend:
+        aliases: [kafka]
+
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    <<: [*restart_policy, *resources_light]
+    # Mount the resources directory relative to THIS compose file
+    volumes:
+      - "./shared-starters/starter-observability/src/main/resources:/etc/otelcol:ro"
+    # Point to the file inside that directory
+    command: ["--config=/etc/otelcol/otel-collector-config.yaml"]
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    healthcheck:
+      <<: *health_defaults
+      test: ["CMD", "/otelcol", "--version"]
+    networks:
+      backend:
+        aliases: [otel-collector]

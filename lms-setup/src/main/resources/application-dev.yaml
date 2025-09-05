@@ -1,17 +1,26 @@
 spring:
   config:
     import:
-      - optional:classpath:/application-shared-common.yaml
       - optional:classpath:/application-shared-dev.yaml
+  redis:
+   host: localhost
+   port: 6379
+  kafka:
+   bootstrap-servers: localhost:9092
+  flyway:
+   enabled: true
+   locations: classpath:db/migration/common,classpath:db/migration/{vendor}
+  data:
+   redis:
+    repositories:
+     enabled: false
   datasource:
-    url: jdbc:postgresql://localhost:5432/lms?currentSchema=catalog
+    url: jdbc:postgresql://localhost:5432/lms?currentSchema=setup
     username: postgres
     password: postgres
-  flyway:
-    default-schema: catalog
-    schemas: catalog
-    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
-
 server:
   servlet:
     context-path: /core
+
+
+
