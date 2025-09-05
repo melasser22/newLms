@@ -58,7 +58,7 @@ management:
     web:
       base-path: /actuator
       exposure:
-        include: health,info,metrics,prometheus,beans,conditions,configprops,loggers,threaddump
+        include: "*"
   endpoint:
     health:
       show-details: always
@@ -91,9 +91,12 @@ shared:
       echo-response-header: true
     cors:
       enabled: true
-      allowed-origins: http://localhost:3000
-      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-origins: "*"
+      allowed-methods: "*"
       allowed-headers: "*"
+    security:
+      resource-server:
+        disable-csrf: true
   headers:
     enabled: true
     correlation:

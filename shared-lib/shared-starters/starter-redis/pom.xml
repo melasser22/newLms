@@ -63,6 +63,13 @@
       <optional>true</optional>
     </dependency>
 
+    <!-- Lombok for boilerplate reduction -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <!-- Observability (opt-in) -->
     <dependency>
       <groupId>io.micrometer</groupId>
