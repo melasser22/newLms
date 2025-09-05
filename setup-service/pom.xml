@@ -19,7 +19,7 @@
     <java.version>21</java.version>
 
     <!-- shared BOM version -->
-    <lms.shared.version>1.0.0</lms.shared.version>
+    <ejada.shared.version>1.0.0</ejada.shared.version>
 
     <!-- MapStruct/Lombok versions used by the compiler plugin -->
     <mapstruct.version>1.5.5.Final</mapstruct.version>
@@ -36,7 +36,7 @@
       <dependency>
         <groupId>com.ejada</groupId>
         <artifactId>shared-bom</artifactId>
-        <version>${lms.shared.version}</version>
+        <version>${ejada.shared.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -77,10 +77,11 @@
       <groupId>com.ejada</groupId>
       <artifactId>starter-actuator</artifactId>
     </dependency>
-    <dependency>
+       <!--
+ <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>starter-observability</artifactId>
-    </dependency>
+    </dependency> -->
     <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>starter-openapi</artifactId>
@@ -112,8 +113,11 @@
     <dependency>
       <groupId>jakarta.servlet</groupId>
       <artifactId>jakarta.servlet-api</artifactId>
-      <scope>test</scope>
     </dependency>
+    <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
     <dependency>
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-test</artifactId>

@@ -8,7 +8,7 @@ RUN addgroup -g 1001 -S appgroup && \
 WORKDIR /app
 
 # Copy the application JAR
-COPY target/lms-setup-*.jar app.jar
+COPY target/ejada-setup-*.jar app.jar
 
 # Change ownership to non-root user
 RUN chown -R appuser:appgroup /app

@@ -1,11 +1,11 @@
 spring:
   datasource:
-    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=setup}"
+    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ejada}?currentSchema=setup}"
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
-      pool-name: HikariPool-LMS
+      pool-name: HikariPool-ejada
       maximum-pool-size: 10
       minimum-idle: 2
       idle-timeout: 30000        # 30s
@@ -30,9 +30,9 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:9092
-    client-id: lms-setup-dev
+    client-id: ejada-setup-dev
     consumer:
-      group-id: lms-backend-dev
+      group-id: ejada-backend-dev
       auto-offset-reset: earliest
       enable-auto-commit: false
       properties:
@@ -162,7 +162,7 @@ shared:
         enabled: false
   openapi:
     enabled: true
-    title: "LMS - Setup Service API"
+    title: "ejada - Setup Service API"
     description: "Setup service endpoints for tenant/platform configuration."
     version: "1.0.0"
     servers:
@@ -170,13 +170,13 @@ shared:
     group:
       name: setup
       packages-to-scan:
-        - com.lms.setup
+        - com.ejada.setup
     jwt-security: false
   redis:
     host: localhost
     port: 6379
     timeout: 2s
-    key-prefix: lms
+    key-prefix: ejada
     default-ttl: 600s
     reactive: false
   crypto:
@@ -205,10 +205,10 @@ shared:
 logging:
   level:
     root: ERROR
-    com.lms: ERROR
-    com.lms.audit.starter: ERROR
-    com.lms.audit.starter.core.dispatch: ERROR
-    com.lms.audit.starter.core.dispatch.sinks: ERROR
+    com.ejada: ERROR
+    com.ejada.audit.starter: ERROR
+    com.ejada.audit.starter.core.dispatch: ERROR
+    com.ejada.audit.starter.core.dispatch.sinks: ERROR
     org.hibernate.tool.schema: ERROR
     org.hibernate.SQL: ERROR
     org.hibernate.orm.jdbc.bind: ERROR

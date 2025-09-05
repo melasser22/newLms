@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=setup}"
+    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ejada}?currentSchema=setup}"
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
@@ -28,9 +28,9 @@ spring:
     baseline-on-migrate: true
   kafka:
     bootstrap-servers: localhost:9092
-    client-id: lms-setup-qa
+    client-id: ejada-setup-qa
     consumer:
-      group-id: lms-backend-qa
+      group-id: ejada-backend-qa
       auto-offset-reset: earliest
       enable-auto-commit: false
       properties:
@@ -178,7 +178,7 @@ shared:
     host: localhost
     port: 6379
     timeout: 2s
-    key-prefix: lms
+    key-prefix: ejada
     default-ttl: 600s
     reactive: false
   crypto:

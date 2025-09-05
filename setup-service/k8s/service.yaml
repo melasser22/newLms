@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: lms-setup
+  name: ejada-setup
   labels:
-    app: lms-setup
+    app: ejada-setup
     version: 1.0.0
 spec:
   selector:
-    app: lms-setup
+    app: ejada-setup
   ports:
     - protocol: TCP
       port: 80

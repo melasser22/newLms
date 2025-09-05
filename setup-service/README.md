@@ -1,4 +1,4 @@
-# lms-Setup
+# ejada-Setup
 Spring Boot microservice for reference lookups (multi-tenant). Uses Postgres + Redis, integrated with shared-lib starters.
 
 ## Database configuration
@@ -7,4 +7,4 @@ Provide connection details via `spring.datasource.url` in your `application-*.ya
 
 ## API Testing
 
-Import `LMS_Setup.postman_collection.json` into Postman to explore and test the available endpoints. The collection uses `{{baseUrl}}` (default `http://localhost:8080`) and `{{token}}` variables for configuring requests.
+Import `ejada_Setup.postman_collection.json` into Postman to explore and test the available endpoints. The collection uses `{{baseUrl}}` (default `http://localhost:8080`) and `{{token}}` variables for configuring requests.
