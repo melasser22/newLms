@@ -29,7 +29,7 @@ spring:
     baseline-on-migrate: true
 
   kafka:
-    bootstrap-servers: 127.0.0.1:9092
+    bootstrap-servers: localhost:9092
     client-id: lms-catalog-dev
     consumer:
       group-id: lms-backend-dev
@@ -89,7 +89,7 @@ shared:
       echo-response-header: true
     cors:
       enabled: true
-      allowed-origins: http://127.0.0.1:3000
+      allowed-origins: http://localhost:3000
       allowed-methods: GET,POST,PUT,DELETE,OPTIONS
       allowed-headers: "*"
   headers:
@@ -166,7 +166,7 @@ shared:
     description: "catalog service endpoints for tenant/platform configuration."
     version: "1.0.0"
     servers:
-      - http://127.0.0.1:8080/core
+      - http://localhost:8080/core
     group:
       name: catalog
       packages-to-scan:

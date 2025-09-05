@@ -1,13 +1,13 @@
 spring:
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/lms?currentSchema=tenant_catalog
+    url: jdbc:postgresql://localhost:5432/lms?currentSchema=tenant_catalog
     username: postgres
     password: postgres
   redis:
     host: localhost
     port: 6379
   kafka:
-    bootstrap-servers: 127.0.0.1:9092
+    bootstrap-servers: localhost:9092
   flyway:
     enabled: true
     default-schema: tenant_catalog
@@ -56,7 +56,7 @@ shared:
       echo-response-header: true
     cors:
       enabled: true
-      allowed-origins: http://127.0.0.1:3000
+      allowed-origins: http://localhost:3000
       allowed-methods: GET,POST,PUT,DELETE,OPTIONS
       allowed-headers: "*"
   headers:

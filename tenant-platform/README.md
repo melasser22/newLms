@@ -28,4 +28,4 @@ mvn -T4 clean verify
 ```bash
 docker-compose up --build
 ```
-Services listen on `127.0.0.1:8081`..`8084`.
+Services listen on `localhost:8081`..`8084`.

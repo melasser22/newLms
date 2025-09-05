@@ -8,7 +8,7 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "shared.kafka")
 public class KafkaProperties {
     /** Bootstrap servers, comma-separated */
-    private String bootstrapServers = "127.0.0.1:9092";
+    private String bootstrapServers = "localhost:9092";
 
     /** app env: dev|stg|prod used in topic naming */
     private String env = "dev";

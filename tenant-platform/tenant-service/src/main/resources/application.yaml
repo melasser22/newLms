@@ -1,10 +1,14 @@
 spring:
+  application:
+    name: ejada-tenant
   profiles:
     active: dev
   flyway:
     enabled: true
     default-schema: tenant_core
+    schemas: tenant_core
     baseline-on-migrate: true
+    baseline-version: 0
     validate-on-migrate: true
     clean-disabled: true
     locations: classpath:db/migration/common,classpath:db/migration/{vendor}
@@ -13,15 +17,26 @@ spring:
       ddl-auto: none
 server:
   port: 8080
+  shutdown: graceful
+  servlet:
+    context-path: /tenant
+  compression:
+    enabled: true
+    mime-types:
+      - text/html
+      - text/plain
+      - text/css
+      - application/json
+      - application/javascript
+    min-response-size: 2KB
+  error:
+    include-message: always
+    include-binding-errors: always
+
 shared:
-  core:
-    correlation:
-      header-name: X-Correlation-Id
-      generate-if-missing: true
-      echo-response-header: true
-    tenant:
-      enabled: true
-      header-name: x_tenant_id
-      query-param: tenantId
-      default-policy: OPTIONAL
-      echo-response-header: true
+  observability:
+    application-name: ejada-tenant
+  security:
+    enable-role-check: true
+    jwt:
+      token-period: 15m

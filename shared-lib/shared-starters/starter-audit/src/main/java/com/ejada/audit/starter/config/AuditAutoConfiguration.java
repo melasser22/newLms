@@ -210,7 +210,7 @@ public class AuditAutoConfiguration {
   @ConditionalOnClass(name = "com.ejada.audit.starter.core.dispatch.sinks.KafkaSink")
   public Sink kafkaSink(AuditProperties props) {
     Object k = props.getSinks().getKafka();
-    String bootstrap = optionalString(k, "getBootstrapServers", "127.0.0.1:9092");
+    String bootstrap = optionalString(k, "getBootstrapServers", "localhost:9092");
     String topic = optionalString(k, "getTopic", "audit.events.v1");
     String acks = optionalString(k, "getAcks", "all");
     String compression = optionalString(k, "getCompression", "zstd");

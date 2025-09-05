@@ -57,7 +57,7 @@ services:
       - "6379:6379"
     healthcheck:
       # non-zero exit on failure
-      test: ["CMD-SHELL", "redis-cli -h 127.0.0.1 ping | grep -q PONG"]
+      test: ["CMD-SHELL", "redis-cli -h localhost ping | grep -q PONG"]
       <<: *health_defaults
     networks:
       backend:
@@ -79,9 +79,9 @@ services:
       - zkdata:/var/lib/zookeeper/data
       - zklog:/var/lib/zookeeper/log
     healthcheck:
-      test: ["CMD-SHELL", "echo srvr | nc -w 2 127.0.0.1 2181 | grep -q 'Mode:'"]
+      test: ["CMD-SHELL", "echo srvr | nc -w 2 localhost 2181 | grep -q 'Mode:'"]
       <<: *health_defaults
-      # test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/commands/srvr | grep -q 'Mode:'"]
+      # test: ["CMD-SHELL", "wget -qO- http://localhost:8080/commands/srvr | grep -q 'Mode:'"]
     networks:
       backend:
         aliases: [zookeeper]
@@ -119,7 +119,7 @@ services:
     volumes:
       - kafkadata:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD-SHELL", "kafka-topics --bootstrap-server 127.0.0.1:29092 --list >/dev/null 2>&1"]
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:29092 --list >/dev/null 2>&1"]
       <<: *health_defaults
     networks:
       backend:
