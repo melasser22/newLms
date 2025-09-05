@@ -107,6 +107,11 @@
       <version>4.8.6</version>
     </dependency>
     <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>shared-test-support</artifactId>
       <scope>test</scope>
