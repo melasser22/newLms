@@ -13,9 +13,18 @@
       </providers>
     </encoder>
   </appender>
-  <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.mdc.v1_0.OpenTelemetryAppender"/>
-  <root level="INFO">
-    <appender-ref ref="OTEL"/>
-    <appender-ref ref="CONSOLE"/>
-  </root>
+
+  <springProfile name="otel">
+    <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.mdc.v1_0.OpenTelemetryAppender"/>
+    <root level="INFO">
+      <appender-ref ref="OTEL"/>
+      <appender-ref ref="CONSOLE"/>
+    </root>
+  </springProfile>
+
+  <springProfile name="!otel">
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+  </springProfile>
 </configuration>
