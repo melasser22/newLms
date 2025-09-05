@@ -1,6 +1,6 @@
 spring:
   application:
-    name: lms-setup
+    name: setup-service
   profiles:
     active: dev
   flyway:
@@ -35,7 +35,7 @@ server:
 
 shared:
   observability:
-    application-name: lms-setup
+    application-name: setup-service
   security:
     enable-role-check: true
     jwt:

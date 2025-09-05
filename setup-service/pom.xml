@@ -11,9 +11,9 @@
   </parent>
 
   <groupId>com.ejada</groupId>
-  <artifactId>lms-setup</artifactId>
+  <artifactId>setup-service</artifactId>
   <version>1.0.0</version>
-  <name>lms-setup</name>
+  <name>setup-service</name>
 
   <properties>
     <java.version>21</java.version>
@@ -108,7 +108,6 @@
     <dependency>
       <groupId>com.github.spotbugs</groupId>
       <artifactId>spotbugs-annotations</artifactId>
-      <version>4.8.6</version>
     </dependency>
     <dependency>
       <groupId>jakarta.servlet</groupId>

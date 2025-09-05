@@ -6,7 +6,7 @@ import org.springframework.cache.annotation.EnableCaching;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 
-@SpringBootApplication(scanBasePackages = "com.ejada")
+@SpringBootApplication
 @EnableCaching
 @OpenAPIDefinition(info = @Info(title = "Ejada Setup Service", version = "1.0"))
 public class SetupApplication {
