@@ -1,5 +1,7 @@
 package com.ejada.tenant.subscription.service;
 
+import com.ejada.common.exception.BusinessRuleException;
+import com.ejada.common.exception.NotFoundException;
 import com.ejada.tenant.subscription.domain.SubscriptionStatus;
 import com.ejada.tenant.subscription.domain.TenantSubscription;
 import com.ejada.tenant.subscription.repo.TenantSubscriptionRepository;
@@ -21,7 +23,7 @@ public class SubscriptionService {
 
     public SubscriptionDto startTrial(UUID tenantId) {
         repository.findActiveByTenantId(tenantId)
-            .ifPresent(s -> { throw new IllegalStateException("Active subscription exists"); });
+            .ifPresent(s -> { throw new BusinessRuleException("Active subscription exists"); });
         TenantSubscription sub = new TenantSubscription(UUID.randomUUID(), tenantId, SubscriptionStatus.TRIAL, true);
         repository.save(sub);
         return toDto(sub);
@@ -41,7 +43,7 @@ public class SubscriptionService {
     public void cancel(UUID tenantId, UUID subscriptionId) {
         TenantSubscription sub = repository.findById(subscriptionId)
             .filter(s -> s.getTenantId().equals(tenantId))
-            .orElseThrow(() -> new IllegalArgumentException("Subscription not found"));
+            .orElseThrow(() -> new NotFoundException("Subscription not found"));
         sub.setActive(false);
         sub.setStatus(SubscriptionStatus.CANCELED);
         repository.save(sub);
