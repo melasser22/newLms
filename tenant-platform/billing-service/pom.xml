@@ -15,7 +15,7 @@
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
-      <artifactId>shared-config</artifactId>
+      <artifactId>starter-config</artifactId>
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>

@@ -15,15 +15,11 @@
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
-      <artifactId>shared-config</artifactId>
+      <artifactId>starter-config</artifactId>
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>starter-data</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
@@ -31,7 +27,7 @@
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
-      <artifactId>starter-actuator</artifactId>
+      <artifactId>starter-security</artifactId>
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
