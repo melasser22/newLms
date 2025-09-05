@@ -1,6 +1,10 @@
 package com.ejada.setup.dto;
 
-import jakarta.validation.constraints.*;
+import com.ejada.setup.constants.ValidationConstants;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Null;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,15 +15,15 @@ public class ResourceDto {
     private Integer id;
 
     @NotBlank
-    @Size(max = 128)
+    @Size(max = ValidationConstants.CODE_LEN)
     private String resourceCd;
 
     @NotBlank
-    @Size(max = 256)
+    @Size(max = ValidationConstants.NAME_LEN)
     private String resourceEnNm;
 
     @NotBlank
-    @Size(max = 256)
+    @Size(max = ValidationConstants.NAME_LEN)
     private String resourceArNm;
 
     @Size(max = 512)
@@ -33,9 +37,9 @@ public class ResourceDto {
     @NotNull
     private Boolean isActive;
 
-    @Size(max = 1000)
+    @Size(max = ValidationConstants.TEXT_LEN_1000)
     private String enDescription;
 
-    @Size(max = 1000)
+    @Size(max = ValidationConstants.TEXT_LEN_1000)
     private String arDescription;
 }
