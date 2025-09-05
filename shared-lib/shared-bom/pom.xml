@@ -233,7 +233,7 @@
       </dependency>
       <dependency>
         <groupId>com.ejada</groupId>
-        <artifactId>starter-config</artifactId>
+        <artifactId>shared-config</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
