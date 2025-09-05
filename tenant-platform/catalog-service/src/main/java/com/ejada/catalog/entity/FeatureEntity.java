@@ -1,12 +1,19 @@
 package com.ejada.catalog.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "feature")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class FeatureEntity {
 
     @Id
@@ -15,20 +22,4 @@ public class FeatureEntity {
 
     @Column(name = "description")
     private String description;
-
-    public String getFeatureKey() {
-        return featureKey;
-    }
-
-    public void setFeatureKey(String featureKey) {
-        this.featureKey = featureKey;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 }

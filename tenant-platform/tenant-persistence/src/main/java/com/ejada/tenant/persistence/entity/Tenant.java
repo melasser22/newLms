@@ -1,19 +1,24 @@
 package com.ejada.tenant.persistence.entity;
 
 import com.ejada.tenant.persistence.entity.enums.TenantStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Tenant aggregate root.
  */
 @Entity
 @Table(name = "tenant")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Tenant {
 
     @Id
@@ -31,46 +36,7 @@ public class Tenant {
     private String name;
 
     @Column(name = "overage_enabled", nullable = false)
+    @Builder.Default
     private boolean overageEnabled = false;
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public TenantStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(TenantStatus status) {
-        this.status = status;
-    }
-
-    public String getSlug() {
-        return slug;
-    }
-
-    public void setSlug(String slug) {
-        this.slug = slug;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public boolean isOverageEnabled() {
-        return overageEnabled;
-    }
-
-    public void setOverageEnabled(boolean overageEnabled) {
-        this.overageEnabled = overageEnabled;
-    }
 }
 

@@ -3,6 +3,8 @@ package com.ejada.setup.model;
 import jakarta.persistence.*;
 import org.hibernate.annotations.DynamicUpdate;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +25,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class City {
 

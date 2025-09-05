@@ -1,31 +1,17 @@
 spring:
-  main:
-    allow-bean-definition-overriding: true
+  config:
+    import:
+      - optional:classpath:/application-shared-common.yaml
+      - optional:classpath:/application-shared-dev.yaml
   datasource:
     url: jdbc:postgresql://localhost:5432/lms?currentSchema=tenant_subscription
     username: postgres
     password: postgres
-  redis:
-    host: localhost
-    port: 6379
-  kafka:
-    bootstrap-servers: localhost:9092
   flyway:
-    enabled: true
     default-schema: tenant_subscription
     schemas: tenant_subscription
-    locations:  classpath:db/migration,classpath:db/migration/common,classpath:db/migration/{vendor}
+    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
+
 server:
-  port: 8080
-shared:
-  core:
-    correlation:
-      header-name: X-Correlation-Id
-      generate-if-missing: true
-      echo-response-header: true
-    tenant:
-      enabled: true
-      header-name: x_tenant_id
-      query-param: tenantId
-      default-policy: OPTIONAL
-      echo-response-header: true
+  servlet:
+    context-path: /subscription

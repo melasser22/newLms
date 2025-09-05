@@ -1,6 +1,17 @@
 -- ===== (1) Ensure index exists (idempotent)
-CREATE INDEX IF NOT EXISTS idx_tenant_integration_key_tenant_id
-  ON tenant_core.tenant_integration_key (tenant_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE c.relkind = 'i'
+      AND c.relname = 'idx_tenant_integration_key_tenant_id'
+      AND n.nspname = 'tenant_core'
+  ) THEN
+    CREATE INDEX idx_tenant_integration_key_tenant_id
+      ON tenant_core.tenant_integration_key (tenant_id);
+  END IF;
+END $$;
 
 -- ===== (2) Ensure tenant_slug column exists, backfill, and enforce constraints
 
@@ -44,4 +55,6 @@ VALUES (
   'Demo Tenant',
   'demo-tenant'
 )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  "name" = EXCLUDED."name",
+  tenant_slug = EXCLUDED.tenant_slug;
