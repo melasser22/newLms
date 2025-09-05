@@ -118,4 +118,12 @@ public class Country implements Serializable {
         if (isActive == null) isActive = Boolean.TRUE;
     }
 
+    public static Country ref(final Long id) {
+        Country country = new Country();
+        if (id != null) {
+            country.setCountryId(id.intValue());
+        }
+        return country;
+    }
+
 }
