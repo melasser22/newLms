@@ -33,6 +33,8 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
@@ -173,6 +175,9 @@ public class SecurityAutoConfiguration {
 
     if (rs.isDisableCsrf()) {
       http.csrf(AbstractHttpConfigurer::disable);
+    } else {
+      http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
+      http.addFilterAfter(new CsrfHeaderFilter(), CsrfFilter.class);
     }
     if (rs.isStateless()) {
       http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -235,8 +240,12 @@ public class SecurityAutoConfiguration {
         HeaderNames.CONTENT_TYPE,
         "X-Requested-With",
         HeaderNames.CORRELATION_ID,
-        HeaderNames.X_TENANT_ID));
-    configuration.setExposedHeaders(Arrays.asList(HeaderNames.CORRELATION_ID, HeaderNames.X_TENANT_ID));
+        HeaderNames.X_TENANT_ID,
+        HeaderNames.CSRF_TOKEN));
+    configuration.setExposedHeaders(Arrays.asList(
+        HeaderNames.CORRELATION_ID,
+        HeaderNames.X_TENANT_ID,
+        HeaderNames.CSRF_TOKEN));
     configuration.setAllowCredentials(false);
     configuration.setMaxAge(3600L);
 
