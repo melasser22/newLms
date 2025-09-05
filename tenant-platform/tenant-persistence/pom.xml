@@ -26,6 +26,10 @@
       <groupId>com.ejada</groupId>
       <artifactId>starter-data</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
 
     <!-- Explicit JPA dependency to provide Entity annotations and Spring Data repositories -->
     <dependency>
