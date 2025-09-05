@@ -2,14 +2,11 @@ package com.ejada.setup.model;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.DynamicUpdate;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @Entity
 @Table(
@@ -25,8 +22,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class City {
 
@@ -47,8 +42,6 @@ public class City {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "country_id", nullable = false)
-    @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
     private Country country;
 
     @Column(name = "is_active", nullable = false)
@@ -56,9 +49,14 @@ public class City {
 
     public boolean isActive() { return Boolean.TRUE.equals(isActive); }
 
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "JPA entity reference is intentionally exposed")
-    public Country getCountry() { return country; }
-
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JPA entity reference is intentionally stored")
-    public void setCountry(final Country country) { this.country = country; }
+    @Builder
+    public City(final Integer cityId, final String cityCd, final String cityEnNm,
+                final String cityArNm, final Long countryId, final Boolean isActive) {
+        this.cityId = cityId;
+        this.cityCd = cityCd;
+        this.cityEnNm = cityEnNm;
+        this.cityArNm = cityArNm;
+        this.country = countryId != null ? Country.ref(countryId) : null;
+        this.isActive = isActive;
+    }
 }
