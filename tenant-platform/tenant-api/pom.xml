@@ -27,7 +27,7 @@
       <artifactId>tenant-core</artifactId>
     </dependency>
 
-    <!-- OpenAPI types used in configuration -->
+
     <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>starter-openapi</artifactId>
