@@ -12,6 +12,7 @@ import org.springframework.kafka.core.*;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -33,15 +34,21 @@ public class KafkaProducerConfig {
   @Bean
   @ConditionalOnMissingBean
   public ProducerFactory<String, Object> producerFactory(KafkaProperties props, ObjectMapper om) {
-    var cfg = Map.<String, Object>of(
-        ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, props.getBootstrapServers(),
-        ProducerConfig.ACKS_CONFIG, "all",
-        ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, props.isExactlyOnce(),
-        ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1,
-        ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
-        ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class,
-        JsonSerializer.ADD_TYPE_INFO_HEADERS, false
-    );
+    Map<String, Object> cfg = new HashMap<>();
+    cfg.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, props.getBootstrapServers());
+    cfg.put(ProducerConfig.ACKS_CONFIG, "all");
+    cfg.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, props.isExactlyOnce());
+    cfg.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1);
+    cfg.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    cfg.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+    cfg.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
+    cfg.put(ProducerConfig.LINGER_MS_CONFIG, (int) props.getLinger().toMillis());
+    cfg.put(ProducerConfig.BATCH_SIZE_CONFIG, props.getBatchSize());
+    cfg.put(ProducerConfig.BUFFER_MEMORY_CONFIG, props.getBufferMemory());
+    cfg.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, props.getCompression());
+    cfg.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, props.getMaxRequestSize());
+    cfg.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, (int) props.getRequestTimeout().toMillis());
+    cfg.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, (int) props.getDeliveryTimeout().toMillis());
     DefaultKafkaProducerFactory<String,Object> pf = new DefaultKafkaProducerFactory<>(cfg);
     pf.addPostProcessor(producer -> new Producer<>() {
       private void addCorrelation(ProducerRecord<String, Object> rec) {
