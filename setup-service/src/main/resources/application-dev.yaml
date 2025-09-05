@@ -155,7 +155,8 @@ shared:
         schema: setup
         table: audit_logs
       kafka:
-        enabled: false
+        enabled: true
+        topic: audit_logs
       otlp:
         enabled: false
       outbox:

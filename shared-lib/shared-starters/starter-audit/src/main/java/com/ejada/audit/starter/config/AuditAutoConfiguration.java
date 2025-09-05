@@ -29,6 +29,7 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -208,9 +209,12 @@ public class AuditAutoConfiguration {
   @Bean
   @ConditionalOnProperty(prefix = "shared.audit.sinks.kafka", name = "enabled", havingValue = "true")
   @ConditionalOnClass(name = "com.ejada.audit.starter.core.dispatch.sinks.KafkaSink")
-  public Sink kafkaSink(AuditProperties props) {
+  public Sink kafkaSink(AuditProperties props, Environment env) {
     Object k = props.getSinks().getKafka();
-    String bootstrap = optionalString(k, "getBootstrapServers", "localhost:9092");
+    String bootstrap = optionalString(k, "getBootstrapServers", null);
+    if (bootstrap == null || bootstrap.isBlank()) {
+      bootstrap = env.getProperty("spring.kafka.bootstrap-servers", "localhost:9092");
+    }
     String topic = optionalString(k, "getTopic", "audit.events.v1");
     String acks = optionalString(k, "getAcks", "all");
     String compression = optionalString(k, "getCompression", "zstd");
