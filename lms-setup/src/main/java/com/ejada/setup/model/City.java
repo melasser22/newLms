@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @Entity
 @Table(
@@ -42,6 +43,8 @@ public class City {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "country_id", nullable = false)
+    @Getter(onMethod_ = @__(@SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Country is a JPA entity")))
+    @Setter(onMethod_ = @__(@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Country is a JPA entity")))
     private Country country;
 
     @Column(name = "is_active", nullable = false)
