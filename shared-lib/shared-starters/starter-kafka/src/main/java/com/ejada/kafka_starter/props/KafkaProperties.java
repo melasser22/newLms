@@ -36,6 +36,10 @@ public class KafkaProperties {
     private String compression = "lz4";
     /** max request size (bytes) */
     private int maxRequestSize = 1_048_576;
+    /** request timeout */
+    private Duration requestTimeout = Duration.ofSeconds(30);
+    /** delivery timeout */
+    private Duration deliveryTimeout = Duration.ofMinutes(2);
 
     // ---------- Consumer ----------
     /** Consumer concurrency */
@@ -102,6 +106,12 @@ public class KafkaProperties {
 
     public int getMaxRequestSize() { return maxRequestSize; }
     public void setMaxRequestSize(int maxRequestSize) { this.maxRequestSize = maxRequestSize; }
+
+    public Duration getRequestTimeout() { return requestTimeout; }
+    public void setRequestTimeout(Duration requestTimeout) { this.requestTimeout = requestTimeout; }
+
+    public Duration getDeliveryTimeout() { return deliveryTimeout; }
+    public void setDeliveryTimeout(Duration deliveryTimeout) { this.deliveryTimeout = deliveryTimeout; }
 
     public int getConcurrency() { return concurrency; }
     public void setConcurrency(int concurrency) { this.concurrency = concurrency; }
