@@ -4,7 +4,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@NoArgsConstructor
 @Entity
 @Table(name = "tenant_feature_override")
 public class TenantFeatureOverrideEntity {
@@ -26,52 +32,4 @@ public class TenantFeatureOverrideEntity {
 
     @Column(name = "overage_currency_override")
     private String overageCurrencyOverride;
-
-    public TenantFeatureOverrideId getId() {
-        return id;
-    }
-
-    public void setId(TenantFeatureOverrideId id) {
-        this.id = id;
-    }
-
-    public Boolean getEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public Long getLimitValue() {
-        return limitValue;
-    }
-
-    public void setLimitValue(Long limitValue) {
-        this.limitValue = limitValue;
-    }
-
-    public Boolean getAllowOverageOverride() {
-        return allowOverageOverride;
-    }
-
-    public void setAllowOverageOverride(Boolean allowOverageOverride) {
-        this.allowOverageOverride = allowOverageOverride;
-    }
-
-    public Long getOverageUnitPriceMinorOverride() {
-        return overageUnitPriceMinorOverride;
-    }
-
-    public void setOverageUnitPriceMinorOverride(Long overageUnitPriceMinorOverride) {
-        this.overageUnitPriceMinorOverride = overageUnitPriceMinorOverride;
-    }
-
-    public String getOverageCurrencyOverride() {
-        return overageCurrencyOverride;
-    }
-
-    public void setOverageCurrencyOverride(String overageCurrencyOverride) {
-        this.overageCurrencyOverride = overageCurrencyOverride;
-    }
 }
