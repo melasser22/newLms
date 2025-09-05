@@ -12,9 +12,17 @@ shared:
     resource-server:
       enabled: true
       permit-all: /actuator/health
-      disable-csrf: true
+      disable-csrf: true  # set to false to enable CSRF with X-CSRF-Token header
       stateless: true
 ```
+
+When `disable-csrf` is set to `false`, the starter:
+
+* stores the token in a readable cookie (`XSRF-TOKEN`)
+* echoes the token in the `X-CSRF-Token` response header
+
+Clients must capture the header/cookie on the first request and send the token
+back on subsequent modifying requests via the same header.
 
 ## Usage
 Add the dependency:
