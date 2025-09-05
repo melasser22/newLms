@@ -40,3 +40,11 @@ shared:
     enable-role-check: true
     jwt:
       token-period: 15m
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui

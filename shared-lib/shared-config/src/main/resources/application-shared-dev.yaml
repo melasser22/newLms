@@ -1,0 +1,37 @@
+server:
+  servlet:
+    context-path: /
+spring:
+  mvc:
+    log-request-details: true
+
+shared:
+  security:
+    resource-server:
+      enabled: true
+      permit-all:
+        - "/**"
+      disable-csrf: true
+    stateless: true
+    enable-role-check: false
+    cors:
+      enabled: true
+      allowed-origins: "*"
+      allowed-methods: "*"
+      allowed-headers: "*"
+      allow-credentials: false
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    org.springframework.web.servlet: DEBUG
+    org.springframework.boot.autoconfigure.web.servlet.error: DEBUG
+    org.springframework.validation: DEBUG
+    com.ejada: DEBUG
+
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on_param
