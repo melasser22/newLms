@@ -11,12 +11,22 @@ spring:
     clean-disabled: true
 server:
   port: 8080
+  servlet:
+    context-path: /policy
 shared:
   core:
     correlation:
       header-name: X-Correlation-Id
       generate-if-missing: true
       echo-response-header: true
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui
     tenant:
       enabled: true
       header-name: x_tenant_id

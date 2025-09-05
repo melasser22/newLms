@@ -15,29 +15,40 @@
       <artifactId>starter-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
+      <groupId>com.ejada</groupId>
+      <artifactId>starter-config</artifactId>
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>starter-data</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-jpa</artifactId>
+      <groupId>com.ejada</groupId>
+      <artifactId>starter-security</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
+      <groupId>com.ejada</groupId>
+      <artifactId>starter-actuator</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-core</artifactId>
+      <groupId>com.ejada</groupId>
+      <artifactId>starter-observability</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-database-postgresql</artifactId>
-      <version>${flyway.version}</version>
+      <groupId>com.ejada</groupId>
+      <artifactId>starter-openapi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ejada</groupId>
+      <artifactId>starter-redis</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ejada</groupId>
+      <artifactId>starter-kafka</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
     </dependency>
     <dependency>
       <groupId>com.ejada.tenant</groupId>
@@ -53,30 +64,7 @@
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
-      <artifactId>starter-openapi</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>starter-actuator</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>postgresql</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
+      <artifactId>shared-test-support</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
