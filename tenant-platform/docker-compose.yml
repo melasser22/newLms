@@ -56,7 +56,6 @@ services:
     ports:
       - "6379:6379"
     healthcheck:
-      # non-zero exit on failure
       test: ["CMD-SHELL", "redis-cli -h localhost ping | grep -q PONG"]
       <<: *health_defaults
     networks:
@@ -71,8 +70,6 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 3000
       ZOOKEEPER_SYNC_LIMIT: 2
-      # KAFKA_OPTS: "-Dzookeeper.4lw.commands.whitelist=srvr,ruok,stat,wchs,wchp,conf,cons,envi"
-      # ZOOKEEPER_4LW_COMMANDS_WHITELIST: "srvr,ruok,stat,wchs,wchp,conf,cons,envi"
     ports:
       - "2181:2181"
     volumes:
@@ -81,7 +78,6 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "echo srvr | nc -w 2 localhost 2181 | grep -q 'Mode:'"]
       <<: *health_defaults
-      # test: ["CMD-SHELL", "wget -qO- http://localhost:8080/commands/srvr | grep -q 'Mode:'"]
     networks:
       backend:
         aliases: [zookeeper]
@@ -95,27 +91,28 @@ services:
         condition: service_healthy
     environment:
       TZ: Asia/Riyadh
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
 
-      # Two listeners: one for containers (9092), one for host (29092)
+      # Dual listeners: internal for containers, host for IDE/local apps
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
 
-      # sensible defaults
+      # Sensible defaults
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_LOG_RETENTION_HOURS: 168           # 7 days
-      KAFKA_LOG_SEGMENT_BYTES: 1073741824      # 1 GiB
-      KAFKA_MESSAGE_MAX_BYTES: 20971520        # 20 MiB
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_MESSAGE_MAX_BYTES: 20971520
       KAFKA_REPLICA_FETCH_MAX_BYTES: 20971520
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_HEAP_OPTS: "-Xms512m -Xmx1024m"
     ports:
-      - "9092:9092"     # in-cluster via kafka:9092
-      - "29092:29092"   # from host via localhost:29092
+      - "9092:9092"     # internal: containers use kafka:9092
+      - "29092:29092"   # host: IDE/local apps use localhost:29092
     volumes:
       - kafkadata:/var/lib/kafka/data
     healthcheck:

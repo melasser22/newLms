@@ -1,76 +1,29 @@
 package com.ejada.tenant.persistence.entity;
 
-import com.ejada.tenant.persistence.entity.enums.TenantStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import java.util.UUID;
+import jakarta.persistence.*;
+import lombok.*;
 
-/**
- * Tenant aggregate root.
- */
 @Entity
-@Table(name = "tenant")
+@Table(name = "tenants")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@EqualsAndHashCode(of = "id")
+@ToString
 public class Tenant {
 
     @Id
-    @Column(nullable = false)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TenantStatus status;
+    @Column(nullable = false, unique = true, length = 100)
+    private String code;
 
-    @Column(name = "tenant_slug", nullable = false, unique = true)
-    private String slug;
-
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String name;
 
-    @Column(name = "overage_enabled", nullable = false)
-    private boolean overageEnabled = false;
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public TenantStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(TenantStatus status) {
-        this.status = status;
-    }
-
-    public String getSlug() {
-        return slug;
-    }
-
-    public void setSlug(String slug) {
-        this.slug = slug;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public boolean isOverageEnabled() {
-        return overageEnabled;
-    }
-
-    public void setOverageEnabled(boolean overageEnabled) {
-        this.overageEnabled = overageEnabled;
-    }
+    @Column(length = 500)
+    private String description;
 }
-

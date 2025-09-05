@@ -2,43 +2,50 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>com.ejada.tenant</groupId>
-    <artifactId>tenant-platform</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-  </parent>
+
+  <!-- Parent manages versions/dependencyManagement -->
+ <parent>
+  <groupId>com.ejada.tenant</groupId>
+  <artifactId>tenant-platform</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <relativePath>..</relativePath>
+</parent>
+
   <artifactId>tenant-service</artifactId>
+  <name>tenant-service</name>
+  <description>Tenant Service for the tenant platform</description>
+
+  <properties>
+    <java.version>21</java.version>
+    <maven.compiler.release>21</maven.compiler.release>
+  </properties>
 
   <dependencies>
+    <!-- Shared starters (avoid duplicating JPA/Flyway/Driver/OpenAPI/Actuator) -->
     <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>starter-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>starter-data</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.ejada</groupId>
+      <artifactId>starter-openapi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ejada</groupId>
+      <artifactId>starter-actuator</artifactId>
+    </dependency>
+
+    <!-- Web (remove if starter-core already brings it) -->
+    <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-jpa</artifactId>
+      <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-database-postgresql</artifactId>
-      <version>${flyway.version}</version>
-    </dependency>
+
+    <!-- Internal platform modules -->
     <dependency>
       <groupId>com.ejada.tenant</groupId>
       <artifactId>tenant-persistence</artifactId>
@@ -51,17 +58,36 @@
       <groupId>com.ejada.tenant</groupId>
       <artifactId>tenant-events</artifactId>
     </dependency>
+
+    <!-- Lombok -->
     <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>starter-openapi</artifactId>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
     </dependency>
-    <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>starter-actuator</artifactId>
-    </dependency>
+
+    <!-- Test stack -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.junit.vintage</groupId>
+          <artifactId>junit-vintage-engine</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <!-- Optionally keep H2 for lightweight unit tests -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Testcontainers for integration testing -->
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -69,24 +95,79 @@
       <artifactId>postgresql</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>
     <plugins>
+      <!-- Compiler with Lombok annotation processing -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <release>${maven.compiler.release}</release>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+
+      <!-- Unit tests -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+        <configuration>
+          <useModulePath>false</useModulePath>
+          <includes>
+            <include>**/*Test.java</include>
+            <include>**/*Tests.java</include>
+          </includes>
+        </configuration>
+      </plugin>
+
+      <!-- (Optional) Integration tests pattern *IT.java -->
+      <!--
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.2.5</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <includes>
+                <include>**/*IT.java</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      -->
+
+      <!-- Spring Boot plugin (layers for faster container rebuilds) -->
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <layers>
+            <enabled>true</enabled>
+          </layers>
+        </configuration>
       </plugin>
     </plugins>
   </build>
+
+  <!-- Notes:
+       - Removed duplicates: spring-boot-starter-data-jpa, org.postgresql:postgresql,
+         org.flywaydb:flyway-core, flyway-database-postgresql — assume starter-data handles them.
+       - If your starters do NOT include any of those, re-add as needed.
+       - If you use MapStruct, add mapstruct + mapstruct-processor like Lombok.
+  -->
 </project>

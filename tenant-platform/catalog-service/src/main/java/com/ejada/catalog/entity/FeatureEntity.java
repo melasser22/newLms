@@ -1,34 +1,26 @@
 package com.ejada.catalog.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Table(name = "feature")
+@Table(name = "features")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@EqualsAndHashCode(of = "id")
+@ToString
 public class FeatureEntity {
 
     @Id
-    @Column(name = "feature_key")
-    private String featureKey;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Column(name = "description")
+    @Column(nullable = false, unique = true, length = 100)
+    private String code;
+
+    @Column(length = 255)
     private String description;
-
-    public String getFeatureKey() {
-        return featureKey;
-    }
-
-    public void setFeatureKey(String featureKey) {
-        this.featureKey = featureKey;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 }

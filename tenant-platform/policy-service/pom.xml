@@ -2,13 +2,26 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
+  <!-- Parent handles dependency management and versions -->
   <parent>
-    <groupId>com.ejada.tenant</groupId>
-    <artifactId>tenant-platform</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-  </parent>
+  <groupId>com.ejada.tenant</groupId>
+  <artifactId>tenant-platform</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <relativePath>..</relativePath>
+</parent>
+
   <artifactId>policy-service</artifactId>
+  <name>policy-service</name>
+  <description>Policy Service for tenant-platform</description>
+
+  <properties>
+    <java.version>21</java.version>
+    <maven.compiler.release>21</maven.compiler.release>
+  </properties>
+
   <dependencies>
+    <!-- Shared starters -->
     <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>starter-core</artifactId>
@@ -18,14 +31,6 @@
       <artifactId>starter-security</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-jdbc</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>starter-openapi</artifactId>
     </dependency>
@@ -33,20 +38,144 @@
       <groupId>com.ejada</groupId>
       <artifactId>starter-actuator</artifactId>
     </dependency>
+
+    <!-- Web (remove if starter-core already brings web) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!-- JDBC (service appears to use JDBC instead of JPA) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
+    </dependency>
+
+    <!-- Platform internal modules -->
     <dependency>
       <groupId>com.ejada.tenant</groupId>
       <artifactId>tenant-core</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.ejada.tenant</groupId>
       <artifactId>tenant-config</artifactId>
-      <version>${project.version}</version>
     </dependency>
+
+    <!-- Validation for DTOs -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+
+    <!-- Lombok -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- Tests -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.junit.vintage</groupId>
+          <artifactId>junit-vintage-engine</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+    <!-- Optional, if you want lightweight in-memory DB for tests -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Optional, if you run DB integration tests -->
+    <!--
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+    -->
   </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Compiler with Lombok annotation processing -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <release>${maven.compiler.release}</release>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+
+      <!-- Unit tests -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+        <configuration>
+          <useModulePath>false</useModulePath>
+          <includes>
+            <include>**/*Test.java</include>
+            <include>**/*Tests.java</include>
+          </includes>
+        </configuration>
+      </plugin>
+
+      <!-- (Optional) Integration tests -->
+      <!--
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.2.5</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <includes>
+                <include>**/*IT.java</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      -->
+
+      <!-- Spring Boot plugin -->
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <layers>
+            <enabled>true</enabled>
+          </layers>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <!-- Notes:
+       - If your starters already bring web/security/openapi/actuator, you can drop duplicates.
+       - Keep JDBC; if you later switch to JPA, replace with starter-data.
+  -->
 </project>

@@ -1,14 +1,16 @@
-package com.ejada.tenant.api.dto;
+package com.ejada.tenant.dto;
 
-import java.util.UUID;
+import lombok.*;
 
-/**
- * Lightweight representation of a tenant in the system.
- *
- * @param id            tenant identifier
- * @param name          tenant display name
- * @param subscription  subscription currently associated with the tenant
- */
-public record TenantDto(UUID id, String name, SubscriptionDto subscription) {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@ToString
+public class TenantDto {
+    private Long id;
+    private String code;
+    private String name;
+    private String description;
 }
-
