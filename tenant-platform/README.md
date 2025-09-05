@@ -24,6 +24,13 @@ Each service follows a standard Maven layout and provides an
 mvn -T4 clean verify
 ```
 
+### Persistence module dependencies
+
+The `tenant-persistence` module now explicitly depends on
+`spring-boot-starter-data-jpa` to provide JPA annotations and Spring Data
+repository support. Ensure this dependency is available when building or
+running the platform.
+
 ## Run locally
 ```bash
 docker-compose up --build
