@@ -39,11 +39,19 @@
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
+      <artifactId>starter-resilience</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-redis</artifactId>
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>starter-kafka</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springdoc</groupId>
