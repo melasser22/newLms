@@ -219,11 +219,70 @@
         <artifactId>cache-api</artifactId>
         <version>${cache.api.version}</version>
       </dependency>
-<dependency>
-    <groupId>org.apache.kafka</groupId>
-    <artifactId>kafka-clients</artifactId>
-    <version>${kafka.clients.version}</version>
-</dependency>
+    <dependency>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-clients</artifactId>
+        <version>${kafka.clients.version}</version>
+    </dependency>
+
+      <!-- Ejada shared starters -->
+      <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>starter-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>starter-config</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>starter-data</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>starter-security</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>starter-actuator</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>starter-observability</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>starter-openapi</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>starter-redis</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>starter-kafka</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>starter-mapstruct</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- Test utilities -->
+      <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>shared-test-support</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
     </dependencies>
   </dependencyManagement>
