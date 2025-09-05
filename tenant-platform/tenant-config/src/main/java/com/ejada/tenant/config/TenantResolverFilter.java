@@ -13,6 +13,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import com.ejada.common.context.TenantContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Resolves tenant identifiers from the incoming request and stores them in the
@@ -22,6 +24,7 @@ import com.ejada.common.context.TenantContext;
 public class TenantResolverFilter extends OncePerRequestFilter {
 
     private static final Pattern SUBDOMAIN = Pattern.compile("^([a-z0-9-]+)\\.");
+    private static final Logger log = LoggerFactory.getLogger(TenantResolverFilter.class);
 
     private final JdbcTemplate jdbc;
     private final TenantResolverService resolver;
@@ -34,7 +37,14 @@ public class TenantResolverFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws ServletException, IOException {
-        String tenantKey = extract(req);
+        String tenantKey;
+        try {
+            tenantKey = extract(req);
+        } catch (IllegalArgumentException ex) {
+            log.debug("{}", ex.getMessage());
+            res.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            return;
+        }
         TenantResolverService.TenantRow tenant = resolver.resolve(tenantKey);
         if (tenant == null) {
             res.sendError(HttpServletResponse.SC_NOT_FOUND, "Tenant not found or inactive");
