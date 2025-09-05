@@ -5,10 +5,16 @@ import java.time.Instant;
 import java.util.UUID;
 
 import com.ejada.billing.enums.OverageStatus;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * JPA entity representing an overage recorded for a tenant.
  */
+@Getter
+@Setter
+@NoArgsConstructor
 @Entity
 @Table(name = "tenant_overage")
 public class TenantOverage {
@@ -53,114 +59,5 @@ public class TenantOverage {
 
     @Column(name = "metadata", columnDefinition = "jsonb")
     private String metadataJson;
-
-    public TenantOverage() {
-    }
-
-    // Getters and setters
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(UUID tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public UUID getSubscriptionId() {
-        return subscriptionId;
-    }
-
-    public void setSubscriptionId(UUID subscriptionId) {
-        this.subscriptionId = subscriptionId;
-    }
-
-    public String getFeatureKey() {
-        return featureKey;
-    }
-
-    public void setFeatureKey(String featureKey) {
-        this.featureKey = featureKey;
-    }
-
-    public long getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(long quantity) {
-        this.quantity = quantity;
-    }
-
-    public long getUnitPriceMinor() {
-        return unitPriceMinor;
-    }
-
-    public void setUnitPriceMinor(long unitPriceMinor) {
-        this.unitPriceMinor = unitPriceMinor;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
-
-    public Instant getOccurredAt() {
-        return occurredAt;
-    }
-
-    public void setOccurredAt(Instant occurredAt) {
-        this.occurredAt = occurredAt;
-    }
-
-    public Instant getPeriodStart() {
-        return periodStart;
-    }
-
-    public void setPeriodStart(Instant periodStart) {
-        this.periodStart = periodStart;
-    }
-
-    public Instant getPeriodEnd() {
-        return periodEnd;
-    }
-
-    public void setPeriodEnd(Instant periodEnd) {
-        this.periodEnd = periodEnd;
-    }
-
-    public OverageStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(OverageStatus status) {
-        this.status = status;
-    }
-
-    public String getIdempotencyKey() {
-        return idempotencyKey;
-    }
-
-    public void setIdempotencyKey(String idempotencyKey) {
-        this.idempotencyKey = idempotencyKey;
-    }
-
-    public String getMetadataJson() {
-        return metadataJson;
-    }
-
-    public void setMetadataJson(String metadataJson) {
-        this.metadataJson = metadataJson;
-    }
 }
 
