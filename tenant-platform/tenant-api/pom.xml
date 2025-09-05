@@ -27,6 +27,12 @@
       <artifactId>tenant-core</artifactId>
     </dependency>
 
+    <!-- Web annotations and REST support for controllers and HTTP clients -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
     <!-- Validation annotations for DTOs -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
