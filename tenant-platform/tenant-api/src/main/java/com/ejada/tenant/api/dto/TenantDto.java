@@ -1,4 +1,4 @@
-package com.ejada.tenant.dto;
+package com.ejada.tenant.api.dto;
 
 import lombok.*;
 
