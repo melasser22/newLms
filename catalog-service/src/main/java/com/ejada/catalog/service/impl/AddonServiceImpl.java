@@ -1,12 +1,20 @@
 package com.ejada.catalog.service.impl;
 
+import com.ejada.audit.starter.api.AuditAction;
+import com.ejada.audit.starter.api.DataClass;
+import com.ejada.audit.starter.api.annotations.Audited;
 import com.ejada.catalog.dto.*;
 import com.ejada.catalog.mapper.AddonMapper;
 import com.ejada.catalog.model.Addon;
 import com.ejada.catalog.repository.AddonRepository;
 import com.ejada.catalog.service.AddonService;
+import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.exception.ResourceNotFoundException;
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,39 +29,52 @@ public class AddonServiceImpl implements AddonService {
     private final AddonMapper mapper;
 
     @Override
-    public AddonRes create(AddonCreateReq req) {
+    @Transactional
+    public BaseResponse<AddonRes> create(AddonCreateReq req) {
         if (repo.existsByAddonCd(req.addonCd())) {
             throw new IllegalStateException("addonCd exists: " + req.addonCd());
         }
         Addon e = mapper.toEntity(req);
-        return mapper.toRes(repo.save(e));
+          return BaseResponse.success("Addon created",mapper.toRes(repo.save(e)));
     }
 
     @Override
-    public AddonRes update(Integer id, AddonUpdateReq req) {
+    @Transactional
+    public BaseResponse<AddonRes> update(Integer id, AddonUpdateReq req) {
         Addon e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Addon " + id));
         mapper.update(e, req);
-        return mapper.toRes(e);
+        return BaseResponse.success("Addon updated",mapper.toRes(e));
+
     }
 
     @Override
     @Transactional(readOnly = true)
-    public AddonRes get(Integer id) {
-        return mapper.toRes(repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Addon " + id)));
+    @Cacheable(cacheNames = "addons", key = "#id")
+    public  BaseResponse<AddonRes> get(Integer id) {
+        Addon addon = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Addon", String.valueOf(id)));
+        return BaseResponse.success("OK", mapper.toRes(addon));
+
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<AddonRes> list(String category, Pageable pageable) {
+    @Audited(action = AuditAction.READ, entity = "Addon", dataClass = DataClass.HEALTH, message = "List Addons")
+    public BaseResponse<Page<AddonRes>> list(String category, Pageable pageable) {
         if (category == null || category.isBlank()) {
-            return repo.findByIsDeletedFalse(pageable).map(mapper::toRes);
+            return BaseResponse.success("Addon page", repo.findByIsDeletedFalse(pageable).map(mapper::toRes));
+
         }
-        return repo.findByCategoryAndIsDeletedFalse(category, pageable).map(mapper::toRes);
+        return BaseResponse.success("Addon page", repo.findByCategoryAndIsDeletedFalse(category, pageable).map(mapper::toRes));
+
     }
 
     @Override
-    public void softDelete(Integer id) {
+    @Transactional
+    public BaseResponse<Void> softDelete(Integer id) {
         Addon e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Addon " + id));
         e.setIsDeleted(true);
+        return BaseResponse.success("Addon deleted", null);
+
     }
 }
