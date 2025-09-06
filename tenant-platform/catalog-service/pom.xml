@@ -207,9 +207,7 @@
       <configuration>
         <configLocation>../../shared-lib/shared-quality/checkstyle.xml</configLocation>
         <consoleOutput>true</consoleOutput>
-        <encoding>${project.build.sourceEncoding}</encoding>
         <failOnViolation>false</failOnViolation>
-        <propertyExpansion>config_loc=${project.basedir}/../../shared-lib/shared-quality</propertyExpansion>
       </configuration>
       <executions>
         <execution>
