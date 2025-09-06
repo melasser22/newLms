@@ -185,6 +185,7 @@
           <version>3.5.0</version>
           <configuration>
             <configLocation>shared-quality/checkstyle.xml</configLocation>
+            <suppressionsLocation>shared-quality/suppressions.xml</suppressionsLocation>
             <encoding>${project.build.sourceEncoding}</encoding>
             <consoleOutput>true</consoleOutput>
             <failOnViolation>false</failOnViolation>
