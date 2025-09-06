@@ -200,25 +200,25 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>3.5.0</version>
-      <configuration>
+     <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-checkstyle-plugin</artifactId>
+    <version>3.5.0</version>
+    <configuration>
         <configLocation>../shared-lib/shared-quality/checkstyle.xml</configLocation>
-        <suppressionsLocation>../shared-lib/shared-quality/suppressions.xml</suppressionsLocation>
+        <suppressionsLocation>${project.basedir}/../shared-lib/shared-quality/suppressions.xml</suppressionsLocation>
         <consoleOutput>true</consoleOutput>
-        <encoding>${project.build.sourceEncoding}</encoding>
         <failOnViolation>false</failOnViolation>
-        <propertyExpansion>config_loc=${project.basedir}/../shared-lib/shared-quality</propertyExpansion>
-      </configuration>
-      <executions>
+    </configuration>
+    <executions>
         <execution>
-          <phase>verify</phase>
-          <goals><goal>check</goal></goals>
+            <phase>verify</phase>
+            <goals>
+                <goal>check</goal>
+            </goals>
         </execution>
-      </executions>
-    </plugin>
+    </executions>
+</plugin>
     <plugin>
       <groupId>com.github.spotbugs</groupId>
       <artifactId>spotbugs-maven-plugin</artifactId>
