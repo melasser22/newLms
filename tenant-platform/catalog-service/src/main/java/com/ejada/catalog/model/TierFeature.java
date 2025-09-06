@@ -87,9 +87,8 @@ public class TierFeature {
 
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = Boolean.FALSE;
-
-    public boolean isEnabled()         { return Boolean.TRUE.equals(enabled); }
     public boolean isDeleted()         { return Boolean.TRUE.equals(isDeleted); }
+    public boolean isEnabled()         { return Boolean.TRUE.equals(enabled); }
     public boolean isOverageEnabled()  { return Boolean.TRUE.equals(overageEnabled); }
 
     @Builder

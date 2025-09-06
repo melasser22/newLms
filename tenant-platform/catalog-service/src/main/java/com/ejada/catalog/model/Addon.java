@@ -50,6 +50,7 @@ public class Addon {
     public boolean isActive()  { return Boolean.TRUE.equals(isActive); }
     public boolean isDeleted() { return Boolean.TRUE.equals(isDeleted); }
 
+
     /** id-only reference helper */
     public static Addon ref(final Integer id) {
         if (id == null) return null;

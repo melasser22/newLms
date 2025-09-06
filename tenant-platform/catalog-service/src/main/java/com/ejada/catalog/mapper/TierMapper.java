@@ -24,5 +24,7 @@ public interface TierMapper {
     @Mapping(target = "tierCd", ignore = true)
     void update(@MappingTarget @NonNull Tier entity, @NonNull TierUpdateReq req);
 
+    @Mapping(target = "isActive", source = "isActive")
+    @Mapping(target = "isDeleted", source = "isDeleted")
     TierRes toRes(@NonNull Tier entity);
 }

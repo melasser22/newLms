@@ -34,5 +34,7 @@ public interface AddonMapper {
     // ---------- Response ----------
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "isActive", source = "isActive")
+    @Mapping(target = "isDeleted", source = "isDeleted")
     AddonRes toRes(@NonNull Addon entity);
 }
