@@ -52,7 +52,8 @@ create table IF NOT EXISTS addon_feature (
 
   constraint uk_addon_feature unique (addon_id, feature_id),
   constraint fk_af_addon   foreign key (addon_id)   references addon(addon_id)   on delete cascade,
-  constraint fk_af_feature foreign key (feature_id) references feature(feature_id) on delete cascade,
+  -- feature table uses "id" as its primary key
+  constraint fk_af_feature foreign key (feature_id) references feature(id) on delete cascade,
 
   constraint ck_af_enforcement check (enforcement in ('ALLOW','BLOCK','ALLOW_WITH_OVERAGE')),
   constraint ck_af_window      check (limit_window is null or limit_window in ('DAILY','MONTHLY','QUARTERLY','YEARLY','LIFETIME')),
@@ -79,6 +80,7 @@ create table IF NOT EXISTS tier_addon (
   -- optional list price metadata (catalog level; billing service owns actual invoicing)
   base_price     numeric(18,4),
   currency       varchar(3),
+  billing_period varchar(24),                         -- MONTHLY | YEARLY | ONE_TIME
 
   is_deleted     boolean not null default false,
   created_at     timestamptz not null default now(),
@@ -87,7 +89,8 @@ create table IF NOT EXISTS tier_addon (
   updated_by     varchar(128),
 
   constraint uk_tier_addon unique (tier_id, addon_id),
-  constraint fk_ta_tier  foreign key (tier_id)  references tier(tier_id)   on delete cascade,
+  -- tier table uses "id" as its primary key
+  constraint fk_ta_tier  foreign key (tier_id)  references tier(id)   on delete cascade,
   constraint fk_ta_addon foreign key (addon_id) references addon(addon_id) on delete cascade,
 
   constraint ck_ta_period check (billing_period is null or billing_period in ('MONTHLY','YEARLY','ONE_TIME'))
