@@ -9,7 +9,6 @@ import org.mapstruct.*;
         imports = {Tier.class, Addon.class})
 public interface TierAddonMapper {
 
-    @BeanMapping(ignoreUnmappedSourceProperties = {"tierId", "addonId"})
     @Mapping(target = "tierAddonId", ignore = true)
     @Mapping(target = "tier", expression = "java(Tier.ref(req.tierId()))")
     @Mapping(target = "addon", expression = "java(Addon.ref(req.addonId()))")
@@ -20,8 +19,7 @@ public interface TierAddonMapper {
     @Mapping(target = "isDeleted", constant = "false")
     TierAddon toEntity(TierAddonCreateReq req);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
-                ignoreUnmappedSourceProperties = {"tierId", "addonId"})
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "tierAddonId", ignore = true)
     @Mapping(target = "tier", ignore = true)
     @Mapping(target = "addon", ignore = true)
