@@ -80,6 +80,7 @@ public class Country implements Serializable {
     @Column(name = "nationality_ar", length = 256)
     private String nationalityAr;
 
+    @Builder.Default
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = Boolean.TRUE;
 

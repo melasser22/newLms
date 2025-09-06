@@ -23,6 +23,7 @@ public abstract class IntegrationTestSupport {
 
     /** Lightweight Redis container. */
     @Container
+    @SuppressWarnings("resource")
     protected static final GenericContainer<?> REDIS =
             new GenericContainer<>("redis:7").withExposedPorts(6379);
 

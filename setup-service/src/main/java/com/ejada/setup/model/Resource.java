@@ -77,6 +77,7 @@ public class Resource implements Serializable {
     @Column(name = "parent_resource_id")
     private Integer parentResourceId;
 
+    @Builder.Default
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = Boolean.TRUE;
 
