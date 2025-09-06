@@ -2,7 +2,8 @@ package com.ejada.catalog.dto;
 
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Schema(name = "AddonCreateReq", description = "Create a new addon")
 public record AddonCreateReq(
@@ -27,4 +28,4 @@ public record AddonCreateReq(
 
         @Schema(description = "Active flag; defaults to true if null")
         Boolean isActive
-) {}
+) { }
