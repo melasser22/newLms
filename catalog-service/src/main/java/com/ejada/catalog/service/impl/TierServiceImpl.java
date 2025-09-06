@@ -5,6 +5,7 @@ import com.ejada.catalog.mapper.TierMapper;
 import com.ejada.catalog.model.Tier;
 import com.ejada.catalog.repository.TierRepository;
 import com.ejada.catalog.service.TierService;
+import com.ejada.common.dto.BaseResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,37 +22,46 @@ public class TierServiceImpl implements TierService {
     private final TierMapper mapper;
 
     @Override
-    public TierRes create(TierCreateReq req) {
+    public BaseResponse<TierRes> create(TierCreateReq req) {
         if (repo.existsByTierCd(req.tierCd())) {
             throw new IllegalStateException("tierCd already exists: " + req.tierCd());
         }
         Tier entity = mapper.toEntity(req);
-        return mapper.toRes(repo.save(entity));
+        return BaseResponse.success("Tier created", mapper.toRes(repo.save(entity)));
     }
 
     @Override
-    public TierRes update(Integer id, TierUpdateReq req) {
+    public BaseResponse<TierRes> update(Integer id, TierUpdateReq req) {
         Tier entity = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Tier " + id));
         mapper.update(entity, req);
-        return mapper.toRes(entity);
+        return BaseResponse.success("Tier updated", mapper.toRes(entity));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public TierRes get(Integer id) {
-        return mapper.toRes(repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Tier " + id)));
+    public BaseResponse<TierRes> get(Integer id) {
+        return BaseResponse.success(
+            "OK",
+            mapper.toRes(repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Tier " + id)))
+        );
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<TierRes> list(Boolean active, Pageable pageable) {
-        if (active == null) return repo.findByIsDeletedFalse(pageable).map(mapper::toRes);
-        return repo.findByIsActiveAndIsDeletedFalse(active, pageable).map(mapper::toRes);
+    public BaseResponse<Page<TierRes>> list(Boolean active, Pageable pageable) {
+        Page<TierRes> page;
+        if (active == null) {
+            page = repo.findByIsDeletedFalse(pageable).map(mapper::toRes);
+        } else {
+            page = repo.findByIsActiveAndIsDeletedFalse(active, pageable).map(mapper::toRes);
+        }
+        return BaseResponse.success("Tier page", page);
     }
 
     @Override
-    public void softDelete(Integer id) {
+    public BaseResponse<Void> softDelete(Integer id) {
         Tier e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Tier " + id));
         e.setIsDeleted(true);
+        return BaseResponse.success("Tier deleted", null);
     }
 }
