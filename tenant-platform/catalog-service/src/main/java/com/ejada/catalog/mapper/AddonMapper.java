@@ -1,10 +1,10 @@
 package com.ejada.catalog.mapper;
 import com.ejada.catalog.dto.*;
 import com.ejada.catalog.model.Addon;
+import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
 import org.mapstruct.*;
 
-@Mapper(componentModel = "spring",
-        unmappedTargetPolicy = ReportingPolicy.ERROR)
+@Mapper(config = SharedMapstructConfig.class)
 public interface AddonMapper {
 
     // ---------- Create ----------
@@ -26,8 +26,12 @@ public interface AddonMapper {
 
     // ---------- Update ----------
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "addonId", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
     void update(@MappingTarget Addon entity, AddonUpdateReq req);
 
     // ---------- Response ----------
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     AddonRes toRes(Addon entity);
 }
