@@ -2,12 +2,10 @@ package com.ejada.tenant.mapper;
 
 import com.ejada.tenant.dto.*;
 import com.ejada.tenant.model.Tenant;
+import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
 import org.mapstruct.*;
 
-import java.time.OffsetDateTime;
-
-@Mapper(componentModel = "spring",
-        unmappedTargetPolicy = ReportingPolicy.ERROR)
+@Mapper(config = SharedMapstructConfig.class)
 public interface TenantMapper {
 
     // ---------- Create ----------
