@@ -76,7 +76,6 @@
     <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>shared-test-support</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
