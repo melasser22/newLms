@@ -205,11 +205,13 @@
         <artifactId>maven-checkstyle-plugin</artifactId>
         <version>3.5.0</version>
       <configuration>
-        <configLocation>../shared-lib/shared-quality/checkstyle.xml</configLocation>
+        <configLocation>../../shared-lib/shared-quality/checkstyle.xml</configLocation>
         <consoleOutput>true</consoleOutput>
         <encoding>${project.build.sourceEncoding}</encoding>
         <failOnViolation>false</failOnViolation>
-        <propertyExpansion>config_loc=${project.basedir}/../shared-lib/shared-quality</propertyExpansion>
+        <propertyExpansion>
+          <suppressionsFile>${project.basedir}/../../shared-lib/shared-quality/suppressions.xml</suppressionsFile>
+        </propertyExpansion>
       </configuration>
       <executions>
         <execution>

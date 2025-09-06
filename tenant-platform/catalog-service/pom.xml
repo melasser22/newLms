@@ -208,6 +208,9 @@
         <configLocation>../../shared-lib/shared-quality/checkstyle.xml</configLocation>
         <consoleOutput>true</consoleOutput>
         <failOnViolation>false</failOnViolation>
+        <propertyExpansion>
+          <suppressionsFile>${project.basedir}/../../shared-lib/shared-quality/suppressions.xml</suppressionsFile>
+        </propertyExpansion>
       </configuration>
       <executions>
         <execution>
