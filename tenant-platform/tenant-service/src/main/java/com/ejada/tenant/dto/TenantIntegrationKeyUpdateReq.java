@@ -29,4 +29,13 @@ public record TenantIntegrationKeyUpdateReq(
 
         @Schema(description = "Arbitrary JSON metadata")
         String meta
-) {}
+) {
+    public TenantIntegrationKeyUpdateReq {
+        scopes = scopes == null ? List.of() : List.copyOf(scopes);
+    }
+
+    @Override
+    public List<String> scopes() {
+        return List.copyOf(scopes);
+    }
+}

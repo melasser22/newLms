@@ -22,4 +22,13 @@ public record TenantIntegrationKeyRes(
         Boolean isDeleted,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
-) {}
+) {
+    public TenantIntegrationKeyRes {
+        scopes = scopes == null ? List.of() : List.copyOf(scopes);
+    }
+
+    @Override
+    public List<String> scopes() {
+        return List.copyOf(scopes);
+    }
+}

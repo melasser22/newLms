@@ -10,7 +10,7 @@ import com.ejada.tenant.repository.TenantRepository;
 import com.ejada.tenant.service.TenantIntegrationKeyService;
 import com.ejada.common.dto.BaseResponse;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,14 +20,24 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyService {
 
     private final TenantIntegrationKeyRepository repo;
     private final TenantRepository tenantRepo;
     private final TenantIntegrationKeyMapper mapper;
-    private final PasswordEncoder passwordEncoder; 
+    private final PasswordEncoder passwordEncoder;
+
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
+    public TenantIntegrationKeyServiceImpl(TenantIntegrationKeyRepository repo,
+                                           TenantRepository tenantRepo,
+                                           TenantIntegrationKeyMapper mapper,
+                                           PasswordEncoder passwordEncoder) {
+        this.repo = repo;
+        this.tenantRepo = tenantRepo;
+        this.mapper = mapper;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     public BaseResponse<TenantIntegrationKeyRes> create(TenantIntegrationKeyCreateReq req) {
