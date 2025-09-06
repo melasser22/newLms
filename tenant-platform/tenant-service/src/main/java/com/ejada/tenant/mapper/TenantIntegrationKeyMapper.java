@@ -6,6 +6,7 @@ import com.ejada.tenant.model.TenantIntegrationKey;
 import com.ejada.tenant.model.TenantIntegrationKey.Status;
 import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
 import org.mapstruct.*;
+import org.springframework.lang.NonNull;
 
 import java.time.OffsetDateTime;
 
@@ -35,7 +36,7 @@ public interface TenantIntegrationKeyMapper {
     // DB-managed timestamps
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    TenantIntegrationKey toEntity(TenantIntegrationKeyCreateReq req);
+    TenantIntegrationKey toEntity(@NonNull TenantIntegrationKeyCreateReq req);
 
     @AfterMapping
     default void setDefaults(@MappingTarget TenantIntegrationKey e, TenantIntegrationKeyCreateReq req) {
@@ -58,13 +59,13 @@ public interface TenantIntegrationKeyMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "scopes", source = "scopes", qualifiedByName = "toArray")
     @Mapping(target = "status", source = "status", qualifiedByName = "toEntityStatus")
-    void update(@MappingTarget TenantIntegrationKey entity, TenantIntegrationKeyUpdateReq req);
+    void update(@MappingTarget @NonNull TenantIntegrationKey entity, @NonNull TenantIntegrationKeyUpdateReq req);
 
     // ---------- Response ----------
     @Mapping(target = "tenantId", source = "tenant.id")
     @Mapping(target = "scopes", source = "scopes", qualifiedByName = "toList")
     @Mapping(target = "status", source = "status", qualifiedByName = "toDtoStatus")
-    TenantIntegrationKeyRes toRes(TenantIntegrationKey entity);
+    TenantIntegrationKeyRes toRes(@NonNull TenantIntegrationKey entity);
 
     // ---------- Enum & collection converters ----------
     @Named("toEntityStatus")

@@ -4,6 +4,7 @@ import com.ejada.catalog.dto.*;
 import com.ejada.catalog.model.*;
 import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
 import org.mapstruct.*;
+import org.springframework.lang.NonNull;
 
 @Mapper(config = SharedMapstructConfig.class,
         imports = {Tier.class, Feature.class, Enforcement.class})
@@ -25,15 +26,15 @@ public interface TierFeatureMapper {
     @Mapping(target = "overageCurrency", source = "overageCurrency", defaultValue = "SAR")
     @Mapping(target = "meta", source = "meta")
     @Mapping(target = "isDeleted", constant = "false")
-    TierFeature toEntity(TierFeatureCreateReq req);
+    TierFeature toEntity(@NonNull TierFeatureCreateReq req);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "tierFeatureId", ignore = true)
     @Mapping(target = "tier", ignore = true)
     @Mapping(target = "feature", ignore = true)
-    void update(@MappingTarget TierFeature entity, TierFeatureUpdateReq req);
+    void update(@MappingTarget @NonNull TierFeature entity, @NonNull TierFeatureUpdateReq req);
 
     @Mapping(target = "tierId", source = "tier.tierId")
     @Mapping(target = "featureId", source = "feature.featureId")
-    TierFeatureRes toRes(TierFeature entity);
+    TierFeatureRes toRes(@NonNull TierFeature entity);
 }
