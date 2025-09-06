@@ -39,6 +39,7 @@ public class SystemParameter {
     @Column(name = "group_code", length = 150)
     private String paramGroup;
 
+    @Builder.Default
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = Boolean.TRUE;
 
