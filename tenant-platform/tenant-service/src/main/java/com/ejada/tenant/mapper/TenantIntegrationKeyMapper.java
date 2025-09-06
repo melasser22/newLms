@@ -4,13 +4,15 @@ import com.ejada.tenant.dto.*;
 import com.ejada.tenant.model.Tenant;
 import com.ejada.tenant.model.TenantIntegrationKey;
 import com.ejada.tenant.model.TenantIntegrationKey.Status;
+import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
 import org.mapstruct.*;
 
 import java.time.OffsetDateTime;
 
-@Mapper(componentModel = "spring",
-        imports = { Tenant.class, TenantIntegrationKey.class, OffsetDateTime.class },
-        unmappedTargetPolicy = ReportingPolicy.ERROR)
+@Mapper(
+    config = SharedMapstructConfig.class,
+    imports = {Tenant.class, TenantIntegrationKey.class, OffsetDateTime.class}
+)
 public interface TenantIntegrationKeyMapper {
 
     // ---------- Create ----------
