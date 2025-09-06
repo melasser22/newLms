@@ -53,8 +53,9 @@ public class Tier {
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = Boolean.FALSE;
 
-    public boolean isActive() { return Boolean.TRUE.equals(isActive); }
+    public boolean isActive()  { return Boolean.TRUE.equals(isActive); }
     public boolean isDeleted() { return Boolean.TRUE.equals(isDeleted); }
+
 
     public static Tier ref(final Integer id) {
         if (id == null) return null;

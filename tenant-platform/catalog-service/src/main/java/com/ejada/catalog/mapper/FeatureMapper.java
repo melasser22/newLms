@@ -25,5 +25,8 @@ public interface FeatureMapper {
     @Mapping(target = "featureKey", ignore = true)
     void update(@MappingTarget @NonNull Feature entity, @NonNull FeatureUpdateReq req);
 
+    @Mapping(target = "isMetered", source = "isMetered")
+    @Mapping(target = "isActive", source = "isActive")
+    @Mapping(target = "isDeleted", source = "isDeleted")
     FeatureRes toRes(@NonNull Feature entity);
 }

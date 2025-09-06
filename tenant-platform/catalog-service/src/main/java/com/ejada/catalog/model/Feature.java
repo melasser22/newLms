@@ -48,9 +48,10 @@ public class Feature {
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = Boolean.FALSE;
 
+    public boolean isMetered() { return Boolean.TRUE.equals(isMetered); }
     public boolean isActive()  { return Boolean.TRUE.equals(isActive); }
     public boolean isDeleted() { return Boolean.TRUE.equals(isDeleted); }
-    public boolean isMetered() { return Boolean.TRUE.equals(isMetered); }
+
 
     public static Feature ref(final Integer id) {
         if (id == null) return null;

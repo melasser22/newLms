@@ -36,5 +36,6 @@ public interface TierFeatureMapper {
 
     @Mapping(target = "tierId", source = "tier.tierId")
     @Mapping(target = "featureId", source = "feature.featureId")
+    @Mapping(target = "isDeleted", source = "isDeleted")
     TierFeatureRes toRes(@NonNull TierFeature entity);
 }

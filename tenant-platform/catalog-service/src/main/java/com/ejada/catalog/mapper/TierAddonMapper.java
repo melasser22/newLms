@@ -10,6 +10,7 @@ import org.springframework.lang.NonNull;
         imports = {Tier.class, Addon.class})
 public interface TierAddonMapper {
 
+    @BeanMapping(ignoreUnmappedSourceProperties = {"tierId", "addonId"})
     @Mapping(target = "tierAddonId", ignore = true)
     @Mapping(target = "tier", expression = "java(Tier.ref(req.tierId()))")
     @Mapping(target = "addon", expression = "java(Addon.ref(req.addonId()))")
@@ -28,5 +29,6 @@ public interface TierAddonMapper {
 
     @Mapping(target = "tierId", source = "tier.tierId")
     @Mapping(target = "addonId", source = "addon.addonId")
+    @Mapping(target = "isDeleted", source = "isDeleted")
     TierAddonRes toRes(@NonNull TierAddon entity);
 }

@@ -36,5 +36,6 @@ public interface AddonFeatureMapper {
 
     @Mapping(target = "addonId", source = "addon.addonId")
     @Mapping(target = "featureId", source = "feature.featureId")
+    @Mapping(target = "isDeleted", source = "isDeleted")
     AddonFeatureRes toRes(@NonNull AddonFeature entity);
 }

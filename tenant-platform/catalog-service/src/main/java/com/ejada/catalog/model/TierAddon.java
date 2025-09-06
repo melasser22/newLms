@@ -54,9 +54,8 @@ public class TierAddon {
 
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = Boolean.FALSE;
-
+    public boolean isDeleted() { return Boolean.TRUE.equals(isDeleted); }
     public boolean isIncluded() { return Boolean.TRUE.equals(included); }
-    public boolean isDeleted()  { return Boolean.TRUE.equals(isDeleted); }
 
     /** id-only helpers */
     public static TierAddon ref(final Integer id) {
