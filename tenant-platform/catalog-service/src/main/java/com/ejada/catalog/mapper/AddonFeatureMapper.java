@@ -4,6 +4,7 @@ import com.ejada.catalog.dto.*;
 import com.ejada.catalog.model.*;
 import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
 import org.mapstruct.*;
+import org.springframework.lang.NonNull;
 
 @Mapper(config = SharedMapstructConfig.class,
         imports = {Addon.class, Feature.class, Enforcement.class})
@@ -25,15 +26,15 @@ public interface AddonFeatureMapper {
     @Mapping(target = "overageCurrency", source = "overageCurrency", defaultValue = "SAR")
     @Mapping(target = "meta", source = "meta")
     @Mapping(target = "isDeleted", constant = "false")
-    AddonFeature toEntity(AddonFeatureCreateReq req);
+    AddonFeature toEntity(@NonNull AddonFeatureCreateReq req);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "addonFeatureId", ignore = true)
     @Mapping(target = "addon", ignore = true)
     @Mapping(target = "feature", ignore = true)
-    void update(@MappingTarget AddonFeature entity, AddonFeatureUpdateReq req);
+    void update(@MappingTarget @NonNull AddonFeature entity, @NonNull AddonFeatureUpdateReq req);
 
     @Mapping(target = "addonId", source = "addon.addonId")
     @Mapping(target = "featureId", source = "feature.featureId")
-    AddonFeatureRes toRes(AddonFeature entity);
+    AddonFeatureRes toRes(@NonNull AddonFeature entity);
 }

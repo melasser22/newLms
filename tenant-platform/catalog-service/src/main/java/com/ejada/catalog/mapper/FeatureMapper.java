@@ -4,6 +4,7 @@ import com.ejada.catalog.dto.*;
 import com.ejada.catalog.model.*;
 import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
 import org.mapstruct.*;
+import org.springframework.lang.NonNull;
 
 @Mapper(config = SharedMapstructConfig.class)
 public interface FeatureMapper {
@@ -17,12 +18,12 @@ public interface FeatureMapper {
     @Mapping(target = "isMetered", source = "isMetered", defaultValue = "false")
     @Mapping(target = "isActive", source = "isActive", defaultValue = "true")
     @Mapping(target = "isDeleted", constant = "false")
-    Feature toEntity(FeatureCreateReq req);
+    Feature toEntity(@NonNull FeatureCreateReq req);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "featureId", ignore = true)
     @Mapping(target = "featureKey", ignore = true)
-    void update(@MappingTarget Feature entity, FeatureUpdateReq req);
+    void update(@MappingTarget @NonNull Feature entity, @NonNull FeatureUpdateReq req);
 
-    FeatureRes toRes(Feature entity);
+    FeatureRes toRes(@NonNull Feature entity);
 }

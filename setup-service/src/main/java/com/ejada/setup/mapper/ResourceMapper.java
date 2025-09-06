@@ -7,18 +7,19 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.lang.NonNull;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface ResourceMapper {
     @Mapping(source = "resourceId", target = "id")
-    ResourceDto toDto(Resource entity);
+    ResourceDto toDto(@NonNull Resource entity);
 
     @InheritInverseConfiguration(name = "toDto")
-    Resource toEntity(ResourceDto dto);
+    Resource toEntity(@NonNull ResourceDto dto);
 
-    List<ResourceDto> toDtoList(List<Resource> entities);
+    List<ResourceDto> toDtoList(@NonNull List<Resource> entities);
 
     default Page<ResourceDto> toDtoPage(Page<Resource> page) {
         if (page == null) return Page.empty();

@@ -7,6 +7,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.lang.NonNull;
 
 import java.util.List;
 
@@ -20,7 +21,7 @@ public interface CityMapper {
   @Mapping(source = "cityArNm",          target = "cityArNm")
   @Mapping(source = "isActive",          target = "isActive")
   @Mapping(source = "country.countryId", target = "countryId")
-  CityDto toDto(City entity);
+  CityDto toDto(@NonNull City entity);
 
   @Mapping(source = "id",        target = "cityId")
   @Mapping(source = "cityCd",    target = "cityCd")
@@ -28,10 +29,10 @@ public interface CityMapper {
   @Mapping(source = "cityArNm",  target = "cityArNm")
   @Mapping(source = "isActive",  target = "isActive")
   @Mapping(source = "countryId", target = "countryId")
-  City toEntity(CityDto dto);
+  City toEntity(@NonNull CityDto dto);
 
   //  Add this so MapStruct generates the iterable mapper
-  List<CityDto> toDtoList(List<City> entities);
+  List<CityDto> toDtoList(@NonNull List<City> entities);
 
   // (optional, if you ever need reverse list mapping)
   // List<City> toEntityList(List<CityDto> dtos);

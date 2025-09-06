@@ -4,6 +4,7 @@ import com.ejada.tenant.dto.*;
 import com.ejada.tenant.model.Tenant;
 import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
 import org.mapstruct.*;
+import org.springframework.lang.NonNull;
 
 @Mapper(config = SharedMapstructConfig.class)
 public interface TenantMapper {
@@ -15,7 +16,7 @@ public interface TenantMapper {
     // DB-managed timestamps
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    Tenant toEntity(TenantCreateReq req);
+    Tenant toEntity(@NonNull TenantCreateReq req);
 
     // Post-process defaults
     @AfterMapping
@@ -30,10 +31,10 @@ public interface TenantMapper {
     @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    void update(@MappingTarget Tenant entity, TenantUpdateReq req);
+    void update(@MappingTarget @NonNull Tenant entity, @NonNull TenantUpdateReq req);
 
     // ---------- Response ----------
-    TenantRes toRes(Tenant entity);
+    TenantRes toRes(@NonNull Tenant entity);
 
     // ---------- Helpers ----------
     static Tenant ref(Integer id) { return Tenant.ref(id); }
