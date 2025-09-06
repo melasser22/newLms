@@ -46,16 +46,10 @@
       <artifactId>spring-data-commons</artifactId>
     </dependency>
 
-		<!-- JPA left to the app -->
+                <!-- JPA support -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>jakarta.persistence</groupId>
-      <artifactId>jakarta.persistence-api</artifactId>
-      <optional>true</optional>
     </dependency>
       <dependency>
     <groupId>org.springframework.boot</groupId>
