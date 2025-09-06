@@ -1,6 +1,8 @@
 package com.ejada.catalog.service;
 
-import com.ejada.catalog.dto.*;
+import com.ejada.catalog.dto.TierCreateReq;
+import com.ejada.catalog.dto.TierRes;
+import com.ejada.catalog.dto.TierUpdateReq;
 import com.ejada.common.dto.BaseResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -1,6 +1,8 @@
 package com.ejada.catalog.service.impl;
 
-import com.ejada.catalog.dto.*;
+import com.ejada.catalog.dto.FeatureCreateReq;
+import com.ejada.catalog.dto.FeatureRes;
+import com.ejada.catalog.dto.FeatureUpdateReq;
 import com.ejada.catalog.mapper.FeatureMapper;
 import com.ejada.catalog.model.Feature;
 import com.ejada.catalog.repository.FeatureRepository;
@@ -17,13 +19,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class FeatureServiceImpl implements FeatureService {
+public final class FeatureServiceImpl implements FeatureService {
 
     private final FeatureRepository repo;
     private final FeatureMapper mapper;
 
     @Override
-    public BaseResponse<FeatureRes> create(FeatureCreateReq req) {
+    public BaseResponse<FeatureRes> create(final FeatureCreateReq req) {
         if (repo.existsByFeatureKey(req.featureKey())) {
             throw new IllegalStateException("featureKey already exists: " + req.featureKey());
         }
@@ -32,7 +34,7 @@ public class FeatureServiceImpl implements FeatureService {
     }
 
     @Override
-    public BaseResponse<FeatureRes> update(Integer id, FeatureUpdateReq req) {
+    public BaseResponse<FeatureRes> update(final Integer id, final FeatureUpdateReq req) {
         Feature e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Feature " + id));
         mapper.update(e, req);
         return BaseResponse.success("Feature updated", mapper.toRes(e));
@@ -40,7 +42,7 @@ public class FeatureServiceImpl implements FeatureService {
 
     @Override
     @Transactional(readOnly = true)
-    public BaseResponse<FeatureRes> get(Integer id) {
+    public BaseResponse<FeatureRes> get(final Integer id) {
         Feature feature = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Feature", String.valueOf(id)));
         return BaseResponse.success("OK", mapper.toRes(feature));
@@ -48,7 +50,7 @@ public class FeatureServiceImpl implements FeatureService {
 
     @Override
     @Transactional(readOnly = true)
-    public BaseResponse<Page<FeatureRes>> list(String category, Pageable pageable) {
+    public BaseResponse<Page<FeatureRes>> list(final String category, final Pageable pageable) {
         Page<FeatureRes> page;
         if (category == null || category.isBlank()) {
             page = repo.findByIsDeletedFalse(pageable).map(mapper::toRes);
@@ -59,7 +61,7 @@ public class FeatureServiceImpl implements FeatureService {
     }
 
     @Override
-    public BaseResponse<Void> softDelete(Integer id) {
+    public BaseResponse<Void> softDelete(final Integer id) {
         Feature e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Feature " + id));
         e.setIsDeleted(true);
         return BaseResponse.success("Feature deleted", null);
