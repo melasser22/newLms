@@ -1,0 +1,32 @@
+package com.ejada.tenant.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.*;
+import java.time.OffsetDateTime;
+import java.util.List;
+
+@Schema(name = "TenantIntegrationKeyUpdateReq")
+public record TenantIntegrationKeyUpdateReq(
+        @Size(max = 128)
+        @Schema(description = "Friendly label", example = "Backoffice API key")
+        String label,
+
+        @Schema(description = "List of scopes/permissions")
+        List<@NotBlank @Size(max = 64) String> scopes,
+
+        @Schema(description = "Status", example = "SUSPENDED")
+        TikStatus status,
+
+        @Schema(description = "Validity start (cannot be after expiresAt)")
+        OffsetDateTime validFrom,
+
+        @Future
+        @Schema(description = "Hard expiry timestamp")
+        OffsetDateTime expiresAt,
+
+        @Positive
+        @Schema(description = "Optional per-day quota")
+        Integer dailyQuota,
+
+        @Schema(description = "Arbitrary JSON metadata")
+        String meta
+) {}

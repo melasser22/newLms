@@ -1,0 +1,54 @@
+version: '3.8'
+
+x-health-defaults: &health_defaults
+  interval: 10s
+  timeout: 5s
+  retries: 10
+  start_period: 15s
+
+x-restart: &restart_policy
+  restart: unless-stopped
+
+x-resources-light: &resources_light
+  deploy:
+    resources:
+      limits:
+        memory: 1g
+      reservations:
+        memory: 256m
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  pgdata:
+  zkdata:
+  zklog:
+  kafkadata:
+
+services:
+ 
+ 
+  
+  
+  catalog-service:
+    build: ./catalog-service
+    <<: [*restart_policy]
+    depends_on:
+      postgres: { condition: service_healthy }
+      otel-collector: { condition: service_started }
+    environment:
+      TZ: Asia/Riyadh
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      OTEL_SERVICE_NAME: catalog-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+    ports:
+      - "8083:8080"
+    networks:
+      backend:
+

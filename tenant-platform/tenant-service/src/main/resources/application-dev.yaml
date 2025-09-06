@@ -1,0 +1,220 @@
+spring:
+  datasource:
+    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:postgres}?currentSchema=tenant}"
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: HikariPool-ejada
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000        # 30s
+      connection-timeout: 300000 # 300s
+      max-lifetime: 1800000      # 30m
+
+  jpa:
+    open-in-view: false
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: tenant
+        hbm2ddl.create_namespaces: true
+        format_sql: true
+        jdbc.time_zone: UTC
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
+
+  kafka:
+    bootstrap-servers: localhost:29092
+    client-id: ejada-tenant-dev
+    consumer:
+      group-id: ejada-backend-dev
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        max.poll.interval.ms: 300000
+        max.poll.records: 500
+    producer:
+      acks: all
+      retries: 3
+      batch-size: 16384
+      compression-type: gzip
+      properties:
+        linger.ms: 5
+
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus,beans,conditions,configprops,loggers,threaddump
+  endpoint:
+    health:
+      show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    display-request-duration: true
+    filter: true
+    operationsSorter: method
+    tagsSorter: alpha
+
+shared:
+  core:
+    correlation:
+      header-name: X-Correlation-Id
+      generate-if-missing: true
+      echo-response-header: true
+    tenant:
+      enabled: true
+      header-name: x_tenant_id
+      query-param: tenantId
+      default-policy: OPTIONAL
+      echo-response-header: true
+    cors:
+      enabled: true
+      allowed-origins: http://localhost:3000
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: "*"
+  headers:
+    enabled: true
+    correlation:
+      header: X-Correlation-Id
+      auto-generate: true
+      mandatory: true
+    request:
+      header: X-Request-ID
+      auto-generate: true
+      mandatory: true
+    tenant:
+      header: x_tenant_id
+      auto-generate: false
+      mandatory: false
+    user:
+      header: X-User-Id
+      auto-generate: false
+      mandatory: false
+    mdc:
+      enabled: true
+    security:
+      enabled: true
+      hsts:
+        enabled: true
+        max-age: 31536000
+        include-subdomains: true
+      frame-options: SAMEORIGIN
+      content-type-options: nosniff
+      referrer-policy: no-referrer
+      xss-protection: "0"
+    propagation:
+      enabled: true
+      include:
+        - X-Correlation-Id
+        - X-Request-ID
+        - x_tenant_id
+        - X-User-Id
+  audit:
+    enabled: true
+    web:
+      enabled: true
+      include-headers: true
+      track-bodies: true
+    aop:
+      enabled: true
+    dispatcher:
+      async: true
+    retention:
+      enabled: true
+      days: 90
+    masking:
+      enabled: true
+      fields-by-key:
+        - password
+        - secret
+        - token
+        - ssn
+    sinks:
+      db:
+        enabled: true
+        schema: tenant
+        table: audit_logs
+      kafka:
+        enabled: true
+        topic: audit_logs
+      otlp:
+        enabled: false
+      outbox:
+        enabled: true
+  openapi:
+    enabled: true
+    title: " tenant Service API"
+    description: "tenant service endpoints for tenant/platform configuration."
+    version: "1.0.0"
+    servers:
+      - http://localhost:8080/core
+    group:
+      name: tenant
+      packages-to-scan:
+        - com.ejada.tenant
+    jwt-security: false
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 2s
+    key-prefix: tenant
+    default-ttl: 600s
+    reactive: false
+  crypto:
+    algorithm: AES_GCM
+    in-memory:
+      activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
+      keys:
+        local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
+  security:
+    mode: hs256
+    jwt:
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+      token-period: 15m
+    hs256:
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+    resource-server:
+      enabled: true
+      permit-all:
+        - "/**"
+      disable-csrf: false
+    stateless: true
+    roles-claim: roles
+    tenant-claim: tenant
+    enable-role-check: false
+
+logging:
+  level:
+    root: DEBUG
+    com.ejada: DEBUG
+    com.ejada.audit.starter: DEBUG
+    com.ejada.audit.starter.core.dispatch: DEBUG
+    com.ejada.audit.starter.core.dispatch.sinks: DEBUG
+    org.hibernate.tool.schema: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: DEBUG
+    org.springframework.cache: DEBUG
+    org.springframework.cache.interceptor.CacheAspectSupport: DEBUG
+
+debug: true
