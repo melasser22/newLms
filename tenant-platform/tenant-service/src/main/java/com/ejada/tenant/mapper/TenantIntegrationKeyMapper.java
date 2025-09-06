@@ -14,6 +14,7 @@ import java.time.OffsetDateTime;
 public interface TenantIntegrationKeyMapper {
 
     // ---------- Create ----------
+    @BeanMapping(ignoreUnmappedSourceProperties = "tenantId")
     @Mapping(target = "tikId", ignore = true)
     @Mapping(target = "tenant", expression = "java(Tenant.ref(req.tenantId()))")
     @Mapping(target = "keyId", source = "keyId")
