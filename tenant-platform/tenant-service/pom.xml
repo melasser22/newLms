@@ -206,7 +206,6 @@
         <version>3.5.0</version>
       <configuration>
         <configLocation>../../shared-lib/shared-quality/checkstyle.xml</configLocation>
-        <suppressionsLocation>../../shared-lib/shared-quality/suppressions.xml</suppressionsLocation>
         <consoleOutput>true</consoleOutput>
         <failOnViolation>false</failOnViolation>
       </configuration>
