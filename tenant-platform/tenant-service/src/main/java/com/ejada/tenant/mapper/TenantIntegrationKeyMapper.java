@@ -66,6 +66,7 @@ public interface TenantIntegrationKeyMapper {
     @Mapping(target = "scopes", source = "scopes", qualifiedByName = "toList")
     @Mapping(target = "status", source = "status", qualifiedByName = "toDtoStatus")
     @Mapping(target = "plainSecret", expression = "java(null)")
+    @Mapping(target = "withPlainSecret", ignore = true)
     TenantIntegrationKeyRes toRes(@NonNull TenantIntegrationKey entity);
 
     // ---------- Enum & collection converters ----------
