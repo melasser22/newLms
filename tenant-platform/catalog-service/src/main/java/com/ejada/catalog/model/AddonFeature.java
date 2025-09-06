@@ -130,6 +130,8 @@ public class AddonFeature {
 
     @PrePersist
     @PreUpdate
+    @SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD",
+                        justification = "Invoked by JPA via reflection")
     private void jpaValidate() {
         validatePolicy();
     }
