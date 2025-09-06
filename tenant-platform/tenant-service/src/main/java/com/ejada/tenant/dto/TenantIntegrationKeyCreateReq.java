@@ -14,8 +14,8 @@ public record TenantIntegrationKeyCreateReq(
         @Schema(description = "Public key identifier", example = "SYS_DEFAULT")
         String keyId,
 
-        @Size(min = 12, max = 256)
-        @Schema(description = "Plain secret to be hashed server-side (optional if you auto-generate)", example = "S3cure-Plain-Secret")
+        @Size(max = 256)
+        @Schema(description = "Optional plain secret to be hashed server-side; generated if blank", example = "S3cure-Plain-Secret")
         String plainSecret,
 
         @Size(max = 128)

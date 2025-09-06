@@ -1,5 +1,7 @@
 package com.ejada.tenant.service.impl;
 
+import com.ejada.common.dto.BaseResponse;
+import com.ejada.crypto.CryptoService;
 import com.ejada.tenant.dto.*;
 import com.ejada.tenant.mapper.TenantIntegrationKeyMapper;
 import com.ejada.tenant.model.Tenant;
@@ -8,16 +10,16 @@ import com.ejada.tenant.model.TenantIntegrationKey.Status;
 import com.ejada.tenant.repository.TenantIntegrationKeyRepository;
 import com.ejada.tenant.repository.TenantRepository;
 import com.ejada.tenant.service.TenantIntegrationKeyService;
-import com.ejada.common.dto.BaseResponse;
-import jakarta.persistence.EntityNotFoundException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.OffsetDateTime;
+import java.util.Base64;
 
 @Service
 @Transactional
@@ -26,17 +28,17 @@ public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyServ
     private final TenantIntegrationKeyRepository repo;
     private final TenantRepository tenantRepo;
     private final TenantIntegrationKeyMapper mapper;
-    private final PasswordEncoder passwordEncoder;
+    private final CryptoService cryptoService;
 
     @SuppressFBWarnings("EI_EXPOSE_REP2")
     public TenantIntegrationKeyServiceImpl(TenantIntegrationKeyRepository repo,
                                            TenantRepository tenantRepo,
                                            TenantIntegrationKeyMapper mapper,
-                                           PasswordEncoder passwordEncoder) {
+                                           CryptoService cryptoService) {
         this.repo = repo;
         this.tenantRepo = tenantRepo;
         this.mapper = mapper;
-        this.passwordEncoder = passwordEncoder;
+        this.cryptoService = cryptoService;
     }
 
     @Override
@@ -61,14 +63,22 @@ public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyServ
         e.setTenant(tenant);
         e.setValidFrom(validFrom);
 
-        // Secret hashing (require a plainSecret for now)
-        if (req.plainSecret() == null || req.plainSecret().isBlank()) {
-            throw new IllegalArgumentException("plainSecret is required to create an integration key");
+        // Secret handling
+        String plainSecret = req.plainSecret();
+        if (plainSecret == null || plainSecret.isBlank()) {
+            byte[] secretBytes = new byte[32];
+            new SecureRandom().nextBytes(secretBytes);
+            plainSecret = Base64.getUrlEncoder().withoutPadding().encodeToString(secretBytes);
         }
-        e.setKeySecret(passwordEncoder.encode(req.plainSecret()));
+        try {
+            e.setKeySecret(cryptoService.signToBase64(plainSecret));
+        } catch (Exception ex) {
+            throw new IllegalStateException("Could not sign integration key secret", ex);
+        }
 
         e = repo.save(e);
-        return BaseResponse.success("Tenant integration key created", mapper.toRes(e));
+        TenantIntegrationKeyRes res = mapper.toRes(e).withPlainSecret(plainSecret);
+        return BaseResponse.success("Tenant integration key created", res);
     }
 
     @Override
