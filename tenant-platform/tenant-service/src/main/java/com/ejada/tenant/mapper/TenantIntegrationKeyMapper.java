@@ -47,6 +47,15 @@ public interface TenantIntegrationKeyMapper {
 
     // ---------- Update (PATCH/PUT with IGNORE nulls) ----------
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "tikId", ignore = true)
+    @Mapping(target = "tenant", ignore = true)
+    @Mapping(target = "keyId", ignore = true)
+    @Mapping(target = "keySecret", ignore = true)
+    @Mapping(target = "lastUsedAt", ignore = true)
+    @Mapping(target = "useCount", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "scopes", source = "scopes", qualifiedByName = "toArray")
     @Mapping(target = "status", source = "status", qualifiedByName = "toEntityStatus")
     void update(@MappingTarget TenantIntegrationKey entity, TenantIntegrationKeyUpdateReq req);
