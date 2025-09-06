@@ -38,7 +38,7 @@
     <springdoc.version>2.7.0</springdoc.version>
    <money.api.version>1.1</money.api.version>
    <moneta.version>1.4.5</moneta.version>
-   <mapstruct.version>1.5.5.Final</mapstruct.version>
+   <mapstruct.version>1.6.2</mapstruct.version>
   <lombok.version>1.18.32</lombok.version>
   <lombokMapstruct.version>0.2.0</lombokMapstruct.version>
   <logstashLogback.version>8.0</logstashLogback.version>
