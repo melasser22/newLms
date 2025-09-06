@@ -7,19 +7,24 @@ import com.ejada.tenant.model.Tenant;
 import com.ejada.tenant.repository.TenantRepository;
 import com.ejada.tenant.service.TenantService;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class TenantServiceImpl implements TenantService {
 
     private final TenantRepository repo;
     private final TenantMapper mapper;
+
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
+    public TenantServiceImpl(TenantRepository repo, TenantMapper mapper) {
+        this.repo = repo;
+        this.mapper = mapper;
+    }
 
     @Override
     public BaseResponse<TenantRes> create(TenantCreateReq req) {

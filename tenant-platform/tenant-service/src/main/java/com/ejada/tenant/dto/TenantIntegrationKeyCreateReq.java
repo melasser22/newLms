@@ -43,4 +43,13 @@ public record TenantIntegrationKeyCreateReq(
 
         @Schema(description = "Arbitrary JSON metadata (stringified if not using json type mapping)")
         String meta
-) {}
+) {
+    public TenantIntegrationKeyCreateReq {
+        scopes = scopes == null ? List.of() : List.copyOf(scopes);
+    }
+
+    @Override
+    public List<String> scopes() {
+        return List.copyOf(scopes);
+    }
+}

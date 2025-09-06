@@ -94,6 +94,22 @@ public class TenantIntegrationKey {
     @Column(name = "updated_at", insertable = false)
     private java.time.OffsetDateTime updatedAt;
 
+    public Tenant getTenant() {
+        return tenant == null ? null : Tenant.ref(tenant.getId());
+    }
+
+    public void setTenant(Tenant tenant) {
+        this.tenant = tenant == null ? null : Tenant.ref(tenant.getId());
+    }
+
+    public String[] getScopes() {
+        return scopes == null ? null : scopes.clone();
+    }
+
+    public void setScopes(String[] scopes) {
+        this.scopes = scopes == null ? null : scopes.clone();
+    }
+
     public boolean isDeleted() { return Boolean.TRUE.equals(isDeleted); }
     public boolean isActive()  { return Status.ACTIVE.equals(status); }
     public boolean isExpired() { return expiresAt != null && expiresAt.isBefore(java.time.OffsetDateTime.now()); }
@@ -104,27 +120,6 @@ public class TenantIntegrationKey {
         TenantIntegrationKey tik = new TenantIntegrationKey();
         tik.setTikId(id);
         return tik;
-    }
-
-    @Builder
-    public TenantIntegrationKey(Long tikId, Tenant tenant, String keyId, String keySecret, String label,
-                                String[] scopes, Status status, java.time.OffsetDateTime validFrom,
-                                java.time.OffsetDateTime expiresAt, java.time.OffsetDateTime lastUsedAt,
-                                Long useCount, Integer dailyQuota, String meta, Boolean isDeleted) {
-        this.tikId = tikId;
-        this.tenant = tenant;
-        this.keyId = keyId;
-        this.keySecret = keySecret;
-        this.label = label;
-        this.scopes = scopes;
-        this.status = (status != null) ? status : Status.ACTIVE;
-        this.validFrom = (validFrom != null) ? validFrom : java.time.OffsetDateTime.now();
-        this.expiresAt = expiresAt;
-        this.lastUsedAt = lastUsedAt;
-        this.useCount = (useCount != null) ? useCount : 0L;
-        this.dailyQuota = dailyQuota;
-        this.meta = meta;
-        this.isDeleted = (isDeleted != null) ? isDeleted : Boolean.FALSE;
     }
 
     public enum Status {
