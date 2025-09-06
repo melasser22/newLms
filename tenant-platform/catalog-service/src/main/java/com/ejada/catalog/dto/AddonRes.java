@@ -14,5 +14,6 @@ public record AddonRes(
         Boolean isActive,
         Boolean isDeleted,
         OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
-) {}
+    OffsetDateTime updatedAt
+    ) { }
+
