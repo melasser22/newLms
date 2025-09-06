@@ -20,14 +20,6 @@
 
     <!-- shared BOM version -->
     <ejada.shared.version>1.0.0</ejada.shared.version>
-
-    <!-- MapStruct/Lombok versions used by the compiler plugin -->
-    <mapstruct.version>1.5.5.Final</mapstruct.version>
-    <lombok.version>1.18.30</lombok.version>
-    <lombok.mapstruct.binding.version>0.2.0</lombok.mapstruct.binding.version>
-
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
 
   <!-- Import shared  to pin internal starter & shared-lib versions -->
