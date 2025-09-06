@@ -2,11 +2,11 @@ package com.ejada.catalog.mapper;
 
 import com.ejada.catalog.dto.*;
 import com.ejada.catalog.model.*;
+import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
 import org.mapstruct.*;
 
-@Mapper(componentModel = "spring",
-        imports = {Tier.class, Addon.class},
-        unmappedTargetPolicy = ReportingPolicy.ERROR)
+@Mapper(config = SharedMapstructConfig.class,
+        imports = {Tier.class, Addon.class})
 public interface TierAddonMapper {
 
     @Mapping(target = "tierAddonId", ignore = true)
@@ -20,6 +20,9 @@ public interface TierAddonMapper {
     TierAddon toEntity(TierAddonCreateReq req);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "tierAddonId", ignore = true)
+    @Mapping(target = "tier", ignore = true)
+    @Mapping(target = "addon", ignore = true)
     void update(@MappingTarget TierAddon entity, TierAddonUpdateReq req);
 
     @Mapping(target = "tierId", source = "tier.tierId")

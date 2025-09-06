@@ -2,11 +2,11 @@ package com.ejada.catalog.mapper;
 
 import com.ejada.catalog.dto.*;
 import com.ejada.catalog.model.*;
+import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
 import org.mapstruct.*;
 
-@Mapper(componentModel = "spring",
-        imports = {Addon.class, Feature.class},
-        unmappedTargetPolicy = ReportingPolicy.ERROR)
+@Mapper(config = SharedMapstructConfig.class,
+        imports = {Addon.class, Feature.class, Enforcement.class})
 public interface AddonFeatureMapper {
 
     @Mapping(target = "addonFeatureId", ignore = true)
@@ -27,6 +27,9 @@ public interface AddonFeatureMapper {
     AddonFeature toEntity(AddonFeatureCreateReq req);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "addonFeatureId", ignore = true)
+    @Mapping(target = "addon", ignore = true)
+    @Mapping(target = "feature", ignore = true)
     void update(@MappingTarget AddonFeature entity, AddonFeatureUpdateReq req);
 
     @Mapping(target = "addonId", source = "addon.addonId")
