@@ -5,6 +5,8 @@ import com.ejada.catalog.mapper.FeatureMapper;
 import com.ejada.catalog.model.Feature;
 import com.ejada.catalog.repository.FeatureRepository;
 import com.ejada.catalog.service.FeatureService;
+import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.exception.ResourceNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,39 +23,45 @@ public class FeatureServiceImpl implements FeatureService {
     private final FeatureMapper mapper;
 
     @Override
-    public FeatureRes create(FeatureCreateReq req) {
+    public BaseResponse<FeatureRes> create(FeatureCreateReq req) {
         if (repo.existsByFeatureKey(req.featureKey())) {
             throw new IllegalStateException("featureKey already exists: " + req.featureKey());
         }
         Feature e = mapper.toEntity(req);
-        return mapper.toRes(repo.save(e));
+        return BaseResponse.success("Feature created", mapper.toRes(repo.save(e)));
     }
 
     @Override
-    public FeatureRes update(Integer id, FeatureUpdateReq req) {
+    public BaseResponse<FeatureRes> update(Integer id, FeatureUpdateReq req) {
         Feature e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Feature " + id));
         mapper.update(e, req);
-        return mapper.toRes(e);
+        return BaseResponse.success("Feature updated", mapper.toRes(e));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public FeatureRes get(Integer id) {
-        return mapper.toRes(repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Feature " + id)));
+    public BaseResponse<FeatureRes> get(Integer id) {
+        Feature feature = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Feature", String.valueOf(id)));
+        return BaseResponse.success("OK", mapper.toRes(feature));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<FeatureRes> list(String category, Pageable pageable) {
+    public BaseResponse<Page<FeatureRes>> list(String category, Pageable pageable) {
+        Page<FeatureRes> page;
         if (category == null || category.isBlank()) {
-            return repo.findByIsDeletedFalse(pageable).map(mapper::toRes);
+            page = repo.findByIsDeletedFalse(pageable).map(mapper::toRes);
+        } else {
+            page = repo.findByCategoryAndIsDeletedFalse(category, pageable).map(mapper::toRes);
         }
-        return repo.findByCategoryAndIsDeletedFalse(category, pageable).map(mapper::toRes);
+        return BaseResponse.success("Feature page", page);
     }
 
     @Override
-    public void softDelete(Integer id) {
+    public BaseResponse<Void> softDelete(Integer id) {
         Feature e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Feature " + id));
         e.setIsDeleted(true);
+        return BaseResponse.success("Feature deleted", null);
     }
 }
