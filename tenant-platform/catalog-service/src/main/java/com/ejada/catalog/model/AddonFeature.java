@@ -116,9 +116,6 @@ public class AddonFeature {
         this.isDeleted       = isDeleted != null ? isDeleted : Boolean.FALSE;
     }
 
-    @PrePersist
-    @PreUpdate
-    @SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD", justification = "JPA lifecycle callback")
     private void validatePolicy() {
         if (enforcement == Enforcement.BLOCK && hardLimit == null) {
             throw new IllegalStateException("hardLimit is required when enforcement=BLOCK");
@@ -129,5 +126,11 @@ public class AddonFeature {
         if (softLimit != null && hardLimit != null && hardLimit.compareTo(softLimit) < 0) {
             throw new IllegalStateException("hardLimit must be >= softLimit");
         }
+    }
+
+    @PrePersist
+    @PreUpdate
+    private void jpaValidate() {
+        validatePolicy();
     }
 }
