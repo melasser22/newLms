@@ -7,6 +7,7 @@ import com.ejada.catalog.repository.AddonFeatureRepository;
 import com.ejada.catalog.repository.AddonRepository;
 import com.ejada.catalog.repository.FeatureRepository;
 import com.ejada.catalog.service.AddonFeatureService;
+import com.ejada.common.dto.BaseResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,7 +26,7 @@ public class AddonFeatureServiceImpl implements AddonFeatureService {
     private final AddonFeatureMapper mapper;
 
     @Override
-    public AddonFeatureRes attach(AddonFeatureCreateReq req) {
+    public BaseResponse<AddonFeatureRes> attach(AddonFeatureCreateReq req) {
         addonRepo.findById(req.addonId()).orElseThrow(() -> new EntityNotFoundException("Addon " + req.addonId()));
         featureRepo.findById(req.featureId()).orElseThrow(() -> new EntityNotFoundException("Feature " + req.featureId()));
 
@@ -33,26 +34,28 @@ public class AddonFeatureServiceImpl implements AddonFeatureService {
             throw new IllegalStateException("AddonFeature exists for addon=" + req.addonId() + " feature=" + req.featureId());
         }
         AddonFeature e = mapper.toEntity(req);
-        return mapper.toRes(repo.save(e));
+        return BaseResponse.success("Addon feature attached", mapper.toRes(repo.save(e)));
     }
 
     @Override
-    public AddonFeatureRes update(Integer id, AddonFeatureUpdateReq req) {
+    public BaseResponse<AddonFeatureRes> update(Integer id, AddonFeatureUpdateReq req) {
         AddonFeature e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("AddonFeature " + id));
         mapper.update(e, req);
-        return mapper.toRes(e);
+        return BaseResponse.success("Addon feature updated", mapper.toRes(e));
     }
 
     @Override
-    public void detach(Integer id) {
+    public BaseResponse<Void> detach(Integer id) {
         AddonFeature e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("AddonFeature " + id));
         e.setIsDeleted(true);
+        return BaseResponse.success("Addon feature detached", null);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<AddonFeatureRes> listByAddon(Integer addonId, Pageable pageable) {
+    public BaseResponse<Page<AddonFeatureRes>> listByAddon(Integer addonId, Pageable pageable) {
         addonRepo.findById(addonId).orElseThrow(() -> new EntityNotFoundException("Addon " + addonId));
-        return repo.findByAddon_AddonIdAndIsDeletedFalse(addonId, pageable).map(mapper::toRes);
+        Page<AddonFeatureRes> page = repo.findByAddon_AddonIdAndIsDeletedFalse(addonId, pageable).map(mapper::toRes);
+        return BaseResponse.success("Addon feature page", page);
     }
 }
