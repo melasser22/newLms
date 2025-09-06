@@ -9,6 +9,7 @@ import org.mapstruct.*;
         imports = {Tier.class, Feature.class, Enforcement.class})
 public interface TierFeatureMapper {
 
+    @BeanMapping(ignoreUnmappedSourceProperties = {"tierId", "featureId"})
     @Mapping(target = "tierFeatureId", ignore = true)
     @Mapping(target = "tier", expression = "java(Tier.ref(req.tierId()))")
     @Mapping(target = "feature", expression = "java(Feature.ref(req.featureId()))")

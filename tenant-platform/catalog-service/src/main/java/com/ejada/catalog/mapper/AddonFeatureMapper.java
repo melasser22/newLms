@@ -9,6 +9,7 @@ import org.mapstruct.*;
         imports = {Addon.class, Feature.class, Enforcement.class})
 public interface AddonFeatureMapper {
 
+    @BeanMapping(ignoreUnmappedSourceProperties = {"addonId", "featureId"})
     @Mapping(target = "addonFeatureId", ignore = true)
     @Mapping(target = "addon", expression = "java(Addon.ref(req.addonId()))")
     @Mapping(target = "feature", expression = "java(Feature.ref(req.featureId()))")

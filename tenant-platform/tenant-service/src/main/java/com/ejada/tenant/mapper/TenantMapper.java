@@ -28,6 +28,10 @@ public interface TenantMapper {
 
     // ---------- Update (PATCH/PUT with IGNORE nulls) ----------
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     void update(@MappingTarget Tenant entity, TenantUpdateReq req);
 
     // ---------- Response ----------
