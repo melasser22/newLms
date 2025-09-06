@@ -67,6 +67,33 @@
         <artifactId>shared-config</artifactId>
         <version>${project.version}</version>
       </dependency>
+       <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>shared-lib-crypto</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+       <dependency><groupId>com.ejada</groupId><artifactId>starter-core</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-security</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-data</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-kafka</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-redis</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-resilience</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-openapi</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-mapstruct</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-headers</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-actuator</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-health</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-validation</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-audit</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-crypto</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-money-time</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-ratelimit</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-observability</artifactId><version>${project.version}</version></dependency>
+   <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>shared-test-support</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <!-- add other internal artifacts here when modules are enabled -->
     </dependencies>
   </dependencyManagement>
