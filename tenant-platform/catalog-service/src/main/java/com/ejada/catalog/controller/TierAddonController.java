@@ -4,6 +4,7 @@ import com.ejada.catalog.dto.*;
 import com.ejada.catalog.security.CatalogAuthorized;
 import com.ejada.catalog.service.TierAddonService;
 import com.ejada.common.dto.BaseResponse;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 @Tag(name = "Tier Addon Management", description = "APIs for managing addons allowed for tiers")
 public class TierAddonController {
-
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final TierAddonService service;
 
     @PostMapping

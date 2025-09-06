@@ -132,7 +132,9 @@ public class TierFeature {
 
     /* --- Optional guard methods (domain validation) --- */
 
-    @PrePersist @PreUpdate
+    @PrePersist
+    @PreUpdate
+    @SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD", justification = "JPA lifecycle callback")
     private void validatePolicy() {
         if (enforcement == Enforcement.BLOCK && hardLimit == null) {
             throw new IllegalStateException("hardLimit is required when enforcement=BLOCK");
