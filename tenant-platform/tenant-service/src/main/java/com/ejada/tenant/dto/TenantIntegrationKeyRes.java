@@ -21,7 +21,9 @@ public record TenantIntegrationKeyRes(
         String meta,
         Boolean isDeleted,
         OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+        OffsetDateTime updatedAt,
+        @Schema(description = "Plain secret returned only on creation")
+        String plainSecret
 ) {
     public TenantIntegrationKeyRes {
         scopes = scopes == null ? List.of() : List.copyOf(scopes);
@@ -30,5 +32,11 @@ public record TenantIntegrationKeyRes(
     @Override
     public List<String> scopes() {
         return List.copyOf(scopes);
+    }
+
+    public TenantIntegrationKeyRes withPlainSecret(String secret) {
+        return new TenantIntegrationKeyRes(tikId, tenantId, keyId, label, scopes, status,
+                validFrom, expiresAt, lastUsedAt, useCount, dailyQuota, meta, isDeleted,
+                createdAt, updatedAt, secret);
     }
 }
