@@ -10,8 +10,10 @@ import com.ejada.catalog.repository.TierAddonRepository;
 import com.ejada.catalog.repository.TierRepository;
 import com.ejada.catalog.service.TierAddonService;
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.exception.DuplicateResourceException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,24 +34,29 @@ public final class TierAddonServiceImpl implements TierAddonService {
         tierRepo.findById(req.tierId()).orElseThrow(() -> new EntityNotFoundException("Tier " + req.tierId()));
         addonRepo.findById(req.addonId()).orElseThrow(() -> new EntityNotFoundException("Addon " + req.addonId()));
 
-        if (repo.existsByTier_TierIdAndAddon_AddonId(req.tierId(), req.addonId())) {
-            throw new IllegalStateException("TierAddon exists for tier=" + req.tierId() + " addon=" + req.addonId());
-        }
         TierAddon e = mapper.toEntity(req);
-        return BaseResponse.success("Tier addon allowed", mapper.toRes(repo.save(e)));
+        try {
+            TierAddon saved = repo.save(e);
+            return BaseResponse.success("Tier addon allowed", mapper.toRes(saved));
+        } catch (DataIntegrityViolationException ex) {
+            throw new DuplicateResourceException(
+                    "TierAddon for tier=" + req.tierId() + " addon=" + req.addonId());
+        }
     }
 
     @Override
     public BaseResponse<TierAddonRes> update(final Integer id, final TierAddonUpdateReq req) {
         TierAddon e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("TierAddon " + id));
         mapper.update(e, req);
-        return BaseResponse.success("Tier addon updated", mapper.toRes(e));
+        TierAddon saved = repo.save(e);
+        return BaseResponse.success("Tier addon updated", mapper.toRes(saved));
     }
 
     @Override
     public BaseResponse<Void> remove(final Integer id) {
         TierAddon e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("TierAddon " + id));
         e.setIsDeleted(true);
+        repo.save(e);
         return BaseResponse.success("Tier addon removed", null);
     }
 

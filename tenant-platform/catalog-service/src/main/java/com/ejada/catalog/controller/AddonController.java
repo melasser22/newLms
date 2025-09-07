@@ -17,6 +17,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,6 +44,7 @@ public class AddonController {
         log.info("Request to create addon: {}", req);
         BaseResponse<AddonRes> res = service.create(req);
         return ResponseEntity.status(201).body(res);
+
     }
 
     @PutMapping("/{id}")
