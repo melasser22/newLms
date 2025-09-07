@@ -8,7 +8,7 @@ RUN addgroup -g 1001 -S appgroup && \
 WORKDIR /app
 
 # Copy the application JAR
-COPY target/ejada-catalog-*.jar app.jar
+COPY target/*.jar app.jar
 
 # Change ownership to non-root user
 RUN chown -R appuser:appgroup /app
