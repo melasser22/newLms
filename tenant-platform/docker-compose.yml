@@ -28,10 +28,70 @@ volumes:
   kafkadata:
 
 services:
- 
- 
-  
-  
+
+
+
+
+  tenant-service:
+    build: ./tenant-service
+    <<: [*restart_policy]
+    depends_on:
+      postgres: { condition: service_healthy }
+      otel-collector: { condition: service_started }
+    environment:
+      TZ: Asia/Riyadh
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      OTEL_SERVICE_NAME: tenant-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+    ports:
+      - "8080:8080"
+    networks:
+      backend:
+
+  setup-service:
+    build: ../setup-service
+    <<: [*restart_policy]
+    depends_on:
+      postgres: { condition: service_healthy }
+      otel-collector: { condition: service_started }
+    environment:
+      TZ: Asia/Riyadh
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      OTEL_SERVICE_NAME: setup-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+    ports:
+      - "8081:8080"
+    networks:
+      backend:
+
+  billing-service:
+    build: ./billing-service
+    <<: [*restart_policy]
+    depends_on:
+      postgres: { condition: service_healthy }
+      otel-collector: { condition: service_started }
+    environment:
+      TZ: Asia/Riyadh
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      OTEL_SERVICE_NAME: billing-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+    ports:
+      - "8082:8080"
+    networks:
+      backend:
+
   catalog-service:
     build: ./catalog-service
     <<: [*restart_policy]
@@ -49,6 +109,26 @@ services:
       OTEL_METRICS_EXPORTER: otlp
     ports:
       - "8083:8080"
+    networks:
+      backend:
+
+  subscription-service:
+    build: ./subscription-service
+    <<: [*restart_policy]
+    depends_on:
+      postgres: { condition: service_healthy }
+      otel-collector: { condition: service_started }
+    environment:
+      TZ: Asia/Riyadh
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      OTEL_SERVICE_NAME: subscription-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+    ports:
+      - "8084:8080"
     networks:
       backend:
 
