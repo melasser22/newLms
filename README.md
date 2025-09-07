@@ -3,8 +3,8 @@
 This repository houses several components:
 
 - **shared-lib** – a collection of reusable Spring Boot starter modules and utilities.
-- **lms-setup** – a Spring Boot microservice for reference lookups and tenant/platform configuration.
-- **tenant-persistence** – central JPA entities, repositories, and Flyway migrations for the tenant domain.
+- **setup-service** – a Spring Boot microservice for reference lookups and tenant/platform configuration.
+- **tenant-platform** – a platform containing shared tenant services and components.
 
 ## Getting Started
 
@@ -23,13 +23,11 @@ mvn clean install
 ### Build and run the setup service
 
 ```bash
-cd ../lms-setup
+cd ../setup-service
 mvn spring-boot:run
 ```
 
-Set the following variables before running:
-=======
-The service uses environment variables for database and security settings. Defaults are provided for local development:
+Before running, configure the following environment variables (defaults are provided for local development):
 - `DB_URL`
 - `DB_USERNAME`
 - `DB_PASSWORD`
@@ -43,7 +41,7 @@ Run unit tests for both modules:
 
 ```bash
 cd shared-lib && mvn test
-cd ../lms-setup && mvn test
+cd ../setup-service && mvn test
 ```
 
 The build pulls dependencies from Maven Central; ensure network access is available.
