@@ -20,6 +20,7 @@ import com.ejada.crypto.starter.InMemoryKeyProviderAutoConfiguration;
 import com.ejada.crypto.AesGcmCrypto;
 import com.ejada.crypto.CryptoAlgorithm;
 import com.ejada.crypto.CryptoFacade;
+import com.ejada.crypto.CryptoService;
 import com.ejada.crypto.HmacSigner;
 import com.ejada.crypto.AesGcmEncryptor;
 import com.ejada.crypto.HmacSha256Signer;
@@ -81,6 +82,28 @@ public class CryptoAutoConfiguration {
     log.info("Shared CryptoFacade  initialized (alg={}, provider=current-key)",
         algorithm.getClass().getSimpleName());
     return facade;
+  }
+
+  /**
+   * Legacy {@link CryptoService} bean built on top of the single-key provider.
+   * <p>
+   *   This is kept for backward compatibility with modules that still depend on
+   *   the deprecated {@code CryptoService} API.  It reuses the configured
+   *   algorithm and resolves both encryption and MAC keys from the current
+   *   key supplied by the provider.
+   * </p>
+   */
+  @Bean
+  @ConditionalOnBean(InMemoryKeyProviderAutoConfiguration.KeyProvider.class)
+  @ConditionalOnMissingBean
+  public CryptoService cryptoService(
+      CryptoAlgorithm algorithm,
+      InMemoryKeyProviderAutoConfiguration.KeyProvider keyProvider) {
+    return CryptoService.builder()
+        .algorithm(algorithm)
+        .encryptionKeySupplier(keyProvider::getCurrentKey)
+        .macKeySupplier(keyProvider::getCurrentKey)
+        .build();
   }
 
   /** Convenience HMAC signer bean (shared lib), if someone wants to inject it directly.
