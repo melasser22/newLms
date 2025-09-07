@@ -87,7 +87,7 @@ public class CountryController {
     }
 
     @GetMapping
-    @RequireTenant
+    //@RequireTenant
     @SetupAuthorized
     @Operation(summary = "List countries", description = "Retrieves a paginated list of countries with optional search")
     @ApiResponses(value = {
