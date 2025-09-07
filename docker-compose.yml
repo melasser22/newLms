@@ -33,7 +33,7 @@ services:
 
 
   tenant-service:
-    build: ./tenant-service
+    build: ./tenant-platform/tenant-service
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
@@ -53,7 +53,7 @@ services:
       backend:
 
   setup-service:
-    build: ../setup-service
+    build: ./setup-service
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
@@ -73,7 +73,7 @@ services:
       backend:
 
   billing-service:
-    build: ./billing-service
+    build: ./tenant-platform/billing-service
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
@@ -93,7 +93,7 @@ services:
       backend:
 
   catalog-service:
-    build: ./catalog-service
+    build: ./tenant-platform/catalog-service
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
@@ -113,7 +113,7 @@ services:
       backend:
 
   subscription-service:
-    build: ./subscription-service
+    build: ./tenant-platform/subscription-service
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }

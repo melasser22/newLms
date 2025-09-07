@@ -25,6 +25,7 @@ mvn -T4 clean verify
 ```
 
 ## Run locally
+From the project root, run:
 ```bash
 docker-compose up --build
 ```
