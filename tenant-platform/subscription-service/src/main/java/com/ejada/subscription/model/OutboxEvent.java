@@ -1,0 +1,45 @@
+package com.ejada.subscription.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.DynamicUpdate;
+
+import java.time.OffsetDateTime;
+
+@Entity
+@Table(
+    name = "outbox_event",
+    indexes = @Index(name = "idx_outbox_unprocessed", columnList = "aggregate_type,aggregate_id")
+)
+@DynamicUpdate
+@Getter @Setter @NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+public class OutboxEvent {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false, updatable = false)
+    @EqualsAndHashCode.Include
+    private Long id;
+
+    @Column(name = "aggregate_type", length = 64, nullable = false)
+    private String aggregateType;
+
+    @Column(name = "aggregate_id", length = 128, nullable = false)
+    private String aggregateId;
+
+    @Column(name = "event_type", length = 64, nullable = false)
+    private String eventType;
+
+    @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
+    private String payload;
+
+    @Column(name = "headers", columnDefinition = "jsonb")
+    private String headers;
+
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt = OffsetDateTime.now();
+
+    @Column(name = "processed_at")
+    private OffsetDateTime processedAt;
+}

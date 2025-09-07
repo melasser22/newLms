@@ -20,6 +20,7 @@
   <!--   <module>shared-lib</module>-->
     <module>catalog-service</module>
     <module>tenant-service</module>
+    <module>subscription-service</module>
   </modules>
 
   <properties>

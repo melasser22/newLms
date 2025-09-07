@@ -44,7 +44,6 @@
     <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>shared-lib-crypto</artifactId>
-      <version>${project.version}</version>
     </dependency>
 
     <!-- Observability (opt-in) -->
