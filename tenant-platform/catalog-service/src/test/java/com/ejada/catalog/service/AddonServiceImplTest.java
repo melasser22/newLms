@@ -7,7 +7,7 @@ import com.ejada.catalog.repository.AddonRepository;
 import com.ejada.catalog.service.impl.AddonServiceImpl;
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.common.exception.ResourceNotFoundException;
-import jakarta.persistence.EntityNotFoundException;
+import com.ejada.common.exception.DuplicateResourceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -53,12 +53,12 @@ class AddonServiceImplTest {
     }
 
     @Test
-    @DisplayName("should throw IllegalStateException when addonCd exists")
+    @DisplayName("should throw DuplicateResourceException when addonCd exists")
     void create_shouldThrowOnDuplicateCd() {
         AddonCreateReq req = new AddonCreateReq("CD1", "Addon", "AR", null, "CAT", true);
         when(repo.existsByAddonCd("CD1")).thenReturn(true);
 
-        assertThrows(IllegalStateException.class, () -> service.create(req));
+        assertThrows(DuplicateResourceException.class, () -> service.create(req));
     }
 
     @Test
@@ -113,11 +113,11 @@ class AddonServiceImplTest {
     }
 
     @Test
-    @DisplayName("should throw EntityNotFoundException when updating missing addon")
+    @DisplayName("should throw ResourceNotFoundException when updating missing addon")
     void update_shouldThrowWhenMissing() {
         when(repo.findById(1)).thenReturn(Optional.empty());
         AddonUpdateReq req = new AddonUpdateReq(null, null, null, null, null, null);
-        assertThrows(EntityNotFoundException.class, () -> service.update(1, req));
+        assertThrows(ResourceNotFoundException.class, () -> service.update(1, req));
     }
 
     @Test
@@ -135,10 +135,10 @@ class AddonServiceImplTest {
     }
 
     @Test
-    @DisplayName("should throw EntityNotFoundException when soft deleting missing addon")
+    @DisplayName("should throw ResourceNotFoundException when soft deleting missing addon")
     void softDelete_shouldThrowWhenMissing() {
         when(repo.findById(1)).thenReturn(Optional.empty());
-        assertThrows(EntityNotFoundException.class, () -> service.softDelete(1));
+        assertThrows(ResourceNotFoundException.class, () -> service.softDelete(1));
     }
 }
 
