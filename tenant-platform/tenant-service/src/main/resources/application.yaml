@@ -12,7 +12,7 @@ server:
   port: 8080
   shutdown: graceful
   servlet:
-    context-path: /core
+    context-path: /tenant
   compression:
     enabled: true
     mime-types:
