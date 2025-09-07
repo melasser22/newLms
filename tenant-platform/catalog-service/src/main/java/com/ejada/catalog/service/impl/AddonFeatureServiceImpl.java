@@ -8,8 +8,10 @@ import com.ejada.catalog.repository.AddonRepository;
 import com.ejada.catalog.repository.FeatureRepository;
 import com.ejada.catalog.service.AddonFeatureService;
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.exception.DuplicateResourceException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,24 +32,28 @@ public class AddonFeatureServiceImpl implements AddonFeatureService {
         addonRepo.findById(req.addonId()).orElseThrow(() -> new EntityNotFoundException("Addon " + req.addonId()));
         featureRepo.findById(req.featureId()).orElseThrow(() -> new EntityNotFoundException("Feature " + req.featureId()));
 
-        if (repo.existsByAddon_AddonIdAndFeature_FeatureId(req.addonId(), req.featureId())) {
-            throw new IllegalStateException("AddonFeature exists for addon=" + req.addonId() + " feature=" + req.featureId());
-        }
         AddonFeature e = mapper.toEntity(req);
-        return BaseResponse.success("Addon feature attached", mapper.toRes(repo.save(e)));
+        try {
+            AddonFeature saved = repo.save(e);
+            return BaseResponse.success("Addon feature attached", mapper.toRes(saved));
+        } catch (DataIntegrityViolationException ex) {
+            throw new DuplicateResourceException("AddonFeature for addon=" + req.addonId() + " feature=" + req.featureId());
+        }
     }
 
     @Override
     public BaseResponse<AddonFeatureRes> update(Integer id, AddonFeatureUpdateReq req) {
         AddonFeature e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("AddonFeature " + id));
         mapper.update(e, req);
-        return BaseResponse.success("Addon feature updated", mapper.toRes(e));
+        AddonFeature saved = repo.save(e);
+        return BaseResponse.success("Addon feature updated", mapper.toRes(saved));
     }
 
     @Override
     public BaseResponse<Void> detach(Integer id) {
         AddonFeature e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("AddonFeature " + id));
         e.setIsDeleted(true);
+        repo.save(e);
         return BaseResponse.success("Addon feature detached", null);
     }
 
