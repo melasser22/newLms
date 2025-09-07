@@ -15,7 +15,7 @@ public interface SubscriptionEnvironmentIdentifierMapper {
     @Mapping(target = "identifierCd",    source = "dto.identifierCd")
     @Mapping(target = "identifierValue", source = "dto.identifierValue")
     @Mapping(target = "createdAt", ignore = true)
-    SubscriptionEnvironmentIdentifier toEntity(EnvironmentIdentifierDto dto, Subscription subscription);
+    SubscriptionEnvironmentIdentifier toEntity(EnvironmentIdentifierDto dto, @Context Subscription subscription);
 
     // entity -> dto (no 'subscription' on DTO)
     EnvironmentIdentifierDto toDto(SubscriptionEnvironmentIdentifier entity);

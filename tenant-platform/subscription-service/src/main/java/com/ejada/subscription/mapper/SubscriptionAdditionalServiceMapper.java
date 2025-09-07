@@ -26,7 +26,7 @@ public interface SubscriptionAdditionalServiceMapper {
     @Mapping(target = "paymentTypeCd", source = "dto.paymentTypeCd")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    SubscriptionAdditionalService toEntity(SubscriptionAdditionalServiceDto dto, Subscription subscription);
+    SubscriptionAdditionalService toEntity(SubscriptionAdditionalServiceDto dto, @Context Subscription subscription);
 
     List<SubscriptionAdditionalService> toEntities(List<SubscriptionAdditionalServiceDto> dtos, @Context Subscription subscription);
 }
