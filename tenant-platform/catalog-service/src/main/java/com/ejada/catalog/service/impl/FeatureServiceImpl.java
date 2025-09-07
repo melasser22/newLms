@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public final class FeatureServiceImpl implements FeatureService {
+public  class FeatureServiceImpl implements FeatureService {
 
     private final FeatureRepository repo;
     private final FeatureMapper mapper;

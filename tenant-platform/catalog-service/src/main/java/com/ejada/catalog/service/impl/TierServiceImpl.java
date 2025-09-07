@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public final class TierServiceImpl implements TierService {
+public class TierServiceImpl implements TierService {
 
     private final TierRepository repo;
     private final TierMapper mapper;

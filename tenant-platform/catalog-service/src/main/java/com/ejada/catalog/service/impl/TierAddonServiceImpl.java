@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public final class TierAddonServiceImpl implements TierAddonService {
+public class TierAddonServiceImpl implements TierAddonService {
 
     private final TierAddonRepository repo;
     private final TierRepository tierRepo;

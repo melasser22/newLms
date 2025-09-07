@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public final class TierFeatureServiceImpl implements TierFeatureService {
+public class TierFeatureServiceImpl implements TierFeatureService {
 
     private final TierFeatureRepository repo;
     private final TierRepository tierRepo;
