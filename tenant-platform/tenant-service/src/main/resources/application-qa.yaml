@@ -206,10 +206,11 @@ shared:
 
 logging:
   level:
-    root: INFO                
+    root: INFO
     com.ejada: INFO
-    org.hibernate.SQL: INFO   
+    org.hibernate.SQL: INFO
     org.hibernate.orm.jdbc.bind: INFO
+    org.hibernate.resource.transaction: INFO
     org.springframework.cache: ERROR
     org.springframework.cache.interceptor.CacheAspectSupport: ERROR
 

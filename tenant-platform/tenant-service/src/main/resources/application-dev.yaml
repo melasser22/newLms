@@ -206,7 +206,7 @@ shared:
 
 logging:
   level:
-    root: DEBUG
+    root: INFO
     com.ejada: DEBUG
     com.ejada.audit.starter: DEBUG
     com.ejada.audit.starter.core.dispatch: DEBUG
@@ -214,7 +214,8 @@ logging:
     org.hibernate.tool.schema: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: DEBUG
+    org.hibernate.resource.transaction: INFO
     org.springframework.cache: DEBUG
     org.springframework.cache.interceptor.CacheAspectSupport: DEBUG
 
-debug: true
+debug: false

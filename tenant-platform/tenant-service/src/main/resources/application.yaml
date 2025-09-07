@@ -31,3 +31,7 @@ shared:
     enable-role-check: true
     jwt:
       token-period: 15m
+
+logging:
+  level:
+    org.hibernate.resource.transaction: INFO
