@@ -5,6 +5,7 @@ import com.ejada.common.exception.BusinessException;
 import com.ejada.common.exception.BusinessRuleException;
 import com.ejada.common.exception.NotFoundException;
 import com.ejada.common.exception.ResourceNotFoundException;
+import com.ejada.common.exception.DuplicateResourceException;
 import com.ejada.common.exception.ValidationException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -104,6 +105,13 @@ public class GlobalExceptionHandler {
         log.error("Data integrity violation: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(BaseResponse.error("ERR_DATA_CONFLICT", "Data conflict occurred"));
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<BaseResponse<?>> handleDuplicateResource(DuplicateResourceException ex, WebRequest request) {
+        log.warn("Duplicate resource: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(BaseResponse.error(ex.getErrorCode(), ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

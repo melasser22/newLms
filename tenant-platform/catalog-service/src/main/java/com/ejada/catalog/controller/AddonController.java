@@ -18,6 +18,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
+import java.net.URI;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,14 +36,16 @@ public class AddonController {
     @CatalogAuthorized
     @Operation(summary = "Create a new addon", description = "Creates a new addon with the provided details")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "addon created successfully",
+            @ApiResponse(responseCode = "201", description = "addon created successfully",
                 content = @Content(schema = @Schema(implementation = BaseResponse.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "403", description = "Access denied"),
             @ApiResponse(responseCode = "409", description = "addon already exists")
         })
     public ResponseEntity<BaseResponse<AddonRes>> create(@Valid @RequestBody AddonCreateReq req) {
-        return ResponseEntity.ok(service.create(req));
+        BaseResponse<AddonRes> res = service.create(req);
+        URI location = URI.create("/api/v1/catalog/addons/" + res.data().addonId());
+        return ResponseEntity.created(location).body(res);
     }
 
     @PutMapping("/{id}")

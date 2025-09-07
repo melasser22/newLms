@@ -9,12 +9,15 @@ import com.ejada.catalog.model.Addon;
 import com.ejada.catalog.repository.AddonRepository;
 import com.ejada.catalog.service.AddonService;
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.exception.DuplicateResourceException;
 import com.ejada.common.exception.ResourceNotFoundException;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,27 +33,38 @@ public class AddonServiceImpl implements AddonService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = "addons", allEntries = true)
     public BaseResponse<AddonRes> create(AddonCreateReq req) {
-        if (repo.existsByAddonCd(req.addonCd())) {
-            throw new IllegalStateException("addonCd exists: " + req.addonCd());
-        }
         Addon e = mapper.toEntity(req);
-          return BaseResponse.success("Addon created",mapper.toRes(repo.save(e)));
+        try {
+            Addon saved = repo.save(e);
+            return BaseResponse.success("Addon created", mapper.toRes(saved));
+        } catch (DataIntegrityViolationException ex) {
+            throw new DuplicateResourceException("Addon", req.addonCd());
+        }
     }
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = "addons", key = "#id")
     public BaseResponse<AddonRes> update(Integer id, AddonUpdateReq req) {
         Addon e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Addon " + id));
         mapper.update(e, req);
-        return BaseResponse.success("Addon updated",mapper.toRes(e));
-
+        try {
+            Addon saved = repo.save(e);
+            return BaseResponse.success("Addon updated", mapper.toRes(saved));
+        } catch (DataIntegrityViolationException ex) {
+            if (req.addonCd() != null) {
+                throw new DuplicateResourceException("Addon", req.addonCd());
+            }
+            throw ex;
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(cacheNames = "addons", key = "#id")
-    public  BaseResponse<AddonRes> get(Integer id) {
+    public BaseResponse<AddonRes> get(Integer id) {
         Addon addon = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Addon", String.valueOf(id)));
         return BaseResponse.success("OK", mapper.toRes(addon));
@@ -71,10 +85,11 @@ public class AddonServiceImpl implements AddonService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = "addons", key = "#id")
     public BaseResponse<Void> softDelete(Integer id) {
         Addon e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Addon " + id));
         e.setIsDeleted(true);
+        repo.save(e);
         return BaseResponse.success("Addon deleted", null);
-
     }
 }
