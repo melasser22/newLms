@@ -5,7 +5,8 @@ import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
 import org.mapstruct.*;
 import org.springframework.lang.NonNull;
 
-@Mapper(config = SharedMapstructConfig.class)
+// Explicitly declare componentModel to ensure Spring Bean generation
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, config = SharedMapstructConfig.class)
 public interface AddonMapper {
 
     // ---------- Create ----------
