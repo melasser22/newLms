@@ -1,11 +1,11 @@
 spring:
   datasource:
-    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=setup}"
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ejada}?currentSchema=billing}"
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      pool-name: HikariPool-ejada
+      pool-name: HikariPool-Ejada
       maximum-pool-size: 10
       minimum-idle: 2
       idle-timeout: 30000        # 30s
@@ -14,26 +14,23 @@ spring:
 
   jpa:
     open-in-view: false
-    show-sql: true
+    show-sql: true              
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
-        default_schema: setup
+        default_schema: billing
         hbm2ddl.create_namespaces: true
         format_sql: true
         jdbc.time_zone: UTC
-
   flyway:
-    enabled: true
+    enabled: false
     baseline-on-migrate: true
-    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
-
   kafka:
-    bootstrap-servers: localhost:29092
-    client-id: ejada-setup-dev
+    bootstrap-servers: localhost:9092
+    client-id: ejada-billing-qa
     consumer:
-      group-id: ejada-backend-dev
+      group-id: ejada-backend-qa
       auto-offset-reset: earliest
       enable-auto-commit: false
       properties:
@@ -46,6 +43,7 @@ spring:
       compression-type: gzip
       properties:
         linger.ms: 5
+
 
   data:
     redis:
@@ -82,10 +80,10 @@ shared:
       header-name: X-Correlation-Id
       generate-if-missing: true
       echo-response-header: true
-    tenant:
+    billing:
       enabled: true
-      header-name: x_tenant_id
-      query-param: tenantId
+      header-name: x_billing_id
+      query-param: billingId
       default-policy: OPTIONAL
       echo-response-header: true
     cors:
@@ -95,6 +93,7 @@ shared:
       allowed-headers: "*"
   headers:
     enabled: true
+
     correlation:
       header: X-Correlation-Id
       auto-generate: true
@@ -103,8 +102,8 @@ shared:
       header: X-Request-ID
       auto-generate: true
       mandatory: true
-    tenant:
-      header: x_tenant_id
+    billing:
+      header: x_billing_id
       auto-generate: false
       mandatory: false
     user:
@@ -122,13 +121,13 @@ shared:
       frame-options: SAMEORIGIN
       content-type-options: nosniff
       referrer-policy: no-referrer
-      xss-protection: "0"
+      xss-protection: "1; mode=block"
     propagation:
       enabled: true
       include:
         - X-Correlation-Id
         - X-Request-ID
-        - x_tenant_id
+        - x_billing_id
         - X-User-Id
   audit:
     enabled: true
@@ -153,7 +152,7 @@ shared:
     sinks:
       db:
         enabled: true
-        schema: setup
+        schema: billing
         table: audit_logs
       kafka:
         enabled: true
@@ -161,60 +160,57 @@ shared:
       otlp:
         enabled: false
       outbox:
-        enabled: true
+        enabled: false
+
   openapi:
     enabled: true
-    title: " Setup Service API"
-    description: "Setup service endpoints for tenant/platform configuration."
+    title: "Ejada - billing Service API"
+    description: "billing service endpoints for billing/platform configuration."
     version: "1.0.0"
     servers:
       - http://localhost:8080/core
     group:
-      name: setup
+      name: billing
       packages-to-scan:
-        - com.ejada.setup
-    jwt-security: false
+        - com.ejada.billing
+
+    jwt-security: true
   redis:
     host: localhost
     port: 6379
     timeout: 2s
-    key-prefix: setup
+    key-prefix: ejada
     default-ttl: 600s
     reactive: false
   crypto:
     algorithm: AES_GCM
     in-memory:
-      activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
+      activeKid: ${CRYPTO_ACTIVE_KID:local-qa-key}
       keys:
-        local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
+        local-qa-key: ${CRYPTO_LOCAL_QA_KEY}
   security:
     mode: hs256
     jwt:
-      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+      secret: ${JWT_SECRET}
       token-period: 15m
     hs256:
-      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+      secret: ${JWT_SECRET}
     resource-server:
       enabled: true
-      permit-all:
-        - "/**"
+      permit-all: ["**"]
       disable-csrf: false
     stateless: true
     roles-claim: roles
-    tenant-claim: tenant
-    enable-role-check: false
+    billing-claim: billing
+    enable-role-check: true
 
 logging:
   level:
-    root: DEBUG
-    com.ejada: DEBUG
-    com.ejada.audit.starter: DEBUG
-    com.ejada.audit.starter.core.dispatch: DEBUG
-    com.ejada.audit.starter.core.dispatch.sinks: DEBUG
-    org.hibernate.tool.schema: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: DEBUG
-    org.springframework.cache: DEBUG
-    org.springframework.cache.interceptor.CacheAspectSupport: DEBUG
+    root: INFO                
+    com.ejada: INFO
+    org.hibernate.SQL: INFO   
+    org.hibernate.orm.jdbc.bind: INFO
+    org.springframework.cache: ERROR
+    org.springframework.cache.interceptor.CacheAspectSupport: ERROR
 
-debug: true
+debug: false

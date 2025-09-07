@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=setup}"
+    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=billing}"
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
@@ -19,7 +19,7 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
-        default_schema: setup
+        default_schema: billing
         hbm2ddl.create_namespaces: true
         format_sql: true
         jdbc.time_zone: UTC
@@ -31,7 +31,7 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:29092
-    client-id: ejada-setup-dev
+    client-id: ejada-billing-dev
     consumer:
       group-id: ejada-backend-dev
       auto-offset-reset: earliest
@@ -82,10 +82,10 @@ shared:
       header-name: X-Correlation-Id
       generate-if-missing: true
       echo-response-header: true
-    tenant:
+    billing:
       enabled: true
-      header-name: x_tenant_id
-      query-param: tenantId
+      header-name: x_billing_id
+      query-param: billingId
       default-policy: OPTIONAL
       echo-response-header: true
     cors:
@@ -103,8 +103,8 @@ shared:
       header: X-Request-ID
       auto-generate: true
       mandatory: true
-    tenant:
-      header: x_tenant_id
+    billing:
+      header: x_billing_id
       auto-generate: false
       mandatory: false
     user:
@@ -128,7 +128,7 @@ shared:
       include:
         - X-Correlation-Id
         - X-Request-ID
-        - x_tenant_id
+        - x_billing_id
         - X-User-Id
   audit:
     enabled: true
@@ -153,7 +153,7 @@ shared:
     sinks:
       db:
         enabled: true
-        schema: setup
+        schema: billing
         table: audit_logs
       kafka:
         enabled: true
@@ -164,21 +164,21 @@ shared:
         enabled: true
   openapi:
     enabled: true
-    title: " Setup Service API"
-    description: "Setup service endpoints for tenant/platform configuration."
+    title: " billing Service API"
+    description: "billing service endpoints for billing/platform configuration."
     version: "1.0.0"
     servers:
       - http://localhost:8080/core
     group:
-      name: setup
+      name: billing
       packages-to-scan:
-        - com.ejada.setup
+        - com.ejada.billing
     jwt-security: false
   redis:
     host: localhost
     port: 6379
     timeout: 2s
-    key-prefix: setup
+    key-prefix: billing
     default-ttl: 600s
     reactive: false
   crypto:
@@ -201,7 +201,7 @@ shared:
       disable-csrf: false
     stateless: true
     roles-claim: roles
-    tenant-claim: tenant
+    billing-claim: billing
     enable-role-check: false
 
 logging:
