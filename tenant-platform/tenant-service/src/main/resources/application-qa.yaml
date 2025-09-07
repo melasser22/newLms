@@ -27,7 +27,7 @@ spring:
     enabled: false
     baseline-on-migrate: true
   kafka:
-    bootstrap-servers: localhost:29092
+    bootstrap-servers: kafka:9092
     client-id: ejada-tenant-qa
     consumer:
       group-id: ejada-backend-qa

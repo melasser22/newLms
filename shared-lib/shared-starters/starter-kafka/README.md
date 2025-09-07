@@ -21,5 +21,5 @@ Example properties:
 ```yaml
 shared:
   kafka:
-    bootstrap-servers: localhost:29092
+    bootstrap-servers: kafka:9092
 ```
