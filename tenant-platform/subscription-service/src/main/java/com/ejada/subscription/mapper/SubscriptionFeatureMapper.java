@@ -16,7 +16,7 @@ public interface SubscriptionFeatureMapper {
     @Mapping(target = "featureCount", source = "dto.featureCount")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    SubscriptionFeature toEntity(SubscriptionFeatureDto dto, Subscription subscription);
+    SubscriptionFeature toEntity(SubscriptionFeatureDto dto, @Context Subscription subscription);
 
     List<SubscriptionFeature> toEntities(List<SubscriptionFeatureDto> dtos, @Context Subscription subscription);
 }

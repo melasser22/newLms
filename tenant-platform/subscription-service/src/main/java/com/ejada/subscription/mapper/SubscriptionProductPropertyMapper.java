@@ -15,7 +15,7 @@ public interface SubscriptionProductPropertyMapper {
     @Mapping(target = "propertyCd", source = "dto.propertyCd")
     @Mapping(target = "propertyValue", source = "dto.propertyValue")
     @Mapping(target = "createdAt", ignore = true)
-    SubscriptionProductProperty toEntity(ProductPropertyDto dto, Subscription subscription);
+    SubscriptionProductProperty toEntity(ProductPropertyDto dto, @Context Subscription subscription);
 
     List<SubscriptionProductProperty> toEntities(List<ProductPropertyDto> dtos, @Context Subscription subscription);
 }
