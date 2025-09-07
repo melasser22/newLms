@@ -68,9 +68,9 @@
       <groupId>com.ejada</groupId>
       <artifactId>starter-security</artifactId>
     </dependency>
-    <dependency> 
+    <dependency>
       <groupId>com.ejada</groupId>
-      <artifactId>shared-lib-crypto</artifactId>
+      <artifactId>starter-crypto</artifactId>
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
