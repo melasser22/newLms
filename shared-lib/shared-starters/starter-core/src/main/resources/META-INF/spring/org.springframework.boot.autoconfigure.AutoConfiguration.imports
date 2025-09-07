@@ -1,3 +1,4 @@
 com.ejada.starter_core.config.CoreExtrasAutoConfiguration
+com.ejada.starter_core.config.JacksonConfig
 com.ejada.starter_core.config.PerformanceConfig
 com.ejada.starter_core.exception.CoreExceptionAutoConfiguration
