@@ -29,16 +29,9 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<BaseResponse<?>> handleResourceNotFound(NotFoundException ex, WebRequest request) {
+    @ExceptionHandler({NotFoundException.class, ResourceNotFoundException.class})
+    public ResponseEntity<BaseResponse<?>> handleResourceNotFound(RuntimeException ex, WebRequest request) {
         log.warn("Resource not found: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(BaseResponse.error("ERR_RESOURCE_NOT_FOUND", ex.getMessage()));
-    }
-
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<BaseResponse<?>> handleSpecificResourceNotFound(ResourceNotFoundException ex, WebRequest request) {
-        log.warn("Specific resource not found: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(BaseResponse.error("ERR_RESOURCE_NOT_FOUND", ex.getMessage()));
     }
