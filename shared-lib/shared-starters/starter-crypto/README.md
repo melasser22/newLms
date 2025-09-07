@@ -3,7 +3,7 @@
 Auto-configures crypto services and metrics.
 
 ## Use cases
-- Provides `CryptoService` and `JwtTokenService` beans.
+- Provides legacy `CryptoService` and `JwtTokenService` beans.
 - MDC filter to log encryption identifiers.
 - Optional in-memory key provider for development.
 
