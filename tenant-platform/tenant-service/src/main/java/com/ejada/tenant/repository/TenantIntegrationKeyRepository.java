@@ -31,7 +31,7 @@ public interface TenantIntegrationKeyRepository extends JpaRepository<TenantInte
             where k.tenant.id = :tenantId
               and k.keyId     = :keyId
               and k.isDeleted = false
-              and k.status    = com.ejada.catalog.model.TenantIntegrationKey.Status.ACTIVE
+              and k.status    = com.ejada.tenant.model.TenantIntegrationKey$Status.ACTIVE
               and k.validFrom <= CURRENT_TIMESTAMP
               and k.expiresAt >  CURRENT_TIMESTAMP
            """)
@@ -44,7 +44,7 @@ public interface TenantIntegrationKeyRepository extends JpaRepository<TenantInte
              from TenantIntegrationKey k
             where k.isDeleted = false
               and k.expiresAt <= CURRENT_TIMESTAMP
-              and k.status <> com.ejada.catalog.model.TenantIntegrationKey.Status.EXPIRED
+              and k.status <> com.ejada.tenant.model.TenantIntegrationKey$Status.EXPIRED
            """)
     List<TenantIntegrationKey> findAllExpiredAndNotMarked();
 
@@ -53,7 +53,7 @@ public interface TenantIntegrationKeyRepository extends JpaRepository<TenantInte
     @Query("""
            update TenantIntegrationKey k
               set k.isDeleted = true,
-                  k.status    = com.ejada.catalog.model.TenantIntegrationKey.Status.REVOKED
+                  k.status    = com.ejada.tenant.model.TenantIntegrationKey$Status.REVOKED
             where k.tikId     = :id
               and k.isDeleted = false
            """)
