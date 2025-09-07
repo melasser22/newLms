@@ -16,7 +16,7 @@ spring:
     open-in-view: false
     show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     properties:
       hibernate:
         default_schema: tenant
@@ -206,15 +206,15 @@ shared:
 
 logging:
   level:
-    root: DEBUG
-    com.ejada: DEBUG
-    com.ejada.audit.starter: DEBUG
-    com.ejada.audit.starter.core.dispatch: DEBUG
-    com.ejada.audit.starter.core.dispatch.sinks: DEBUG
-    org.hibernate.tool.schema: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: DEBUG
-    org.springframework.cache: DEBUG
-    org.springframework.cache.interceptor.CacheAspectSupport: DEBUG
+    root: ERROR
+    com.ejada: ERROR
+    com.ejada.audit.starter: ERROR
+    com.ejada.audit.starter.core.dispatch: ERROR
+    com.ejada.audit.starter.core.dispatch.sinks: ERROR
+    org.hibernate.tool.schema: ERROR
+    org.hibernate.SQL: ERROR
+    org.hibernate.orm.jdbc.bind: ERROR
+    org.springframework.cache: ERROR
+    org.springframework.cache.interceptor.CacheAspectSupport: ERROR
 
 debug: true

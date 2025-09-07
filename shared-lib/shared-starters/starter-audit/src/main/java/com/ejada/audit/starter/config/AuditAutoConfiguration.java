@@ -213,7 +213,7 @@ public class AuditAutoConfiguration {
     Object k = props.getSinks().getKafka();
     String bootstrap = optionalString(k, "getBootstrapServers", null);
     if (bootstrap == null || bootstrap.isBlank()) {
-      bootstrap = env.getProperty("spring.kafka.bootstrap-servers", "localhost:9092");
+      bootstrap = env.getProperty("spring.kafka.bootstrap-servers", "localhost:29092");
     }
     String topic = optionalString(k, "getTopic", "audit.events.v1");
     String acks = optionalString(k, "getAcks", "all");
