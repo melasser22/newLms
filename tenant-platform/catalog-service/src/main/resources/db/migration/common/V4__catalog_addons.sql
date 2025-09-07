@@ -50,13 +50,12 @@ create table IF NOT EXISTS addon_feature (
   updated_at           timestamptz,
   updated_by           varchar(128),
 
-  constraint uk_addon_feature unique (addon_id, feature_id),
-  constraint fk_af_addon   foreign key (addon_id)   references addon(addon_id)   on delete cascade,
-  constraint fk_af_feature foreign key (feature_id) references feature(id) on delete cascade,
-
-  constraint ck_af_enforcement check (enforcement in ('ALLOW','BLOCK','ALLOW_WITH_OVERAGE')),
-  constraint ck_af_window      check (limit_window is null or limit_window in ('DAILY','MONTHLY','QUARTERLY','YEARLY','LIFETIME')),
-  constraint ck_af_soft_hard   check (soft_limit is null or hard_limit is null or hard_limit >= soft_limit),
+  constraint uk_addon_feature    unique (addon_id, feature_id),
+  constraint fk_af_addon         foreign key (addon_id)   references addon(addon_id) on delete cascade,
+  constraint fk_af_feature       foreign key (feature_id) references feature(id)  on delete cascade,
+  constraint ck_af_enforcement   check (enforcement in ('ALLOW','BLOCK','ALLOW_WITH_OVERAGE')),
+  constraint ck_af_window        check (limit_window is null or limit_window in ('DAILY','MONTHLY','QUARTERLY','YEARLY','LIFETIME')),
+  constraint ck_af_soft_hard     check (soft_limit is null or hard_limit is null or hard_limit >= soft_limit),
   constraint ck_af_block_has_hard check (enforcement <> 'BLOCK' or hard_limit is not null),
   constraint ck_af_overage_price check ((overage_enabled = false) or (overage_unit_price is not null))
 );
