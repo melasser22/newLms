@@ -17,7 +17,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.Builder;
 import org.hibernate.annotations.DynamicUpdate;
 
 // Uncomment if using hibernate-types library:
@@ -48,6 +47,8 @@ public class TenantIntegrationKey {
     public static final int SECRET_LENGTH = 255;
     public static final int LABEL_LENGTH = 128;
     public static final int STATUS_LENGTH = 16;
+    public static final int PLAIN_SECRET_LENGTH = 256;
+    public static final int SCOPE_LENGTH = 64;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

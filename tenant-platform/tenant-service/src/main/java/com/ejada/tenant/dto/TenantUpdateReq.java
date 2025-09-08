@@ -1,28 +1,34 @@
 package com.ejada.tenant.dto;
 
+import static com.ejada.tenant.model.Tenant.CODE_LENGTH;
+import static com.ejada.tenant.model.Tenant.EMAIL_LENGTH;
+import static com.ejada.tenant.model.Tenant.LOGO_URL_LENGTH;
+import static com.ejada.tenant.model.Tenant.NAME_LENGTH;
+import static com.ejada.tenant.model.Tenant.PHONE_LENGTH;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
 @Schema(name = "TenantUpdateReq")
 public record TenantUpdateReq(
-        @Size(max = 64)
+        @Size(max = CODE_LENGTH)
         @Schema(description = "Unique tenant code", example = "EJADA")
         String code,
 
-        @Size(max = 128)
+        @Size(max = NAME_LENGTH)
         @Schema(description = "Tenant display name", example = "Ejada Systems")
         String name,
 
-        @Email @Size(max = 255)
+        @Email @Size(max = EMAIL_LENGTH)
         @Schema(description = "Contact email", example = "ops@ejada.com")
         String contactEmail,
 
-        @Size(max = 32)
+        @Size(max = PHONE_LENGTH)
         @Schema(description = "Contact phone (normalized E.164 preferred)", example = "+966500000000")
         String contactPhone,
 
-        @Size(max = 255)
+        @Size(max = LOGO_URL_LENGTH)
         @Schema(description = "Tenant logo URL", example = "https://example.com/logo.png")
         String logoUrl,
 

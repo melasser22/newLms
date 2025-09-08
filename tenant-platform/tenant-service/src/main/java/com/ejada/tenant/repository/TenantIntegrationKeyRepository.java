@@ -18,13 +18,44 @@ public interface TenantIntegrationKeyRepository extends JpaRepository<TenantInte
 
     Optional<TenantIntegrationKey> findByTikIdAndIsDeletedFalse(Long tikId);
 
-    Optional<TenantIntegrationKey> findByTenant_IdAndKeyIdAndIsDeletedFalse(Integer tenantId, String keyId);
+    @Query("""
+           select k
+             from TenantIntegrationKey k
+            where k.tenant.id = :tenantId
+              and k.keyId     = :keyId
+              and k.isDeleted = false
+           """)
+    Optional<TenantIntegrationKey> findByTenantIdAndKeyIdAndIsDeletedFalse(@Param("tenantId") Integer tenantId,
+                                                                           @Param("keyId") String keyId);
 
-    Page<TenantIntegrationKey> findByTenant_IdAndIsDeletedFalse(Integer tenantId, Pageable pageable);
+    @Query("""
+           select k
+             from TenantIntegrationKey k
+            where k.tenant.id = :tenantId
+              and k.isDeleted = false
+           """)
+    Page<TenantIntegrationKey> findByTenantIdAndIsDeletedFalse(@Param("tenantId") Integer tenantId,
+                                                              Pageable pageable);
 
-    List<TenantIntegrationKey> findByTenant_IdAndStatusAndIsDeletedFalse(Integer tenantId, Status status);
+    @Query("""
+           select k
+             from TenantIntegrationKey k
+            where k.tenant.id = :tenantId
+              and k.status    = :status
+              and k.isDeleted = false
+           """)
+    List<TenantIntegrationKey> findByTenantIdAndStatusAndIsDeletedFalse(@Param("tenantId") Integer tenantId,
+                                                                       @Param("status") Status status);
 
-    boolean existsByTenant_IdAndKeyIdAndIsDeletedFalse(Integer tenantId, String keyId);
+    @Query("""
+           select count(k) > 0
+             from TenantIntegrationKey k
+            where k.tenant.id = :tenantId
+              and k.keyId     = :keyId
+              and k.isDeleted = false
+           """)
+    boolean existsByTenantIdAndKeyIdAndIsDeletedFalse(@Param("tenantId") Integer tenantId,
+                                                      @Param("keyId") String keyId);
 
     // --- Usable (active + within validity window + not deleted) ---
     @Query("""

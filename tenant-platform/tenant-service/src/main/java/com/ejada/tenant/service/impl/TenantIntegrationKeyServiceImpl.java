@@ -28,7 +28,7 @@ import java.util.Base64;
 public final class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyService {
 
     private static final SecureRandom RANDOM = new SecureRandom();
-
+    private static final int SECRET_BYTES_LENGTH = 32;
     private final TenantIntegrationKeyRepository repo;
     private final TenantRepository tenantRepo;
     private final TenantIntegrationKeyMapper mapper;
@@ -52,7 +52,7 @@ public final class TenantIntegrationKeyServiceImpl implements TenantIntegrationK
                 .orElseThrow(() -> new EntityNotFoundException("Tenant " + req.tenantId()));
 
         // Uniqueness under soft delete
-        if (repo.existsByTenant_IdAndKeyIdAndIsDeletedFalse(req.tenantId(), req.keyId())) {
+        if (repo.existsByTenantIdAndKeyIdAndIsDeletedFalse(req.tenantId(), req.keyId())) {
             throw new IllegalStateException("integration key exists for tenant=" + req.tenantId() + " keyId=" + req.keyId());
         }
 
@@ -70,7 +70,7 @@ public final class TenantIntegrationKeyServiceImpl implements TenantIntegrationK
         // Secret handling
         String plainSecret = req.plainSecret();
         if (plainSecret == null || plainSecret.isBlank()) {
-            byte[] secretBytes = new byte[32];
+            byte[] secretBytes = new byte[SECRET_BYTES_LENGTH];
             RANDOM.nextBytes(secretBytes);
             plainSecret = Base64.getUrlEncoder().withoutPadding().encodeToString(secretBytes);
         }
@@ -134,9 +134,7 @@ public final class TenantIntegrationKeyServiceImpl implements TenantIntegrationK
         tenantRepo.findByIdAndIsDeletedFalse(tenantId)
                 .orElseThrow(() -> new EntityNotFoundException("Tenant " + tenantId));
         Page<TenantIntegrationKeyRes> page =
-                repo.findByTenant_IdAndIsDeletedFalse(tenantId, pageable).map(mapper::toRes);
+                repo.findByTenantIdAndIsDeletedFalse(tenantId, pageable).map(mapper::toRes);
         return BaseResponse.success("Tenant integration keys listed", page);
     }
-
-    private static final int SECRET_BYTES_LENGTH = 32;
 }

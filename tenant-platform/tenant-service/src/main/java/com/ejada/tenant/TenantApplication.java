@@ -9,8 +9,8 @@ import io.swagger.v3.oas.annotations.info.Info;
 @SpringBootApplication
 @EnableCaching
 @OpenAPIDefinition(info = @Info(title = "Ejada Tenant Service", version = "1.0"))
-public class TenantApplication {
-  private TenantApplication() {}
+public final class TenantApplication {
+  private TenantApplication() { }
 
   public static void main(final String[] args) {
     SpringApplication.run(TenantApplication.class, args);
