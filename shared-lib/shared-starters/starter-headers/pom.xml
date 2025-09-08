@@ -14,7 +14,7 @@
   <artifactId>starter-headers</artifactId>
   <packaging>jar</packaging>
   <name>Shared Starter - Headers</name>
-  <description>Correlation/request/tenant propagation, security response headers, outbound propagation (MVC/WebFlux/Feign)</description>
+  <description>Correlation/request/tenant propagation, security response headers, outbound propagation for WebFlux clients</description>
 
   <dependencies>
     <!-- Autoconfiguration infra -->
@@ -23,24 +23,10 @@
       <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>
 
-    <!-- Servlet / MVC (opt-in) -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-      <optional>true</optional>
-    </dependency>
-
     <!-- Reactive (opt-in) -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-webflux</artifactId>
-      <optional>true</optional>
-    </dependency>
-
-    <!-- Feign for outbound header propagation (opt-in; version managed in shared-bom) -->
-    <dependency>
-      <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-openfeign</artifactId>
       <optional>true</optional>
     </dependency>
 

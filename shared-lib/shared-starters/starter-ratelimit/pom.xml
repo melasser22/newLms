@@ -36,12 +36,7 @@
       <optional>true</optional>
     </dependency>
 
-    <!-- Web stacks only if the app uses servlet/reactive filters -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-      <optional>true</optional>
-    </dependency>
+    <!-- Reactive web stack for filter support -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-webflux</artifactId>
