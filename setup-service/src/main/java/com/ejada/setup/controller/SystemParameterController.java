@@ -20,7 +20,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -28,12 +35,14 @@ import java.util.List;
 @RequestMapping("/setup/systemParameters")
 @Validated
 @Tag(name = "System Parameter Management", description = "APIs for managing system parameters")
-public class SystemParameterController {
+public final class SystemParameterController {
+
+    private static final int DEFAULT_PAGE_SIZE = 20;
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final SystemParameterService systemParameterService;
 
-    public SystemParameterController(SystemParameterService systemParameterService) {
+    public SystemParameterController(final SystemParameterService systemParameterService) {
         this.systemParameterService = systemParameterService;
     }
 
@@ -47,7 +56,7 @@ public class SystemParameterController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "409", description = "System parameter already exists")
     })
-    public ResponseEntity<BaseResponse<SystemParameter>> add(@Valid @RequestBody SystemParameter body) {
+    public ResponseEntity<BaseResponse<SystemParameter>> add(@Valid @RequestBody final SystemParameter body) {
         return ResponseEntity.ok(systemParameterService.add(body));
     }
 
@@ -62,8 +71,8 @@ public class SystemParameterController {
     })
     public ResponseEntity<BaseResponse<SystemParameter>> update(
             @Parameter(description = "ID of the system parameter to update", required = true)
-            @PathVariable @Min(1) Integer paramId,
-            @Valid @RequestBody SystemParameter body) {
+            @PathVariable @Min(1) final Integer paramId,
+            @Valid @RequestBody final SystemParameter body) {
         return ResponseEntity.ok(systemParameterService.update(paramId, body));
     }
 
@@ -77,7 +86,7 @@ public class SystemParameterController {
     })
     public ResponseEntity<BaseResponse<SystemParameter>> get(
             @Parameter(description = "ID of the system parameter to retrieve", required = true)
-            @PathVariable @Min(1) Integer paramId) {
+            @PathVariable @Min(1) final Integer paramId) {
         return ResponseEntity.ok(systemParameterService.get(paramId));
     }
 
@@ -89,14 +98,14 @@ public class SystemParameterController {
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
     public ResponseEntity<BaseResponse<Page<SystemParameter>>> list(
-            @PageableDefault(size = 20) Pageable pageable,
+            @PageableDefault(size = DEFAULT_PAGE_SIZE) final Pageable pageable,
             @Parameter(description = "Group filter for parameters")
-            @RequestParam(required = false) String group,
+            @RequestParam(required = false) final String group,
             @Parameter(description = "Whether to return only active parameters")
-            @RequestParam(required = false) Boolean onlyActive,
+            @RequestParam(required = false) final Boolean onlyActive,
             @Parameter(description = "Whether to retrieve all parameters (ignores pagination)")
-            @RequestParam(name = "unpaged", defaultValue = "false") boolean unpaged) {
-        Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
+            @RequestParam(name = "unpaged", defaultValue = "false") final boolean unpaged) {
+        final Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
         return ResponseEntity.ok(systemParameterService.list(effectivePageable, group, onlyActive));
     }
 
@@ -110,7 +119,7 @@ public class SystemParameterController {
     })
     public ResponseEntity<BaseResponse<SystemParameter>> getByKey(
             @Parameter(description = "Key of the parameter to retrieve", required = true)
-            @PathVariable @NotBlank String paramKey) {
+            @PathVariable @NotBlank final String paramKey) {
         return ResponseEntity.ok(systemParameterService.getByKey(paramKey));
     }
 
@@ -123,7 +132,7 @@ public class SystemParameterController {
     })
     public ResponseEntity<BaseResponse<List<SystemParameter>>> getByKeys(
             @Parameter(description = "List of parameter keys to retrieve", required = true)
-            @RequestBody List<String> keys) {
+            @RequestBody final List<String> keys) {
         return ResponseEntity.ok(systemParameterService.getByKeys(keys));
     }
 }
