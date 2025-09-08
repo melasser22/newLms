@@ -21,9 +21,9 @@ public interface FeatureMapper {
     @Mapping(target = "featureArNm", source = "featureArNm")
     @Mapping(target = "description", source = "description")
     @Mapping(target = "category", source = "category")
-    @Mapping(target = "metered", source = "isMetered", defaultValue = "false")
-    @Mapping(target = "active", source = "isActive", defaultValue = "true")
-    @Mapping(target = "deleted", constant = "false")
+    @Mapping(target = "isMetered", source = "isMetered", defaultValue = "false")
+    @Mapping(target = "isActive", source = "isActive", defaultValue = "true")
+    @Mapping(target = "isDeleted", constant = "false")
     Feature toEntity(@NonNull FeatureCreateReq req);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -31,8 +31,8 @@ public interface FeatureMapper {
     @Mapping(target = "featureKey", ignore = true)
     void update(@MappingTarget @NonNull Feature entity, @NonNull FeatureUpdateReq req);
 
-    @Mapping(target = "isMetered", source = "metered")
-    @Mapping(target = "isActive", source = "active")
-    @Mapping(target = "isDeleted", source = "deleted")
+    @Mapping(target = "isMetered", source = "isMetered")
+    @Mapping(target = "isActive", source = "isActive")
+    @Mapping(target = "isDeleted", source = "isDeleted")
     FeatureRes toRes(@NonNull Feature entity);
 }

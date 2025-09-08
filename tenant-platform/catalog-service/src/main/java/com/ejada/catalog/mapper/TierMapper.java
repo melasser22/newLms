@@ -21,8 +21,8 @@ public interface TierMapper {
     @Mapping(target = "tierArNm", source = "tierArNm")
     @Mapping(target = "description", source = "description")
     @Mapping(target = "rankOrder", source = "rankOrder", defaultValue = "0")
-    @Mapping(target = "active", source = "isActive", defaultValue = "true")
-    @Mapping(target = "deleted", constant = "false")
+    @Mapping(target = "isActive", source = "isActive", defaultValue = "true")
+    @Mapping(target = "isDeleted", constant = "false")
     Tier toEntity(@NonNull TierCreateReq req);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -30,7 +30,7 @@ public interface TierMapper {
     @Mapping(target = "tierCd", ignore = true)
     void update(@MappingTarget @NonNull Tier entity, @NonNull TierUpdateReq req);
 
-    @Mapping(target = "isActive", source = "active")
-    @Mapping(target = "isDeleted", source = "deleted")
+    @Mapping(target = "isActive", source = "isActive")
+    @Mapping(target = "isDeleted", source = "isDeleted")
     TierRes toRes(@NonNull Tier entity);
 }

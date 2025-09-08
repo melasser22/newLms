@@ -26,7 +26,7 @@ public interface TierAddonMapper {
     @Mapping(target = "sortOrder", source = "sortOrder", defaultValue = "0")
     @Mapping(target = "basePrice", source = "basePrice")
     @Mapping(target = "currency", source = "currency")
-    @Mapping(target = "deleted", constant = "false")
+    @Mapping(target = "isDeleted", constant = "false")
     TierAddon toEntity(@NonNull TierAddonCreateReq req);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -37,6 +37,6 @@ public interface TierAddonMapper {
 
     @Mapping(target = "tierId", source = "tier.tierId")
     @Mapping(target = "addonId", source = "addon.addonId")
-    @Mapping(target = "isDeleted", source = "deleted")
+    @Mapping(target = "isDeleted", source = "isDeleted")
     TierAddonRes toRes(@NonNull TierAddon entity);
 }
