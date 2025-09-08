@@ -102,8 +102,8 @@
             <artifactId>maven-checkstyle-plugin</artifactId>
             <version>${plugin.checkstyle.version}</version>
             <configuration>
-              <configLocation>${maven.multiModuleProjectDirectory}/../shared-lib/shared-quality/checkstyle.xml</configLocation>
-              <suppressionsLocation>${maven.multiModuleProjectDirectory}/../shared-lib/shared-quality/suppressions.xml</suppressionsLocation>
+              <configLocation>${project.basedir}/../shared-lib/shared-quality/checkstyle.xml</configLocation>
+              <suppressionsLocation>${project.basedir}/../shared-lib/shared-quality/suppressions.xml</suppressionsLocation>
               <consoleOutput>true</consoleOutput>
               <failOnViolation>false</failOnViolation>
             </configuration>
