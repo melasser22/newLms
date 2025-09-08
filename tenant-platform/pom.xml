@@ -102,8 +102,12 @@
             <artifactId>maven-checkstyle-plugin</artifactId>
             <version>${plugin.checkstyle.version}</version>
             <configuration>
-              <configLocation>${project.basedir}/../shared-lib/shared-quality/checkstyle.xml</configLocation>
-              <suppressionsLocation>${project.basedir}/../shared-lib/shared-quality/suppressions.xml</suppressionsLocation>
+             <configLocation>
+          ${maven.multiModuleProjectDirectory}/shared-lib/shared-quality/checkstyle.xml
+        </configLocation>
+        <suppressionsLocation>
+          ${maven.multiModuleProjectDirectory}/shared-lib/shared-quality/suppressions.xml
+        </suppressionsLocation>
               <consoleOutput>true</consoleOutput>
               <failOnViolation>false</failOnViolation>
             </configuration>
@@ -119,7 +123,7 @@
               <xmlOutput>true</xmlOutput>
               <htmlOutput>true</htmlOutput>
               <outputDirectory>${project.build.directory}/spotbugs</outputDirectory>
-              <excludeFilterFile>${maven.multiModuleProjectDirectory}/../shared-lib/shared-quality/spotbugs-exclude.xml</excludeFilterFile>
+              <excludeFilterFile>${maven.multiModuleProjectDirectory}/shared-lib/shared-quality/spotbugs-exclude.xml</excludeFilterFile>
             </configuration>
             <dependencies>
               <dependency>
