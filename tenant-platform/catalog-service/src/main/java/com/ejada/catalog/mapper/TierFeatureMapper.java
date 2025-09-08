@@ -1,9 +1,18 @@
 package com.ejada.catalog.mapper;
 
-import com.ejada.catalog.dto.*;
-import com.ejada.catalog.model.*;
+import com.ejada.catalog.dto.TierFeatureCreateReq;
+import com.ejada.catalog.dto.TierFeatureRes;
+import com.ejada.catalog.dto.TierFeatureUpdateReq;
+import com.ejada.catalog.model.Enforcement;
+import com.ejada.catalog.model.Feature;
+import com.ejada.catalog.model.Tier;
+import com.ejada.catalog.model.TierFeature;
 import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
-import org.mapstruct.*;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.lang.NonNull;
 
 @Mapper(config = SharedMapstructConfig.class,
@@ -25,7 +34,7 @@ public interface TierFeatureMapper {
     @Mapping(target = "overageUnitPrice", source = "overageUnitPrice")
     @Mapping(target = "overageCurrency", source = "overageCurrency", defaultValue = "SAR")
     @Mapping(target = "meta", source = "meta")
-    @Mapping(target = "isDeleted", constant = "false")
+    @Mapping(target = "deleted", constant = "false")
     TierFeature toEntity(@NonNull TierFeatureCreateReq req);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -36,6 +45,6 @@ public interface TierFeatureMapper {
 
     @Mapping(target = "tierId", source = "tier.tierId")
     @Mapping(target = "featureId", source = "feature.featureId")
-    @Mapping(target = "isDeleted", source = "isDeleted")
+    @Mapping(target = "isDeleted", source = "deleted")
     TierFeatureRes toRes(@NonNull TierFeature entity);
 }
