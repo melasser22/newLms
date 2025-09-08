@@ -39,7 +39,9 @@ public interface CityMapper {
 
   // Uses the list mapper above
   default Page<CityDto> toDtoPage(Page<City> page) {
-    if (page == null) return Page.empty();
+    if (page == null) {
+      return Page.empty();
+    }
     List<CityDto> content = toDtoList(page.getContent());
     return new PageImpl<>(content, page.getPageable(), page.getTotalElements());
   }

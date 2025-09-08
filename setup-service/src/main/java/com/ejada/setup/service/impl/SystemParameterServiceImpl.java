@@ -21,24 +21,23 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional
-public class SystemParameterServiceImpl implements SystemParameterService {
+public final class SystemParameterServiceImpl implements SystemParameterService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SystemParameterServiceImpl.class);
 
     private final SystemParameterRepository systemParameterRepository;
 
-    public SystemParameterServiceImpl(SystemParameterRepository systemParameterRepository) {
+    public SystemParameterServiceImpl(final SystemParameterRepository systemParameterRepository) {
         this.systemParameterRepository = systemParameterRepository;
     }
 
     @Override
     @Audited(action = AuditAction.CREATE, entity = "SystemParameter", dataClass = DataClass.HEALTH, message = "Create system parameter")
     @CacheEvict(cacheNames = {"sysparams:byKeys"}, allEntries = true)
-    public BaseResponse<SystemParameter> add(SystemParameter request) {
+    public BaseResponse<SystemParameter> add(final SystemParameter request) {
         try {
             if (request.getParamKey() == null || request.getParamKey().isBlank()) {
                 return BaseResponse.error("ERR_PARAM_KEY_REQUIRED", "Parameter key is required");
@@ -57,24 +56,33 @@ public class SystemParameterServiceImpl implements SystemParameterService {
     @Override
     @Audited(action = AuditAction.UPDATE, entity = "SystemParameter", dataClass = DataClass.HEALTH, message = "Update system parameter")
     @CacheEvict(cacheNames = {"sysparams:byKeys"}, allEntries = true)
-    public BaseResponse<SystemParameter> update(Integer paramId, SystemParameter request) {
+    public BaseResponse<SystemParameter> update(final Integer paramId, final SystemParameter request) {
         try {
             SystemParameter existing = systemParameterRepository.findById(paramId).orElse(null);
             if (existing == null) {
                 return BaseResponse.error("ERR_PARAM_NOT_FOUND", "System parameter not found");
             }
 
-            if (request.getParamKey() != null &&
-                !request.getParamKey().equalsIgnoreCase(existing.getParamKey()) &&
-                systemParameterRepository.existsByParamKeyIgnoreCase(request.getParamKey())) {
+            if (request.getParamKey() != null
+                    && !request.getParamKey().equalsIgnoreCase(existing.getParamKey())
+                    && systemParameterRepository.existsByParamKeyIgnoreCase(request.getParamKey())) {
                 return BaseResponse.error("ERR_PARAM_DUP_KEY", "Parameter key already exists");
             }
-
-            if (request.getParamKey() != null)   existing.setParamKey(request.getParamKey());
-            if (request.getParamValue() != null) existing.setParamValue(request.getParamValue());
-            if (request.getParamGroup() != null) existing.setParamGroup(request.getParamGroup());
-            if (request.getIsActive() != null)   existing.setIsActive(request.getIsActive());
-            if (request.getDescription() != null) existing.setDescription(request.getDescription());
+            if (request.getParamKey() != null) {
+                existing.setParamKey(request.getParamKey());
+            }
+            if (request.getParamValue() != null) {
+                existing.setParamValue(request.getParamValue());
+            }
+            if (request.getParamGroup() != null) {
+                existing.setParamGroup(request.getParamGroup());
+            }
+            if (request.getIsActive() != null) {
+                existing.setIsActive(request.getIsActive());
+            }
+            if (request.getDescription() != null) {
+                existing.setDescription(request.getDescription());
+            }
 
             SystemParameter saved = systemParameterRepository.save(existing);
             return BaseResponse.success("System parameter updated", saved);
@@ -87,7 +95,7 @@ public class SystemParameterServiceImpl implements SystemParameterService {
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "SystemParameter", dataClass = DataClass.HEALTH, message = "Get system parameter")
-    public BaseResponse<SystemParameter> get(Integer paramId) {
+    public BaseResponse<SystemParameter> get(final Integer paramId) {
         try {
             return systemParameterRepository.findById(paramId)
                     .map(p -> BaseResponse.success("System parameter", p))
@@ -101,7 +109,7 @@ public class SystemParameterServiceImpl implements SystemParameterService {
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "SystemParameter", dataClass = DataClass.HEALTH, message = "List system parameters")
-    public BaseResponse<Page<SystemParameter>> list(Pageable pageable, String group, Boolean onlyActive) {
+    public BaseResponse<Page<SystemParameter>> list(final Pageable pageable, final String group, final Boolean onlyActive) {
         try {
             Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
                     "paramKey", "paramGroup", "paramValue");
@@ -126,14 +134,14 @@ public class SystemParameterServiceImpl implements SystemParameterService {
 
     @Cacheable(cacheNames = "sysparams:byKeys", key = "#keys")
     @Transactional(Transactional.TxType.SUPPORTS)
-    public List<SystemParameter> getByKeysRaw(Collection<String> keys) {
+    public List<SystemParameter> getByKeysRaw(final Collection<String> keys) {
         return systemParameterRepository.findByParamKeyIn(keys);
     }
 
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "SystemParameter", dataClass = DataClass.HEALTH, message = "Get system parameters by keys")
-    public BaseResponse<List<SystemParameter>> getByKeys(List<String> keys) {
+    public BaseResponse<List<SystemParameter>> getByKeys(final List<String> keys) {
         try {
             if (keys == null || keys.isEmpty()) {
                 return BaseResponse.error("ERR_PARAM_KEYS_REQUIRED", "Keys list is required");
@@ -146,7 +154,7 @@ public class SystemParameterServiceImpl implements SystemParameterService {
     }
     
     @Override
-    public BaseResponse<SystemParameter> getByKey(String paramKey) {
+    public BaseResponse<SystemParameter> getByKey(final String paramKey) {
         return systemParameterRepository.findByParamKey(paramKey)
                 .map(p -> BaseResponse.success("System parameter", p))
                 .orElseGet(() -> BaseResponse.error("ERR_PARAM_NOT_FOUND", "System parameter not found"));

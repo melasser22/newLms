@@ -1,7 +1,12 @@
 package com.ejada.setup.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -26,25 +31,35 @@ public class SystemParameter {
     @EqualsAndHashCode.Include
     private Integer paramId;
 
-    @Column(name = "param_key", nullable = false, unique = true, length = 150)
+    private static final int KEY_LENGTH = 150;
+    private static final int VALUE_LENGTH = 1000;
+
+    @Column(name = "param_key", nullable = false, unique = true, length = KEY_LENGTH)
     private String paramKey;
 
-    @Column(name = "param_value", nullable = false, length = 1000)
+    @Column(name = "param_value", nullable = false, length = VALUE_LENGTH)
     private String paramValue;
 
-    @Column(name = "description", length = 1000)
+    @Column(name = "description", length = VALUE_LENGTH)
     private String description;
 
     // DB column might be 'group_code' — map it to Java property 'paramGroup' that your service uses
-    @Column(name = "group_code", length = 150)
+    @Column(name = "group_code", length = KEY_LENGTH)
     private String paramGroup;
 
     @Builder.Default
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = Boolean.TRUE;
 
-    public Boolean isActive() { return isActive != null ? isActive : Boolean.FALSE; }
+    public final Boolean isActive() {
+        return isActive != null ? isActive : Boolean.FALSE;
+    }
 
-   public String getGroupCode() { return paramGroup; }
-   public void setGroupCode(String groupCode) { this.paramGroup = groupCode; }
+    public final String getGroupCode() {
+        return paramGroup;
+    }
+
+    public final void setGroupCode(final String groupCode) {
+        this.paramGroup = groupCode;
+    }
 }

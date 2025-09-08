@@ -1,6 +1,16 @@
 package com.ejada.setup.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import org.hibernate.annotations.DynamicUpdate;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -32,13 +42,16 @@ public class City {
     @EqualsAndHashCode.Include
     private Integer cityId;
 
-    @Column(name = "city_cd", length = 50, nullable = false)
+    private static final int CODE_LENGTH = 50;
+    private static final int NAME_LENGTH = 200;
+
+    @Column(name = "city_cd", length = CODE_LENGTH, nullable = false)
     private String cityCd;
 
-    @Column(name = "city_en_nm", length = 200, nullable = false)
+    @Column(name = "city_en_nm", length = NAME_LENGTH, nullable = false)
     private String cityEnNm;
 
-    @Column(name = "city_ar_nm", length = 200, nullable = false)
+    @Column(name = "city_ar_nm", length = NAME_LENGTH, nullable = false)
     private String cityArNm;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -50,7 +63,9 @@ public class City {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = Boolean.TRUE;
 
-    public boolean isActive() { return Boolean.TRUE.equals(isActive); }
+    public final boolean isActive() {
+        return Boolean.TRUE.equals(isActive);
+    }
 
     @Builder
     public City(final Integer cityId, final String cityCd, final String cityEnNm,

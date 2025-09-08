@@ -31,12 +31,11 @@ import com.ejada.setup.constants.ValidationConstants;
 
 import java.util.List;
 
-@SuppressWarnings("checkstyle:DesignForExtension")
 @RestController
 @RequestMapping("/setup/resources")
 @Validated
 @Tag(name = "Resource Management", description = "APIs for managing resources")
-public class ResourceController {
+public final class ResourceController {
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final ResourceService resourceService;

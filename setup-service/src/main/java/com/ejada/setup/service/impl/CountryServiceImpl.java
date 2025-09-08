@@ -23,11 +23,11 @@ import java.util.List;
 
 @Service
 @Transactional
-public class CountryServiceImpl implements CountryService {
+public final class CountryServiceImpl implements CountryService {
 
     private final CountryRepository countryRepository;
 
-    public CountryServiceImpl(CountryRepository countryRepository) {
+    public CountryServiceImpl(final CountryRepository countryRepository) {
         this.countryRepository = countryRepository;
     }
 
@@ -37,7 +37,7 @@ public class CountryServiceImpl implements CountryService {
             @CacheEvict(cacheNames = "countries", key = "#result.data.countryId", condition = "#result.isSuccess()"),
             @CacheEvict(cacheNames = "countries:active", key = "'active'")
     })
-    public BaseResponse<Country> add(CountryDto request) {
+    public BaseResponse<Country> add(final CountryDto request) {
         if (countryRepository.existsByCountryCdIgnoreCase(request.getCountryCd())) {
             return BaseResponse.error("ERR_COUNTRY_DUP_CD", "Country code already exists");
         }
@@ -62,15 +62,15 @@ public class CountryServiceImpl implements CountryService {
             @CacheEvict(cacheNames = "countries", key = "#countryId"),
             @CacheEvict(cacheNames = "countries:active", key = "'active'")
     })
-    public BaseResponse<Country> update(Integer countryId, CountryDto request) {
+    public BaseResponse<Country> update(final Integer countryId, final CountryDto request) {
         Country existing = countryRepository.findById(countryId)
                 .orElse(null);
         if (existing == null) {
             return BaseResponse.error("ERR_COUNTRY_NOT_FOUND", "Country not found");
         }
-        if (request.getCountryCd() != null &&
-            !request.getCountryCd().equalsIgnoreCase(existing.getCountryCd()) &&
-            countryRepository.existsByCountryCdIgnoreCase(request.getCountryCd())) {
+        if (request.getCountryCd() != null
+                && !request.getCountryCd().equalsIgnoreCase(existing.getCountryCd())
+                && countryRepository.existsByCountryCdIgnoreCase(request.getCountryCd())) {
             return BaseResponse.error("ERR_COUNTRY_DUP_CD", "Country code already exists");
         }
         existing.setCountryCd(request.getCountryCd());
@@ -91,7 +91,7 @@ public class CountryServiceImpl implements CountryService {
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Country", dataClass = DataClass.HEALTH, message = "Get country")
     @Cacheable(cacheNames = "countries", key = "#countryId")
-    public BaseResponse<Country> get(Integer countryId) {
+    public BaseResponse<Country> get(final Integer countryId) {
         return countryRepository.findById(countryId)
                 .map(c -> BaseResponse.success("Country", c))
                 .orElseGet(() -> BaseResponse.error("ERR_COUNTRY_NOT_FOUND", "Country not found"));
@@ -100,7 +100,7 @@ public class CountryServiceImpl implements CountryService {
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Country", dataClass = DataClass.HEALTH, message = "List countries")
-    public BaseResponse<?> list(Pageable pageable, String q, boolean unpaged) {
+    public BaseResponse<?> list(final Pageable pageable, final String q, final boolean unpaged) {
         Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
                 "countryEnNm", "countryArNm", "countryCd");
         Pageable pg = (pageable == null || !pageable.isPaged()
