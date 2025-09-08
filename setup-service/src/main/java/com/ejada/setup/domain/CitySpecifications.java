@@ -7,14 +7,16 @@ import org.springframework.util.StringUtils;
 import java.util.Locale;
 
 public final class CitySpecifications {
-  private CitySpecifications() {}
+  private CitySpecifications() { }
 
   public static Specification<City> isActive() {
     return (root, query, cb) -> cb.isTrue(root.get("isActive"));
   }
 
-  public static Specification<City> nameContains(String q) {
-    if (!StringUtils.hasText(q)) return null; // will be ignored when combined
+  public static Specification<City> nameContains(final String q) {
+    if (!StringUtils.hasText(q)) {
+      return null; // will be ignored when combined
+    }
     String like = "%" + q.trim().toLowerCase(Locale.ROOT) + "%";
     return (root, query, cb) -> {
       Predicate en = cb.like(cb.lower(root.get("cityEnNm")), like);
@@ -23,8 +25,10 @@ public final class CitySpecifications {
     };
   }
 
-  public static Specification<City> byCountry(Integer countryId) {
-    if (countryId == null) return null;
+  public static Specification<City> byCountry(final Integer countryId) {
+    if (countryId == null) {
+      return null;
+    }
     return (root, query, cb) -> cb.equal(root.get("country").get("countryId"), countryId);
   }
 }
