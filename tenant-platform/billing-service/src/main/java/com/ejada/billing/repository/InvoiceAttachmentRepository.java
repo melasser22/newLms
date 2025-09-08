@@ -9,5 +9,5 @@ import java.util.Optional;
 @Repository
 public interface InvoiceAttachmentRepository extends JpaRepository<InvoiceAttachment, Long> {
 
-    Optional<InvoiceAttachment> findFirstByInvoice_InvoiceIdOrderByCreatedAtDesc(Long invoiceId);
+    Optional<InvoiceAttachment> findFirstByInvoiceInvoiceIdOrderByCreatedAtDesc(Long invoiceId);
 }

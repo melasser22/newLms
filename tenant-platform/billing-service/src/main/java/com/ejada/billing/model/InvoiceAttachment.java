@@ -1,7 +1,22 @@
 package com.ejada.billing.model;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -12,11 +27,11 @@ import java.time.OffsetDateTime;
        indexes = @Index(name = "idx_invoice_attachment_invoice_created",
                         columnList = "invoice_id,created_at DESC"))
 @DynamicUpdate
-@Getter
-@Setter
-@NoArgsConstructor
-public class InvoiceAttachment {
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+public final class InvoiceAttachment {
 
+  private static final int FILE_NM_LENGTH = 255;
+  private static final int MIME_TYP_LENGTH = 128;
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "invoice_attachment_id", updatable = false, nullable = false)
@@ -26,10 +41,10 @@ public class InvoiceAttachment {
   @JoinColumn(name = "invoice_id", nullable = false)
   private Invoice invoice;
 
-  @Column(name = "file_nm", length = 255, nullable = false)
+  @Column(name = "file_nm", length = FILE_NM_LENGTH, nullable = false)
   private String fileNm;
 
-  @Column(name = "mime_typ", length = 128, nullable = false)
+  @Column(name = "mime_typ", length = MIME_TYP_LENGTH, nullable = false)
   private String mimeTyp;
 
   @Lob
@@ -41,7 +56,9 @@ public class InvoiceAttachment {
 
   @PrePersist
   void onInsert() {
-    if (createdAt == null) createdAt = OffsetDateTime.now();
+    if (createdAt == null) {
+      createdAt = OffsetDateTime.now();
+    }
   }
 
   @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Invoice is a JPA entity; reference sharing is intentional")
@@ -62,7 +79,7 @@ public class InvoiceAttachment {
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  public void setInvoice(Invoice invoice) {
+  public void setInvoice(final Invoice invoice) {
     this.invoice = invoice;
   }
 
@@ -70,18 +87,18 @@ public class InvoiceAttachment {
     return content == null ? null : content.clone();
   }
 
-  public void setContent(byte[] content) {
+  public void setContent(final byte[] content) {
     this.content = content == null ? null : content.clone();
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  public static class InvoiceAttachmentBuilder {
-    public InvoiceAttachmentBuilder invoice(Invoice invoice) {
+  public static final class InvoiceAttachmentBuilder {
+    public InvoiceAttachmentBuilder invoice(final Invoice invoice) {
       this.invoice = invoice;
       return this;
     }
 
-    public InvoiceAttachmentBuilder content(byte[] content) {
+    public InvoiceAttachmentBuilder content(final byte[] content) {
       this.content = content == null ? null : content.clone();
       return this;
     }

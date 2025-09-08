@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface InvoiceItemRepository extends JpaRepository<InvoiceItem, Long> {
 
-    List<InvoiceItem> findByInvoice_InvoiceIdOrderByLineNoAsc(Long invoiceId);
+    List<InvoiceItem> findByInvoiceInvoiceIdOrderByLineNoAsc(Long invoiceId);
 }

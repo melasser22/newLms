@@ -3,7 +3,9 @@ package com.ejada.billing.mapper;
 import com.ejada.billing.dto.ConsumptionType;
 import com.ejada.billing.dto.ProductConsumptionStts;
 import com.ejada.billing.model.UsageCounter;
-import org.mapstruct.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -30,16 +32,20 @@ public interface UsageCounterMapper {
         return code == null ? null : ConsumptionType.valueOf(code);
     }
 
-    default Long fillCount(String typ, Long count) {
-        if (typ == null) return null;
+    default Long fillCount(final String typ, final Long count) {
+        if (typ == null) {
+            return null;
+        }
         return switch (typ) {
             case "TRANSACTION", "USER" -> count == null ? Long.valueOf(0L) : count;
             default -> null;
         };
     }
 
-    default Double fillAmount(String typ, BigDecimal amount) {
-        if (typ == null) return null;
+    default Double fillAmount(final String typ, final BigDecimal amount) {
+        if (typ == null) {
+            return null;
+        }
         return switch (typ) {
             case "BALANCE" -> amount == null ? 0d : amount.doubleValue();
             default -> null;
@@ -47,10 +53,14 @@ public interface UsageCounterMapper {
     }
 
     /** Bulk mapping helper. */
-    default List<ProductConsumptionStts> toDtoList(List<UsageCounter> counters) {
-        if (counters == null) return List.of();
+    default List<ProductConsumptionStts> toDtoList(final List<UsageCounter> counters) {
+        if (counters == null) {
+            return List.of();
+        }
         List<ProductConsumptionStts> list = new ArrayList<>(counters.size());
-        for (UsageCounter c : counters) list.add(toDto(c));
+        for (UsageCounter c : counters) {
+            list.add(toDto(c));
+        }
         return list;
     }
 }

@@ -1,7 +1,20 @@
 package com.ejada.billing.model;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -11,11 +24,14 @@ import java.math.BigDecimal;
 @Table(name = "invoice_item",
        indexes = @Index(name = "idx_invoice_item_invoice", columnList = "invoice_id,line_no"))
 @DynamicUpdate
-@Getter
-@Setter
-@NoArgsConstructor
-public class InvoiceItem {
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+public final class InvoiceItem {
 
+  private static final int ITEM_CD_LENGTH = 64;
+  private static final int ITEM_DESC_LENGTH = 256;
+  private static final int AMOUNT_PRECISION = 18;
+  private static final int SCALE_FOUR = 4;
+  private static final int SCALE_SIX = 6;
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "invoice_item_id", updatable = false, nullable = false)
@@ -28,23 +44,23 @@ public class InvoiceItem {
   @Column(name = "line_no", nullable = false)
   private Integer lineNo;
 
-  @Column(name = "item_cd", length = 64, nullable = false)
+  @Column(name = "item_cd", length = ITEM_CD_LENGTH, nullable = false)
   private String itemCd; // FEATURE/ADDON/USAGE/etc.
 
-  @Column(name = "item_desc", length = 256)
+  @Column(name = "item_desc", length = ITEM_DESC_LENGTH)
   private String itemDesc;
 
-  @Column(name = "qty", precision = 18, scale = 4, nullable = false)
+  @Column(name = "qty", precision = AMOUNT_PRECISION, scale = SCALE_FOUR, nullable = false)
   private BigDecimal qty;
 
-  @Column(name = "unit_price", precision = 18, scale = 6, nullable = false)
+  @Column(name = "unit_price", precision = AMOUNT_PRECISION, scale = SCALE_SIX, nullable = false)
   private BigDecimal unitPrice;
 
-  @Column(name = "line_total", precision = 18, scale = 4, nullable = false)
+  @Column(name = "line_total", precision = AMOUNT_PRECISION, scale = SCALE_FOUR, nullable = false)
   private BigDecimal lineTotal;
 
-  public static InvoiceItem of(Invoice inv, int lineNo, String code, String desc,
-                               BigDecimal qty, BigDecimal price) {
+  public static InvoiceItem of(final Invoice inv, final int lineNo, final String code, final String desc,
+                               final BigDecimal qty, final BigDecimal price) {
     BigDecimal total = (qty == null ? BigDecimal.ONE : qty)
         .multiply(price == null ? BigDecimal.ZERO : price);
     return InvoiceItem.builder()
@@ -75,13 +91,13 @@ public class InvoiceItem {
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  public void setInvoice(Invoice invoice) {
+  public void setInvoice(final Invoice invoice) {
     this.invoice = invoice;
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  public static class InvoiceItemBuilder {
-    public InvoiceItemBuilder invoice(Invoice invoice) {
+  public static final class InvoiceItemBuilder {
+    public InvoiceItemBuilder invoice(final Invoice invoice) {
       this.invoice = invoice;
       return this;
     }

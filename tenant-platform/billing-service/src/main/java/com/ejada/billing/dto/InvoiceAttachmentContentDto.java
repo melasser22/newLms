@@ -10,4 +10,4 @@ public record InvoiceAttachmentContentDto(
         String mimeType,
         OffsetDateTime createdAt,
         String base64Content
-) {}
+) { }

@@ -3,7 +3,9 @@ package com.ejada.billing.mapper;
 import com.ejada.billing.dto.ProductConsumptionStts;
 import com.ejada.billing.dto.ProductSubscriptionStts;
 import com.ejada.billing.dto.TrackProductConsumptionRs;
-import org.mapstruct.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 import java.util.List;
 

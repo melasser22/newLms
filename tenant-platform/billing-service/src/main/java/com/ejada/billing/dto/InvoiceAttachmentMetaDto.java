@@ -10,4 +10,4 @@ public record InvoiceAttachmentMetaDto(
         String mimeType,
         OffsetDateTime createdAt,
         Long sizeBytes
-) {}
+) { }

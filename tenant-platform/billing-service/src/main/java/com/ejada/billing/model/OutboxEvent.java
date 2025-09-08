@@ -1,7 +1,18 @@
 package com.ejada.billing.model;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.OffsetDateTime;
@@ -13,20 +24,24 @@ import java.time.OffsetDateTime;
        })
 @DynamicUpdate
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class OutboxEvent {
+public final class OutboxEvent {
+
+  private static final int AGGREGATE_TYPE_LENGTH = 64;
+  private static final int AGGREGATE_ID_LENGTH = 128;
+  private static final int EVENT_TYPE_LENGTH = 64;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "outbox_event_id", updatable = false, nullable = false)
   private Long outboxEventId;
 
-  @Column(name = "aggregate_type", length = 64, nullable = false)
+  @Column(name = "aggregate_type", length = AGGREGATE_TYPE_LENGTH, nullable = false)
   private String aggregateType;
 
-  @Column(name = "aggregate_id", length = 128, nullable = false)
+  @Column(name = "aggregate_id", length = AGGREGATE_ID_LENGTH, nullable = false)
   private String aggregateId;
 
-  @Column(name = "event_type", length = 64, nullable = false)
+  @Column(name = "event_type", length = EVENT_TYPE_LENGTH, nullable = false)
   private String eventType;
 
   @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
@@ -43,11 +58,15 @@ public class OutboxEvent {
 
   @PrePersist
   void preInsert() {
-    if (createdAt == null) createdAt = OffsetDateTime.now();
-    if (published == null) published = Boolean.FALSE;
+    if (createdAt == null) {
+      createdAt = OffsetDateTime.now();
+    }
+    if (published == null) {
+      published = Boolean.FALSE;
+    }
   }
 
-  public static OutboxEvent ref(Long id) {
+  public static OutboxEvent ref(final Long id) {
     OutboxEvent e = new OutboxEvent();
     e.setOutboxEventId(id);
     return e;

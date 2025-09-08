@@ -1,7 +1,9 @@
 package com.ejada.billing.mapper;
 
 import com.ejada.billing.model.UsageEvent;
-import org.mapstruct.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 import java.util.UUID;
 
