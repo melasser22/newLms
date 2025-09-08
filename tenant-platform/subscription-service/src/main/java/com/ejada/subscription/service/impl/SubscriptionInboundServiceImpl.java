@@ -1,10 +1,37 @@
 package com.ejada.subscription.service.impl;
 
-import com.ejada.subscription.dto.*;
-import com.ejada.subscription.mapper.*;
-import com.ejada.subscription.dto.SubscriptionUpdateType; // <-- your enum package
-import com.ejada.subscription.model.*;
-import com.ejada.subscription.repository.*;
+import com.ejada.subscription.dto.ProductPropertyDto;
+import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRq;
+import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRs;
+import com.ejada.subscription.dto.ReceiveSubscriptionUpdateRq;
+import com.ejada.subscription.dto.ServiceResult;
+import com.ejada.subscription.dto.SubscriptionAdditionalServiceDto;
+import com.ejada.subscription.dto.SubscriptionFeatureDto;
+import com.ejada.subscription.dto.SubscriptionInfoDto;
+import com.ejada.subscription.dto.SubscriptionUpdateType;
+import com.ejada.subscription.mapper.SubscriptionAdditionalServiceMapper;
+import com.ejada.subscription.mapper.SubscriptionEnvironmentIdentifierMapper;
+import com.ejada.subscription.mapper.SubscriptionFeatureMapper;
+import com.ejada.subscription.mapper.SubscriptionMapper;
+import com.ejada.subscription.mapper.SubscriptionProductPropertyMapper;
+import com.ejada.subscription.mapper.SubscriptionUpdateEventMapper;
+import com.ejada.subscription.model.InboundNotificationAudit;
+import com.ejada.subscription.model.OutboxEvent;
+import com.ejada.subscription.model.Subscription;
+import com.ejada.subscription.model.SubscriptionAdditionalService;
+import com.ejada.subscription.model.SubscriptionEnvironmentIdentifier;
+import com.ejada.subscription.model.SubscriptionFeature;
+import com.ejada.subscription.model.SubscriptionProductProperty;
+import com.ejada.subscription.model.SubscriptionUpdateEvent;
+import com.ejada.subscription.repository.InboundNotificationAuditRepository;
+import com.ejada.subscription.repository.IdempotentRequestRepository;
+import com.ejada.subscription.repository.OutboxEventRepository;
+import com.ejada.subscription.repository.SubscriptionAdditionalServiceRepository;
+import com.ejada.subscription.repository.SubscriptionEnvironmentIdentifierRepository;
+import com.ejada.subscription.repository.SubscriptionFeatureRepository;
+import com.ejada.subscription.repository.SubscriptionProductPropertyRepository;
+import com.ejada.subscription.repository.SubscriptionRepository;
+import com.ejada.subscription.repository.SubscriptionUpdateEventRepository;
 import com.ejada.subscription.service.SubscriptionInboundService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -19,7 +46,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Handles marketplace callbacks:
@@ -76,7 +107,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             var maybeSub = subscriptionRepo.findByExtSubscriptionIdAndExtCustomerId(
                     rq.subscriptionInfo().subscriptionId(), rq.subscriptionInfo().customerId());
             List<SubscriptionEnvironmentIdentifier> ids = maybeSub
-                    .map(s -> envIdRepo.findBySubscription_SubscriptionId(s.getSubscriptionId()))
+                    .map(s -> envIdRepo.findBySubscriptionSubscriptionId(s.getSubscriptionId()))
                     .orElseGet(List::of);
             var rs = new ReceiveSubscriptionNotificationRs(Boolean.TRUE, envIdMapper.toDtoList(ids));
             return okNotification(rs);
@@ -97,10 +128,15 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
                     .findByExtSubscriptionIdAndExtCustomerId(si.subscriptionId(), si.customerId())
                     .orElse(null);
 
-            if (sub == null) sub = subscriptionMapper.toEntity(si);
-            else             subscriptionMapper.update(sub, si);
+            if (sub == null) {
+                sub = subscriptionMapper.toEntity(si);
+            } else {
+                subscriptionMapper.update(sub, si);
+            }
 
-            if (sub.getEndDt() == null) sub.setEndDt(Optional.ofNullable(si.endDt()).orElse(LocalDate.now()));
+            if (sub.getEndDt() == null) {
+                sub.setEndDt(Optional.ofNullable(si.endDt()).orElse(LocalDate.now()));
+            }
             sub = subscriptionRepo.save(sub);
 
             // 4) Replace children from payload
@@ -110,7 +146,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
 
             // 5) (Optional) environment identifiers (if provisioning already occurred)
             List<SubscriptionEnvironmentIdentifier> envIds =
-                    envIdRepo.findBySubscription_SubscriptionId(sub.getSubscriptionId());
+                    envIdRepo.findBySubscriptionSubscriptionId(sub.getSubscriptionId());
 
             // 6) Mark success and emit outbox
             markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
@@ -188,38 +224,50 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     // Private helpers
     // -------------------------------------------------------------------------
 
-    private void replaceFeatures(Subscription sub, List<SubscriptionFeatureDto> dtos) {
-        var existing = featureRepo.findBySubscription_SubscriptionId(sub.getSubscriptionId());
-        if (!existing.isEmpty()) featureRepo.deleteAllInBatch(existing);
+    private void replaceFeatures(final Subscription sub, final List<SubscriptionFeatureDto> dtos) {
+        var existing = featureRepo.findBySubscriptionSubscriptionId(sub.getSubscriptionId());
+        if (!existing.isEmpty()) {
+            featureRepo.deleteAllInBatch(existing);
+        }
         if (dtos != null && !dtos.isEmpty()) {
             var mapped = new ArrayList<SubscriptionFeature>(dtos.size());
-            for (var d : dtos) mapped.add(featureMapper.toEntity(d, sub));
+            for (var d : dtos) {
+                mapped.add(featureMapper.toEntity(d, sub));
+            }
             featureRepo.saveAll(mapped);
         }
     }
 
-    private void replaceAdditionalServices(Subscription sub, List<SubscriptionAdditionalServiceDto> dtos) {
-        var existing = additionalServiceRepo.findBySubscription_SubscriptionId(sub.getSubscriptionId());
-        if (!existing.isEmpty()) additionalServiceRepo.deleteAllInBatch(existing);
+    private void replaceAdditionalServices(final Subscription sub, final List<SubscriptionAdditionalServiceDto> dtos) {
+        var existing = additionalServiceRepo.findBySubscriptionSubscriptionId(sub.getSubscriptionId());
+        if (!existing.isEmpty()) {
+            additionalServiceRepo.deleteAllInBatch(existing);
+        }
         if (dtos != null && !dtos.isEmpty()) {
             var mapped = new ArrayList<SubscriptionAdditionalService>(dtos.size());
-            for (var d : dtos) mapped.add(additionalServiceMapper.toEntity(d, sub));
+            for (var d : dtos) {
+                mapped.add(additionalServiceMapper.toEntity(d, sub));
+            }
             additionalServiceRepo.saveAll(mapped);
         }
     }
 
-    private void replaceProductProperties(Subscription sub, List<ProductPropertyDto> dtos) {
-        var existing = propertyRepo.findBySubscription_SubscriptionId(sub.getSubscriptionId());
-        if (!existing.isEmpty()) propertyRepo.deleteAllInBatch(existing);
+    private void replaceProductProperties(final Subscription sub, final List<ProductPropertyDto> dtos) {
+        var existing = propertyRepo.findBySubscriptionSubscriptionId(sub.getSubscriptionId());
+        if (!existing.isEmpty()) {
+            propertyRepo.deleteAllInBatch(existing);
+        }
         if (dtos != null && !dtos.isEmpty()) {
             var mapped = new ArrayList<SubscriptionProductProperty>(dtos.size());
-            for (var d : dtos) mapped.add(propertyMapper.toEntity(d, sub));
+            for (var d : dtos) {
+                mapped.add(propertyMapper.toEntity(d, sub));
+            }
             propertyRepo.saveAll(mapped);
         }
     }
 
     // String-based version (kept for flexibility)
-    private void transitionStatus(Subscription sub, String updateType) {
+    private void transitionStatus(final Subscription sub, final String updateType) {
         switch (updateType) {
             case "SUSPENDED" -> sub.setSubscriptionSttsCd("SUSPENDED");
             case "RESUMED"   -> sub.setSubscriptionSttsCd("ACTIVE");
@@ -235,44 +283,51 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     }
 
     // Enum overload (your enum package)
-    private void transitionStatus(Subscription sub, SubscriptionUpdateType type) {
+    private void transitionStatus(final Subscription sub, final SubscriptionUpdateType type) {
         if (type != null) {
             transitionStatus(sub, type.name());
         }
     }
 
-    private String writeJson(Object o) {
-        try { return objectMapper.writeValueAsString(o); }
-        catch (Exception e) { return "{\"error\":\"serialize\"}"; }
+    private String writeJson(final Object o) {
+        try {
+            return objectMapper.writeValueAsString(o);
+        } catch (Exception e) {
+            return "{\"error\":\"serialize\"}";
+        }
     }
 
-    private String sha256(String s) {
-        if (s == null) return null;
+    private String sha256(final String s) {
+        if (s == null) {
+            return null;
+        }
         try {
             var md = MessageDigest.getInstance("SHA-256");
             byte[] hash = md.digest(s.getBytes(StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder(hash.length * 2);
-            for (byte b : hash) sb.append(String.format("%02x", b));
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
             return null;
         }
     }
 
-    private String jsonMsg(String msg) {
+    private String jsonMsg(final String msg) {
         String safe = msg == null ? "" : msg.replace("\"", "'");
         return "{\"message\":\"" + safe + "\"}";
     }
 
-    private void markAuditSuccess(Long id, String code, String desc, String detailsJson) {
+    private void markAuditSuccess(final Long id, final String code, final String desc, final String detailsJson) {
         auditRepo.markProcessed(id, code, desc, detailsJson);
     }
 
-    private void markAuditFailure(Long id, String code, String desc, String detailsJson) {
+    private void markAuditFailure(final Long id, final String code, final String desc, final String detailsJson) {
         auditRepo.markProcessed(id, code, desc, detailsJson);
     }
 
-    private void emitOutbox(String aggregate, String id, String type, Map<String, ?> payload) {
+    private void emitOutbox(final String aggregate, final String id, final String type, final Map<String, ?> payload) {
         try {
             OutboxEvent ev = new OutboxEvent();
             ev.setAggregateType(aggregate);
@@ -286,13 +341,13 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     }
 
     // Success helpers with distinct names to avoid overload ambiguity
-    private static ServiceResult<ReceiveSubscriptionNotificationRs> okNotification(ReceiveSubscriptionNotificationRs rs) {
+    private static ServiceResult<ReceiveSubscriptionNotificationRs> okNotification(final ReceiveSubscriptionNotificationRs rs) {
         return new ServiceResult<>("I000000", "Successful Operation", null, rs);
     }
     private static ServiceResult<Void> okVoid() {
         return new ServiceResult<>("I000000", "Successful Operation", null, null);
     }
-    private static <T> ServiceResult<T> err(String code, String desc, String details) {
+    private static <T> ServiceResult<T> err(final String code, final String desc, final String details) {
         return new ServiceResult<>(code, desc, details, null);
     }
 }

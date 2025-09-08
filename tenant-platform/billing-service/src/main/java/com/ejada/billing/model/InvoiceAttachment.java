@@ -32,7 +32,6 @@ public final class InvoiceAttachment {
 
   private static final int FILE_NM_LENGTH = 255;
   private static final int MIME_TYP_LENGTH = 128;
-
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "invoice_attachment_id", updatable = false, nullable = false)
@@ -60,6 +59,18 @@ public final class InvoiceAttachment {
     if (createdAt == null) {
       createdAt = OffsetDateTime.now();
     }
+  }
+
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Invoice is a JPA entity; reference sharing is intentional")
+  @Builder
+  public InvoiceAttachment(Long invoiceAttachmentId, Invoice invoice, String fileNm,
+                           String mimeTyp, byte[] content, OffsetDateTime createdAt) {
+    this.invoiceAttachmentId = invoiceAttachmentId;
+    this.invoice = invoice;
+    this.fileNm = fileNm;
+    this.mimeTyp = mimeTyp;
+    this.content = content == null ? null : content.clone();
+    this.createdAt = createdAt;
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP")

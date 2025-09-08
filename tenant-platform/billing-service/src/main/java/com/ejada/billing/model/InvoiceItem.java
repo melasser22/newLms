@@ -32,7 +32,6 @@ public final class InvoiceItem {
   private static final int AMOUNT_PRECISION = 18;
   private static final int SCALE_FOUR = 4;
   private static final int SCALE_SIX = 6;
-
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "invoice_item_id", updatable = false, nullable = false)
@@ -70,6 +69,20 @@ public final class InvoiceItem {
         .unitPrice(price == null ? BigDecimal.ZERO : price)
         .lineTotal(total)
         .build();
+  }
+
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Invoice is a JPA entity; reference sharing is intentional")
+  @Builder
+  public InvoiceItem(Long invoiceItemId, Invoice invoice, Integer lineNo, String itemCd,
+                     String itemDesc, BigDecimal qty, BigDecimal unitPrice, BigDecimal lineTotal) {
+    this.invoiceItemId = invoiceItemId;
+    this.invoice = invoice;
+    this.lineNo = lineNo;
+    this.itemCd = itemCd;
+    this.itemDesc = itemDesc;
+    this.qty = qty;
+    this.unitPrice = unitPrice;
+    this.lineTotal = lineTotal;
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP")

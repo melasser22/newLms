@@ -1,8 +1,21 @@
 package com.ejada.subscription.model;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.OffsetDateTime;
@@ -18,6 +31,8 @@ import java.time.OffsetDateTime;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class SubscriptionFeature {
 
+    private static final int FEATURE_CD_LENGTH = 128;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "subscription_feature_id", nullable = false, updatable = false)
@@ -29,7 +44,7 @@ public class SubscriptionFeature {
     @JoinColumn(name = "subscription_id", nullable = false)
     private Subscription subscription;
 
-    @Column(name = "feature_cd", length = 128, nullable = false)
+    @Column(name = "feature_cd", length = FEATURE_CD_LENGTH, nullable = false)
     private String featureCd;
 
     @Column(name = "feature_count")
@@ -41,8 +56,10 @@ public class SubscriptionFeature {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
-    public static SubscriptionFeature ref(Long id) {
-        if (id == null) return null;
+    public static SubscriptionFeature ref(final Long id) {
+        if (id == null) {
+            return null;
+        }
         SubscriptionFeature x = new SubscriptionFeature();
         x.setSubscriptionFeatureId(id);
         return x;
