@@ -18,7 +18,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.security.web.server.SecurityWebFiltersOrder;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
