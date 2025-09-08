@@ -1,30 +1,54 @@
 package com.ejada.shared_starter_resilience;
 
-import io.netty.channel.ChannelOption;
-import reactor.netty.http.client.HttpClient;
+import java.time.Duration;
+
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestTemplate;
 
-import java.time.Duration;
-
+/**
+ * Auto-configuration for basic HTTP resilience features.
+ *
+ * <p>This configuration provides a {@link RestTemplateBuilder} that sets
+ * connect and read timeouts based on {@link SharedResilienceProps}. It avoids
+ * any dependency on WebFlux or reactive clients.</p>
+ */
 @AutoConfiguration
-@ConditionalOnClass(WebClient.Builder.class)
+@ConditionalOnClass(RestTemplateBuilder.class)
 @EnableConfigurationProperties(SharedResilienceProps.class)
 public class ResilienceAutoConfiguration {
 
+  /**
+   * Creates a {@link RestTemplateBuilder} with timeouts derived from the
+   * supplied {@link SharedResilienceProps}. The bean is only created if no
+   * other {@code RestTemplateBuilder} is already present.
+   *
+   * @param props properties containing timeout values
+   * @return a configured {@link RestTemplateBuilder}
+   */
   @Bean
-  @ConditionalOnClass({HttpClient.class, ReactorClientHttpConnector.class})
-  @ConditionalOnMissingBean(WebClient.Builder.class)
-  public WebClient.Builder resilientWebClientBuilder(SharedResilienceProps props) {
-    HttpClient client = HttpClient.create()
-        .responseTimeout(Duration.ofMillis(props.getHttpTimeoutMs()))
-        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, props.getConnectTimeoutMs());
+  @ConditionalOnMissingBean(RestTemplateBuilder.class)
+  public RestTemplateBuilder resilientRestTemplateBuilder(SharedResilienceProps props) {
+    return new RestTemplateBuilder()
+        .setConnectTimeout(Duration.ofMillis(props.getConnectTimeoutMs()))
+        .setReadTimeout(Duration.ofMillis(props.getHttpTimeoutMs()));
+  }
 
-    return WebClient.builder().clientConnector(new ReactorClientHttpConnector(client));
+  /**
+   * Provides a {@link RestTemplate} built from the configured builder when no
+   * other {@code RestTemplate} bean is defined.
+   *
+   * @param builder the builder configured with timeouts
+   * @return a {@link RestTemplate} instance
+   */
+  @Bean
+  @ConditionalOnMissingBean(RestTemplate.class)
+  public RestTemplate resilientRestTemplate(RestTemplateBuilder builder) {
+    return builder.build();
   }
 }
+
