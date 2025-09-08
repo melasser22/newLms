@@ -14,7 +14,7 @@
   <artifactId>starter-resilience</artifactId>
   <name>Shared Starter - Resilience</name>
   <packaging>jar</packaging>
-  <description>Resilience4j auto-configuration with optional WebClient integration and Micrometer metrics</description>
+  <description>Resilience4j auto-configuration with configurable RestTemplate timeouts and Micrometer metrics</description>
 
   <dependencies>
     <!-- Autoconfiguration infra (if you expose @AutoConfiguration) -->
@@ -41,10 +41,10 @@
       <artifactId>resilience4j-spring-boot3</artifactId>
     </dependency>
 
-    <!-- Optional Reactor Netty if you customize HttpClient/ChannelOption -->
+    <!-- Spring Web for RestTemplate support (optional to avoid forcing web stack) -->
     <dependency>
-      <groupId>io.projectreactor.netty</groupId>
-      <artifactId>reactor-netty-http</artifactId>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
       <optional>true</optional>
     </dependency>
 
