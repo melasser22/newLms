@@ -26,14 +26,15 @@ import java.util.List;
 
 @Service
 @Transactional
-public class ResourceServiceImpl implements ResourceService {
+public final class ResourceServiceImpl implements ResourceService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceServiceImpl.class);
+    private static final int LARGE_PAGE_SIZE = 1000;
 
     private final ResourceRepository resourceRepository;
     private final ResourceMapper mapper;
 
-    public ResourceServiceImpl(ResourceRepository resourceRepository, ResourceMapper mapper) {
+    public ResourceServiceImpl(final ResourceRepository resourceRepository, final ResourceMapper mapper) {
         this.resourceRepository = resourceRepository;
         this.mapper = mapper;
     }
@@ -41,7 +42,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Audited(action = AuditAction.CREATE, entity = "Resource", dataClass = DataClass.HEALTH, message = "Create resource")
     @CacheEvict(cacheNames = {"resources:children"}, allEntries = true)
-    public BaseResponse<ResourceDto> add(ResourceDto request) {
+    public BaseResponse<ResourceDto> add(final ResourceDto request) {
         try {
             if (request.getResourceCd() == null || request.getResourceCd().isBlank()) {
                 return BaseResponse.error("ERR_RESOURCE_CD_REQUIRED", "Resource code is required");
@@ -49,8 +50,10 @@ public class ResourceServiceImpl implements ResourceService {
             if (resourceRepository.existsByResourceCdIgnoreCase(request.getResourceCd())) {
                 return BaseResponse.error("ERR_RESOURCE_DUP_CD", "Resource code already exists");
             }
-            if (request.getPath() != null && request.getHttpMethod() != null &&
-                resourceRepository.findByPathIgnoreCaseAndHttpMethodIgnoreCase(request.getPath(), request.getHttpMethod()).isPresent()) {
+            if (request.getPath() != null && request.getHttpMethod() != null
+                    && resourceRepository
+                            .findByPathIgnoreCaseAndHttpMethodIgnoreCase(request.getPath(), request.getHttpMethod())
+                            .isPresent()) {
                 return BaseResponse.error("ERR_RESOURCE_DUP_ENDPOINT", "A resource with same path+method exists");
             }
             Resource entity = mapper.toEntity(request);
@@ -65,33 +68,53 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Audited(action = AuditAction.UPDATE, entity = "Resource", dataClass = DataClass.HEALTH, message = "Update resource")
     @CacheEvict(cacheNames = {"resources:children"}, allEntries = true)
-    public BaseResponse<ResourceDto> update(Integer resourceId, ResourceDto request) {
+    public BaseResponse<ResourceDto> update(final Integer resourceId, final ResourceDto request) {
         try {
             Resource existing = resourceRepository.findById(resourceId).orElse(null);
             if (existing == null) {
                 return BaseResponse.error("ERR_RESOURCE_NOT_FOUND", "Resource not found");
             }
 
-            if (request.getResourceCd() != null &&
-                !request.getResourceCd().equalsIgnoreCase(existing.getResourceCd()) &&
-                resourceRepository.existsByResourceCdIgnoreCase(request.getResourceCd())) {
+            if (request.getResourceCd() != null
+                    && !request.getResourceCd().equalsIgnoreCase(existing.getResourceCd())
+                    && resourceRepository.existsByResourceCdIgnoreCase(request.getResourceCd())) {
                 return BaseResponse.error("ERR_RESOURCE_DUP_CD", "Resource code already exists");
             }
             if (request.getPath() != null && request.getHttpMethod() != null) {
                 resourceRepository.findByPathIgnoreCaseAndHttpMethodIgnoreCase(request.getPath(), request.getHttpMethod())
                         .filter(r -> !r.getResourceId().equals(existing.getResourceId()))
-                        .ifPresent(r -> { throw new IllegalStateException("A resource with same path+method exists"); });
+                        .ifPresent(r -> {
+                            throw new IllegalStateException("A resource with same path+method exists");
+                        });
             }
 
-            if (request.getResourceCd() != null) existing.setResourceCd(request.getResourceCd());
-            if (request.getResourceEnNm() != null) existing.setResourceEnNm(request.getResourceEnNm());
-            if (request.getResourceArNm() != null) existing.setResourceArNm(request.getResourceArNm());
-            if (request.getPath() != null)        existing.setPath(request.getPath());
-            if (request.getHttpMethod() != null)  existing.setHttpMethod(request.getHttpMethod());
-            if (request.getParentResourceId() != null) existing.setParentResourceId(request.getParentResourceId());
-            if (request.getIsActive() != null)    existing.setIsActive(request.getIsActive());
-            if (request.getEnDescription() != null) existing.setEnDescription(request.getEnDescription());
-            if (request.getArDescription() != null) existing.setArDescription(request.getArDescription());
+            if (request.getResourceCd() != null) {
+                existing.setResourceCd(request.getResourceCd());
+            }
+            if (request.getResourceEnNm() != null) {
+                existing.setResourceEnNm(request.getResourceEnNm());
+            }
+            if (request.getResourceArNm() != null) {
+                existing.setResourceArNm(request.getResourceArNm());
+            }
+            if (request.getPath() != null) {
+                existing.setPath(request.getPath());
+            }
+            if (request.getHttpMethod() != null) {
+                existing.setHttpMethod(request.getHttpMethod());
+            }
+            if (request.getParentResourceId() != null) {
+                existing.setParentResourceId(request.getParentResourceId());
+            }
+            if (request.getIsActive() != null) {
+                existing.setIsActive(request.getIsActive());
+            }
+            if (request.getEnDescription() != null) {
+                existing.setEnDescription(request.getEnDescription());
+            }
+            if (request.getArDescription() != null) {
+                existing.setArDescription(request.getArDescription());
+            }
 
             Resource saved = resourceRepository.save(existing);
             return BaseResponse.success("Resource updated", mapper.toDto(saved));
@@ -106,7 +129,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Resource", dataClass = DataClass.HEALTH, message = "Get resource")
-    public BaseResponse<ResourceDto> get(Integer resourceId) {
+    public BaseResponse<ResourceDto> get(final Integer resourceId) {
         try {
             return resourceRepository.findById(resourceId)
                     .map(r -> BaseResponse.success("Resource", mapper.toDto(r)))
@@ -120,7 +143,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Resource", dataClass = DataClass.HEALTH, message = "List resources")
-    public BaseResponse<Page<ResourceDto>> list(Pageable pageable, String q, boolean unpaged) {
+    public BaseResponse<Page<ResourceDto>> list(final Pageable pageable, final String q, final boolean unpaged) {
         try {
             Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
                     "resourceEnNm", "resourceArNm", "resourceCd");
@@ -133,7 +156,8 @@ public class ResourceServiceImpl implements ResourceService {
                     list = resourceRepository.findAll(sort);
                 } else {
                     list = resourceRepository
-                            .findByResourceEnNmContainingIgnoreCaseOrResourceArNmContainingIgnoreCase(q, q, PageRequest.of(0, 1000, sort))
+                            .findByResourceEnNmContainingIgnoreCaseOrResourceArNmContainingIgnoreCase(
+                                    q, q, PageRequest.of(0, LARGE_PAGE_SIZE, sort))
                             .getContent();
                 }
                 return BaseResponse.success("Resources list", new PageImpl<>(mapper.toDtoList(list)));
@@ -169,14 +193,14 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Cacheable(cacheNames = "resources:children", key = "#parentResourceId")
     @Transactional(Transactional.TxType.SUPPORTS)
-    public List<Resource> childrenRaw(Integer parentResourceId) {
+    public List<Resource> childrenRaw(final Integer parentResourceId) {
         return resourceRepository.findByParentResourceIdOrderByResourceCdAsc(parentResourceId);
     }
 
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Resource", dataClass = DataClass.HEALTH, message = "Children of resource")
-    public BaseResponse<List<ResourceDto>> childrenOf(Integer parentResourceId) {
+    public BaseResponse<List<ResourceDto>> childrenOf(final Integer parentResourceId) {
         try {
             return BaseResponse.success("Children", mapper.toDtoList(childrenRaw(parentResourceId)));
         } catch (Exception ex) {

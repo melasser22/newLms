@@ -97,9 +97,9 @@ public final class LookupController {
 
     @GetMapping("/all")
     @PreAuthorize(
-            "@roleChecker.hasRole(authentication, T(com.ejada.starter_security.Role).EJADA_OFFICER, " +
-            "T(com.ejada.starter_security.Role).TENANT_ADMIN, " +
-            "T(com.ejada.starter_security.Role).TENANT_OFFICER)")
+            "@roleChecker.hasRole(authentication, T(com.ejada.starter_security.Role).EJADA_OFFICER, "
+                    + "T(com.ejada.starter_security.Role).TENANT_ADMIN, "
+                    + "T(com.ejada.starter_security.Role).TENANT_OFFICER)")
     @Operation(summary = "Get all lookups (alternative endpoint)", description = "Retrieves all lookup values")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lookups retrieved successfully"),

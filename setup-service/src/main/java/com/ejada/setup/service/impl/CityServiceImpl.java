@@ -19,7 +19,11 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -27,24 +31,25 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class CityServiceImpl implements CityService {
+public final class CityServiceImpl implements CityService {
         private final CityRepository cityRepo;
         private final CountryRepository countryRepo;
         private final CityMapper mapper;
         private final CacheManager cacheManager;
 
-        private void evictCache(String cacheName, Object key) {
+        private void evictCache(final String cacheName, final Object key) {
                 var cache = cacheManager.getCache(cacheName);
                 if (cache != null) {
                         cache.evict(key);
                 }
         }
 
-	@Override
+    @Override
         @Transactional
-        public BaseResponse<CityDto> add(CityDto request) {
+        public BaseResponse<CityDto> add(final CityDto request) {
                 Country country = countryRepo.findById(request.getCountryId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Country", String.valueOf(request.getCountryId())));
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Country", String.valueOf(request.getCountryId())));
 
                 City entity = mapper.toEntity(request);
                 entity.setCountry(country);
@@ -53,9 +58,9 @@ public class CityServiceImpl implements CityService {
                 return BaseResponse.success("City created", mapper.toDto(saved));
         }
 
-	@Override
+    @Override
         @Transactional
-        public BaseResponse<CityDto> update(Integer id, CityDto request) {
+        public BaseResponse<CityDto> update(final Integer id, final CityDto request) {
                 City city = cityRepo.findById(id)
                                 .orElseThrow(() -> new ResourceNotFoundException("City", String.valueOf(id)));
                 Integer oldCountryId = city.getCountry().getCountryId();
@@ -67,7 +72,8 @@ public class CityServiceImpl implements CityService {
 
                 if (!oldCountryId.equals(request.getCountryId())) {
                         Country country = countryRepo.findById(request.getCountryId())
-                                        .orElseThrow(() -> new ResourceNotFoundException("Country", String.valueOf(request.getCountryId())));
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Country", String.valueOf(request.getCountryId())));
                         city.setCountry(country);
                 }
 
@@ -78,9 +84,9 @@ public class CityServiceImpl implements CityService {
                 return BaseResponse.success("City updated", mapper.toDto(saved));
         }
 
-	@Override
+    @Override
         @Transactional
-        public BaseResponse<Void> delete(Integer id) {
+        public BaseResponse<Void> delete(final Integer id) {
                 City city = cityRepo.findById(id)
                                 .orElse(null);
                 if (city == null) {
@@ -93,19 +99,19 @@ public class CityServiceImpl implements CityService {
                 return BaseResponse.success("City deleted", null);
         }
 
-	@Override
+    @Override
         @Transactional(Transactional.TxType.SUPPORTS)
         @Cacheable(cacheNames = "cities", key = "#id")
-        public BaseResponse<CityDto> get(Integer id) {
+        public BaseResponse<CityDto> get(final Integer id) {
                 City city = cityRepo.findById(id)
                                 .orElseThrow(() -> new ResourceNotFoundException("City", String.valueOf(id)));
                 return BaseResponse.success("OK", mapper.toDto(city));
         }
 
-	@Override
+    @Override
         @Transactional(Transactional.TxType.SUPPORTS)
         @Audited(action = AuditAction.READ, entity = "City", dataClass = DataClass.HEALTH, message = "List cities")
-        public BaseResponse<Page<CityDto>> list(Pageable pageable, String q, boolean unpaged) {
+        public BaseResponse<Page<CityDto>> list(final Pageable pageable, final String q, final boolean unpaged) {
                 Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
                                 "cityEnNm", "cityArNm", "cityCd");
                 final Pageable pg = (pageable == null || !pageable.isPaged()
@@ -113,26 +119,28 @@ public class CityServiceImpl implements CityService {
                                 : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
 
                 if (unpaged) {
-                        var spec = Specification.where(CitySpecifications.isActive()).and(CitySpecifications.nameContains(q));
+                        var spec = Specification.allOf(CitySpecifications.isActive())
+                                        .and(CitySpecifications.nameContains(q));
                         var entities = cityRepo.findAll(spec, sort);
                         return BaseResponse.success("City list", new PageImpl<>(mapper.toDtoList(entities)));
                 }
 
-                var spec = Specification.where(CitySpecifications.isActive()).and(CitySpecifications.nameContains(q));
+                var spec = Specification.allOf(CitySpecifications.isActive())
+                                .and(CitySpecifications.nameContains(q));
 
                 var page = cityRepo.findAll(spec, pg);
                 return BaseResponse.success("Cities page", mapper.toDtoPage(page));
         }
 
-	@Override
+    @Override
         @Transactional(Transactional.TxType.SUPPORTS)
         @Audited(action = AuditAction.READ, entity = "City", dataClass = DataClass.HEALTH, message = "List active cities by country")
         @Cacheable(cacheNames = "cities:byCountry", key = "#countryId")
-        public BaseResponse<List<CityDto>> listActiveByCountry(Integer countryId) {
+        public BaseResponse<List<CityDto>> listActiveByCountry(final Integer countryId) {
                 if (!countryRepo.existsById(countryId)) {
                         return BaseResponse.error("ERR_CITY_COUNTRY_NOT_FOUND", "Country not found");
                 }
-                List<City> entities = cityRepo.findByCountry_CountryIdAndIsActiveTrueOrderByCityEnNmAsc(countryId);
+                List<City> entities = cityRepo.findByCountryCountryIdAndIsActiveTrueOrderByCityEnNmAsc(countryId);
 
                 return BaseResponse.success("Active cities", mapper.toDtoList(entities));
         }

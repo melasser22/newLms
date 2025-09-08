@@ -22,7 +22,9 @@ public interface ResourceMapper {
     List<ResourceDto> toDtoList(@NonNull List<Resource> entities);
 
     default Page<ResourceDto> toDtoPage(Page<Resource> page) {
-        if (page == null) return Page.empty();
+        if (page == null) {
+            return Page.empty();
+        }
         return new PageImpl<>(toDtoList(page.getContent()), page.getPageable(), page.getTotalElements());
     }
 }

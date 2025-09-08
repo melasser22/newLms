@@ -1,7 +1,10 @@
 package com.ejada.setup.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -49,5 +52,7 @@ public class Lookup {
     @Column(name = "item_ar_description")
     private String itemArDescription;
 
-    public Boolean isActive() { return isActive != null ? isActive : Boolean.FALSE; }
+    public final Boolean isActive() {
+        return isActive != null ? isActive : Boolean.FALSE;
+    }
 }

@@ -1,8 +1,8 @@
 package com.ejada.setup.enums;
 
-public class ECMEnums {
+public final class ECMEnums {
 
-    public static enum DocumentAttributeValueType {
+    public enum DocumentAttributeValueType {
         NUMBER("NUMBER"),
         TEXT("TEXT"),
         CHOICE("CHOICE"),
@@ -10,7 +10,7 @@ public class ECMEnums {
 
         private final String description;
 
-        DocumentAttributeValueType(String description) {
+        DocumentAttributeValueType(final String description) {
             this.description = description;
         }
 
@@ -19,7 +19,7 @@ public class ECMEnums {
         }
     }
 
-    public static enum ErrorMessage {
+    public enum ErrorMessage {
 
         // 200s Status messages.
         OK("INFO_ECM_200_00000", "Success Operation"),
@@ -45,9 +45,10 @@ public class ECMEnums {
         INTERNAL_SERVER_ERROR("ERROR_ECM_500_00001", "Error While processing an API call to {0}:{1}"),
         GENERAL_ERROR("ERROR_ECM_500_00002", "General Error");
 
-        private String errorCode, description;
+        private final String errorCode;
+        private final String description;
 
-        ErrorMessage(String errorCode, String description) {
+        ErrorMessage(final String errorCode, final String description) {
             this.errorCode = errorCode;
             this.description = description;
         }

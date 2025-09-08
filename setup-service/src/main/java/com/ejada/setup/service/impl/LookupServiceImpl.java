@@ -1,7 +1,6 @@
 package com.ejada.setup.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.enums.StatusEnums.ApiStatus;
 import com.ejada.setup.model.Lookup;
 import com.ejada.setup.repository.LookupRepository;
 import com.ejada.setup.service.LookupService;
@@ -19,13 +18,13 @@ import java.util.List;
 
 @Service
 @Transactional
-public class LookupServiceImpl implements LookupService {
+public final class LookupServiceImpl implements LookupService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LookupServiceImpl.class);
 
     private final LookupRepository lookupRepository;
 
-    public LookupServiceImpl(LookupRepository lookupRepository) {
+    public LookupServiceImpl(final LookupRepository lookupRepository) {
         this.lookupRepository = lookupRepository;
     }
 
@@ -51,13 +50,13 @@ public class LookupServiceImpl implements LookupService {
     }
 
     @Cacheable(cacheNames = "lookups:byGroup", key = "#groupCode")
-    public List<Lookup> getByGroupRaw(String groupCode) {
+    public List<Lookup> getByGroupRaw(final String groupCode) {
         return lookupRepository.findByLookupGroupCodeAndIsActiveTrueOrderByLookupItemEnNmAsc(groupCode);
     }
 
     @Override
     @Audited(action = AuditAction.READ, entity = "Lookup", dataClass = DataClass.HEALTH, message = "Fetch lookups by group")
-    public BaseResponse<List<Lookup>> getByGroup(String groupCode) {
+    public BaseResponse<List<Lookup>> getByGroup(final String groupCode) {
         try {
             if (groupCode == null || groupCode.isBlank()) {
                 return BaseResponse.error("ERR_LOOKUP_GROUP_REQUIRED", "Group code is required");
@@ -72,7 +71,7 @@ public class LookupServiceImpl implements LookupService {
     @Override
     @Audited(action = AuditAction.CREATE, entity = "Lookup", dataClass = DataClass.HEALTH, message = "Create lookup")
     @CacheEvict(cacheNames = {"lookups:all", "lookups:byGroup"}, allEntries = true)
-    public BaseResponse<Lookup> add(Lookup request) {
+    public BaseResponse<Lookup> add(final Lookup request) {
         try {
             if (request.getLookupItemId() == null) {
                 return BaseResponse.error("ERR_LOOKUP_ID_REQUIRED", "Lookup item id is required");
@@ -94,21 +93,37 @@ public class LookupServiceImpl implements LookupService {
     @Override
     @Audited(action = AuditAction.UPDATE, entity = "Lookup", dataClass = DataClass.HEALTH, message = "Update lookup")
     @CacheEvict(cacheNames = {"lookups:all", "lookups:byGroup"}, allEntries = true)
-    public BaseResponse<Lookup> update(Integer lookupItemId, Lookup request) {
+    public BaseResponse<Lookup> update(final Integer lookupItemId, final Lookup request) {
         try {
             Lookup existing = lookupRepository.findById(lookupItemId).orElse(null);
             if (existing == null) {
                 return BaseResponse.error("ERR_LOOKUP_NOT_FOUND", "Lookup not found");
             }
 
-            if (request.getLookupItemCd() != null) existing.setLookupItemCd(request.getLookupItemCd());
-            if (request.getLookupItemEnNm() != null) existing.setLookupItemEnNm(request.getLookupItemEnNm());
-            if (request.getLookupItemArNm() != null) existing.setLookupItemArNm(request.getLookupItemArNm());
-            if (request.getLookupGroupCode() != null) existing.setLookupGroupCode(request.getLookupGroupCode());
-            if (request.getParentLookupId() != null) existing.setParentLookupId(request.getParentLookupId());
-            if (request.getIsActive() != null) existing.setIsActive(request.getIsActive());
-            if (request.getItemEnDescription() != null) existing.setItemEnDescription(request.getItemEnDescription());
-            if (request.getItemArDescription() != null) existing.setItemArDescription(request.getItemArDescription());
+            if (request.getLookupItemCd() != null) {
+                existing.setLookupItemCd(request.getLookupItemCd());
+            }
+            if (request.getLookupItemEnNm() != null) {
+                existing.setLookupItemEnNm(request.getLookupItemEnNm());
+            }
+            if (request.getLookupItemArNm() != null) {
+                existing.setLookupItemArNm(request.getLookupItemArNm());
+            }
+            if (request.getLookupGroupCode() != null) {
+                existing.setLookupGroupCode(request.getLookupGroupCode());
+            }
+            if (request.getParentLookupId() != null) {
+                existing.setParentLookupId(request.getParentLookupId());
+            }
+            if (request.getIsActive() != null) {
+                existing.setIsActive(request.getIsActive());
+            }
+            if (request.getItemEnDescription() != null) {
+                existing.setItemEnDescription(request.getItemEnDescription());
+            }
+            if (request.getItemArDescription() != null) {
+                existing.setItemArDescription(request.getItemArDescription());
+            }
 
             Lookup saved = lookupRepository.save(existing);
             return BaseResponse.success("Lookup updated", saved);
