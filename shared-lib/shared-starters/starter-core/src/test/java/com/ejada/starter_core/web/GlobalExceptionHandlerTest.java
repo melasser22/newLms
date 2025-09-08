@@ -12,7 +12,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleGenericReturnsInternalServerError() {
-        ResponseEntity<BaseResponse<?>> resp = handler.handleGeneric(new RuntimeException("boom"), null);
+        ResponseEntity<BaseResponse<?>> resp = handler.handleGeneric(new RuntimeException("boom"));
         assertEquals(500, resp.getStatusCode().value());
         assertEquals("ERR_INTERNAL", resp.getBody().getCode());
     }

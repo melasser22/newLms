@@ -14,14 +14,14 @@ class SecurityExceptionHandlerTest {
 
     @Test
     void handleAccessDeniedReturnsForbidden() {
-        ResponseEntity<BaseResponse<?>> resp = handler.handleAccessDenied(new AccessDeniedException("denied"), null);
+        ResponseEntity<BaseResponse<?>> resp = handler.handleAccessDenied(new AccessDeniedException("denied"));
         assertEquals(403, resp.getStatusCode().value());
         assertEquals("ERR_ACCESS_DENIED", resp.getBody().getCode());
     }
 
     @Test
     void handleAuthorizationDeniedReturnsForbidden() {
-        ResponseEntity<BaseResponse<?>> resp = handler.handleAccessDenied(new AuthorizationDeniedException("denied"), null);
+        ResponseEntity<BaseResponse<?>> resp = handler.handleAccessDenied(new AuthorizationDeniedException("denied"));
         assertEquals(403, resp.getStatusCode().value());
         assertEquals("ERR_ACCESS_DENIED", resp.getBody().getCode());
     }
