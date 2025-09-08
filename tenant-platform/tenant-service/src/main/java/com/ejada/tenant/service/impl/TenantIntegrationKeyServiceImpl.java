@@ -2,7 +2,9 @@ package com.ejada.tenant.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.crypto.CryptoFacade;
-import com.ejada.tenant.dto.*;
+import com.ejada.tenant.dto.TenantIntegrationKeyCreateReq;
+import com.ejada.tenant.dto.TenantIntegrationKeyRes;
+import com.ejada.tenant.dto.TenantIntegrationKeyUpdateReq;
 import com.ejada.tenant.mapper.TenantIntegrationKeyMapper;
 import com.ejada.tenant.model.Tenant;
 import com.ejada.tenant.model.TenantIntegrationKey;
@@ -23,7 +25,7 @@ import java.util.Base64;
 
 @Service
 @Transactional
-public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyService {
+public final class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyService {
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -33,10 +35,10 @@ public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyServ
     private final CryptoFacade crypto;
 
     @SuppressFBWarnings("EI_EXPOSE_REP2")
-    public TenantIntegrationKeyServiceImpl(TenantIntegrationKeyRepository repo,
-                                           TenantRepository tenantRepo,
-                                           TenantIntegrationKeyMapper mapper,
-                                           CryptoFacade crypto) {
+    public TenantIntegrationKeyServiceImpl(final TenantIntegrationKeyRepository repo,
+                                           final TenantRepository tenantRepo,
+                                           final TenantIntegrationKeyMapper mapper,
+                                           final CryptoFacade crypto) {
         this.repo = repo;
         this.tenantRepo = tenantRepo;
         this.mapper = mapper;
@@ -44,13 +46,13 @@ public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyServ
     }
 
     @Override
-    public BaseResponse<TenantIntegrationKeyRes> create(TenantIntegrationKeyCreateReq req) {
+    public BaseResponse<TenantIntegrationKeyRes> create(final TenantIntegrationKeyCreateReq req) {
         // Validate tenant
         Tenant tenant = tenantRepo.findByIdAndIsDeletedFalse(req.tenantId())
                 .orElseThrow(() -> new EntityNotFoundException("Tenant " + req.tenantId()));
 
         // Uniqueness under soft delete
-        if (repo.existsByTenant_IdAndKeyIdAndIsDeletedFalse(req.tenantId(), req.keyId())) {
+        if (repo.existsByTenantIdAndKeyIdAndIsDeletedFalse(req.tenantId(), req.keyId())) {
             throw new IllegalStateException("integration key exists for tenant=" + req.tenantId() + " keyId=" + req.keyId());
         }
 
@@ -84,7 +86,7 @@ public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyServ
     }
 
     @Override
-    public BaseResponse<TenantIntegrationKeyRes> update(Long tikId, TenantIntegrationKeyUpdateReq req) {
+    public BaseResponse<TenantIntegrationKeyRes> update(final Long tikId, final TenantIntegrationKeyUpdateReq req) {
         TenantIntegrationKey e = repo.findByTikIdAndIsDeletedFalse(tikId)
                 .orElseThrow(() -> new EntityNotFoundException("TenantIntegrationKey " + tikId));
 
@@ -108,7 +110,7 @@ public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyServ
     }
 
     @Override
-    public BaseResponse<Void> revoke(Long tikId) {
+    public BaseResponse<Void> revoke(final Long tikId) {
         TenantIntegrationKey e = repo.findByTikIdAndIsDeletedFalse(tikId)
                 .orElseThrow(() -> new EntityNotFoundException("TenantIntegrationKey " + tikId));
         e.setIsDeleted(true);
@@ -119,7 +121,7 @@ public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyServ
 
     @Override
     @Transactional(readOnly = true)
-    public BaseResponse<TenantIntegrationKeyRes> get(Long tikId) {
+    public BaseResponse<TenantIntegrationKeyRes> get(final Long tikId) {
         TenantIntegrationKey e = repo.findByTikIdAndIsDeletedFalse(tikId)
                 .orElseThrow(() -> new EntityNotFoundException("TenantIntegrationKey " + tikId));
         return BaseResponse.success("Tenant integration key fetched", mapper.toRes(e));
@@ -127,12 +129,14 @@ public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyServ
 
     @Override
     @Transactional(readOnly = true)
-    public BaseResponse<Page<TenantIntegrationKeyRes>> listByTenant(Integer tenantId, Pageable pageable) {
+    public BaseResponse<Page<TenantIntegrationKeyRes>> listByTenant(final Integer tenantId, final Pageable pageable) {
         // Validate tenant existence (optional but helpful)
         tenantRepo.findByIdAndIsDeletedFalse(tenantId)
                 .orElseThrow(() -> new EntityNotFoundException("Tenant " + tenantId));
         Page<TenantIntegrationKeyRes> page =
-                repo.findByTenant_IdAndIsDeletedFalse(tenantId, pageable).map(mapper::toRes);
+                repo.findByTenantIdAndIsDeletedFalse(tenantId, pageable).map(mapper::toRes);
         return BaseResponse.success("Tenant integration keys listed", page);
     }
+
+    private static final int SECRET_BYTES_LENGTH = 32;
 }

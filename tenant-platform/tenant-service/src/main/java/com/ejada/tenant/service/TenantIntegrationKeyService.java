@@ -1,6 +1,8 @@
 package com.ejada.tenant.service;
 
-import com.ejada.tenant.dto.*;
+import com.ejada.tenant.dto.TenantIntegrationKeyCreateReq;
+import com.ejada.tenant.dto.TenantIntegrationKeyRes;
+import com.ejada.tenant.dto.TenantIntegrationKeyUpdateReq;
 import com.ejada.common.dto.BaseResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

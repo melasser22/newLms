@@ -1,11 +1,20 @@
 package com.ejada.tenant.mapper;
 
-import com.ejada.tenant.dto.*;
+import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
+import com.ejada.tenant.dto.TenantIntegrationKeyCreateReq;
+import com.ejada.tenant.dto.TenantIntegrationKeyRes;
+import com.ejada.tenant.dto.TenantIntegrationKeyUpdateReq;
+import com.ejada.tenant.dto.TikStatus;
 import com.ejada.tenant.model.Tenant;
 import com.ejada.tenant.model.TenantIntegrationKey;
 import com.ejada.tenant.model.TenantIntegrationKey.Status;
-import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
-import org.mapstruct.*;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.lang.NonNull;
 
 import java.time.OffsetDateTime;
@@ -40,10 +49,18 @@ public interface TenantIntegrationKeyMapper {
 
     @AfterMapping
     default void setDefaults(@MappingTarget TenantIntegrationKey e, TenantIntegrationKeyCreateReq req) {
-        if (e.getValidFrom() == null) e.setValidFrom(OffsetDateTime.now());
-        if (e.getStatus() == null) e.setStatus(Status.ACTIVE);
-        if (e.getUseCount() == null) e.setUseCount(0L);
-        if (e.getIsDeleted() == null) e.setIsDeleted(Boolean.FALSE);
+        if (e.getValidFrom() == null) {
+            e.setValidFrom(OffsetDateTime.now());
+        }
+        if (e.getStatus() == null) {
+            e.setStatus(Status.ACTIVE);
+        }
+        if (e.getUseCount() == null) {
+            e.setUseCount(0L);
+        }
+        if (e.getIsDeleted() == null) {
+            e.setIsDeleted(Boolean.FALSE);
+        }
     }
 
     // ---------- Update (PATCH/PUT with IGNORE nulls) ----------
@@ -72,7 +89,9 @@ public interface TenantIntegrationKeyMapper {
     // ---------- Enum & collection converters ----------
     @Named("toEntityStatus")
     default Status toEntityStatus(TikStatus s) {
-        if (s == null) return null;
+        if (s == null) {
+            return null;
+        }
         return switch (s) {
             case ACTIVE -> Status.ACTIVE;
             case SUSPENDED -> Status.SUSPENDED;
@@ -83,7 +102,9 @@ public interface TenantIntegrationKeyMapper {
 
     @Named("toDtoStatus")
     default TikStatus toDtoStatus(Status s) {
-        if (s == null) return null;
+        if (s == null) {
+            return null;
+        }
         return switch (s) {
             case ACTIVE -> TikStatus.ACTIVE;
             case SUSPENDED -> TikStatus.SUSPENDED;

@@ -1,7 +1,23 @@
 package com.ejada.tenant.model;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.Builder;
 import org.hibernate.annotations.DynamicUpdate;
 
 // Uncomment if using hibernate-types library:
@@ -22,9 +38,16 @@ import org.hibernate.annotations.DynamicUpdate;
     // DB enforces partial uniqueness: (tenant_id, key_id) where is_deleted = false
 )
 @DynamicUpdate
-@Getter @Setter @NoArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class TenantIntegrationKey {
+
+    public static final int KEY_ID_LENGTH = 64;
+    public static final int SECRET_LENGTH = 255;
+    public static final int LABEL_LENGTH = 128;
+    public static final int STATUS_LENGTH = 16;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,13 +60,13 @@ public class TenantIntegrationKey {
         foreignKey = @ForeignKey(name = "fk_tik_tenant"))
     private Tenant tenant;
 
-    @Column(name = "key_id", length = 64, nullable = false)
+    @Column(name = "key_id", length = KEY_ID_LENGTH, nullable = false)
     private String keyId; // public identifier
 
-    @Column(name = "key_secret", length = 255, nullable = false)
+    @Column(name = "key_secret", length = SECRET_LENGTH, nullable = false)
     private String keySecret; // store HASH (bcrypt/argon2), never plaintext
 
-    @Column(name = "label", length = 128)
+    @Column(name = "label", length = LABEL_LENGTH)
     private String label;
 
     // ---------- Scopes ----------
@@ -56,7 +79,7 @@ public class TenantIntegrationKey {
     @Column(name = "scopes", columnDefinition = "text[]")
     private String[] scopes;
 
-    @Column(name = "status", length = 16, nullable = false)
+    @Column(name = "status", length = STATUS_LENGTH, nullable = false)
     @Enumerated(EnumType.STRING)
     private Status status = Status.ACTIVE;
 
@@ -94,29 +117,39 @@ public class TenantIntegrationKey {
     @Column(name = "updated_at", insertable = false)
     private java.time.OffsetDateTime updatedAt;
 
-    public Tenant getTenant() {
+    public final Tenant getTenant() {
         return tenant == null ? null : Tenant.ref(tenant.getId());
     }
 
-    public void setTenant(Tenant tenant) {
+    public final void setTenant(final Tenant tenant) {
         this.tenant = tenant == null ? null : Tenant.ref(tenant.getId());
     }
 
-    public String[] getScopes() {
+    public final String[] getScopes() {
         return scopes == null ? null : scopes.clone();
     }
 
-    public void setScopes(String[] scopes) {
+    public final void setScopes(final String[] scopes) {
         this.scopes = scopes == null ? null : scopes.clone();
     }
 
-    public boolean isDeleted() { return Boolean.TRUE.equals(isDeleted); }
-    public boolean isActive()  { return Status.ACTIVE.equals(status); }
-    public boolean isExpired() { return expiresAt != null && expiresAt.isBefore(java.time.OffsetDateTime.now()); }
+    public final boolean isDeleted() {
+        return Boolean.TRUE.equals(isDeleted);
+    }
+
+    public final boolean isActive() {
+        return Status.ACTIVE.equals(status);
+    }
+
+    public final boolean isExpired() {
+        return expiresAt != null && expiresAt.isBefore(java.time.OffsetDateTime.now());
+    }
 
     /** id-only reference helper */
     public static TenantIntegrationKey ref(final Long id) {
-        if (id == null) return null;
+        if (id == null) {
+            return null;
+        }
         TenantIntegrationKey tik = new TenantIntegrationKey();
         tik.setTikId(id);
         return tik;

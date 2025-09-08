@@ -34,7 +34,7 @@ public record TenantIntegrationKeyRes(
         return List.copyOf(scopes);
     }
 
-    public TenantIntegrationKeyRes withPlainSecret(String secret) {
+    public TenantIntegrationKeyRes withPlainSecret(final String secret) {
         return new TenantIntegrationKeyRes(tikId, tenantId, keyId, label, scopes, status,
                 validFrom, expiresAt, lastUsedAt, useCount, dailyQuota, meta, isDeleted,
                 createdAt, updatedAt, secret);

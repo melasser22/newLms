@@ -4,7 +4,9 @@ import com.ejada.tenant.model.TenantIntegrationKey;
 import com.ejada.tenant.model.TenantIntegrationKey.Status;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -16,13 +18,13 @@ public interface TenantIntegrationKeyRepository extends JpaRepository<TenantInte
 
     Optional<TenantIntegrationKey> findByTikIdAndIsDeletedFalse(Long tikId);
 
-    Optional<TenantIntegrationKey> findByTenant_IdAndKeyIdAndIsDeletedFalse(Integer tenantId, String keyId);
+    Optional<TenantIntegrationKey> findByTenantIdAndKeyIdAndIsDeletedFalse(Integer tenantId, String keyId);
 
-    Page<TenantIntegrationKey> findByTenant_IdAndIsDeletedFalse(Integer tenantId, Pageable pageable);
+    Page<TenantIntegrationKey> findByTenantIdAndIsDeletedFalse(Integer tenantId, Pageable pageable);
 
-    List<TenantIntegrationKey> findByTenant_IdAndStatusAndIsDeletedFalse(Integer tenantId, Status status);
+    List<TenantIntegrationKey> findByTenantIdAndStatusAndIsDeletedFalse(Integer tenantId, Status status);
 
-    boolean existsByTenant_IdAndKeyIdAndIsDeletedFalse(Integer tenantId, String keyId);
+    boolean existsByTenantIdAndKeyIdAndIsDeletedFalse(Integer tenantId, String keyId);
 
     // --- Usable (active + within validity window + not deleted) ---
     @Query("""

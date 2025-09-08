@@ -1,9 +1,16 @@
 package com.ejada.tenant.mapper;
 
-import com.ejada.tenant.dto.*;
-import com.ejada.tenant.model.Tenant;
 import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
-import org.mapstruct.*;
+import com.ejada.tenant.dto.TenantCreateReq;
+import com.ejada.tenant.dto.TenantRes;
+import com.ejada.tenant.dto.TenantUpdateReq;
+import com.ejada.tenant.model.Tenant;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.lang.NonNull;
 
 @Mapper(config = SharedMapstructConfig.class)
@@ -21,8 +28,12 @@ public interface TenantMapper {
     // Post-process defaults
     @AfterMapping
     default void setDefaults(@MappingTarget Tenant e, TenantCreateReq req) {
-        if (e.getActive() == null) e.setActive(Boolean.TRUE);
-        if (e.getIsDeleted() == null) e.setIsDeleted(Boolean.FALSE);
+        if (e.getActive() == null) {
+            e.setActive(Boolean.TRUE);
+        }
+        if (e.getIsDeleted() == null) {
+            e.setIsDeleted(Boolean.FALSE);
+        }
     }
 
     // ---------- Update (PATCH/PUT with IGNORE nulls) ----------
@@ -37,5 +48,7 @@ public interface TenantMapper {
     TenantRes toRes(@NonNull Tenant entity);
 
     // ---------- Helpers ----------
-    static Tenant ref(Integer id) { return Tenant.ref(id); }
+    static Tenant ref(Integer id) {
+        return Tenant.ref(id);
+    }
 }
