@@ -1,5 +1,6 @@
 package com.ejada.subscription.model;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
@@ -27,6 +28,7 @@ public class EntitlementCache {
     @EqualsAndHashCode.Include
     private Long entitlementCacheId;
 
+    @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "subscription_id", nullable = false)
     private Subscription subscription;

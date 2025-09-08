@@ -7,6 +7,7 @@ import com.ejada.subscription.model.*;
 import com.ejada.subscription.repository.*;
 import com.ejada.subscription.service.SubscriptionInboundService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -51,6 +53,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     private final SubscriptionUpdateEventMapper updateEventMapper;
 
     // JSON
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
     private final ObjectMapper objectMapper;
 
     private static final String EP_NOTIFICATION = "RECEIVE_NOTIFICATION";
@@ -233,7 +236,9 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
 
     // Enum overload (your enum package)
     private void transitionStatus(Subscription sub, SubscriptionUpdateType type) {
-        transitionStatus(sub, type == null ? null : type.name());
+        if (type != null) {
+            transitionStatus(sub, type.name());
+        }
     }
 
     private String writeJson(Object o) {
@@ -249,7 +254,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             StringBuilder sb = new StringBuilder(hash.length * 2);
             for (byte b : hash) sb.append(String.format("%02x", b));
             return sb.toString();
-        } catch (Exception e) {
+        } catch (NoSuchAlgorithmException e) {
             return null;
         }
     }
