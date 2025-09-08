@@ -1,6 +1,6 @@
 package com.ejada.sec.handler;
 
-import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.dto.ErrorResponse;
 import java.util.NoSuchElementException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -8,14 +8,14 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
- * Handles authentication-related exceptions and converts them to {@link BaseResponse} payloads.
+ * Handles authentication-related exceptions and converts them to {@link ErrorResponse} payloads.
  */
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "com.ejada.sec")
 public class AuthExceptionHandler {
 
     @ExceptionHandler({NoSuchElementException.class, IllegalStateException.class})
-    public ResponseEntity<BaseResponse<?>> handleAuthExceptions(RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(BaseResponse.error("ERR_AUTH", ex.getMessage()));
+    public ResponseEntity<ErrorResponse> handleAuthExceptions(RuntimeException ex) {
+        ErrorResponse body = ErrorResponse.of("ERR_AUTH", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
     }
 }
