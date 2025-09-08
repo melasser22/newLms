@@ -5,11 +5,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
- * Registers {@link NoResourceFoundExceptionHandler} only when the MVC-specific
+ * Registers {@link NoResourceFoundExceptionHandler} only when the reactive
  * {@code NoResourceFoundException} is present on the classpath.
  */
 @Configuration(proxyBeanMethods = false)
-@ConditionalOnClass(name = "org.springframework.web.servlet.resource.NoResourceFoundException")
+@ConditionalOnClass(name = "org.springframework.web.reactive.resource.NoResourceFoundException")
 @Import(NoResourceFoundExceptionHandler.class)
 public class NoResourceFoundHandlerConfiguration {
 }

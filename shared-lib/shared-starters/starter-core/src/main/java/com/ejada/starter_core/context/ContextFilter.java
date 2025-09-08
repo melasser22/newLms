@@ -2,26 +2,20 @@ package com.ejada.starter_core.context;
 
 import org.slf4j.MDC;
 import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
 
 import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.context.ContextManager;
 import com.ejada.common.context.CorrelationContextUtil;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-@Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
-public class ContextFilter extends OncePerRequestFilter {
+public class ContextFilter implements WebFilter, Ordered {
 
 
     // Paths we don't want to enforce tenant/correlation for
@@ -30,68 +24,63 @@ public class ContextFilter extends OncePerRequestFilter {
     );
 
     @Override
-    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        final String path = request.getRequestURI();
-        for (String p : SKIP_PREFIXES) {
-            if (path.startsWith(p)) return true;
-        }
-        return false;
+    public int getOrder() {
+        return Ordered.HIGHEST_PRECEDENCE;
     }
 
     @Override
-    protected void doFilterInternal(
-            @NonNull HttpServletRequest request,
-            @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain
-    ) throws ServletException, IOException {
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        final String path = exchange.getRequest().getPath().value();
+        for (String p : SKIP_PREFIXES) {
+            if (path.startsWith(p)) {
+                return chain.filter(exchange);
+            }
+        }
 
-        String tenantId      = trimToNull(firstNonNull(
-                request.getHeader(HeaderNames.X_TENANT_ID),
-                request.getParameter(HeaderNames.X_TENANT_ID)           // optional fallback
+        String tenantId = trimToNull(firstNonNull(
+                exchange.getRequest().getHeaders().getFirst(HeaderNames.X_TENANT_ID),
+                exchange.getRequest().getQueryParams().getFirst(HeaderNames.X_TENANT_ID)
         ));
         if (tenantId != null && !TENANT_PATTERN.matcher(tenantId).matches()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + HeaderNames.X_TENANT_ID);
-            return;
+            exchange.getResponse().setStatusCode(HttpStatus.BAD_REQUEST);
+            return exchange.getResponse().setComplete();
         }
         String incomingCorrelation = trimToNull(
-                request.getHeader(HeaderNames.CORRELATION_ID)
+                exchange.getRequest().getHeaders().getFirst(HeaderNames.CORRELATION_ID)
         );
-        String userId        = trimToNull(firstNonNull(
-                request.getHeader(HeaderNames.USER_ID),
-                (String) request.getAttribute(HeaderNames.USER_ID)  // some stacks set it as an attribute
+        String userId = trimToNull(firstNonNull(
+                exchange.getRequest().getHeaders().getFirst(HeaderNames.USER_ID),
+                null
         ));
 
-        // Initialize correlation (generates a new one if missing) and tenant context
         CorrelationContextUtil.init(incomingCorrelation, tenantId);
         String correlationId = CorrelationContextUtil.getCorrelationId();
 
-        // If you want hard enforcement for protected APIs, uncomment:
-        // if (tenantId == null) {
-        //     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing " + HDR_TENANT_ID);
-        //     return;
-        // }
-
         try {
-            // ---- Propagate to thread-local holders used elsewhere in the stack
             if (tenantId != null) {
                 ContextManager.Tenant.set(tenantId);
             }
-            // ---- Enrich logging context (appears on every log line)
             putMdc(HeaderNames.X_TENANT_ID, tenantId);
             putMdc(HeaderNames.USER_ID, userId);
             putMdc(HeaderNames.CORRELATION_ID, correlationId);
 
-            // ---- Echo correlation for clients & downstream services
-            response.setHeader(HeaderNames.CORRELATION_ID, correlationId);
+            exchange.getResponse().getHeaders().set(HeaderNames.CORRELATION_ID, correlationId);
 
-            filterChain.doFilter(request, response);
-        } finally {
-            // ---- Always cleanup
+            return chain.filter(exchange)
+                    .doFinally(s -> {
+                        ContextManager.Tenant.clear();
+                        CorrelationContextUtil.clear();
+                        MDC.remove(HeaderNames.X_TENANT_ID);
+                        MDC.remove(HeaderNames.USER_ID);
+                        MDC.remove(HeaderNames.CORRELATION_ID);
+                    });
+        } catch (RuntimeException ex) {
             ContextManager.Tenant.clear();
             CorrelationContextUtil.clear();
             MDC.remove(HeaderNames.X_TENANT_ID);
             MDC.remove(HeaderNames.USER_ID);
             MDC.remove(HeaderNames.CORRELATION_ID);
+            throw ex;
         }
     }
 

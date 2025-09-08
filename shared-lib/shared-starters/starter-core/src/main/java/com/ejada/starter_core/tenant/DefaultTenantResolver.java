@@ -1,8 +1,8 @@
 package com.ejada.starter_core.tenant;
 
 import com.ejada.starter_core.config.CoreAutoConfiguration.CoreProps;
-import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.MDC;
+import org.springframework.web.server.ServerWebExchange;
 
 import java.util.Map;
 import java.util.Objects;
@@ -17,11 +17,11 @@ public class DefaultTenantResolver implements TenantResolver {
     }
 
     @Override
-    public String resolve(HttpServletRequest request) {
+    public String resolve(ServerWebExchange exchange) {
         // 1) header
-        String fromHeader = trimToNull(request.getHeader(cfg.getHeaderName()));
+        String fromHeader = trimToNull(exchange.getRequest().getHeaders().getFirst(cfg.getHeaderName()));
         // 2) query param
-        String fromQuery = trimToNull(request.getParameter(cfg.getQueryParam()));
+        String fromQuery = trimToNull(exchange.getRequest().getQueryParams().getFirst(cfg.getQueryParam()));
         // 3) jwt (optional)
         String fromJwt = null;
         if (cfg.isResolveFromJwt()) {

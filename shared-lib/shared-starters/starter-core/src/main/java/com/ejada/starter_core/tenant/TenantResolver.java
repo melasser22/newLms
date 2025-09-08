@@ -1,8 +1,8 @@
 package com.ejada.starter_core.tenant;
 
-import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.server.ServerWebExchange;
 
 public interface TenantResolver {
     /** Return tenant id if found; else null. Must NOT throw. */
-    String resolve(HttpServletRequest request);
+    String resolve(ServerWebExchange exchange);
 }

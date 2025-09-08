@@ -2,16 +2,14 @@ package com.ejada.starter_core.tenant;
 
 import com.ejada.common.context.ContextManager;
 import com.ejada.starter_core.config.CoreAutoConfiguration.CoreProps;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.core.Ordered;
 import org.springframework.util.AntPathMatcher;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-
-public class TenantFilter extends OncePerRequestFilter {
+public class TenantFilter implements WebFilter, Ordered {
 
     private final TenantResolver resolver;
     private final CoreProps.Tenant cfg;
@@ -24,27 +22,27 @@ public class TenantFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        for (String p : cfg.getSkipPatterns()) {
-            if (matcher.match(p, uri)) return true;
-        }
-        return false;
+    public int getOrder() {
+        return cfg.getOrder();
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
-            throws ServletException, IOException {
-        String tenant = resolver.resolve(req);
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        String uri = exchange.getRequest().getURI().getPath();
+        for (String p : cfg.getSkipPatterns()) {
+            if (matcher.match(p, uri)) {
+                return chain.filter(exchange);
+            }
+        }
+
+        String tenant = resolver.resolve(exchange);
         if (tenant != null) {
             if (cfg.isEchoResponseHeader()) {
-                res.setHeader(cfg.getHeaderName(), tenant);
+                exchange.getResponse().getHeaders().set(cfg.getHeaderName(), tenant);
             }
-            try (ContextManager.Tenant.Scope ignored = ContextManager.Tenant.openScope(tenant)) {
-                chain.doFilter(req, res);
-            }
-        } else {
-            chain.doFilter(req, res);
+            ContextManager.Tenant.set(tenant);
         }
+
+        return chain.filter(exchange).doFinally(s -> ContextManager.Tenant.clear());
     }
 }
