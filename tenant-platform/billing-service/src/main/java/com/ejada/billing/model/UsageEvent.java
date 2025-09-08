@@ -1,7 +1,18 @@
 package com.ejada.billing.model;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.OffsetDateTime;
@@ -15,7 +26,11 @@ import java.util.UUID;
        })
 @DynamicUpdate
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class UsageEvent {
+public final class UsageEvent {
+
+  private static final int TOKEN_HASH_LENGTH = 64;
+  private static final int STATUS_CODE_LENGTH = 32;
+  private static final int STATUS_DESC_LENGTH = 128;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,7 +40,7 @@ public class UsageEvent {
   @Column(name = "rq_uid", nullable = false)
   private UUID rqUid;
 
-  @Column(name = "token_hash", length = 64)
+  @Column(name = "token_hash", length = TOKEN_HASH_LENGTH)
   private String tokenHash;
 
   /** Raw request payload for audit (JSON string stored in jsonb). */
@@ -41,10 +56,10 @@ public class UsageEvent {
   @Column(name = "processed", nullable = false)
   private Boolean processed;
 
-  @Column(name = "status_code", length = 32, nullable = false)
+  @Column(name = "status_code", length = STATUS_CODE_LENGTH, nullable = false)
   private String statusCode;
 
-  @Column(name = "status_desc", length = 128, nullable = false)
+  @Column(name = "status_desc", length = STATUS_DESC_LENGTH, nullable = false)
   private String statusDesc;
 
   /** Optional details (errors etc.) as JSON. */
@@ -53,11 +68,15 @@ public class UsageEvent {
 
   @PrePersist
   void onInsert() {
-    if (receivedAt == null) receivedAt = OffsetDateTime.now();
-    if (processed == null) processed = Boolean.TRUE;
+    if (receivedAt == null) {
+      receivedAt = OffsetDateTime.now();
+    }
+    if (processed == null) {
+      processed = Boolean.TRUE;
+    }
   }
 
-  public static UsageEvent ref(Long id) {
+  public static UsageEvent ref(final Long id) {
     UsageEvent e = new UsageEvent();
     e.setUsageEventId(id);
     return e;

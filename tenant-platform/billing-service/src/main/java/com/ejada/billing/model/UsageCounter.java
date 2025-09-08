@@ -1,7 +1,20 @@
 package com.ejada.billing.model;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.math.BigDecimal;
@@ -10,14 +23,18 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "usage_counter",
        uniqueConstraints = @UniqueConstraint(name = "uk_counter_sub_typ",
-                                             columnNames = {"ext_subscription_id","consumption_typ_cd"}),
+                                             columnNames = {"ext_subscription_id", "consumption_typ_cd"}),
        indexes = {
          @Index(name = "idx_usage_counter_sub_typ", columnList = "ext_subscription_id,consumption_typ_cd"),
          @Index(name = "idx_usage_counter_updated_at", columnList = "updated_at DESC")
        })
 @DynamicUpdate
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class UsageCounter {
+public final class UsageCounter {
+
+  private static final int TYPE_CD_LENGTH = 32;
+  private static final int AMOUNT_PRECISION = 18;
+  private static final int AMOUNT_SCALE = 4;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,7 +48,7 @@ public class UsageCounter {
   private Long extCustomerId;
 
   /** TRANSACTION | USER | BALANCE (per Swagger). */
-  @Column(name = "consumption_typ_cd", length = 32, nullable = false)
+  @Column(name = "consumption_typ_cd", length = TYPE_CD_LENGTH, nullable = false)
   private String consumptionTypCd;
 
   /** For TRANSACTION/USER types. */
@@ -39,7 +56,7 @@ public class UsageCounter {
   private Long currentConsumption;
 
   /** For BALANCE type. */
-  @Column(name = "current_consumed_amt", precision = 18, scale = 4)
+  @Column(name = "current_consumed_amt", precision = AMOUNT_PRECISION, scale = AMOUNT_SCALE)
   private BigDecimal currentConsumedAmt;
 
   @Column(name = "updated_at", nullable = false)
@@ -52,7 +69,7 @@ public class UsageCounter {
   }
 
   /** Lightweight reference helper (no DB hit). */
-  public static UsageCounter ref(Long id) {
+  public static UsageCounter ref(final Long id) {
     UsageCounter c = new UsageCounter();
     c.setUsageCounterId(id);
     return c;

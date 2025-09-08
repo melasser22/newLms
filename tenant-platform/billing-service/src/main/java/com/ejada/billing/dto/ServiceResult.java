@@ -22,10 +22,10 @@ public record ServiceResult<T>(
         return List.copyOf(statusDtls);
     }
 
-    public static <T> ServiceResult<T> ok(String rqUID, T body) {
+    public static <T> ServiceResult<T> ok(final String rqUID, final T body) {
         return new ServiceResult<>(rqUID, "I000000", "Successful Operation", body, null, null, Boolean.TRUE);
     }
-    public static <T> ServiceResult<T> error(String rqUID, String debugId, List<String> details) {
+    public static <T> ServiceResult<T> error(final String rqUID, final String debugId, final List<String> details) {
         return new ServiceResult<>(rqUID, "EINT000", "Unexpected Error", null, debugId, details, Boolean.FALSE);
     }
 }

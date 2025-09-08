@@ -10,14 +10,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class InvoiceAttachmentServiceImpl implements InvoiceAttachmentService {
+public final class InvoiceAttachmentServiceImpl implements InvoiceAttachmentService {
 
     private final InvoiceAttachmentRepository repo;
 
     @Override
     @Transactional(readOnly = true)
-    public AttachmentView getLatestAttachment(Long invoiceId) {
-        InvoiceAttachment ia = repo.findFirstByInvoice_InvoiceIdOrderByCreatedAtDesc(invoiceId)
+    public AttachmentView getLatestAttachment(final Long invoiceId) {
+        InvoiceAttachment ia = repo.findFirstByInvoiceInvoiceIdOrderByCreatedAtDesc(invoiceId)
                 .orElseThrow(() -> new IllegalArgumentException("No attachment for invoice " + invoiceId));
         return new AttachmentView(ia.getFileNm(), ia.getMimeTyp(), new ByteArrayResource(ia.getContent()));
     }

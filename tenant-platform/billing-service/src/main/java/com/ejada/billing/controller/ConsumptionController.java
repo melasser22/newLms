@@ -8,7 +8,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
@@ -23,15 +27,15 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(value = "/subscription", produces = MediaType.APPLICATION_JSON_VALUE)
-public class ConsumptionController {
+public final class ConsumptionController {
 
     private final ConsumptionService service;
 
     @PostMapping(value = "/product-consumption/track", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ServiceResult<TrackProductConsumptionRs>> track(
-            @RequestHeader("rqUID") UUID rqUid,
-            @RequestHeader("token") String token,
-            @Valid @RequestBody TrackProductConsumptionRq body) {
+            @RequestHeader("rqUID") final UUID rqUid,
+            @RequestHeader("token") final String token,
+            @Valid @RequestBody final TrackProductConsumptionRq body) {
 
         return ResponseEntity.ok(service.trackProductConsumption(rqUid, token, body));
     }

@@ -3,7 +3,9 @@ package com.ejada.billing.mapper;
 import com.ejada.billing.dto.InvoiceAttachmentContentDto;
 import com.ejada.billing.dto.InvoiceAttachmentMetaDto;
 import com.ejada.billing.model.InvoiceAttachment;
-import org.mapstruct.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 import java.util.Base64;
 

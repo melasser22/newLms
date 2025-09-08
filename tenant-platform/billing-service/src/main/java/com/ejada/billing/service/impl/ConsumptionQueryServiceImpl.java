@@ -14,14 +14,14 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class ConsumptionQueryServiceImpl implements ConsumptionQueryService {
+public final class ConsumptionQueryServiceImpl implements ConsumptionQueryService {
 
     private final UsageCounterRepository repo;
     private final UsageCounterMapper mapper;
 
     @Override
     @Transactional(readOnly = true)
-    public ProductSubscriptionStts getSnapshot(Long extSubscriptionId, Long customerIdNullable) {
+    public ProductSubscriptionStts getSnapshot(final Long extSubscriptionId, final Long customerIdNullable) {
         List<UsageCounter> counters = repo.findByExtSubscriptionId(extSubscriptionId);
         Long custId = customerIdNullable;
 
