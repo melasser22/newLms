@@ -11,7 +11,9 @@ import java.math.BigDecimal;
 @Table(name = "invoice_item",
        indexes = @Index(name = "idx_invoice_item_invoice", columnList = "invoice_id,line_no"))
 @DynamicUpdate
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
 public class InvoiceItem {
 
   @Id
@@ -51,6 +53,20 @@ public class InvoiceItem {
         .unitPrice(price == null ? BigDecimal.ZERO : price)
         .lineTotal(total)
         .build();
+  }
+
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Invoice is a JPA entity; reference sharing is intentional")
+  @Builder
+  public InvoiceItem(Long invoiceItemId, Invoice invoice, Integer lineNo, String itemCd,
+                     String itemDesc, BigDecimal qty, BigDecimal unitPrice, BigDecimal lineTotal) {
+    this.invoiceItemId = invoiceItemId;
+    this.invoice = invoice;
+    this.lineNo = lineNo;
+    this.itemCd = itemCd;
+    this.itemDesc = itemDesc;
+    this.qty = qty;
+    this.unitPrice = unitPrice;
+    this.lineTotal = lineTotal;
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP")
