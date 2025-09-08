@@ -1,11 +1,11 @@
 package com.ejada.setup.controller;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.setup.model.Country;
 import com.ejada.setup.dto.CountryDto;
+import com.ejada.setup.model.Country;
+import com.ejada.setup.constants.ValidationConstants;
 import com.ejada.setup.security.SetupAuthorized;
 import com.ejada.setup.service.CountryService;
-import com.ejada.starter_core.tenant.RequireTenant;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,14 +17,19 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -32,13 +37,13 @@ import java.util.List;
 @RequestMapping("/setup/countries")
 @Validated
 @Tag(name = "Country Management", description = "APIs for managing countries")
-public class CountryController {
+public final class CountryController {
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final CountryService countryService;
     
-    public CountryController(CountryService countryService) { 
-        this.countryService = countryService; 
+    public CountryController(final CountryService countryService) {
+        this.countryService = countryService;
     }
 
     @PostMapping
@@ -51,7 +56,7 @@ public class CountryController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "409", description = "Country code already exists")
     })
-    public ResponseEntity<BaseResponse<Country>> add(@Valid @RequestBody CountryDto body) {
+    public ResponseEntity<BaseResponse<Country>> add(@Valid @RequestBody final CountryDto body) {
         return ResponseEntity.ok(countryService.add(body));
     }
 
@@ -67,8 +72,8 @@ public class CountryController {
     })
     public ResponseEntity<BaseResponse<Country>> update(
             @Parameter(description = "ID of the country to update", required = true)
-            @PathVariable @Min(1) Integer countryId,
-            @Valid @RequestBody CountryDto body) {
+            @PathVariable @Min(1) final Integer countryId,
+            @Valid @RequestBody final CountryDto body) {
         return ResponseEntity.ok(countryService.update(countryId, body));
     }
 
@@ -82,7 +87,7 @@ public class CountryController {
     })
     public ResponseEntity<BaseResponse<Country>> get(
             @Parameter(description = "ID of the country to retrieve", required = true)
-            @PathVariable @Min(1) Integer countryId) {
+            @PathVariable @Min(1) final Integer countryId) {
         return ResponseEntity.ok(countryService.get(countryId));
     }
 
@@ -95,11 +100,11 @@ public class CountryController {
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
     public ResponseEntity<?> list(
-            @PageableDefault(size = 20) Pageable pageable,
+            @PageableDefault(size = ValidationConstants.PAGE_SIZE_DEFAULT) final Pageable pageable,
             @Parameter(description = "Search query for country names")
-            @RequestParam(required = false) String q,
+            @RequestParam(required = false) final String q,
             @Parameter(description = "Whether to retrieve all countries (ignores pagination)")
-            @RequestParam(name = "unpaged", defaultValue = "false") boolean unpaged) {
+            @RequestParam(name = "unpaged", defaultValue = "false") final boolean unpaged) {
         Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
         return ResponseEntity.ok(countryService.list(effectivePageable, q, unpaged));
     }

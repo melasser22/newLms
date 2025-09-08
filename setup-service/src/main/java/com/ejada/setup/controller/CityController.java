@@ -2,6 +2,7 @@ package com.ejada.setup.controller;
 
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.setup.dto.CityDto;
+import com.ejada.setup.constants.ValidationConstants;
 import com.ejada.setup.security.SetupAuthorized;
 import com.ejada.setup.service.CityService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -19,19 +20,26 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
 @RequestMapping("/setup/cities")
 @Validated
 @Tag(name = "City Management", description = "APIs for managing cities")
-public class CityController {
+public final class CityController {
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final CityService cityService;
 
-    public CityController(CityService cityService) {
+    public CityController(final CityService cityService) {
         this.cityService = cityService;
     }
 
@@ -45,7 +53,7 @@ public class CityController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "409", description = "City already exists")
     })
-    public ResponseEntity<BaseResponse<CityDto>> add(@Valid @RequestBody CityDto body) {
+    public ResponseEntity<BaseResponse<CityDto>> add(@Valid @RequestBody final CityDto body) {
         return ResponseEntity.ok(cityService.add(body));
     }
 
@@ -60,8 +68,8 @@ public class CityController {
     })
     public ResponseEntity<BaseResponse<CityDto>> update(
             @Parameter(description = "ID of the city to update", required = true)
-            @PathVariable @Min(1) Integer cityId,
-            @Valid @RequestBody CityDto body) {
+            @PathVariable @Min(1) final Integer cityId,
+            @Valid @RequestBody final CityDto body) {
         return ResponseEntity.ok(cityService.update(cityId, body));
     }
 
@@ -75,7 +83,7 @@ public class CityController {
     })
     public ResponseEntity<BaseResponse<CityDto>> get(
             @Parameter(description = "ID of the city to retrieve", required = true)
-            @PathVariable @Min(1) Integer cityId) {
+            @PathVariable @Min(1) final Integer cityId) {
         return ResponseEntity.ok(cityService.get(cityId));
     }
 
@@ -87,11 +95,11 @@ public class CityController {
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
     public ResponseEntity<BaseResponse<Page<CityDto>>> list(
-            @PageableDefault(size = 20) Pageable pageable,
+            @PageableDefault(size = ValidationConstants.PAGE_SIZE_DEFAULT) final Pageable pageable,
             @Parameter(description = "Search query for city names")
-            @RequestParam(required = false) String q,
+            @RequestParam(required = false) final String q,
             @Parameter(description = "Whether to retrieve all cities (ignores pagination)")
-            @RequestParam(name = "unpaged", defaultValue = "false") boolean unpaged) {
+            @RequestParam(name = "unpaged", defaultValue = "false") final boolean unpaged) {
         Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
         return ResponseEntity.ok(cityService.list(effectivePageable, q, unpaged));
     }
@@ -105,7 +113,7 @@ public class CityController {
     })
     public ResponseEntity<BaseResponse<List<CityDto>>> listActive(
             @Parameter(description = "Country ID to filter cities", required = true)
-            @RequestParam @Min(1) Integer countryId) {
+            @RequestParam @Min(1) final Integer countryId) {
         return ResponseEntity.ok(cityService.listActiveByCountry(countryId));
     }
 }

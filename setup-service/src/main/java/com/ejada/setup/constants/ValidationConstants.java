@@ -1,7 +1,7 @@
 package com.ejada.setup.constants;
 
 public final class ValidationConstants {
-    private ValidationConstants() {}
+    private ValidationConstants() { }
 
     public static final int CODE_LEN = 128;
     public static final int NAME_LEN = 256;
