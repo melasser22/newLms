@@ -10,6 +10,7 @@ public record TenantRes(
         String name,
         String contactEmail,
         String contactPhone,
+        String logoUrl,
         Boolean active,
         Boolean isDeleted,
         OffsetDateTime createdAt,

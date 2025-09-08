@@ -21,6 +21,10 @@ public record TenantUpdateReq(
         @Schema(description = "Contact phone (normalized E.164 preferred)", example = "+966500000000")
         String contactPhone,
 
+        @Size(max = 255)
+        @Schema(description = "Tenant logo URL", example = "https://example.com/logo.png")
+        String logoUrl,
+
         @Schema(description = "Active flag")
         Boolean active
 ) {}
