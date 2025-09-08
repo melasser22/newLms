@@ -1,9 +1,18 @@
 package com.ejada.catalog.mapper;
 
-import com.ejada.catalog.dto.*;
-import com.ejada.catalog.model.*;
+import com.ejada.catalog.dto.AddonFeatureCreateReq;
+import com.ejada.catalog.dto.AddonFeatureRes;
+import com.ejada.catalog.dto.AddonFeatureUpdateReq;
+import com.ejada.catalog.model.Addon;
+import com.ejada.catalog.model.AddonFeature;
+import com.ejada.catalog.model.Enforcement;
+import com.ejada.catalog.model.Feature;
 import com.ejada.mapstruct.starter.config.SharedMapstructConfig;
-import org.mapstruct.*;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.lang.NonNull;
 
 @Mapper(config = SharedMapstructConfig.class,
