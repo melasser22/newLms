@@ -18,13 +18,13 @@ public interface TenantIntegrationKeyRepository extends JpaRepository<TenantInte
 
     Optional<TenantIntegrationKey> findByTikIdAndIsDeletedFalse(Long tikId);
 
-    Optional<TenantIntegrationKey> findByTenantIdAndKeyIdAndIsDeletedFalse(Integer tenantId, String keyId);
+    Optional<TenantIntegrationKey> findByTenant_IdAndKeyIdAndIsDeletedFalse(Integer tenantId, String keyId);
 
-    Page<TenantIntegrationKey> findByTenantIdAndIsDeletedFalse(Integer tenantId, Pageable pageable);
+    Page<TenantIntegrationKey> findByTenant_IdAndIsDeletedFalse(Integer tenantId, Pageable pageable);
 
-    List<TenantIntegrationKey> findByTenantIdAndStatusAndIsDeletedFalse(Integer tenantId, Status status);
+    List<TenantIntegrationKey> findByTenant_IdAndStatusAndIsDeletedFalse(Integer tenantId, Status status);
 
-    boolean existsByTenantIdAndKeyIdAndIsDeletedFalse(Integer tenantId, String keyId);
+    boolean existsByTenant_IdAndKeyIdAndIsDeletedFalse(Integer tenantId, String keyId);
 
     // --- Usable (active + within validity window + not deleted) ---
     @Query("""
