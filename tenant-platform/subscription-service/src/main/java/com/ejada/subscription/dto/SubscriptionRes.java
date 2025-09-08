@@ -28,4 +28,4 @@ public record SubscriptionRes(
     String balanceLimitResetType,
     String environmentSizeCd,
     Boolean isAutoProvEnabled
-) {}
+) { }

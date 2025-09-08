@@ -79,9 +79,11 @@ public interface TenantIntegrationKeyMapper {
     void update(@MappingTarget @NonNull TenantIntegrationKey entity, @NonNull TenantIntegrationKeyUpdateReq req);
 
     // ---------- Response ----------
+    @BeanMapping(ignoreUnmappedSourceProperties = {"keySecret", "active", "expired"})
     @Mapping(target = "tenantId", source = "tenant.id")
     @Mapping(target = "scopes", source = "scopes", qualifiedByName = "toList")
     @Mapping(target = "status", source = "status", qualifiedByName = "toDtoStatus")
+    @Mapping(target = "isDeleted", source = "isDeleted")
     @Mapping(target = "plainSecret", expression = "java(null)")
     @Mapping(target = "withPlainSecret", ignore = true)
     TenantIntegrationKeyRes toRes(@NonNull TenantIntegrationKey entity);

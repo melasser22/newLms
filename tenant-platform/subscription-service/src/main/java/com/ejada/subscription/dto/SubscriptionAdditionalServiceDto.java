@@ -1,6 +1,7 @@
 package com.ejada.subscription.dto;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public record SubscriptionAdditionalServiceDto(
@@ -19,4 +20,4 @@ public record SubscriptionAdditionalServiceDto(
     Long requestedCount,
 
     String paymentTypeCd    // ONE_TIME_FEES | WITH_INSTALLMENT
-) {}
+) { }

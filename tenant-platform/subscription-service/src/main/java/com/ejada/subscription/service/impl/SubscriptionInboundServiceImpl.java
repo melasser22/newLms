@@ -22,7 +22,6 @@ import com.ejada.subscription.model.SubscriptionAdditionalService;
 import com.ejada.subscription.model.SubscriptionEnvironmentIdentifier;
 import com.ejada.subscription.model.SubscriptionFeature;
 import com.ejada.subscription.model.SubscriptionProductProperty;
-import com.ejada.subscription.model.SubscriptionUpdateEvent;
 import com.ejada.subscription.repository.InboundNotificationAuditRepository;
 import com.ejada.subscription.repository.IdempotentRequestRepository;
 import com.ejada.subscription.repository.OutboxEventRepository;
@@ -60,7 +59,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class SubscriptionInboundServiceImpl implements SubscriptionInboundService {
+public final class SubscriptionInboundServiceImpl implements SubscriptionInboundService {
 
     // Repositories
     private final SubscriptionRepository subscriptionRepo;

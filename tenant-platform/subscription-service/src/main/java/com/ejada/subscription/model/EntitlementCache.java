@@ -1,8 +1,21 @@
 package com.ejada.subscription.model;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.math.BigDecimal;
@@ -11,15 +24,18 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(
     name = "entitlement_cache",
-    uniqueConstraints = @UniqueConstraint(name = "uk_entitlement", columnNames = {"subscription_id","feature_key"}),
+    uniqueConstraints = @UniqueConstraint(name = "uk_entitlement", columnNames = {"subscription_id", "feature_key"}),
     indexes = {
         @Index(name = "idx_ec_sub", columnList = "subscription_id"),
         @Index(name = "idx_ec_feature", columnList = "feature_key")
     }
 )
 @DynamicUpdate
-@Getter @Setter @NoArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@SuppressWarnings("checkstyle:MagicNumber")
 public class EntitlementCache {
 
     @Id
@@ -78,8 +94,10 @@ public class EntitlementCache {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
-    public static EntitlementCache ref(Long id) {
-        if (id == null) return null;
+    public static EntitlementCache ref(final Long id) {
+        if (id == null) {
+            return null;
+        }
         EntitlementCache x = new EntitlementCache();
         x.setEntitlementCacheId(id);
         return x;

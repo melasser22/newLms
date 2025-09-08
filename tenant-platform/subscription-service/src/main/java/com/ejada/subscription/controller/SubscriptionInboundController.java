@@ -22,7 +22,7 @@ import java.util.UUID;
 @RequestMapping(value = "/subscription", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 @Validated
-public class SubscriptionInboundController {
+public final class SubscriptionInboundController {
 
     private final SubscriptionInboundService service;
 
@@ -31,9 +31,9 @@ public class SubscriptionInboundController {
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<ServiceResult<ReceiveSubscriptionNotificationRs>> receiveSubscriptionNotification(
-            @RequestHeader("rqUID") UUID rqUid,
-            @RequestHeader(value = "token", required = false) String token,
-            @Valid @RequestBody ReceiveSubscriptionNotificationRq body) {
+            @RequestHeader("rqUID") final UUID rqUid,
+            @RequestHeader(value = "token", required = false) final String token,
+            @Valid @RequestBody final ReceiveSubscriptionNotificationRq body) {
 
         ServiceResult<ReceiveSubscriptionNotificationRs> result =
                 service.receiveSubscriptionNotification(rqUid, token, body);
@@ -45,9 +45,9 @@ public class SubscriptionInboundController {
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<ServiceResult<Void>> receiveSubscriptionUpdate(
-            @RequestHeader("rqUID") UUID rqUid,
-            @RequestHeader(value = "token", required = false) String token,
-            @Valid @RequestBody ReceiveSubscriptionUpdateRq body) {
+            @RequestHeader("rqUID") final UUID rqUid,
+            @RequestHeader(value = "token", required = false) final String token,
+            @Valid @RequestBody final ReceiveSubscriptionUpdateRq body) {
 
         ServiceResult<Void> result = service.receiveSubscriptionUpdate(rqUid, token, body);
         return ResponseEntity.ok(result);
