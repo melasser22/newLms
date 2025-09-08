@@ -26,10 +26,10 @@ public class ResourceDto {
     @Size(max = ValidationConstants.NAME_LEN)
     private String resourceArNm;
 
-    @Size(max = 512)
+    @Size(max = ValidationConstants.PATH_LEN)
     private String path;
 
-    @Size(max = 16)
+    @Size(max = ValidationConstants.HTTP_METHOD_LEN)
     private String httpMethod;
 
     private Integer parentResourceId;
