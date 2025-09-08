@@ -1,7 +1,18 @@
 package com.ejada.subscription.model;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.math.BigDecimal;
@@ -19,8 +30,11 @@ import java.time.OffsetDateTime;
     }
 )
 @DynamicUpdate
-@Getter @Setter @NoArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@SuppressWarnings("checkstyle:MagicNumber")
 public class Subscription {
 
     @Id
@@ -133,8 +147,10 @@ public class Subscription {
     private String updatedBy;
 
     /** id-only ref helper */
-    public static Subscription ref(Long id) {
-        if (id == null) return null;
+    public static Subscription ref(final Long id) {
+        if (id == null) {
+            return null;
+        }
         Subscription s = new Subscription();
         s.setSubscriptionId(id);
         return s;

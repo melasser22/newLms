@@ -1,6 +1,11 @@
 package com.ejada.subscription.mapper;
 
-import org.mapstruct.*;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
 
 import com.ejada.subscription.dto.SubscriptionInfoDto;
 import com.ejada.subscription.model.Subscription;
@@ -24,10 +29,10 @@ public interface SubscriptionMapper {
     @Mapping(target = "createChannel",      source = "createChannel")
     @Mapping(target = "unlimitedUsersFlag", source = "unlimitedUsersFlag", defaultValue = "false")
     @Mapping(target = "usersLimit",         source = "usersLimit")
-    @Mapping(target = "usersLimitResetType",source = "usersLimitResetType")
+    @Mapping(target = "usersLimitResetType", source = "usersLimitResetType")
     @Mapping(target = "unlimitedTransFlag", source = "unlimitedTransFlag", defaultValue = "false")
     @Mapping(target = "transactionsLimit",  source = "transactionsLimit")
-    @Mapping(target = "transLimitResetType",source = "transLimitResetType")
+    @Mapping(target = "transLimitResetType", source = "transLimitResetType")
     @Mapping(target = "balanceLimit",       source = "balanceLimit")
     @Mapping(target = "balanceLimitResetType", source = "balanceLimitResetType")
     @Mapping(target = "environmentSizeCd",  source = "environmentSizeCd")
@@ -61,10 +66,10 @@ public interface SubscriptionMapper {
     @Mapping(target = "createChannel",      source = "createChannel")
     @Mapping(target = "unlimitedUsersFlag", source = "unlimitedUsersFlag")
     @Mapping(target = "usersLimit",         source = "usersLimit")
-    @Mapping(target = "usersLimitResetType",source = "usersLimitResetType")
+    @Mapping(target = "usersLimitResetType", source = "usersLimitResetType")
     @Mapping(target = "unlimitedTransFlag", source = "unlimitedTransFlag")
     @Mapping(target = "transactionsLimit",  source = "transactionsLimit")
-    @Mapping(target = "transLimitResetType",source = "transLimitResetType")
+    @Mapping(target = "transLimitResetType", source = "transLimitResetType")
     @Mapping(target = "balanceLimit",       source = "balanceLimit")
     @Mapping(target = "balanceLimitResetType", source = "balanceLimitResetType")
     @Mapping(target = "environmentSizeCd",  source = "environmentSizeCd")

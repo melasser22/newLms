@@ -1,7 +1,16 @@
 package com.ejada.subscription.model;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.OffsetDateTime;
@@ -10,11 +19,14 @@ import java.util.UUID;
 @Entity
 @Table(
     name = "inbound_notification_audit",
-    uniqueConstraints = @UniqueConstraint(name = "ux_inb_rquid", columnNames = {"rq_uid","endpoint"})
+    uniqueConstraints = @UniqueConstraint(name = "ux_inb_rquid", columnNames = {"rq_uid", "endpoint"})
 )
 @DynamicUpdate
-@Getter @Setter @NoArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@SuppressWarnings("checkstyle:MagicNumber")
 public class InboundNotificationAudit {
 
     @Id
@@ -53,8 +65,10 @@ public class InboundNotificationAudit {
     @Column(name = "status_dtls", columnDefinition = "jsonb")
     private String statusDtls;
 
-    public static InboundNotificationAudit ref(Long id) {
-        if (id == null) return null;
+    public static InboundNotificationAudit ref(final Long id) {
+        if (id == null) {
+            return null;
+        }
         InboundNotificationAudit x = new InboundNotificationAudit();
         x.setInboundNotificationAuditId(id);
         return x;

@@ -1,7 +1,8 @@
 package com.ejada.subscription.mapper;
 
 
-import org.mapstruct.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.ReportingPolicy;
 
 import com.ejada.subscription.dto.EnvironmentIdentifierDto;
 import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRs;

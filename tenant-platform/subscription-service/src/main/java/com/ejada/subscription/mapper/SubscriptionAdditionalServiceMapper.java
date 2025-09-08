@@ -3,7 +3,10 @@ package com.ejada.subscription.mapper;
 import com.ejada.subscription.dto.SubscriptionAdditionalServiceDto;
 import com.ejada.subscription.model.Subscription;
 import com.ejada.subscription.model.SubscriptionAdditionalService;
-import org.mapstruct.*;
+import org.mapstruct.Context;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 import java.util.List;
 

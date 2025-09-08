@@ -2,7 +2,9 @@ package com.ejada.subscription.mapper;
 
 import com.ejada.subscription.dto.ReceiveSubscriptionUpdateRq;
 import com.ejada.subscription.model.SubscriptionUpdateEvent;
-import org.mapstruct.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 import java.util.UUID;
 

@@ -1,6 +1,6 @@
 package com.ejada.subscription.dto;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
 
 public record CustomerInfoDto(
     String customerNameEn,
@@ -13,4 +13,4 @@ public record CustomerInfoDto(
     String addressAr,
     @Email String email,
     String mobileNo
-) {}
+) { }

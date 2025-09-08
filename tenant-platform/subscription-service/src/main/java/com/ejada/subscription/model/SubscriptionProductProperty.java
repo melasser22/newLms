@@ -23,7 +23,7 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(
     name = "subscription_product_property",
-    uniqueConstraints = @UniqueConstraint(name = "ux_spp", columnNames = {"subscription_id","property_cd"}),
+    uniqueConstraints = @UniqueConstraint(name = "ux_spp", columnNames = {"subscription_id", "property_cd"}),
     indexes = @Index(name = "idx_spp_sub", columnList = "subscription_id")
 )
 @DynamicUpdate

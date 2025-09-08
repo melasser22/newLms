@@ -7,4 +7,4 @@ public record ReceiveSubscriptionUpdateRq(
     @NotNull Long subscriptionId,
     @NotNull Long customerId,
     @NotNull SubscriptionUpdateType  subscriptionUpdateType // SUSPENDED | RESUMED | TERMINATED | EXPIRED
-) {}
+) { }
