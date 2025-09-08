@@ -34,7 +34,6 @@ import java.time.OffsetDateTime;
 @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@SuppressWarnings("checkstyle:MagicNumber")
 public class Subscription {
 
     @Id
