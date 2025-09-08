@@ -12,7 +12,9 @@ import java.time.OffsetDateTime;
        indexes = @Index(name = "idx_invoice_attachment_invoice_created",
                         columnList = "invoice_id,created_at DESC"))
 @DynamicUpdate
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
 public class InvoiceAttachment {
 
   @Id
@@ -40,6 +42,18 @@ public class InvoiceAttachment {
   @PrePersist
   void onInsert() {
     if (createdAt == null) createdAt = OffsetDateTime.now();
+  }
+
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Invoice is a JPA entity; reference sharing is intentional")
+  @Builder
+  public InvoiceAttachment(Long invoiceAttachmentId, Invoice invoice, String fileNm,
+                           String mimeTyp, byte[] content, OffsetDateTime createdAt) {
+    this.invoiceAttachmentId = invoiceAttachmentId;
+    this.invoice = invoice;
+    this.fileNm = fileNm;
+    this.mimeTyp = mimeTyp;
+    this.content = content == null ? null : content.clone();
+    this.createdAt = createdAt;
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP")
