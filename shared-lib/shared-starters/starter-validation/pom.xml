@@ -29,10 +29,10 @@
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
 
-    <!-- Optional: if you provide a GlobalExceptionHandler / MVC bindings -->
+    <!-- Reactive stack users can add WebFlux explicitly; servlet starter removed -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
+      <artifactId>spring-boot-starter-webflux</artifactId>
       <optional>true</optional>
     </dependency>
 

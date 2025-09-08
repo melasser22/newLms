@@ -3,17 +3,24 @@ spring:
     name: catalog-service
   profiles:
     active: dev
+  r2dbc:
+    url: r2dbc:postgresql://postgres:5432/lms
+    username: postgres
+    password: postgres
   flyway:
     baseline-on-migrate: true
     baseline-version: 0
     default-schema: catalog
     schemas: catalog
+    url: jdbc:postgresql://postgres:5432/lms
+    user: postgres
+    password: postgres
+  webflux:
+    base-path: /catalog
 
 server:
   port: 8080
   shutdown: graceful
-  servlet:
-    context-path: /catalog
   compression:
     enabled: true
     mime-types:

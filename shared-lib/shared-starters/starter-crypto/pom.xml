@@ -29,9 +29,10 @@
       <artifactId>spring-boot-starter</artifactId>
       <optional>true</optional>
     </dependency>
+    <!-- Avoid pulling in servlet stack; WebFlux apps can opt-in explicitly if needed -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
+      <artifactId>spring-boot-starter-webflux</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>

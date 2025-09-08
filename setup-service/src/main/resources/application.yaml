@@ -3,7 +3,15 @@ spring:
     name: setup-service
   profiles:
     active: dev
+  r2dbc:
+    url: r2dbc:postgresql://postgres:5432/lms
+    username: postgres
+    password: postgres
   flyway:
+    enabled: true
+    url: jdbc:postgresql://postgres:5432/lms
+    user: postgres
+    password: postgres
     baseline-on-migrate: true
     baseline-version: 0
     schemas: public,setup
@@ -11,8 +19,6 @@ spring:
 server:
   port: 8080
   shutdown: graceful
-  servlet:
-    context-path: /core
   compression:
     enabled: true
     mime-types:
@@ -25,7 +31,8 @@ server:
   error:
     include-message: always
     include-binding-errors: always
-
+spring.webflux:
+  base-path: /core
 shared:
   observability:
     application-name: setup-service

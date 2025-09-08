@@ -29,12 +29,7 @@
       <artifactId>springdoc-openapi-starter-common</artifactId>
     </dependency>
 
-    <!-- UI stacks (opt-in; app chooses MVC or WebFlux) -->
-    <dependency>
-      <groupId>org.springdoc</groupId>
-      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-      <optional>true</optional>
-    </dependency>
+    <!-- WebFlux UI (servlet variant removed) -->
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
