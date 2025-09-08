@@ -1,5 +1,8 @@
 package com.ejada.sec.service.impl;
 
+import com.ejada.audit.starter.api.AuditAction;
+import com.ejada.audit.starter.api.DataClass;
+import com.ejada.audit.starter.api.annotations.Audited;
 import com.ejada.sec.domain.*;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.mapper.ReferenceResolver;
@@ -25,6 +28,8 @@ public class GrantServiceImpl implements GrantService {
 
   @Transactional
   @Override
+  @Audited(action = AuditAction.UPDATE, entity = "UserRole", dataClass = DataClass.CREDENTIALS,
+      message = "Assign roles to user")
   public void assignRolesToUser(AssignRolesToUserRequest req) {
     User user = userRepository.findById(req.getUserId())
         .orElseThrow(() -> new NoSuchElementException("User not found: " + req.getUserId()));
@@ -39,6 +44,8 @@ public class GrantServiceImpl implements GrantService {
 
   @Transactional
   @Override
+  @Audited(action = AuditAction.UPDATE, entity = "UserRole", dataClass = DataClass.CREDENTIALS,
+      message = "Revoke roles from user")
   public void revokeRolesFromUser(RevokeRolesFromUserRequest req) {
     User user = userRepository.findById(req.getUserId())
         .orElseThrow(() -> new NoSuchElementException("User not found: " + req.getUserId()));
@@ -48,6 +55,8 @@ public class GrantServiceImpl implements GrantService {
 
   @Transactional
   @Override
+  @Audited(action = AuditAction.UPDATE, entity = "RolePrivilege", dataClass = DataClass.CREDENTIALS,
+      message = "Grant privileges to role")
   public void grantPrivilegesToRole(GrantPrivilegesToRoleRequest req) {
     Role role = roleRepository.findByTenantIdAndCode(req.getTenantId(), req.getRoleCode())
         .orElseThrow(() -> new NoSuchElementException("Role not found: " + req.getRoleCode()));
@@ -62,6 +71,8 @@ public class GrantServiceImpl implements GrantService {
 
   @Transactional
   @Override
+  @Audited(action = AuditAction.UPDATE, entity = "RolePrivilege", dataClass = DataClass.CREDENTIALS,
+      message = "Revoke privileges from role")
   public void revokePrivilegesFromRole(RevokePrivilegesFromRoleRequest req) {
     Role role = roleRepository.findByTenantIdAndCode(req.getTenantId(), req.getRoleCode())
         .orElseThrow(() -> new NoSuchElementException("Role not found: " + req.getRoleCode()));
@@ -71,6 +82,8 @@ public class GrantServiceImpl implements GrantService {
 
   @Transactional
   @Override
+  @Audited(action = AuditAction.UPDATE, entity = "UserPrivilege", dataClass = DataClass.CREDENTIALS,
+      message = "Set user privilege override")
   public void setUserPrivilegeOverride(SetUserPrivilegeOverrideRequest req) {
     User user = userRepository.findById(req.getUserId())
         .orElseThrow(() -> new NoSuchElementException("User not found: " + req.getUserId()));
