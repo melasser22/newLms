@@ -15,12 +15,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
-import com.ejada.crypto.starter.InMemoryKeyProviderAutoConfiguration;
-
 import com.ejada.crypto.AesGcmCrypto;
 import com.ejada.crypto.CryptoAlgorithm;
 import com.ejada.crypto.CryptoFacade;
-import com.ejada.crypto.CryptoService;
 import com.ejada.crypto.HmacSigner;
 import com.ejada.crypto.AesGcmEncryptor;
 import com.ejada.crypto.HmacSha256Signer;
@@ -93,19 +90,6 @@ public class CryptoAutoConfiguration {
    *   key supplied by the provider.
    * </p>
    */
-  @Bean
-  @ConditionalOnBean(InMemoryKeyProviderAutoConfiguration.KeyProvider.class)
-  @ConditionalOnMissingBean
-  public CryptoService cryptoService(
-      CryptoAlgorithm algorithm,
-      InMemoryKeyProviderAutoConfiguration.KeyProvider keyProvider) {
-    return CryptoService.builder()
-        .algorithm(algorithm)
-        .encryptionKeySupplier(keyProvider::getCurrentKey)
-        .macKeySupplier(keyProvider::getCurrentKey)
-        .build();
-  }
-
   /** Convenience HMAC signer bean (shared lib), if someone wants to inject it directly.
    *
    * <p>This bean is only created when no other {@code HmacSigner} is present and no

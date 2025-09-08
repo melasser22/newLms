@@ -51,7 +51,8 @@ public class CryptoMdcFilter extends OncePerRequestFilter {
         }
 
         try {
-            // Echo correlation id in response for client-side tracing  response.setHeader(HeaderNames.CORRELATION_ID, correlationId);
+            // Echo correlation id in response for client-side tracing
+            response.setHeader(HeaderNames.CORRELATION_ID, correlationId);
             chain.doFilter(request, response);
         } finally {
             if (putUser) MDC.remove(HeaderNames.USER_ID);

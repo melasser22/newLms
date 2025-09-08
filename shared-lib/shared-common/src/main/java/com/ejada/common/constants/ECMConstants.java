@@ -5,8 +5,6 @@ package com.ejada.common.constants;
  */
 public final class ECMConstants {
 
-        private static final long serialVersionUID = 1L;
-
         private ECMConstants() {
         }
 

@@ -1,7 +1,7 @@
 package com.ejada.tenant.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.crypto.CryptoService;
+import com.ejada.crypto.CryptoFacade;
 import com.ejada.tenant.dto.*;
 import com.ejada.tenant.mapper.TenantIntegrationKeyMapper;
 import com.ejada.tenant.model.Tenant;
@@ -28,17 +28,17 @@ public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyServ
     private final TenantIntegrationKeyRepository repo;
     private final TenantRepository tenantRepo;
     private final TenantIntegrationKeyMapper mapper;
-    private final CryptoService cryptoService;
+    private final CryptoFacade crypto;
 
     @SuppressFBWarnings("EI_EXPOSE_REP2")
     public TenantIntegrationKeyServiceImpl(TenantIntegrationKeyRepository repo,
                                            TenantRepository tenantRepo,
                                            TenantIntegrationKeyMapper mapper,
-                                           CryptoService cryptoService) {
+                                           CryptoFacade crypto) {
         this.repo = repo;
         this.tenantRepo = tenantRepo;
         this.mapper = mapper;
-        this.cryptoService = cryptoService;
+        this.crypto = crypto;
     }
 
     @Override
@@ -71,7 +71,7 @@ public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyServ
             plainSecret = Base64.getUrlEncoder().withoutPadding().encodeToString(secretBytes);
         }
         try {
-            e.setKeySecret(cryptoService.signToBase64(plainSecret));
+            e.setKeySecret(crypto.signToBase64(plainSecret));
         } catch (Exception ex) {
             throw new IllegalStateException("Could not sign integration key secret", ex);
         }

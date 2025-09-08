@@ -1,7 +1,7 @@
 package com.ejada.tenant.service;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.crypto.CryptoService;
+import com.ejada.crypto.CryptoFacade;
 import com.ejada.tenant.dto.TenantIntegrationKeyCreateReq;
 import com.ejada.tenant.dto.TenantIntegrationKeyRes;
 import com.ejada.tenant.dto.TikStatus;
@@ -30,7 +30,7 @@ class TenantIntegrationKeyServiceImplTest {
         TenantIntegrationKeyRepository repo = mock(TenantIntegrationKeyRepository.class);
         TenantRepository tenantRepo = mock(TenantRepository.class);
         TenantIntegrationKeyMapper mapper = Mappers.getMapper(TenantIntegrationKeyMapper.class);
-        CryptoService crypto = mock(CryptoService.class);
+        CryptoFacade crypto = mock(CryptoFacade.class);
 
         Tenant tenant = new Tenant();
         tenant.setId(1);

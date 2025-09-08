@@ -37,7 +37,9 @@ class CityServiceImplTest {
     @Test
     void list_ok() {
         var cityPage = new org.springframework.data.domain.PageImpl<>(Collections.singletonList(new City()));
-        when(cityRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class), any(org.springframework.data.domain.Pageable.class)))
+        when(cityRepository.findAll(
+                (org.springframework.data.jpa.domain.Specification<City>) any(org.springframework.data.jpa.domain.Specification.class),
+                any(org.springframework.data.domain.Pageable.class)))
                 .thenReturn(cityPage);
         when(mapper.toDtoPage(cityPage)).thenReturn(org.springframework.data.domain.Page.<CityDto>empty());
 

@@ -112,7 +112,7 @@ public class KafkaProducerConfig {
 
       @Override
       public void sendOffsetsToTransaction(Map<TopicPartition, OffsetAndMetadata> offsets, String groupId) {
-        producer.sendOffsetsToTransaction(offsets, groupId);
+        producer.sendOffsetsToTransaction(offsets, new ConsumerGroupMetadata(groupId));
       }
 
       @Override

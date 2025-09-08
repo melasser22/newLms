@@ -4,6 +4,7 @@ import com.ejada.audit.starter.api.AuditEvent;
 
 /** Placeholder for OTLP exporter wiring via OpenTelemetry SDK */
 public class OtlpSink implements Sink {
+  @SuppressWarnings("unused")
   private final String endpoint;
 
   public OtlpSink(String endpoint) {
