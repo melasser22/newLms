@@ -52,7 +52,7 @@ public final class TenantIntegrationKeyServiceImpl implements TenantIntegrationK
                 .orElseThrow(() -> new EntityNotFoundException("Tenant " + req.tenantId()));
 
         // Uniqueness under soft delete
-        if (repo.existsByTenantIdAndKeyIdAndIsDeletedFalse(req.tenantId(), req.keyId())) {
+        if (repo.existsByTenant_IdAndKeyIdAndIsDeletedFalse(req.tenantId(), req.keyId())) {
             throw new IllegalStateException("integration key exists for tenant=" + req.tenantId() + " keyId=" + req.keyId());
         }
 
@@ -134,7 +134,7 @@ public final class TenantIntegrationKeyServiceImpl implements TenantIntegrationK
         tenantRepo.findByIdAndIsDeletedFalse(tenantId)
                 .orElseThrow(() -> new EntityNotFoundException("Tenant " + tenantId));
         Page<TenantIntegrationKeyRes> page =
-                repo.findByTenantIdAndIsDeletedFalse(tenantId, pageable).map(mapper::toRes);
+                repo.findByTenant_IdAndIsDeletedFalse(tenantId, pageable).map(mapper::toRes);
         return BaseResponse.success("Tenant integration keys listed", page);
     }
 
