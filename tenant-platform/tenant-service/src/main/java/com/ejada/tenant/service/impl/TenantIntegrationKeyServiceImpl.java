@@ -25,6 +25,8 @@ import java.util.Base64;
 @Transactional
 public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyService {
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     private final TenantIntegrationKeyRepository repo;
     private final TenantRepository tenantRepo;
     private final TenantIntegrationKeyMapper mapper;
@@ -67,7 +69,7 @@ public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyServ
         String plainSecret = req.plainSecret();
         if (plainSecret == null || plainSecret.isBlank()) {
             byte[] secretBytes = new byte[32];
-            new SecureRandom().nextBytes(secretBytes);
+            RANDOM.nextBytes(secretBytes);
             plainSecret = Base64.getUrlEncoder().withoutPadding().encodeToString(secretBytes);
         }
         try {
