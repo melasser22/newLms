@@ -5,18 +5,17 @@ import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.context.ContextManager;
 import com.ejada.common.dto.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.server.ServerAuthenticationEntryPoint;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-public class JsonAuthEntryPoint implements AuthenticationEntryPoint {
+public class JsonAuthEntryPoint implements ServerAuthenticationEntryPoint {
 
   private final ObjectMapper mapper;
 
@@ -25,28 +24,34 @@ public class JsonAuthEntryPoint implements AuthenticationEntryPoint {
   }
 
   @Override
-  public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
-      throws IOException {
-
+  public Mono<Void> commence(ServerWebExchange exchange, AuthenticationException ex) {
     ErrorResponse body = ErrorResponse.of(
         ErrorCodes.AUTH_UNAUTHORIZED,
-        WebUtils.safe(authException.getMessage(), "Unauthorized"),
+        WebUtils.safe(ex.getMessage(), "Unauthorized"),
         List.of()
     );
     body.setTenantId(ContextManager.Tenant.get());
     String cid = WebUtils.firstNonBlank(
         MDC.get(HeaderNames.CORRELATION_ID),
-        request.getHeader(HeaderNames.CORRELATION_ID),
-        request.getHeader(HeaderNames.REQUEST_ID)
+        exchange.getRequest().getHeaders().getFirst(HeaderNames.CORRELATION_ID),
+        exchange.getRequest().getHeaders().getFirst(HeaderNames.REQUEST_ID)
     );
     if (cid != null) {
-      response.setHeader(HeaderNames.CORRELATION_ID, cid);
+      exchange.getResponse().getHeaders().set(HeaderNames.CORRELATION_ID, cid);
     }
 
-    response.setStatus(HttpStatus.UNAUTHORIZED.value());
-    response.setContentType("application/json");
-    response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-    mapper.writeValue(response.getWriter(), body);
+    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+    exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+    return exchange.getResponse().writeWith(
+        Mono.fromSupplier(() -> exchange.getResponse().bufferFactory().wrap(writeValue(body)))
+    );
   }
 
+  private byte[] writeValue(Object value) {
+    try {
+      return mapper.writeValueAsBytes(value);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 }

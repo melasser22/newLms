@@ -2,17 +2,15 @@ package com.ejada.starter_security;
 
 import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.context.ContextManager;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
+import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
 
@@ -22,24 +20,21 @@ class JwtTenantFilterTest {
 
     @AfterEach
     void clearContext() {
-        SecurityContextHolder.clearContext();
         ContextManager.Tenant.clear();
     }
 
     @Test
-    void setsTenantFromJwtAndEchoesHeader() throws ServletException, IOException {
+    void setsTenantFromJwtAndEchoesHeader() {
         Jwt jwt = new Jwt("token", Instant.now(), Instant.now().plusSeconds(60), Map.of("alg","none"), Map.of("tenant","acme"));
-        SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt));
+        JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt);
 
-        JwtTenantFilter filter = new JwtTenantFilter("tenant");
-        MockHttpServletRequest req = new MockHttpServletRequest();
-        MockHttpServletResponse res = new MockHttpServletResponse();
+        MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/").build());
+        exchange = exchange.mutate().principal(Mono.just(auth)).build();
+        WebFilterChain chain = ex -> Mono.fromRunnable(() -> assertEquals("acme", ContextManager.Tenant.get()));
 
-        FilterChain chain = (request, response) -> assertEquals("acme", ContextManager.Tenant.get());
+        new JwtTenantFilter("tenant").filter(exchange, chain).block();
 
-        filter.doFilter(req, res, chain);
-
-        assertEquals("acme", res.getHeader(HeaderNames.X_TENANT_ID));
+        assertEquals("acme", exchange.getResponse().getHeaders().getFirst(HeaderNames.X_TENANT_ID));
         assertNull(ContextManager.Tenant.get());
     }
 }

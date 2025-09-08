@@ -1,30 +1,27 @@
 package com.ejada.starter_security;
 
 import com.ejada.common.constants.HeaderNames;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.security.web.server.csrf.CsrfToken;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
 
 /**
  * Exposes the CSRF token value via {@code X-CSRF-Token} header so that
  * JavaScript clients can read it on the first request and echo it back in
  * subsequent state changing requests.
  */
-class CsrfHeaderFilter extends OncePerRequestFilter {
+class CsrfHeaderFilter implements WebFilter {
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
-        CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
-        if (token != null) {
-            response.setHeader(HeaderNames.CSRF_TOKEN, token.getToken());
-        }
-        filterChain.doFilter(request, response);
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        Mono<CsrfToken> token = exchange.getAttributeOrDefault(CsrfToken.class.getName(), Mono.empty());
+        return token.doOnSuccess(t -> {
+                    if (t != null) {
+                        exchange.getResponse().getHeaders().set(HeaderNames.CSRF_TOKEN, t.getToken());
+                    }
+                })
+                .then(chain.filter(exchange));
     }
 }
