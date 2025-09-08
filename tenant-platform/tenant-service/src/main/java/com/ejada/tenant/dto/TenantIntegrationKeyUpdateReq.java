@@ -1,4 +1,8 @@
 package com.ejada.tenant.dto;
+
+import static com.ejada.tenant.model.TenantIntegrationKey.LABEL_LENGTH;
+import static com.ejada.tenant.model.TenantIntegrationKey.SCOPE_LENGTH;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
@@ -9,12 +13,12 @@ import java.util.List;
 
 @Schema(name = "TenantIntegrationKeyUpdateReq")
 public record TenantIntegrationKeyUpdateReq(
-        @Size(max = 128)
+        @Size(max = LABEL_LENGTH)
         @Schema(description = "Friendly label", example = "Backoffice API key")
         String label,
 
         @Schema(description = "List of scopes/permissions")
-        List<@NotBlank @Size(max = 64) String> scopes,
+        List<@NotBlank @Size(max = SCOPE_LENGTH) String> scopes,
 
         @Schema(description = "Status", example = "SUSPENDED")
         TikStatus status,

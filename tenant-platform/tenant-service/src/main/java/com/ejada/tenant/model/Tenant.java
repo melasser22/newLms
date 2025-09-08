@@ -7,7 +7,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -88,18 +87,4 @@ public class Tenant {
         return t;
     }
 
-    @Builder
-    @SuppressWarnings("checkstyle:ParameterNumber")
-    public Tenant(final Integer id, final String code, final String name,
-                  final String contactEmail, final String contactPhone, final String logoUrl,
-                  final Boolean active, final Boolean isDeleted) {
-        this.id = id;
-        this.code = code;
-        this.name = name;
-        this.contactEmail = contactEmail;
-        this.contactPhone = contactPhone;
-        this.logoUrl = logoUrl;
-        this.active = (active != null) ? active : Boolean.TRUE;
-        this.isDeleted = (isDeleted != null) ? isDeleted : Boolean.FALSE;
-    }
 }

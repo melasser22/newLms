@@ -35,7 +35,7 @@ class TenantIntegrationKeyServiceImplTest {
         Tenant tenant = new Tenant();
         tenant.setId(1);
         when(tenantRepo.findByIdAndIsDeletedFalse(1)).thenReturn(Optional.of(tenant));
-        when(repo.existsByTenant_IdAndKeyIdAndIsDeletedFalse(1, "KEY")).thenReturn(false);
+        when(repo.existsByTenantIdAndKeyIdAndIsDeletedFalse(1, "KEY")).thenReturn(false);
         when(crypto.signToBase64(anyString())).thenReturn("hashed-secret");
         when(repo.save(any(TenantIntegrationKey.class))).thenAnswer(invocation -> invocation.getArgument(0));
 

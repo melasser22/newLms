@@ -1,4 +1,10 @@
 package com.ejada.tenant.dto;
+
+import static com.ejada.tenant.model.TenantIntegrationKey.KEY_ID_LENGTH;
+import static com.ejada.tenant.model.TenantIntegrationKey.LABEL_LENGTH;
+import static com.ejada.tenant.model.TenantIntegrationKey.PLAIN_SECRET_LENGTH;
+import static com.ejada.tenant.model.TenantIntegrationKey.SCOPE_LENGTH;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
@@ -14,20 +20,20 @@ public record TenantIntegrationKeyCreateReq(
         @Schema(description = "Owning tenant ID", example = "1")
         Integer tenantId,
 
-        @NotBlank @Size(max = 64)
+        @NotBlank @Size(max = KEY_ID_LENGTH)
         @Schema(description = "Public key identifier", example = "SYS_DEFAULT")
         String keyId,
 
-        @Size(max = 256)
+        @Size(max = PLAIN_SECRET_LENGTH)
         @Schema(description = "Optional plain secret to be hashed server-side; generated if blank", example = "S3cure-Plain-Secret")
         String plainSecret,
 
-        @Size(max = 128)
+        @Size(max = LABEL_LENGTH)
         @Schema(description = "Friendly label", example = "Backoffice API key")
         String label,
 
         @Schema(description = "List of scopes/permissions")
-        List<@NotBlank @Size(max = 64) String> scopes,
+        List<@NotBlank @Size(max = SCOPE_LENGTH) String> scopes,
 
         @NotNull
         @Schema(description = "Status", example = "ACTIVE")
