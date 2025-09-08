@@ -23,21 +23,16 @@
       <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>
 
-    <!-- Springdoc common (doesn't force MVC vs WebFlux) -->
+    <!-- Springdoc common (doesn't force MVC) -->
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-common</artifactId>
     </dependency>
 
-    <!-- UI stacks (opt-in; app chooses MVC or WebFlux) -->
+    <!-- UI stack (opt-in for MVC) -->
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.springdoc</groupId>
-      <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
       <optional>true</optional>
     </dependency>
 
