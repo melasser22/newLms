@@ -10,7 +10,6 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,7 +23,7 @@ import java.math.BigDecimal;
 @Table(name = "invoice_item",
        indexes = @Index(name = "idx_invoice_item_invoice", columnList = "invoice_id,line_no"))
 @DynamicUpdate
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter @Setter @NoArgsConstructor
 public final class InvoiceItem {
 
   private static final int ITEM_CD_LENGTH = 64;
