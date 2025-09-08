@@ -1,7 +1,9 @@
 package com.ejada.tenant.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.tenant.dto.*;
+import com.ejada.tenant.dto.TenantCreateReq;
+import com.ejada.tenant.dto.TenantRes;
+import com.ejada.tenant.dto.TenantUpdateReq;
 import com.ejada.tenant.mapper.TenantMapper;
 import com.ejada.tenant.model.Tenant;
 import com.ejada.tenant.repository.TenantRepository;
@@ -15,19 +17,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
-public class TenantServiceImpl implements TenantService {
+public final class TenantServiceImpl implements TenantService {
 
     private final TenantRepository repo;
     private final TenantMapper mapper;
 
     @SuppressFBWarnings("EI_EXPOSE_REP2")
-    public TenantServiceImpl(TenantRepository repo, TenantMapper mapper) {
+    public TenantServiceImpl(final TenantRepository repo, final TenantMapper mapper) {
         this.repo = repo;
         this.mapper = mapper;
     }
 
     @Override
-    public BaseResponse<TenantRes> create(TenantCreateReq req) {
+    public BaseResponse<TenantRes> create(final TenantCreateReq req) {
         if (repo.existsByCodeAndIsDeletedFalse(req.code())) {
             throw new IllegalStateException("tenant code exists: " + req.code());
         }
@@ -40,7 +42,7 @@ public class TenantServiceImpl implements TenantService {
     }
 
     @Override
-    public BaseResponse<TenantRes> update(Integer id, TenantUpdateReq req) {
+    public BaseResponse<TenantRes> update(final Integer id, final TenantUpdateReq req) {
         Tenant e = repo.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new EntityNotFoundException("Tenant " + id));
 
@@ -60,7 +62,7 @@ public class TenantServiceImpl implements TenantService {
     }
 
     @Override
-    public BaseResponse<Void> softDelete(Integer id) {
+    public BaseResponse<Void> softDelete(final Integer id) {
         Tenant e = repo.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new EntityNotFoundException("Tenant " + id));
         e.setIsDeleted(true);
@@ -71,7 +73,7 @@ public class TenantServiceImpl implements TenantService {
 
     @Override
     @Transactional(readOnly = true)
-    public BaseResponse<TenantRes> get(Integer id) {
+    public BaseResponse<TenantRes> get(final Integer id) {
         Tenant e = repo.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new EntityNotFoundException("Tenant " + id));
         return BaseResponse.success("Tenant fetched", mapper.toRes(e));
@@ -79,7 +81,7 @@ public class TenantServiceImpl implements TenantService {
 
     @Override
     @Transactional(readOnly = true)
-    public BaseResponse<Page<TenantRes>> list(String name, Boolean active, Pageable pageable) {
+    public BaseResponse<Page<TenantRes>> list(final String name, final Boolean active, final Pageable pageable) {
         Page<Tenant> page;
         if ((name == null || name.isBlank()) && active == null) {
             page = repo.findByIsDeletedFalse(pageable);

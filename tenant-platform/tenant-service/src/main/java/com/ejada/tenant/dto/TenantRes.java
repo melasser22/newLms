@@ -15,4 +15,4 @@ public record TenantRes(
         Boolean isDeleted,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
-) {}
+) { }

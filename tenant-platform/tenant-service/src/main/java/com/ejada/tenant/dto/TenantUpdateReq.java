@@ -1,7 +1,8 @@
 package com.ejada.tenant.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
 
 @Schema(name = "TenantUpdateReq")
 public record TenantUpdateReq(
@@ -27,4 +28,4 @@ public record TenantUpdateReq(
 
         @Schema(description = "Active flag")
         Boolean active
-) {}
+) { }
