@@ -1,12 +1,17 @@
 package com.ejada.sec.dto;
 
+import com.ejada.common.dto.BaseRequest;
 import jakarta.validation.constraints.*;
 import lombok.*;
-import java.util.UUID;
+import lombok.experimental.SuperBuilder;
 
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class ResetPasswordRequest {
-  @NotNull private UUID tenantId;
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
+public class ResetPasswordRequest extends BaseRequest {
   @NotBlank private String resetToken;
-  @NotBlank @Size(min=8, max=120) private String newPassword;
+  @NotBlank @Size(min = 8, max = 120) private String newPassword;
 }

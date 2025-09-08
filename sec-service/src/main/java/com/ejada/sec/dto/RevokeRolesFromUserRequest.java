@@ -1,13 +1,18 @@
 package com.ejada.sec.dto;
 
+import com.ejada.common.dto.BaseRequest;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import java.util.List;
-import java.util.UUID;
 
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class RevokeRolesFromUserRequest {
-  @NotNull private UUID tenantId;
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
+public class RevokeRolesFromUserRequest extends BaseRequest {
   @NotNull private Long userId;
   private List<@NotBlank String> roleCodes;
 }
