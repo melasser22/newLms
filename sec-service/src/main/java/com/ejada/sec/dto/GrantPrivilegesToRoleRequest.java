@@ -9,5 +9,5 @@ import java.util.UUID;
 public class GrantPrivilegesToRoleRequest {
   @NotNull private UUID tenantId;
   @NotBlank private String roleCode;
-  @Singular private List<@NotBlank String> privilegeCodes;
+  private List<@NotBlank String> privilegeCodes;
 }

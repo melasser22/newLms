@@ -26,7 +26,6 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@SuppressWarnings("checkstyle:MagicNumber")
 public class InboundNotificationAudit {
 
     @Id

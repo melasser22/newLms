@@ -25,6 +25,7 @@ public class UserPrivilege {
     private boolean granted;
 
     @Column(name = "noted_at", nullable = false)
+    @Builder.Default
     private Instant notedAt = Instant.now();
 
     @Column(name = "noted_by")

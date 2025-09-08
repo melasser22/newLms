@@ -11,5 +11,5 @@ public class CreateUserRequest {
   @NotBlank @Size(max = 120) private String username;
   @Email @NotBlank @Size(max = 255) private String email;
   @NotBlank @Size(min = 8, max = 120) private String password;
-  @Singular private List<@NotBlank String> roles;
+  private List<@NotBlank String> roles;
 }

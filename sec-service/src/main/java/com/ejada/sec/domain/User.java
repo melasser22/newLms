@@ -38,8 +38,13 @@ public class User extends AuditableEntity {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
-    @Column(nullable = false) private boolean enabled = true;
-    @Column(nullable = false) private boolean locked  = false;
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean enabled = true;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean locked  = false;
 
     @Column(name = "last_login_at") private Instant lastLoginAt;
 

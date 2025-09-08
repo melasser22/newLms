@@ -9,5 +9,5 @@ import java.util.UUID;
 public class RevokeRolesFromUserRequest {
   @NotNull private UUID tenantId;
   @NotNull private Long userId;
-  @Singular private List<@NotBlank String> roleCodes;
+  private List<@NotBlank String> roleCodes;
 }

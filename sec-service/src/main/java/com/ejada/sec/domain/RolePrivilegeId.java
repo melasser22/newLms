@@ -8,6 +8,7 @@ import java.io.Serializable;
 @Embeddable
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @EqualsAndHashCode
 public class RolePrivilegeId implements Serializable {
+    private static final long serialVersionUID = 1L;
     private Long roleId;
     private Long privilegeId;
 }

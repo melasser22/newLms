@@ -9,5 +9,5 @@ public class UpdateUserRequest {
   @Email @Size(max = 255) private String email;
   private Boolean enabled;
   private Boolean locked;
-  @Singular private List<@NotBlank String> roles;
+  private List<@NotBlank String> roles;
 }
