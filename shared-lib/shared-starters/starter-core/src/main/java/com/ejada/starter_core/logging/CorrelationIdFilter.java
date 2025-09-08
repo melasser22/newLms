@@ -2,19 +2,18 @@ package com.ejada.starter_core.logging;
 
 import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.context.CorrelationContextUtil;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.MDC;
+import org.springframework.core.Ordered;
 import org.springframework.util.AntPathMatcher;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.util.Objects;
 import java.util.UUID;
 
-public class CorrelationIdFilter extends OncePerRequestFilter {
+public class CorrelationIdFilter implements WebFilter, Ordered {
 
     private final String headerName;
     private final String mdcKey;
@@ -40,19 +39,26 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        for (String p : skipPatterns) {
-            if (matcher.match(p, uri)) return true;
-        }
-        return false;
+    public int getOrder() {
+        return order;
+    }
+
+    private int order = Ordered.HIGHEST_PRECEDENCE;
+
+    public void setOrder(int order) {
+        this.order = order;
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
-            throws ServletException, IOException {
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        String uri = exchange.getRequest().getURI().getPath();
+        for (String p : skipPatterns) {
+            if (matcher.match(p, uri)) {
+                return chain.filter(exchange);
+            }
+        }
 
-        String correlationId = req.getHeader(headerName);
+        String correlationId = exchange.getRequest().getHeaders().getFirst(headerName);
         if (isBlank(correlationId) && generateIfMissing) {
             correlationId = UUID.randomUUID().toString();
         }
@@ -60,18 +66,15 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
         if (!isBlank(correlationId)) {
             MDC.put(mdcKey, correlationId);
             CorrelationContextUtil.put(CorrelationContextUtil.CORRELATION_ID, correlationId);
-            // Set early to ensure response always has the header (even on exceptions)
             if (echoResponseHeader) {
-                res.setHeader(headerName, correlationId);
+                exchange.getResponse().getHeaders().set(headerName, correlationId);
             }
         }
 
-        try {
-            chain.doFilter(req, res);
-        } finally {
+        return chain.filter(exchange).doFinally(s -> {
             MDC.remove(mdcKey);
             CorrelationContextUtil.clear();
-        }
+        });
     }
 
     private static boolean isBlank(String s) {
