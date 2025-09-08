@@ -8,4 +8,13 @@ public record ProductSubscriptionStts(
         @NotNull Long customerId,
         @NotNull Long subscriptionId,
         List<ProductConsumptionStts> productConsumptionStts
-) {}
+) {
+    public ProductSubscriptionStts {
+        productConsumptionStts = productConsumptionStts == null ? List.of() : List.copyOf(productConsumptionStts);
+    }
+
+    @Override
+    public List<ProductConsumptionStts> productConsumptionStts() {
+        return List.copyOf(productConsumptionStts);
+    }
+}

@@ -48,8 +48,7 @@ public class UsageCounter {
   @PrePersist
   @PreUpdate
   void touch() {
-    if (updatedAt == null) updatedAt = OffsetDateTime.now();
-    else updatedAt = OffsetDateTime.now();
+    updatedAt = OffsetDateTime.now();
   }
 
   /** Lightweight reference helper (no DB hit). */

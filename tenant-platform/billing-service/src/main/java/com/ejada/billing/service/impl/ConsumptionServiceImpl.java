@@ -9,7 +9,6 @@ import com.ejada.billing.repository.UsageCounterRepository;
 import com.ejada.billing.repository.UsageEventRepository;
 import com.ejada.billing.service.ConsumptionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,8 +17,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.*;
 
+import java.security.NoSuchAlgorithmException;
+
 @Service
-@RequiredArgsConstructor
 public class ConsumptionServiceImpl implements ConsumptionService {
 
     private final UsageCounterRepository counterRepo;
@@ -28,6 +28,20 @@ public class ConsumptionServiceImpl implements ConsumptionService {
     private final ConsumptionResponseMapper responseMapper;
     private final UsageEventMapper eventMapper;
     private final ObjectMapper objectMapper;
+
+    public ConsumptionServiceImpl(UsageCounterRepository counterRepo,
+                                  UsageEventRepository eventRepo,
+                                  UsageCounterMapper counterMapper,
+                                  ConsumptionResponseMapper responseMapper,
+                                  UsageEventMapper eventMapper,
+                                  ObjectMapper objectMapper) {
+        this.counterRepo = counterRepo;
+        this.eventRepo = eventRepo;
+        this.counterMapper = counterMapper;
+        this.responseMapper = responseMapper;
+        this.eventMapper = eventMapper;
+        this.objectMapper = objectMapper.copy();
+    }
 
     @Override
     @Transactional
@@ -79,7 +93,7 @@ public class ConsumptionServiceImpl implements ConsumptionService {
 
             return ServiceResult.ok(rqUid.toString(), body);
 
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
             String debugId = Long.toString(System.nanoTime());
             // best-effort audit with error
             try {
@@ -92,7 +106,7 @@ public class ConsumptionServiceImpl implements ConsumptionService {
                         "Unexpected Error",
                         toJson(List.of(ex.getClass().getSimpleName() + ": " + ex.getMessage()))
                 ));
-            } catch (Exception ignored) {}
+            } catch (RuntimeException ignored) {}
             return ServiceResult.error(rqUid.toString(), debugId, List.of("Unexpected Error"));
         }
     }
@@ -113,6 +127,6 @@ public class ConsumptionServiceImpl implements ConsumptionService {
             StringBuilder sb = new StringBuilder(b.length * 2);
             for (byte x : b) sb.append(String.format("%02x", x));
             return sb.toString();
-        } catch (Exception e) { return null; }
+        } catch (NoSuchAlgorithmException e) { return null; }
     }
 }
