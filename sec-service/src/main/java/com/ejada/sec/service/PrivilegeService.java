@@ -1,13 +1,13 @@
 package com.ejada.sec.service;
 
+import com.ejada.common.dto.BaseResponse;
 import com.ejada.sec.dto.*;
 import java.util.List;
-import java.util.UUID;
 
 public interface PrivilegeService {
-  PrivilegeDto create(CreatePrivilegeRequest req);
-  PrivilegeDto update(Long privilegeId, UpdatePrivilegeRequest req);
-  void         delete(Long privilegeId);
-  PrivilegeDto get(Long privilegeId);
-  List<PrivilegeDto> listByTenant(UUID tenantId);
+  BaseResponse<PrivilegeDto> create(CreatePrivilegeRequest req);
+  BaseResponse<PrivilegeDto> update(Long privilegeId, UpdatePrivilegeRequest req);
+  BaseResponse<Void>         delete(Long privilegeId);
+  BaseResponse<PrivilegeDto> get(Long privilegeId);
+  BaseResponse<List<PrivilegeDto>> listByTenant();
 }

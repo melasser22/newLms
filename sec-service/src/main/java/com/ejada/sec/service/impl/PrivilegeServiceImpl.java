@@ -1,5 +1,6 @@
 package com.ejada.sec.service.impl;
 
+import com.ejada.common.dto.BaseResponse;
 import com.ejada.sec.domain.Privilege;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.mapper.PrivilegeMapper;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import com.ejada.common.context.ContextManager;
 
 @Service
 @RequiredArgsConstructor
@@ -22,35 +24,41 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
   @Transactional
   @Override
-  public PrivilegeDto create(CreatePrivilegeRequest req) {
+  public BaseResponse<PrivilegeDto> create(CreatePrivilegeRequest req) {
     Privilege p = repository.save(mapper.toEntity(req));
-    return mapper.toDto(p);
+    return BaseResponse.success("Privilege created", mapper.toDto(p));
   }
 
   @Transactional
   @Override
-  public PrivilegeDto update(Long id, UpdatePrivilegeRequest req) {
+  public BaseResponse<PrivilegeDto> update(Long id, UpdatePrivilegeRequest req) {
     Privilege p = repository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("Privilege not found: " + id));
     mapper.updateEntity(p, req);
-    return mapper.toDto(repository.save(p));
+    return BaseResponse.success("Privilege updated", mapper.toDto(repository.save(p)));
   }
 
   @Transactional
   @Override
-  public void delete(Long id) {
-    if (!repository.existsById(id)) return;
-    repository.deleteById(id);
+  public BaseResponse<Void> delete(Long id) {
+    if (repository.existsById(id)) {
+      repository.deleteById(id);
+    }
+    return BaseResponse.success("Privilege deleted", null);
   }
 
   @Override
-  public PrivilegeDto get(Long id) {
-    return repository.findById(id).map(mapper::toDto)
+  public BaseResponse<PrivilegeDto> get(Long id) {
+    return repository.findById(id)
+        .map(mapper::toDto)
+        .map(dto -> BaseResponse.success("Privilege fetched", dto))
         .orElseThrow(() -> new NoSuchElementException("Privilege not found: " + id));
   }
 
   @Override
-  public List<PrivilegeDto> listByTenant(UUID tenantId) {
-    return mapper.toDto(repository.findAllByTenantId(tenantId));
+  public BaseResponse<List<PrivilegeDto>> listByTenant() {
+    UUID tenantId = UUID.fromString(ContextManager.Tenant.get());
+    return BaseResponse.success("Privileges listed",
+        mapper.toDto(repository.findAllByTenantId(tenantId)));
   }
 }
