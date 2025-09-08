@@ -36,6 +36,9 @@ public class Tenant {
     @Column(name = "contact_phone", length = 32)
     private String contactPhone;
 
+    @Column(name = "logo_url", length = 255)
+    private String logoUrl;
+
     @Column(name = "active", nullable = false)
     private Boolean active = Boolean.TRUE;
 
@@ -62,13 +65,14 @@ public class Tenant {
 
     @Builder
     public Tenant(Integer id, String code, String name,
-                  String contactEmail, String contactPhone,
+                  String contactEmail, String contactPhone, String logoUrl,
                   Boolean active, Boolean isDeleted) {
         this.id = id;
         this.code = code;
         this.name = name;
         this.contactEmail = contactEmail;
         this.contactPhone = contactPhone;
+        this.logoUrl = logoUrl;
         this.active = (active != null) ? active : Boolean.TRUE;
         this.isDeleted = (isDeleted != null) ? isDeleted : Boolean.FALSE;
     }
