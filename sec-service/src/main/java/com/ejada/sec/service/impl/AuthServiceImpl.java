@@ -37,7 +37,7 @@ public class AuthServiceImpl implements AuthService {
             .password(req.getPassword())
             .roles(req.getRoles())
             .build()
-    );
+    ).getData();
     var tokens = issueTokens(created.getTenantId(), created.getUsername(), created.getId());
     return BaseResponse.success("User registered", tokens);
   }
