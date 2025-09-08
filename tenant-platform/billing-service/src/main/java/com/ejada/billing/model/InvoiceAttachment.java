@@ -12,7 +12,6 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,7 +26,7 @@ import java.time.OffsetDateTime;
        indexes = @Index(name = "idx_invoice_attachment_invoice_created",
                         columnList = "invoice_id,created_at DESC"))
 @DynamicUpdate
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter @Setter @NoArgsConstructor
 public final class InvoiceAttachment {
 
   private static final int FILE_NM_LENGTH = 255;
