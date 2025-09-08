@@ -11,6 +11,7 @@
   <description>Centralized dependency management for Ejada modules</description>
 
   <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- Platforms -->
     <spring.boot.version>3.5.5</spring.boot.version>
     <spring.cloud.version>2024.0.2</spring.cloud.version> <!-- 2024.0.3 is not on Central -->
