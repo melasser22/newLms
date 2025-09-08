@@ -1,5 +1,6 @@
 package com.ejada.sec.service.impl;
 
+import com.ejada.common.dto.BaseResponse;
 import com.ejada.sec.domain.PasswordResetToken;
 import com.ejada.sec.domain.User;
 import com.ejada.sec.dto.ForgotPasswordRequest;
@@ -30,7 +31,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
   @Transactional
   @Override
-  public String createToken(ForgotPasswordRequest req) {
+  public BaseResponse<String> createToken(ForgotPasswordRequest req) {
     // locate user by username OR email within tenant
     UUID tenantId = req.getTenantId();
     User user = userRepository.findByTenantIdAndUsername(tenantId, req.getIdentifier())
@@ -44,12 +45,12 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         .expiresAt(Instant.now().plusSeconds(resetTtl))
         .build();
     tokenRepository.save(prt);
-    return token; // deliver via mail/SMS service externally
+    return BaseResponse.success("Reset token generated", token); // deliver via mail/SMS service externally
   }
 
   @Transactional
   @Override
-  public void reset(ResetPasswordRequest req) {
+  public BaseResponse<Void> reset(ResetPasswordRequest req) {
     var prt = tokenRepository.findByTokenAndUsedAtIsNullAndExpiresAtAfter(
         req.getResetToken(), Instant.now()
     ).orElseThrow(() -> new NoSuchElementException("Invalid or expired reset token"));
@@ -58,5 +59,6 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     user.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
     prt.setUsedAt(Instant.now());
     // repositories will update through transaction
+    return BaseResponse.success("Password reset", null);
   }
 }

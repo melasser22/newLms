@@ -1,10 +1,10 @@
 package com.ejada.sec.service.impl;
 
+import com.ejada.common.dto.BaseResponse;
 import com.ejada.sec.domain.User;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.repository.UserRepository;
 import com.ejada.sec.service.AuthService;
-import com.ejada.sec.service.PasswordResetService;
 import com.ejada.sec.service.RefreshTokenService;
 import com.ejada.sec.service.TokenIssuer;
 import com.ejada.sec.service.UserService;
@@ -28,7 +28,7 @@ public class AuthServiceImpl implements AuthService {
 
   @Transactional
   @Override
-  public AuthResponse register(RegisterRequest req) {
+  public BaseResponse<AuthResponse> register(RegisterRequest req) {
     var created = userService.create(
         CreateUserRequest.builder()
             .tenantId(req.getTenantId())
@@ -38,12 +38,13 @@ public class AuthServiceImpl implements AuthService {
             .roles(req.getRoles())
             .build()
     );
-    return issueTokens(created.getTenantId(), created.getUsername(), created.getId());
+    var tokens = issueTokens(created.getTenantId(), created.getUsername(), created.getId());
+    return BaseResponse.success("User registered", tokens);
   }
 
   @Transactional
   @Override
-  public AuthResponse login(AuthRequest req) {
+  public BaseResponse<AuthResponse> login(AuthRequest req) {
     UUID tenantId = req.getTenantId();
     // identifier can be username or email
     User user = userRepository.findByTenantIdAndUsername(tenantId, req.getIdentifier())
@@ -56,20 +57,23 @@ public class AuthServiceImpl implements AuthService {
     if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
       throw new NoSuchElementException("Invalid credentials");
     }
-    return issueTokens(user.getTenantId(), user.getUsername(), user.getId());
+    var tokens = issueTokens(user.getTenantId(), user.getUsername(), user.getId());
+    return BaseResponse.success("Login successful", tokens);
   }
 
   @Transactional
   @Override
-  public AuthResponse refresh(RefreshTokenRequest req) {
+  public BaseResponse<AuthResponse> refresh(RefreshTokenRequest req) {
     var user = refreshTokenService.validateAndGetUser(req.getRefreshToken());
-    return issueTokens(user.getTenantId(), user.getUsername(), user.getId());
+    var tokens = issueTokens(user.getTenantId(), user.getUsername(), user.getId());
+    return BaseResponse.success("Token refreshed", tokens);
   }
 
   @Transactional
   @Override
-  public void logout(String refreshToken) {
+  public BaseResponse<Void> logout(String refreshToken) {
     refreshTokenService.revoke(refreshToken);
+    return BaseResponse.success("Logged out", null);
   }
 
   private AuthResponse issueTokens(UUID tenantId, String username, Long userId) {
