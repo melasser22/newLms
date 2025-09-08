@@ -29,6 +29,6 @@ public class ConsumptionQueryServiceImpl implements ConsumptionQueryService {
         if (custId == null && !counters.isEmpty()) {
             custId = counters.getFirst().getExtCustomerId();
         }
-        return new ProductSubscriptionStts(custId == null ? -1L : custId, extSubscriptionId, list);
+        return new ProductSubscriptionStts(custId == null ? Long.valueOf(-1L) : custId, extSubscriptionId, list);
     }
 }

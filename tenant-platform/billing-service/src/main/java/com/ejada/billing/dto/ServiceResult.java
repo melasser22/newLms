@@ -13,6 +13,15 @@ public record ServiceResult<T>(
         List<String> statusDtls,
         Boolean success
 ) {
+    public ServiceResult {
+        statusDtls = statusDtls == null ? List.of() : List.copyOf(statusDtls);
+    }
+
+    @Override
+    public List<String> statusDtls() {
+        return List.copyOf(statusDtls);
+    }
+
     public static <T> ServiceResult<T> ok(String rqUID, T body) {
         return new ServiceResult<>(rqUID, "I000000", "Successful Operation", body, null, null, Boolean.TRUE);
     }

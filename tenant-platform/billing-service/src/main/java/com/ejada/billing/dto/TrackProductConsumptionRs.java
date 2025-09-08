@@ -7,4 +7,13 @@ import java.util.List;
 public record TrackProductConsumptionRs(
         @NotNull Long productId,
         List<ProductSubscriptionStts> subscriptionsStts
-) {}
+) {
+    public TrackProductConsumptionRs {
+        subscriptionsStts = subscriptionsStts == null ? List.of() : List.copyOf(subscriptionsStts);
+    }
+
+    @Override
+    public List<ProductSubscriptionStts> subscriptionsStts() {
+        return List.copyOf(subscriptionsStts);
+    }
+}

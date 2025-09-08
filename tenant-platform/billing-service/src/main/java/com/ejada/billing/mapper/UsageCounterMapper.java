@@ -33,7 +33,7 @@ public interface UsageCounterMapper {
     default Long fillCount(String typ, Long count) {
         if (typ == null) return null;
         return switch (typ) {
-            case "TRANSACTION", "USER" -> count == null ? 0L : count;
+            case "TRANSACTION", "USER" -> count == null ? Long.valueOf(0L) : count;
             default -> null;
         };
     }

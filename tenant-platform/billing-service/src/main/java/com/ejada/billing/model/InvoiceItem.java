@@ -3,6 +3,7 @@ package com.ejada.billing.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.math.BigDecimal;
 
@@ -50,5 +51,23 @@ public class InvoiceItem {
         .unitPrice(price == null ? BigDecimal.ZERO : price)
         .lineTotal(total)
         .build();
+  }
+
+  @SuppressFBWarnings("EI_EXPOSE_REP")
+  public Invoice getInvoice() {
+    return invoice;
+  }
+
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
+  public void setInvoice(Invoice invoice) {
+    this.invoice = invoice;
+  }
+
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
+  public static class InvoiceItemBuilder {
+    public InvoiceItemBuilder invoice(Invoice invoice) {
+      this.invoice = invoice;
+      return this;
+    }
   }
 }

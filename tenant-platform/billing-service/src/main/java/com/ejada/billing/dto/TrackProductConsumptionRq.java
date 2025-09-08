@@ -8,4 +8,13 @@ import java.util.List;
 public record TrackProductConsumptionRq(
         @NotNull Long productId,
         @NotNull @Size(min = 1) List<ProductSubscription> activeSubscriptions
-) {}
+) {
+    public TrackProductConsumptionRq {
+        activeSubscriptions = activeSubscriptions == null ? List.of() : List.copyOf(activeSubscriptions);
+    }
+
+    @Override
+    public List<ProductSubscription> activeSubscriptions() {
+        return List.copyOf(activeSubscriptions);
+    }
+}

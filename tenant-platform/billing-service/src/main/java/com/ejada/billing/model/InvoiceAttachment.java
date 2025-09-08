@@ -3,6 +3,7 @@ package com.ejada.billing.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.time.OffsetDateTime;
 
@@ -39,5 +40,36 @@ public class InvoiceAttachment {
   @PrePersist
   void onInsert() {
     if (createdAt == null) createdAt = OffsetDateTime.now();
+  }
+
+  @SuppressFBWarnings("EI_EXPOSE_REP")
+  public Invoice getInvoice() {
+    return invoice;
+  }
+
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
+  public void setInvoice(Invoice invoice) {
+    this.invoice = invoice;
+  }
+
+  public byte[] getContent() {
+    return content == null ? null : content.clone();
+  }
+
+  public void setContent(byte[] content) {
+    this.content = content == null ? null : content.clone();
+  }
+
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
+  public static class InvoiceAttachmentBuilder {
+    public InvoiceAttachmentBuilder invoice(Invoice invoice) {
+      this.invoice = invoice;
+      return this;
+    }
+
+    public InvoiceAttachmentBuilder content(byte[] content) {
+      this.content = content == null ? null : content.clone();
+      return this;
+    }
   }
 }
