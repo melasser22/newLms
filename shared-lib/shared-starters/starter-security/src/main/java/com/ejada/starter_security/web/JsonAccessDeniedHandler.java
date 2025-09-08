@@ -5,18 +5,17 @@ import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.context.ContextManager;
 import com.ejada.common.dto.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.server.authorization.ServerAccessDeniedHandler;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-public class JsonAccessDeniedHandler implements AccessDeniedHandler {
+public class JsonAccessDeniedHandler implements ServerAccessDeniedHandler {
 
   private final ObjectMapper mapper;
 
@@ -25,9 +24,7 @@ public class JsonAccessDeniedHandler implements AccessDeniedHandler {
   }
 
   @Override
-  public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException ex)
-      throws IOException {
-
+  public Mono<Void> handle(ServerWebExchange exchange, AccessDeniedException ex) {
     ErrorResponse body = ErrorResponse.of(
         ErrorCodes.AUTH_FORBIDDEN,
         WebUtils.safe(ex.getMessage(), "Forbidden"),
@@ -36,17 +33,26 @@ public class JsonAccessDeniedHandler implements AccessDeniedHandler {
     body.setTenantId(ContextManager.Tenant.get());
     String cid = WebUtils.firstNonBlank(
         MDC.get(HeaderNames.CORRELATION_ID),
-        request.getHeader(HeaderNames.CORRELATION_ID),
-        request.getHeader(HeaderNames.REQUEST_ID)
+        exchange.getRequest().getHeaders().getFirst(HeaderNames.CORRELATION_ID),
+        exchange.getRequest().getHeaders().getFirst(HeaderNames.REQUEST_ID)
     );
     if (cid != null) {
-      response.setHeader(HeaderNames.CORRELATION_ID, cid);
+      exchange.getResponse().getHeaders().set(HeaderNames.CORRELATION_ID, cid);
     }
 
-    response.setStatus(HttpStatus.FORBIDDEN.value());
-    response.setContentType("application/json");
-    response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-    mapper.writeValue(response.getWriter(), body);
+    exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+    exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+    return exchange.getResponse().writeWith(
+        Mono.fromSupplier(() -> exchange.getResponse().bufferFactory()
+            .wrap(writeValue(body)))
+    );
   }
 
+  private byte[] writeValue(Object value) {
+    try {
+      return mapper.writeValueAsBytes(value);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 }
