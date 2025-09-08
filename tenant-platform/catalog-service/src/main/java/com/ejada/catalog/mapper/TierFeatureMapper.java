@@ -34,7 +34,7 @@ public interface TierFeatureMapper {
     @Mapping(target = "overageUnitPrice", source = "overageUnitPrice")
     @Mapping(target = "overageCurrency", source = "overageCurrency", defaultValue = "SAR")
     @Mapping(target = "meta", source = "meta")
-    @Mapping(target = "deleted", constant = "false")
+    @Mapping(target = "isDeleted", constant = "false")
     TierFeature toEntity(@NonNull TierFeatureCreateReq req);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -45,6 +45,6 @@ public interface TierFeatureMapper {
 
     @Mapping(target = "tierId", source = "tier.tierId")
     @Mapping(target = "featureId", source = "feature.featureId")
-    @Mapping(target = "isDeleted", source = "deleted")
+    @Mapping(target = "isDeleted", source = "isDeleted")
     TierFeatureRes toRes(@NonNull TierFeature entity);
 }

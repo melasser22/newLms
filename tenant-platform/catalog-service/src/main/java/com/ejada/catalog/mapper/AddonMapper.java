@@ -25,8 +25,8 @@ public interface AddonMapper {
     @Mapping(target = "addonArNm", source = "addonArNm")
     @Mapping(target = "description", source = "description")
     @Mapping(target = "category", source = "category")
-    @Mapping(target = "active", source = "isActive")
-    @Mapping(target = "deleted", constant = "false")
+    @Mapping(target = "isActive", source = "isActive")
+    @Mapping(target = "isDeleted", constant = "false")
     Addon toEntity(@NonNull AddonCreateReq req);
 
     @AfterMapping
@@ -42,13 +42,13 @@ public interface AddonMapper {
     // ---------- Update ----------
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "addonId", ignore = true)
-    @Mapping(target = "deleted", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
     void update(@MappingTarget @NonNull Addon entity, @NonNull AddonUpdateReq req);
 
     // ---------- Response ----------
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "isActive", source = "active")
-    @Mapping(target = "isDeleted", source = "deleted")
+    @Mapping(target = "isActive", source = "isActive")
+    @Mapping(target = "isDeleted", source = "isDeleted")
     AddonRes toRes(@NonNull Addon entity);
 }

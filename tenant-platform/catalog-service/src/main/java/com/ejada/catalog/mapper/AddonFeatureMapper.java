@@ -34,7 +34,7 @@ public interface AddonFeatureMapper {
     @Mapping(target = "overageUnitPrice", source = "overageUnitPrice")
     @Mapping(target = "overageCurrency", source = "overageCurrency", defaultValue = "SAR")
     @Mapping(target = "meta", source = "meta")
-    @Mapping(target = "deleted", constant = "false")
+    @Mapping(target = "isDeleted", constant = "false")
     AddonFeature toEntity(@NonNull AddonFeatureCreateReq req);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -45,6 +45,6 @@ public interface AddonFeatureMapper {
 
     @Mapping(target = "addonId", source = "addon.addonId")
     @Mapping(target = "featureId", source = "feature.featureId")
-    @Mapping(target = "isDeleted", source = "deleted")
+    @Mapping(target = "isDeleted", source = "isDeleted")
     AddonFeatureRes toRes(@NonNull AddonFeature entity);
 }
