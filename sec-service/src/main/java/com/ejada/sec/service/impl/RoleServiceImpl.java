@@ -1,5 +1,6 @@
 package com.ejada.sec.service.impl;
 
+import com.ejada.common.dto.BaseResponse;
 import com.ejada.sec.domain.Role;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.mapper.ReferenceResolver;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import com.ejada.common.context.ContextManager;
 
 @Service
 @RequiredArgsConstructor
@@ -24,38 +26,43 @@ public class RoleServiceImpl implements RoleService {
 
   @Transactional
   @Override
-  public RoleDto create(CreateRoleRequest req) {
+  public BaseResponse<RoleDto> create(CreateRoleRequest req) {
     Role role = roleMapper.toEntity(req);
     role = roleRepository.save(role);
-    return roleMapper.toDto(role, resolver);
+    return BaseResponse.success("Role created", roleMapper.toDto(role, resolver));
   }
 
   @Transactional
   @Override
-  public RoleDto update(Long roleId, UpdateRoleRequest req) {
+  public BaseResponse<RoleDto> update(Long roleId, UpdateRoleRequest req) {
     Role role = roleRepository.findById(roleId)
         .orElseThrow(() -> new NoSuchElementException("Role not found: " + roleId));
     roleMapper.updateEntity(role, req);
     role = roleRepository.save(role);
-    return roleMapper.toDto(role, resolver);
+    return BaseResponse.success("Role updated", roleMapper.toDto(role, resolver));
   }
 
   @Transactional
   @Override
-  public void delete(Long roleId) {
-    if (!roleRepository.existsById(roleId)) return;
-    roleRepository.deleteById(roleId);
+  public BaseResponse<Void> delete(Long roleId) {
+    if (roleRepository.existsById(roleId)) {
+      roleRepository.deleteById(roleId);
+    }
+    return BaseResponse.success("Role deleted", null);
   }
 
   @Override
-  public RoleDto get(Long roleId) {
+  public BaseResponse<RoleDto> get(Long roleId) {
     return roleRepository.findById(roleId)
         .map(r -> roleMapper.toDto(r, resolver))
+        .map(dto -> BaseResponse.success("Role fetched", dto))
         .orElseThrow(() -> new NoSuchElementException("Role not found: " + roleId));
   }
 
   @Override
-  public List<RoleDto> listByTenant(UUID tenantId) {
-    return roleMapper.toDto(roleRepository.findAllByTenantId(tenantId), resolver);
+  public BaseResponse<List<RoleDto>> listByTenant() {
+    UUID tenantId = UUID.fromString(ContextManager.Tenant.get());
+    return BaseResponse.success("Roles listed",
+        roleMapper.toDto(roleRepository.findAllByTenantId(tenantId), resolver));
   }
 }

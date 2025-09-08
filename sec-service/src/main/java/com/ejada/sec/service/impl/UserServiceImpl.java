@@ -1,5 +1,6 @@
 package com.ejada.sec.service.impl;
 
+import com.ejada.common.dto.BaseResponse;
 import com.ejada.sec.domain.User;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.mapper.ReferenceResolver;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import com.ejada.common.context.ContextManager;
 
 @Service
 @RequiredArgsConstructor
@@ -26,62 +28,69 @@ public class UserServiceImpl implements UserService {
 
   @Transactional
   @Override
-  public UserDto create(CreateUserRequest req) {
+  public BaseResponse<UserDto> create(CreateUserRequest req) {
     User user = userMapper.toEntity(req);
     user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
     user = userRepository.save(user);
     // attach roles by codes (if any)
     userMapper.setRolesByCodes(user, req.getRoles(), req.getTenantId(), resolver);
     user = userRepository.save(user);
-    return userMapper.toDto(user, resolver);
+    return BaseResponse.success("User created", userMapper.toDto(user, resolver));
   }
 
   @Transactional
   @Override
-  public UserDto update(Long userId, UpdateUserRequest req) {
+  public BaseResponse<UserDto> update(Long userId, UpdateUserRequest req) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
     userMapper.updateEntity(user, req);
     user = userRepository.save(user);
     // roles changes typically go via GrantService, but if you pass role codes in Update, you can:
     // userMapper.setRolesByCodes(user, req.getRoles(), user.getTenantId(), resolver);
-    return userMapper.toDto(user, resolver);
+    return BaseResponse.success("User updated", userMapper.toDto(user, resolver));
   }
 
   @Transactional
   @Override
-  public void delete(Long userId) {
-    if (!userRepository.existsById(userId)) return;
-    userRepository.deleteById(userId);
+  public BaseResponse<Void> delete(Long userId) {
+    if (userRepository.existsById(userId)) {
+      userRepository.deleteById(userId);
+    }
+    return BaseResponse.success("User deleted", null);
   }
 
   @Override
-  public UserDto get(Long userId) {
+  public BaseResponse<UserDto> get(Long userId) {
     return userRepository.findById(userId)
         .map(u -> userMapper.toDto(u, resolver))
+        .map(dto -> BaseResponse.success("User fetched", dto))
         .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
   }
 
   @Override
-  public List<UserDto> listByTenant(UUID tenantId) {
-    return userMapper.toDto(userRepository.findAllByTenantId(tenantId), resolver);
+  public BaseResponse<List<UserDto>> listByTenant() {
+    UUID tenantId = UUID.fromString(ContextManager.Tenant.get());
+    return BaseResponse.success("Users listed",
+        userMapper.toDto(userRepository.findAllByTenantId(tenantId), resolver));
   }
 
-  @Transactional @Override public void enable(Long userId)  { setEnabled(userId, true); }
-  @Transactional @Override public void disable(Long userId) { setEnabled(userId, false); }
-  @Transactional @Override public void lock(Long userId)    { setLocked(userId, true); }
-  @Transactional @Override public void unlock(Long userId)  { setLocked(userId, false); }
+  @Transactional @Override public BaseResponse<Void> enable(Long userId)  { return setEnabled(userId, true, "User enabled"); }
+  @Transactional @Override public BaseResponse<Void> disable(Long userId) { return setEnabled(userId, false, "User disabled"); }
+  @Transactional @Override public BaseResponse<Void> lock(Long userId)    { return setLocked(userId, true, "User locked"); }
+  @Transactional @Override public BaseResponse<Void> unlock(Long userId)  { return setLocked(userId, false, "User unlocked"); }
 
-  private void setEnabled(Long userId, boolean flag) {
+  private BaseResponse<Void> setEnabled(Long userId, boolean flag, String message) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
     user.setEnabled(flag);
     userRepository.save(user);
+    return BaseResponse.success(message, null);
   }
-  private void setLocked(Long userId, boolean flag) {
+  private BaseResponse<Void> setLocked(Long userId, boolean flag, String message) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
     user.setLocked(flag);
     userRepository.save(user);
+    return BaseResponse.success(message, null);
   }
 }
