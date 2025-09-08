@@ -12,8 +12,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
-import java.util.List;
-
 @AutoConfiguration
 @ConditionalOnClass(OpenAPI.class)
 @EnableConfigurationProperties(SharedOpenApiProperties.class)

@@ -18,15 +18,9 @@ import java.util.function.Supplier;
 public final class CryptoService {
 
     private final CryptoFacade facade;
-    private final Supplier<SecretKey> encryptionKeySupplier;
-    private final Supplier<SecretKey> macKeySupplier;
 
-    private CryptoService(CryptoFacade facade,
-                          Supplier<SecretKey> encryptionKeySupplier,
-                          Supplier<SecretKey> macKeySupplier) {
+    private CryptoService(CryptoFacade facade) {
         this.facade = Objects.requireNonNull(facade, "facade");
-        this.encryptionKeySupplier = Objects.requireNonNull(encryptionKeySupplier, "encryptionKeySupplier");
-        this.macKeySupplier = Objects.requireNonNull(macKeySupplier, "macKeySupplier");
     }
 
     /* ---------------- Encryption ---------------- */
@@ -160,7 +154,7 @@ public final class CryptoService {
             Encryptor encryptor = new AesGcmEncryptor(algorithm, encKeySupplier);
             Signer signer = new HmacSha256Signer(macKeySupplier);
             CryptoFacade facade = new CryptoFacade(encryptor, signer);
-            return new CryptoService(facade, encKeySupplier, macKeySupplier);
+            return new CryptoService(facade);
         }
 
     }

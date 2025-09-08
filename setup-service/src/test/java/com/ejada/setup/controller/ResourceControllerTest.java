@@ -7,7 +7,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import static org.mockito.Mockito.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
@@ -27,7 +29,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ResourceControllerTest {
 
     @Autowired MockMvc mockMvc;
-    @MockBean ResourceService resourceService;
+    @Autowired ResourceService resourceService;
+
+    @TestConfiguration
+    static class MockConfig {
+        @Bean ResourceService resourceService() { return mock(ResourceService.class); }
+    }
 
     @Test
     void list_ok() throws Exception {

@@ -2,7 +2,6 @@ package com.ejada.starter_security;
 
 import com.ejada.common.constants.HeaderNames;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ejada.starter_security.Role;
 import com.ejada.starter_security.web.JsonAccessDeniedHandler;
 import com.ejada.starter_security.web.JsonAuthEntryPoint;
 import java.nio.charset.StandardCharsets;
@@ -204,19 +203,16 @@ public class SecurityAutoConfiguration {
         .formLogin(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable)
         .logout(AbstractHttpConfigurer::disable)
-        .headers(headers -> headers
-            .frameOptions().deny()
-            .contentTypeOptions().and()
-            .httpStrictTransportSecurity(hsts -> hsts
+        .headers(headers -> {
+            headers.frameOptions(frame -> frame.deny());
+            headers.contentTypeOptions(org.springframework.security.config.Customizer.withDefaults());
+            headers.httpStrictTransportSecurity(hsts -> hsts
                 .maxAgeInSeconds(31536000)
                 .includeSubDomains(true)
                 .preload(true)
-            )
-            .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-            .permissionsPolicy(permissions -> permissions
-                .policy("geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()")
-            )
-        );
+            );
+            headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN));
+        });
 
     // Propagate tenant from JWT claim (after JWT auth), if configured
     if (StringUtils.hasText(props.getTenantClaim())) {
@@ -278,7 +274,6 @@ public class SecurityAutoConfiguration {
   /**
    * Supports nested claim resolution via dot path, e.g. "realm_access.roles".
    */
-  @SuppressWarnings("unchecked")
   private static Object claimPath(Map<String, Object> claims, String path) {
     if (!StringUtils.hasText(path)) return null;
     Object cur = claims;

@@ -2,7 +2,6 @@ package com.ejada.subscription.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 public record SubscriptionRes(
     Long subscriptionId,

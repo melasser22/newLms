@@ -11,7 +11,6 @@ import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.aop.AopAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -50,13 +49,14 @@ class CountryControllerTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
 
-    @MockBean CountryService countryService;
+    @Autowired CountryService countryService;
 
     @TestConfiguration
     @EnableMethodSecurity(prePostEnabled = true)
     static class TestSecurityConfig {
         @Bean SharedSecurityProps sharedSecurityProps() { return new SharedSecurityProps(); }
         @Bean RoleChecker roleChecker(SharedSecurityProps props) { return new RoleChecker(props); }
+        @Bean CountryService countryService() { return mock(CountryService.class); }
     }
 
     private Country createTestCountry() {

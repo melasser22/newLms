@@ -2,7 +2,6 @@ package com.ejada.billing.mapper;
 
 import com.ejada.billing.dto.InvoiceAttachmentContentDto;
 import com.ejada.billing.dto.InvoiceAttachmentMetaDto;
-import com.ejada.billing.model.Invoice;
 import com.ejada.billing.model.InvoiceAttachment;
 import org.mapstruct.*;
 
@@ -37,7 +36,7 @@ public interface InvoiceAttachmentMapper {
      * createdAt is filled by @PrePersist; override if you want to set explicitly.
      */
     @Mapping(target = "invoiceAttachmentId", ignore = true)
-    @Mapping(target = "invoice",             expression = "java(Invoice.ref(invoiceId))")
+    @Mapping(target = "invoice",             expression = "java(com.ejada.billing.model.Invoice.ref(invoiceId))")
     @Mapping(target = "fileNm",              source = "fileName")
     @Mapping(target = "mimeTyp",             source = "mimeType")
     @Mapping(target = "content",             source = "content")

@@ -5,6 +5,8 @@ package com.ejada.common.exception;
  */
 public class ResourceNotFoundException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Create a ResourceNotFoundException with a formatted message.
      *

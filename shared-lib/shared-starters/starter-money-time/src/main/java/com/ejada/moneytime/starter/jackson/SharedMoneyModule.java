@@ -16,6 +16,8 @@ import java.math.BigDecimal;
 
 public class SharedMoneyModule extends SimpleModule {
 
+  private static final long serialVersionUID = 1L;
+
   public SharedMoneyModule() {
     super("SharedMoneyModule");
     addSerializer(MonetaryAmount.class, new MonetaryAmountJsonSerializer());
@@ -44,7 +46,7 @@ public class SharedMoneyModule extends SimpleModule {
       }
       String amountStr = null, currency = null;
       while (p.nextToken() != JsonToken.END_OBJECT) {
-        String name = p.getCurrentName();
+        String name = p.currentName();
         p.nextToken();
         if ("amount".equals(name)) amountStr = p.getValueAsString();
         else if ("currency".equals(name)) currency = p.getValueAsString();
