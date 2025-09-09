@@ -1,6 +1,6 @@
 package com.ejada.starter_core.config;
 
-import com.ejada.config.EnvironmentProperties;
+import com.ejada.config.AppProperties;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -17,10 +17,10 @@ import org.springframework.stereotype.Component;
 public class EnvironmentLogger {
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected configuration is managed by Spring")
-    private final EnvironmentProperties properties;
+    private final AppProperties properties;
 
     @PostConstruct
     void logEnv() {
-        log.info("Environment: {} | Version: {}", properties.getEnvironment(), properties.getVersion());
+        log.info("Environment: {} | Version: {}", properties.getEnv(), properties.getVersion());
     }
 }
