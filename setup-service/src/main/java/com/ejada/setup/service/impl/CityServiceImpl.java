@@ -13,7 +13,7 @@ import com.ejada.common.sort.SortUtils;
 import com.ejada.audit.starter.api.AuditAction;
 import com.ejada.audit.starter.api.DataClass;
 import com.ejada.audit.starter.api.annotations.Audited;
-import com.ejada.common.exception.ResourceNotFoundException;
+import com.ejada.common.exception.NotFoundException;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -48,8 +48,8 @@ public final class CityServiceImpl implements CityService {
         @Transactional
         public BaseResponse<CityDto> add(final CityDto request) {
                 Country country = countryRepo.findById(request.getCountryId())
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "Country", String.valueOf(request.getCountryId())));
+                                .orElseThrow(() -> new NotFoundException(
+                                                "Country not found", String.valueOf(request.getCountryId())));
 
                 City entity = mapper.toEntity(request);
                 entity.setCountry(country);
@@ -62,7 +62,7 @@ public final class CityServiceImpl implements CityService {
         @Transactional
         public BaseResponse<CityDto> update(final Integer id, final CityDto request) {
                 City city = cityRepo.findById(id)
-                                .orElseThrow(() -> new ResourceNotFoundException("City", String.valueOf(id)));
+                                .orElseThrow(() -> new NotFoundException("City not found", String.valueOf(id)));
                 Integer oldCountryId = city.getCountry().getCountryId();
 
                 city.setCityCd(request.getCityCd());
@@ -72,8 +72,8 @@ public final class CityServiceImpl implements CityService {
 
                 if (!oldCountryId.equals(request.getCountryId())) {
                         Country country = countryRepo.findById(request.getCountryId())
-                                        .orElseThrow(() -> new ResourceNotFoundException(
-                                                        "Country", String.valueOf(request.getCountryId())));
+                                        .orElseThrow(() -> new NotFoundException(
+                                                        "Country not found", String.valueOf(request.getCountryId())));
                         city.setCountry(country);
                 }
 
@@ -104,7 +104,7 @@ public final class CityServiceImpl implements CityService {
         @Cacheable(cacheNames = "cities", key = "#id")
         public BaseResponse<CityDto> get(final Integer id) {
                 City city = cityRepo.findById(id)
-                                .orElseThrow(() -> new ResourceNotFoundException("City", String.valueOf(id)));
+                                .orElseThrow(() -> new NotFoundException("City not found", String.valueOf(id)));
                 return BaseResponse.success("OK", mapper.toDto(city));
         }
 

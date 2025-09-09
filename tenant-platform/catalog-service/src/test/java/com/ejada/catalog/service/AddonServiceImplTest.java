@@ -6,7 +6,7 @@ import com.ejada.catalog.model.Addon;
 import com.ejada.catalog.repository.AddonRepository;
 import com.ejada.catalog.service.impl.AddonServiceImpl;
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.exception.ResourceNotFoundException;
+import com.ejada.common.exception.NotFoundException;
 import com.ejada.common.exception.DuplicateResourceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -76,10 +76,10 @@ class AddonServiceImplTest {
     }
 
     @Test
-    @DisplayName("should throw ResourceNotFoundException when addon not found")
+    @DisplayName("should throw NotFoundException when addon not found")
     void get_shouldThrowWhenNotFound() {
         when(repo.findById(1)).thenReturn(Optional.empty());
-        assertThrows(ResourceNotFoundException.class, () -> service.get(1));
+        assertThrows(NotFoundException.class, () -> service.get(1));
     }
 
     @Test
@@ -113,11 +113,11 @@ class AddonServiceImplTest {
     }
 
     @Test
-    @DisplayName("should throw ResourceNotFoundException when updating missing addon")
+    @DisplayName("should throw NotFoundException when updating missing addon")
     void update_shouldThrowWhenMissing() {
         when(repo.findById(1)).thenReturn(Optional.empty());
         AddonUpdateReq req = new AddonUpdateReq(null, null, null, null, null, null);
-        assertThrows(ResourceNotFoundException.class, () -> service.update(1, req));
+        assertThrows(NotFoundException.class, () -> service.update(1, req));
     }
 
     @Test
@@ -135,10 +135,10 @@ class AddonServiceImplTest {
     }
 
     @Test
-    @DisplayName("should throw ResourceNotFoundException when soft deleting missing addon")
+    @DisplayName("should throw NotFoundException when soft deleting missing addon")
     void softDelete_shouldThrowWhenMissing() {
         when(repo.findById(1)).thenReturn(Optional.empty());
-        assertThrows(ResourceNotFoundException.class, () -> service.softDelete(1));
+        assertThrows(NotFoundException.class, () -> service.softDelete(1));
     }
 }
 

@@ -8,7 +8,7 @@ import com.ejada.catalog.model.Feature;
 import com.ejada.catalog.repository.FeatureRepository;
 import com.ejada.catalog.service.FeatureService;
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.exception.ResourceNotFoundException;
+import com.ejada.common.exception.NotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -44,7 +44,7 @@ public  class FeatureServiceImpl implements FeatureService {
     @Transactional(readOnly = true)
     public BaseResponse<FeatureRes> get(final Integer id) {
         Feature feature = repo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Feature", String.valueOf(id)));
+                .orElseThrow(() -> new NotFoundException("Feature not found", String.valueOf(id)));
         return BaseResponse.success("OK", mapper.toRes(feature));
     }
 
