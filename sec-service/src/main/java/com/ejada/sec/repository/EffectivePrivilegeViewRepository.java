@@ -1,14 +1,18 @@
 package com.ejada.sec.repository;
 
+import com.ejada.sec.domain.EffectivePrivilegeProjection;
+import com.ejada.sec.domain.Privilege;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
-
-import com.ejada.sec.domain.EffectivePrivilegeProjection;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface EffectivePrivilegeViewRepository extends Repository<Object, Long> {
+// Spring Data requires a domain type to create a repository bean.  Although the
+// queries in this repository operate on the `effective_privileges` view and
+// return `EffectivePrivilegeProjection`, we associate the repository with the
+// `Privilege` entity so that Spring can create a proxy implementation.
+public interface EffectivePrivilegeViewRepository extends Repository<Privilege, Long> {
 
     @Query(value = """
         select user_id     as userId,
