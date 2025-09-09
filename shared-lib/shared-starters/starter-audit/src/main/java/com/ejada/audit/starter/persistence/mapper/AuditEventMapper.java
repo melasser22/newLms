@@ -2,7 +2,7 @@ package com.ejada.audit.starter.persistence.mapper;
 
 import com.ejada.audit.starter.api.AuditEvent;
 import com.ejada.audit.starter.persistence.entity.AuditEventEntity;
-import com.ejada.audit.starter.util.JsonUtils;
+import com.ejada.common.json.JsonUtils;
 import com.ejada.common.exception.JsonSerializationException;
 
 public final class AuditEventMapper {
