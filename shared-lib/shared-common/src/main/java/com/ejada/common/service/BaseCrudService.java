@@ -2,7 +2,7 @@ package com.ejada.common.service;
 
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.common.exception.DuplicateResourceException;
-import com.ejada.common.exception.ResourceNotFoundException;
+import com.ejada.common.exception.NotFoundException;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,14 +50,14 @@ public abstract class BaseCrudService<E, ID, C, U, R> {
     @Transactional(readOnly = true)
     public BaseResponse<R> get(ID id) {
         E entity = getRepository().findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(getEntityName(), String.valueOf(id)));
+                .orElseThrow(() -> new NotFoundException(getEntityName() + " not found", String.valueOf(id)));
         return BaseResponse.success("OK", mapToDto(entity));
     }
 
     @Transactional
     public BaseResponse<R> update(ID id, U dto) {
         E entity = getRepository().findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(getEntityName(), String.valueOf(id)));
+                .orElseThrow(() -> new NotFoundException(getEntityName() + " not found", String.valueOf(id)));
         updateEntity(entity, dto);
         return BaseResponse.success(getEntityName() + " updated", mapToDto(entity));
     }
@@ -65,7 +65,7 @@ public abstract class BaseCrudService<E, ID, C, U, R> {
     @Transactional
     public BaseResponse<Void> softDelete(ID id) {
         E entity = getRepository().findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(getEntityName(), String.valueOf(id)));
+                .orElseThrow(() -> new NotFoundException(getEntityName() + " not found", String.valueOf(id)));
         try {
             Method m = entity.getClass().getMethod("setIsDeleted", Boolean.class);
             m.invoke(entity, Boolean.TRUE);

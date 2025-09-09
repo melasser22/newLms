@@ -4,7 +4,6 @@ import com.ejada.common.dto.BaseResponse;
 import com.ejada.common.exception.BusinessException;
 import com.ejada.common.exception.BusinessRuleException;
 import com.ejada.common.exception.NotFoundException;
-import com.ejada.common.exception.ResourceNotFoundException;
 import com.ejada.common.exception.DuplicateResourceException;
 import com.ejada.common.exception.ValidationException;
 import jakarta.validation.ConstraintViolationException;
@@ -29,7 +28,7 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({NotFoundException.class, ResourceNotFoundException.class})
+    @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<BaseResponse<?>> handleResourceNotFound(RuntimeException ex, WebRequest request) {
         log.warn("Resource not found: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
