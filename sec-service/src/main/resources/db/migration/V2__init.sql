@@ -1,12 +1,3 @@
--- Create schema (change name if you prefer another schema)
-CREATE SCHEMA IF NOT EXISTS security;
-
--- For convenience in this migration
-SET search_path = security, public;
-
--- ==============
--- USERS
--- ==============
 CREATE TABLE IF NOT EXISTS users (
     id              BIGSERIAL PRIMARY KEY,
     tenant_id       UUID        NOT NULL,
@@ -32,7 +23,7 @@ CREATE INDEX IF NOT EXISTS ix_users_tenant_id ON users (tenant_id);
 CREATE INDEX IF NOT EXISTS ix_users_last_login ON users (last_login_at);
 
 -- keep updated_at in sync
-CREATE OR REPLACE FUNCTION security.set_updated_at()
+CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at := NOW();
@@ -44,7 +35,7 @@ DROP TRIGGER IF EXISTS trg_users_set_updated ON users;
 CREATE TRIGGER trg_users_set_updated
 BEFORE UPDATE ON users
 FOR EACH ROW
-EXECUTE FUNCTION security.set_updated_at();
+EXECUTE FUNCTION set_updated_at();
 
 -- ==============
 -- ROLES
@@ -65,7 +56,7 @@ DROP TRIGGER IF EXISTS trg_roles_set_updated ON roles;
 CREATE TRIGGER trg_roles_set_updated
 BEFORE UPDATE ON roles
 FOR EACH ROW
-EXECUTE FUNCTION security.set_updated_at();
+EXECUTE FUNCTION set_updated_at();
 
 -- ==============
 -- USER_ROLES (M2M)

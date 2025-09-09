@@ -91,11 +91,11 @@ shared:
       query-param: tenantId
       default-policy: OPTIONAL
       echo-response-header: true
-      cors:
-        enabled: true
-        allowed-origins: http://localhost:3000
-        allowed-methods: GET,POST,PUT,DELETE,OPTIONS
-        allowed-headers: Authorization,Content-Type
+    cors:
+      enabled: true
+      allowed-origins: http://localhost:3000
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: "*"
   headers:
     enabled: true
     correlation:
@@ -171,7 +171,7 @@ shared:
     description: "security service endpoints for tenant/platform configuration."
     version: "1.0.0"
     servers:
-      - http://localhost:8080/sec
+      - http://localhost:8080/core
     group:
       name: security
       packages-to-scan:
@@ -190,13 +190,13 @@ shared:
       activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
       keys:
         local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
-    security:
-      mode: hs256
-      jwt:
-        secret: ${JWT_SECRET}
-        token-period: 15m
-      hs256:
-        secret: ${JWT_SECRET}
+  security:
+    mode: hs256
+    jwt:
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+      token-period: 15m
+    hs256:
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
     resource-server:
       enabled: true
       permit-all:

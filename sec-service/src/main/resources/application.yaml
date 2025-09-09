@@ -22,9 +22,9 @@ server:
       - application/json
       - application/javascript
     min-response-size: 2KB
-    error:
-      include-message: never
-      include-binding-errors: never
+  error:
+    include-message: always
+    include-binding-errors: always
 
 shared:
   observability:

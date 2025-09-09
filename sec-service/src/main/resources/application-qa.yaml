@@ -168,7 +168,7 @@ shared:
     description: "security service endpoints for tenant/platform configuration."
     version: "1.0.0"
     servers:
-      - http://localhost:8080/sec
+      - http://localhost:8080/core
     group:
       name: security
       packages-to-scan:
@@ -197,7 +197,7 @@ shared:
       secret: ${JWT_SECRET}
     resource-server:
       enabled: true
-      permit-all: ["/**"]
+      permit-all: ["/*"]
       disable-csrf: false
     stateless: true
     roles-claim: roles

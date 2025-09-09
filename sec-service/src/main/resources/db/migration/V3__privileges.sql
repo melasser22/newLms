@@ -1,8 +1,3 @@
-SET search_path = security, public;
-
--- =========
--- PRIVILEGES 
--- =========
 CREATE TABLE IF NOT EXISTS privileges (
     id           BIGSERIAL PRIMARY KEY,
     tenant_id    UUID         NOT NULL,                   
@@ -21,7 +16,7 @@ CREATE TABLE IF NOT EXISTS privileges (
 DROP TRIGGER IF EXISTS trg_priv_set_updated ON privileges;
 CREATE TRIGGER trg_priv_set_updated
 BEFORE UPDATE ON privileges
-FOR EACH ROW EXECUTE FUNCTION security.set_updated_at();
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 CREATE INDEX IF NOT EXISTS ix_privileges_tenant_resource_action
     ON privileges (tenant_id, resource, action);
