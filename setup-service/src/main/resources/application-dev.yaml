@@ -190,13 +190,13 @@ shared:
       activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
       keys:
         local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
-  security:
-    mode: hs256
-    jwt:
-      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
-      token-period: 15m
-    hs256:
-      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+    security:
+      mode: hs256
+      jwt:
+        secret: ${JWT_SECRET}
+        token-period: 15m
+      hs256:
+        secret: ${JWT_SECRET}
     resource-server:
       enabled: true
       permit-all:
