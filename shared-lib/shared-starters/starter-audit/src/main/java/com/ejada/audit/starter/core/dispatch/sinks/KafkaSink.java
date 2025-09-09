@@ -1,7 +1,7 @@
 package com.ejada.audit.starter.core.dispatch.sinks;
 
 import com.ejada.audit.starter.api.AuditEvent;
-import com.ejada.audit.starter.util.JsonUtils;
+import com.ejada.common.json.JsonUtils;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;

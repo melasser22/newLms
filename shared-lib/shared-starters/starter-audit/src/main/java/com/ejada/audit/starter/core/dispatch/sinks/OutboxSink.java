@@ -1,7 +1,7 @@
 package com.ejada.audit.starter.core.dispatch.sinks;
 
 import com.ejada.audit.starter.api.AuditEvent;
-import com.ejada.audit.starter.util.JsonUtils;
+import com.ejada.common.json.JsonUtils;
 import com.ejada.common.exception.JsonSerializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
