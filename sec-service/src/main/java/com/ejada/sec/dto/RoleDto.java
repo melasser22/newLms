@@ -9,7 +9,7 @@ import java.util.UUID;
 public class RoleDto {
   private Long id;
   @NotNull private UUID tenantId;
-  @NotBlank @Size(max=64) private String code;
-  @NotBlank @Size(max=128) private String name;
+    @NotBlank @Size(max = 64) private String code;
+    @NotBlank @Size(max = 128) private String name;
   private List<String> privileges;
 }

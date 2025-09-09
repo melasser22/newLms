@@ -16,9 +16,11 @@ public interface GrantMapper {
 
   default void applyRevokeFromRole(Role role, RevokePrivilegesFromRoleRequest req,
                                    @Context ReferenceResolver resolver) {
-    if (role.getRolePrivileges() == null) return;
-    role.getRolePrivileges().removeIf(rp -> req.getPrivilegeCodes()
-        .contains(rp.getPrivilege().getCode()));
+      if (role.getRolePrivileges() == null) {
+        return;
+      }
+      role.getRolePrivileges().removeIf(rp -> req.getPrivilegeCodes()
+          .contains(rp.getPrivilege().getCode()));
   }
 
   default void applyAssignRoles(User user, AssignRolesToUserRequest req,
@@ -28,7 +30,9 @@ public interface GrantMapper {
   }
 
   default void applyRevokeRoles(User user, RevokeRolesFromUserRequest req) {
-    if (user.getRoles() == null) return;
-    user.getRoles().removeIf(ur -> req.getRoleCodes().contains(ur.getRole().getCode()));
+      if (user.getRoles() == null) {
+        return;
+      }
+      user.getRoles().removeIf(ur -> req.getRoleCodes().contains(ur.getRole().getCode()));
   }
 }

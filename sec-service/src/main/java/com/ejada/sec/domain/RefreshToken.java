@@ -10,8 +10,8 @@ import java.time.Instant;
   name = "refresh_tokens",
   uniqueConstraints = @UniqueConstraint(name = "ux_refresh_tokens_token", columnNames = "token"),
   indexes = {
-    @Index(name="ix_refresh_tokens_user", columnList="user_id"),
-    @Index(name="ix_refresh_tokens_expiry", columnList="expires_at")
+    @Index(name = "ix_refresh_tokens_user", columnList = "user_id"),
+    @Index(name = "ix_refresh_tokens_expiry", columnList = "expires_at")
   }
 )
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder

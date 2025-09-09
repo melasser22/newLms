@@ -12,8 +12,8 @@ import java.util.UUID;
 @Table(
   name = "users",
   uniqueConstraints = {
-    @UniqueConstraint(name = "ux_users_tenant_username", columnNames = {"tenant_id","username"}),
-    @UniqueConstraint(name = "ux_users_tenant_email",    columnNames = {"tenant_id","email"})
+      @UniqueConstraint(name = "ux_users_tenant_username", columnNames = {"tenant_id", "username"}),
+      @UniqueConstraint(name = "ux_users_tenant_email",    columnNames = {"tenant_id", "email"})
   },
   indexes = {
     @Index(name = "ix_users_tenant_id", columnList = "tenant_id"),

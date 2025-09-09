@@ -21,8 +21,10 @@ public class ReferenceResolver {
   }
 
   public List<Role> rolesByCodes(UUID tenantId, Collection<String> codes) {
-    if (codes == null || codes.isEmpty()) return List.of();
-    return codes.stream().map(c -> roleByCode(tenantId, c)).toList();
+      if (codes == null || codes.isEmpty()) {
+        return List.of();
+      }
+      return codes.stream().map(c -> roleByCode(tenantId, c)).toList();
   }
 
   public Privilege privilegeByCode(UUID tenantId, String code) {
@@ -31,31 +33,41 @@ public class ReferenceResolver {
   }
 
   public List<Privilege> privilegesByCodes(UUID tenantId, Collection<String> codes) {
-    if (codes == null || codes.isEmpty()) return List.of();
-    return codes.stream().map(c -> privilegeByCode(tenantId, c)).toList();
+      if (codes == null || codes.isEmpty()) {
+        return List.of();
+      }
+      return codes.stream().map(c -> privilegeByCode(tenantId, c)).toList();
   }
 
   public List<String> toRoleCodes(Collection<UserRole> userRoles) {
-    if (userRoles == null) return List.of();
-    return userRoles.stream().map(ur -> ur.getRole().getCode()).toList();
+      if (userRoles == null) {
+        return List.of();
+      }
+      return userRoles.stream().map(ur -> ur.getRole().getCode()).toList();
   }
 
   public List<String> toPrivilegeCodes(Collection<RolePrivilege> rolePrivileges) {
-    if (rolePrivileges == null) return List.of();
-    return rolePrivileges.stream().map(rp -> rp.getPrivilege().getCode()).toList();
+      if (rolePrivileges == null) {
+        return List.of();
+      }
+      return rolePrivileges.stream().map(rp -> rp.getPrivilege().getCode()).toList();
   }
 
   public Set<UserRole> toUserRoles(Long userId, List<Role> roles) {
-    if (roles == null) return Set.of();
-    return roles.stream().map(r -> {
+      if (roles == null) {
+        return Set.of();
+      }
+      return roles.stream().map(r -> {
       var id = new UserRoleId(userId, r.getId());
       return UserRole.builder().id(id).role(r).build();
     }).collect(Collectors.toSet());
   }
 
   public Set<RolePrivilege> toRolePrivileges(Long roleId, List<Privilege> privilegeList) {
-    if (privilegeList == null) return Set.of();
-    return privilegeList.stream().map(p -> {
+      if (privilegeList == null) {
+        return Set.of();
+      }
+      return privilegeList.stream().map(p -> {
       var id = new RolePrivilegeId(roleId, p.getId());
       return RolePrivilege.builder().id(id).privilege(p).build();
     }).collect(Collectors.toSet());

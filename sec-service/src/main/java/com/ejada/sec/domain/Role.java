@@ -10,7 +10,7 @@ import java.util.UUID;
 @Entity
 @Table(
   name = "roles",
-  uniqueConstraints = @UniqueConstraint(name = "ux_roles_tenant_code", columnNames = {"tenant_id","code"})
+    uniqueConstraints = @UniqueConstraint(name = "ux_roles_tenant_code", columnNames = {"tenant_id", "code"})
 )
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Role extends AuditableEntity {
