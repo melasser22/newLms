@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Tenant Integration Keys", description = "APIs for managing tenant integration keys")
-public final class TenantIntegrationKeyController {
+public class TenantIntegrationKeyController {
 
     private final TenantIntegrationKeyService service;
 

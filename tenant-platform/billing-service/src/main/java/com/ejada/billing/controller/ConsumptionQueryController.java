@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/billing")
-public final class ConsumptionQueryController {
+public class ConsumptionQueryController {
 
     private final ConsumptionQueryService service;
 

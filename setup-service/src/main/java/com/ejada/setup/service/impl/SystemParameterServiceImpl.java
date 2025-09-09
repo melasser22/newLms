@@ -24,7 +24,7 @@ import java.util.List;
 
 @Service
 @Transactional
-public final class SystemParameterServiceImpl implements SystemParameterService {
+public class SystemParameterServiceImpl implements SystemParameterService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SystemParameterServiceImpl.class);
 

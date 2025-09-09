@@ -28,7 +28,7 @@ import java.time.OffsetDateTime;
        })
 @DynamicUpdate
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public final class Invoice {
+public class Invoice {
 
   private static final int CURRENCY_LENGTH = 3;
   private static final int AMOUNT_PRECISION = 18;

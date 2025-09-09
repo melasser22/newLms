@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public final class InvoiceAttachmentServiceImpl implements InvoiceAttachmentService {
+public class InvoiceAttachmentServiceImpl implements InvoiceAttachmentService {
 
     private final InvoiceAttachmentRepository repo;
 

@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.info.Info;
 @SpringBootApplication
 @EnableCaching
 @OpenAPIDefinition(info = @Info(title = "Ejada Billing Service", version = "1.0"))
-public final class BillingApplication {
+public class BillingApplication {
   private BillingApplication() { }
 
   public static void main(final String[] args) {

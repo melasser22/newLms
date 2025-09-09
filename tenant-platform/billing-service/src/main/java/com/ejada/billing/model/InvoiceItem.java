@@ -24,7 +24,7 @@ import java.math.BigDecimal;
        indexes = @Index(name = "idx_invoice_item_invoice", columnList = "invoice_id,line_no"))
 @DynamicUpdate
 @Getter @Setter @NoArgsConstructor
-public final class InvoiceItem {
+public class InvoiceItem {
 
   private static final int ITEM_CD_LENGTH = 64;
   private static final int ITEM_DESC_LENGTH = 256;

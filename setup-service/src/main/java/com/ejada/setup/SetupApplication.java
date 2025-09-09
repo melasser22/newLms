@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.info.Info;
 @SpringBootApplication
 @EnableCaching
 @OpenAPIDefinition(info = @Info(title = "Ejada Setup Service", version = "1.0"))
-public final class SetupApplication {
+public class SetupApplication {
   private SetupApplication() { }
 
   public static void main(final String[] args) {

@@ -15,7 +15,7 @@ import java.io.IOException;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/billing")
-public final class InvoiceAttachmentController {
+public class InvoiceAttachmentController {
 
     private final InvoiceAttachmentService svc;
 

@@ -23,7 +23,7 @@ import java.util.List;
 
 @Service
 @Transactional
-public final class CountryServiceImpl implements CountryService {
+public class CountryServiceImpl implements CountryService {
 
     private final CountryRepository countryRepository;
 

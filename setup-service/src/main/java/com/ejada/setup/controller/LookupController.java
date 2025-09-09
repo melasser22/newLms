@@ -32,7 +32,7 @@ import java.util.List;
 @RequestMapping("/setup/lookups")
 @Validated
 @Tag(name = "Lookup Management", description = "APIs for managing lookup values")
-public final class LookupController {
+public class LookupController {
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final LookupService lookupService;

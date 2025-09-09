@@ -1,6 +1,6 @@
 package com.ejada.setup.enums;
 
-public final class ECMEnums {
+public class ECMEnums {
 
     public enum DocumentAttributeValueType {
         NUMBER("NUMBER"),

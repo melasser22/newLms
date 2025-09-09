@@ -14,7 +14,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public final class ConsumptionQueryServiceImpl implements ConsumptionQueryService {
+public class ConsumptionQueryServiceImpl implements ConsumptionQueryService {
 
     private final UsageCounterRepository repo;
     private final UsageCounterMapper mapper;

@@ -27,7 +27,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(value = "/subscription", produces = MediaType.APPLICATION_JSON_VALUE)
-public final class ConsumptionController {
+public class ConsumptionController {
 
     private final ConsumptionService service;
 

@@ -35,7 +35,7 @@ import java.util.List;
 @RequestMapping("/setup/resources")
 @Validated
 @Tag(name = "Resource Management", description = "APIs for managing resources")
-public final class ResourceController {
+public class ResourceController {
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final ResourceService resourceService;

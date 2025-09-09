@@ -22,7 +22,7 @@ import java.util.UUID;
 @RequestMapping(value = "/subscription", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 @Validated
-public final class SubscriptionInboundController {
+public class SubscriptionInboundController {
 
     private final SubscriptionInboundService service;
 

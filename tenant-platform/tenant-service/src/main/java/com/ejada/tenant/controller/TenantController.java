@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Tenant Management", description = "APIs for managing tenants")
-public final class TenantController {
+public class TenantController {
 
     private final TenantService service;
 

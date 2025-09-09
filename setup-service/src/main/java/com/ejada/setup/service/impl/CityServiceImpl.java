@@ -31,7 +31,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public final class CityServiceImpl implements CityService {
+public class CityServiceImpl implements CityService {
         private final CityRepository cityRepo;
         private final CountryRepository countryRepo;
         private final CityMapper mapper;

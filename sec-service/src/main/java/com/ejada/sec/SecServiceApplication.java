@@ -12,7 +12,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
  */
 @SpringBootApplication
 @EnableJpaAuditing
-public final class SecServiceApplication {
+public class SecServiceApplication {
 
     private SecServiceApplication() {
     }

@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Tier Feature Management", description = "APIs for managing features attached to tiers")
-public final class TierFeatureController {
+public class TierFeatureController {
 
     private final TierFeatureService service;
 

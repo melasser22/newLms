@@ -37,7 +37,7 @@ import java.util.List;
 @RequestMapping("/setup/countries")
 @Validated
 @Tag(name = "Country Management", description = "APIs for managing countries")
-public final class CountryController {
+public class CountryController {
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final CountryService countryService;

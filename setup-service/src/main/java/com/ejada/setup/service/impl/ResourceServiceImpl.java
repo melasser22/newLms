@@ -26,7 +26,7 @@ import java.util.List;
 
 @Service
 @Transactional
-public final class ResourceServiceImpl implements ResourceService {
+public class ResourceServiceImpl implements ResourceService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceServiceImpl.class);
     private static final int LARGE_PAGE_SIZE = 1000;

@@ -18,7 +18,7 @@ import java.util.List;
 
 @Service
 @Transactional
-public final class LookupServiceImpl implements LookupService {
+public class LookupServiceImpl implements LookupService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LookupServiceImpl.class);
 

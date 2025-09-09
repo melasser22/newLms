@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public final class ConsumptionServiceImpl implements ConsumptionService {
+public class ConsumptionServiceImpl implements ConsumptionService {
 
     private final UsageCounterRepository counterRepo;
     private final UsageEventRepository eventRepo;

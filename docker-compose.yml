@@ -223,4 +223,23 @@ services:
       - "8084:8080"
     networks:
       backend:
+  security-service:
+    build: ./sec-service
+    <<: [*restart_policy]
+    depends_on:
+      postgres: { condition: service_healthy }
+      otel-collector: { condition: service_started }
+    environment:
+      TZ: Asia/Riyadh
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      OTEL_SERVICE_NAME: security-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+    ports:
+      - "8085:8080"
+    networks:
+      backend:    
 

@@ -25,7 +25,7 @@ import java.util.Base64;
 
 @Service
 @Transactional
-public final class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyService {
+public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyService {
 
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final int SECRET_BYTES_LENGTH = 32;

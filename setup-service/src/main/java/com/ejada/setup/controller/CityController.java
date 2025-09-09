@@ -34,7 +34,7 @@ import java.util.List;
 @RequestMapping("/setup/cities")
 @Validated
 @Tag(name = "City Management", description = "APIs for managing cities")
-public final class CityController {
+public class CityController {
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final CityService cityService;

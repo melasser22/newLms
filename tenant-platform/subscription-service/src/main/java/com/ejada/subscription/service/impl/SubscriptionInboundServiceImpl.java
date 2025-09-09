@@ -59,7 +59,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public final class SubscriptionInboundServiceImpl implements SubscriptionInboundService {
+public class SubscriptionInboundServiceImpl implements SubscriptionInboundService {
 
     // Repositories
     private final SubscriptionRepository subscriptionRepo;

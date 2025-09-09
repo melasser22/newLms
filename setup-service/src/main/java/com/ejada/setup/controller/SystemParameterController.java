@@ -35,7 +35,7 @@ import java.util.List;
 @RequestMapping("/setup/systemParameters")
 @Validated
 @Tag(name = "System Parameter Management", description = "APIs for managing system parameters")
-public final class SystemParameterController {
+public class SystemParameterController {
 
     private static final int DEFAULT_PAGE_SIZE = 20;
 

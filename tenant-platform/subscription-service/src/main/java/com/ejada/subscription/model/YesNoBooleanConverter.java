@@ -4,7 +4,7 @@ import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
 @Converter(autoApply = false)
-public final class YesNoBooleanConverter implements AttributeConverter<Boolean, String> {
+public class YesNoBooleanConverter implements AttributeConverter<Boolean, String> {
 
     @Override
     public String convertToDatabaseColumn(final Boolean value) {

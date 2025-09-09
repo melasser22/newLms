@@ -6,7 +6,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 import java.util.Locale;
 
-public final class CitySpecifications {
+public class CitySpecifications {
   private CitySpecifications() { }
 
   public static Specification<City> isActive() {

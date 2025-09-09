@@ -24,7 +24,7 @@ import java.time.OffsetDateTime;
        })
 @DynamicUpdate
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public final class OutboxEvent {
+public class OutboxEvent {
 
   private static final int AGGREGATE_TYPE_LENGTH = 64;
   private static final int AGGREGATE_ID_LENGTH = 128;

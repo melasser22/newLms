@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
-public final class TenantServiceImpl implements TenantService {
+public class TenantServiceImpl implements TenantService {
 
     private final TenantRepository repo;
     private final TenantMapper mapper;

@@ -26,7 +26,7 @@ import java.util.UUID;
        })
 @DynamicUpdate
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public final class UsageEvent {
+public class UsageEvent {
 
   private static final int TOKEN_HASH_LENGTH = 64;
   private static final int STATUS_CODE_LENGTH = 32;

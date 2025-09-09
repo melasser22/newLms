@@ -27,7 +27,7 @@ import java.time.OffsetDateTime;
                         columnList = "invoice_id,created_at DESC"))
 @DynamicUpdate
 @Getter @Setter @NoArgsConstructor
-public final class InvoiceAttachment {
+public class InvoiceAttachment {
 
   private static final int FILE_NM_LENGTH = 255;
   private static final int MIME_TYP_LENGTH = 128;

@@ -30,7 +30,7 @@ import java.time.OffsetDateTime;
        })
 @DynamicUpdate
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public final class UsageCounter {
+public class UsageCounter {
 
   private static final int TYPE_CD_LENGTH = 32;
   private static final int AMOUNT_PRECISION = 18;
