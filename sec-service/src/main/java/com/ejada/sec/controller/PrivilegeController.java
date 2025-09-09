@@ -4,6 +4,7 @@ import com.ejada.common.dto.BaseResponse;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.service.PrivilegeService;
 import com.ejada.starter_core.tenant.RequireTenant;
+import com.ejada.sec.security.SecAuthorized;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/privileges")
 @RequiredArgsConstructor
 @RequireTenant
+@SecAuthorized
 public class PrivilegeController {
 
   private final PrivilegeService privilegeService;

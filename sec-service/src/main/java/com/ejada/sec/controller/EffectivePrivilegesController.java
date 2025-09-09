@@ -5,6 +5,7 @@ import com.ejada.common.dto.BaseResponse;
 import com.ejada.sec.domain.EffectivePrivilegeProjection;
 import com.ejada.sec.repository.EffectivePrivilegeViewRepository;
 import com.ejada.starter_core.tenant.RequireTenant;
+import com.ejada.sec.security.SecAuthorized;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/effective-privileges")
 @RequiredArgsConstructor
 @RequireTenant
+@SecAuthorized
 public class EffectivePrivilegesController {
 
   private final EffectivePrivilegeViewRepository viewRepo;
