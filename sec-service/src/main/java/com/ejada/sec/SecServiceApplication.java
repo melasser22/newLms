@@ -12,6 +12,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class SecServiceApplication {
 
+    private SecServiceApplication() {
+    }
+
     public static void main(String[] args) {
         SpringApplication.run(SecServiceApplication.class, args);
     }

@@ -74,10 +74,29 @@ public class UserServiceImpl implements UserService {
         userMapper.toDto(userRepository.findAllByTenantId(tenantId), resolver));
   }
 
-  @Transactional @Override public BaseResponse<Void> enable(Long userId)  { return setEnabled(userId, true, "User enabled"); }
-  @Transactional @Override public BaseResponse<Void> disable(Long userId) { return setEnabled(userId, false, "User disabled"); }
-  @Transactional @Override public BaseResponse<Void> lock(Long userId)    { return setLocked(userId, true, "User locked"); }
-  @Transactional @Override public BaseResponse<Void> unlock(Long userId)  { return setLocked(userId, false, "User unlocked"); }
+  @Transactional
+  @Override
+  public BaseResponse<Void> enable(Long userId) {
+    return setEnabled(userId, true, "User enabled");
+  }
+
+  @Transactional
+  @Override
+  public BaseResponse<Void> disable(Long userId) {
+    return setEnabled(userId, false, "User disabled");
+  }
+
+  @Transactional
+  @Override
+  public BaseResponse<Void> lock(Long userId) {
+    return setLocked(userId, true, "User locked");
+  }
+
+  @Transactional
+  @Override
+  public BaseResponse<Void> unlock(Long userId) {
+    return setLocked(userId, false, "User unlocked");
+  }
 
   private BaseResponse<Void> setEnabled(Long userId, boolean flag, String message) {
     User user = userRepository.findById(userId)

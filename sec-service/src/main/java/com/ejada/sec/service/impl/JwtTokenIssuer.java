@@ -34,7 +34,7 @@ public class JwtTokenIssuer implements TokenIssuer {
   // --- dummy inner class for illustration; replace with your shared lib ---
   static class JwtStub {
     static String create(String iss, UUID tid, Long uid, String sub, long ttl) {
-      return "stub.jwt." + iss + "." + tid + "." + uid + "." + sub + "." + (Instant.now().getEpochSecond()+ttl);
+      return "stub.jwt." + iss + "." + tid + "." + uid + "." + sub + "." + (Instant.now().getEpochSecond() + ttl);
     }
   }
 }

@@ -10,7 +10,7 @@ import java.util.UUID;
 @Entity
 @Table(
   name = "privileges",
-  uniqueConstraints = @UniqueConstraint(name = "ux_privileges_tenant_code", columnNames = {"tenant_id","code"}),
+  uniqueConstraints = @UniqueConstraint(name = "ux_privileges_tenant_code", columnNames = {"tenant_id", "code"}),
   indexes = @Index(name = "ix_privileges_tenant_resource_action", columnList = "tenant_id,resource,action")
 )
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
