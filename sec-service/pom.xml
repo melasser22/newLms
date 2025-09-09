@@ -116,10 +116,7 @@
       <groupId>com.ejada</groupId>
       <artifactId>shared-lib-crypto</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.springdoc</groupId>
-      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-    </dependency>
+      <!-- covered by starter-openapi -->
     <dependency>
       <groupId>com.github.spotbugs</groupId>
       <artifactId>spotbugs-annotations</artifactId>
