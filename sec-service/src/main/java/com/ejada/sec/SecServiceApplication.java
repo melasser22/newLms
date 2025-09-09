@@ -10,7 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * parent repository and exposes authentication and user management APIs.
  */
 @SpringBootApplication
-public class SecServiceApplication {
+public final class SecServiceApplication {
 
     private SecServiceApplication() {
     }
