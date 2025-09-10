@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
+import com.ejada.common.constants.HeaderNames;
+import java.util.UUID;
 
 public class OutboxSink implements Sink {
   private static final Logger log = LoggerFactory.getLogger(OutboxSink.class);
@@ -22,7 +24,10 @@ public class OutboxSink implements Sink {
     this.jdbc = jdbc;
     this.tx = null;
     this.table = table;
-    this.insertSql = "INSERT INTO " + table + " (id, payload, status) VALUES (?, cast(? as jsonb), 'NEW')";
+    this.insertSql =
+        "INSERT INTO "
+            + table
+            + " (id, correlation_id, payload, status) VALUES (?, ?, cast(? as jsonb), 'NEW')";
   }
 
   // New constructor (REQUIRES_NEW)
@@ -34,7 +39,10 @@ public class OutboxSink implements Sink {
       this.tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
     this.table = table;
-    this.insertSql = "INSERT INTO " + table + " (id, payload, status) VALUES (?, cast(? as jsonb), 'NEW')";
+    this.insertSql =
+        "INSERT INTO "
+            + table
+            + " (id, correlation_id, payload, status) VALUES (?, ?, cast(? as jsonb), 'NEW')";
   }
 
   @Override
@@ -48,15 +56,24 @@ public class OutboxSink implements Sink {
         log.warn("Failed to serialize outbox event {} to JSON.", event.getEventId(), jsonEx);
         return;
       }
+      String correlationId = null;
+      Object corr = event.getMetadata().get(HeaderNames.CORRELATION_ID);
+      if (corr != null) {
+        correlationId = corr.toString();
+      }
+      UUID id = UUID.randomUUID();
       if (tx == null) {
         // legacy behavior (same TX as request)
-        jdbc.update(insertSql, event.getEventId(), payload);
+        jdbc.update(insertSql, id, correlationId, payload);
       } else {
         // isolated TX so it commits even if the request rolls back
-        tx.execute(status -> {
-          jdbc.update(insertSql, event.getEventId(), payload);
-          return null;
-        });
+        final String cid = correlationId;
+        final UUID rid = id;
+        tx.execute(
+            status -> {
+              jdbc.update(insertSql, rid, cid, payload);
+              return null;
+            });
       }
     } catch (Exception ex) {
       // Never break the request because of outbox persistence
