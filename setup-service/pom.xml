@@ -88,11 +88,11 @@
       <groupId>com.ejada</groupId>
       <artifactId>starter-actuator</artifactId>
     </dependency>
-       <!--
+       
  <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>starter-observability</artifactId>
-    </dependency> -->
+    </dependency> 
     <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>starter-openapi</artifactId>
