@@ -17,7 +17,7 @@ import com.ejada.redis.starter.config.KeyPrefixStrategy;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import com.ejada.common.context.ContextManager;
+import com.ejada.common.context.TenantContext;
 
 @Service
 @RequiredArgsConstructor
@@ -98,7 +98,8 @@ public class RoleServiceImpl implements RoleService {
 
   @Override
     public BaseResponse<List<RoleDto>> listByTenant() {
-      UUID tenantId = UUID.fromString(ContextManager.Tenant.get());
+      UUID tenantId =
+          TenantContext.get().orElseThrow(() -> new IllegalStateException("Tenant context is not set"));
       log.debug("Listing roles for tenant {}", tenantId);
       String key = roleListKey(tenantId);
       @SuppressWarnings("unchecked")
