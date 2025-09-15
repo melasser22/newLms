@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
  <parent>
-    <groupId>com.lms</groupId>
+    <groupId>com.ejada</groupId>
     <artifactId>shared-starter</artifactId>
     <version>1.0.0</version>
     <relativePath>../pom.xml</relativePath>
@@ -40,7 +40,7 @@
 
     <!-- Shared types (exceptions, headers, utils) -->
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>shared-common</artifactId>
     </dependency>
 
@@ -51,15 +51,10 @@
       <optional>true</optional>
     </dependency>
 
-    <!-- Optional web stacks if you ship filters or MVC advice -->
+    <!-- Optional web stack if you ship filters or MVC advice -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-webflux</artifactId>
       <optional>true</optional>
     </dependency>
 
@@ -122,7 +117,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>com.shared.starter.security</Automatic-Module-Name>
+              <Automatic-Module-Name>com.ejada.starter.security</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>

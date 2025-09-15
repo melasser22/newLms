@@ -1,3 +1,2 @@
-com.shared.headers.starter.config.SharedHeadersAutoConfiguration
-com.shared.headers.starter.config.SharedHeadersFeignAutoConfiguration
-com.shared.headers.starter.config.SharedHeadersWebClientAutoConfiguration
+com.ejada.headers.starter.config.SharedHeadersAutoConfiguration
+com.ejada.headers.starter.config.SharedHeadersFeignAutoConfiguration

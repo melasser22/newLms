@@ -6,19 +6,10 @@ A lightweight Spring Boot starter that wires Springdoc OpenAPI with:
 - Dynamic grouped APIs from `application.properties`
 
 ## Add UI in your app
-Choose one (do **not** add both):
 ```xml
 <dependency>
   <groupId>org.springdoc</groupId>
   <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-  <version>2.6.0</version>
-</dependency>
-```
-or
-```xml
-<dependency>
-  <groupId>org.springdoc</groupId>
-  <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
   <version>2.6.0</version>
 </dependency>
 ```

@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.lms</groupId>
+    <groupId>com.ejada</groupId>
     <artifactId>shared-lib</artifactId>
     <version>1.0.0</version>
   </parent>
@@ -16,23 +16,23 @@
   <description>Aggregator for all Shared Spring Boot starters</description>
 <dependencyManagement>
   <dependencies>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-core</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-security</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-data</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-kafka</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-redis</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-resilience</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-openapi</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-mapstruct</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-headers</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-actuator</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-health</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-validation</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-audit</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-crypto</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-money-time</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-ratelimit</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.lms</groupId><artifactId>starter-observability</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-core</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-security</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-data</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-kafka</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-redis</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-resilience</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-openapi</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-mapstruct</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-headers</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-actuator</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-health</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-validation</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-audit</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-crypto</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-money-time</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-ratelimit</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>com.ejada</groupId><artifactId>starter-observability</artifactId><version>${project.version}</version></dependency>
   </dependencies>
 </dependencyManagement>
   <modules>

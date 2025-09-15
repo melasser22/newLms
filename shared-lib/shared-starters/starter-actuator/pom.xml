@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.lms</groupId>
+    <groupId>com.ejada</groupId>
     <artifactId>shared-starter</artifactId>
     <version>1.0.0</version>
     <relativePath>../pom.xml</relativePath>
@@ -86,7 +86,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>com.shared.starter.actuator</Automatic-Module-Name>
+              <Automatic-Module-Name>com.ejada.starter.actuator</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>

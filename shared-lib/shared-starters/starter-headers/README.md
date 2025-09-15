@@ -13,7 +13,7 @@ Add the dependency and you get consistent IDs and security headers across all se
 ## Usage
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>starter-headers</artifactId>
 </dependency>
 ```

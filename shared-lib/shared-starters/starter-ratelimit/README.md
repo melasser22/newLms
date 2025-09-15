@@ -9,7 +9,7 @@ Bucket4j-based rate limiting filter.
 ## Usage
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>starter-ratelimit</artifactId>
 </dependency>
 ```

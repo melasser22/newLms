@@ -3,14 +3,14 @@
 Utilities for integration tests using Testcontainers.
 
 ## Features
-- `IntegrationTestSupport` base class to spin up Postgres and Redis containers.
+- `IntegrationTestSupport` base class to spin up Postgres 16 and Redis 7 via Testcontainers.
 - Helpers for generating JWTs in tests.
 
 ## Usage
 Add the dependency to test scope:
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>shared-test-support</artifactId>
   <scope>test</scope>
 </dependency>

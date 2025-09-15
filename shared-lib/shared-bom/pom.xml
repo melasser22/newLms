@@ -3,20 +3,21 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>shared-bom</artifactId>
   <version>1.0.0</version>
   <packaging>pom</packaging>
   <name>Shared BOM</name>
-  <description>Centralized dependency management for LMS modules</description>
+  <description>Centralized dependency management for Ejada modules</description>
 
   <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- Platforms -->
     <spring.boot.version>3.5.5</spring.boot.version>
     <spring.cloud.version>2024.0.2</spring.cloud.version> <!-- 2024.0.3 is not on Central -->
 
     <!-- Libraries not fully managed by Boot -->
-    <flyway.version>11.11.2</flyway.version>
+    <flyway.version>11.8.2</flyway.version>
 
     <!-- Observability / Testing -->
     <otel.version>1.45.0</otel.version>
@@ -35,10 +36,10 @@
     <jjwt.version>0.13.0</jjwt.version> <!-- per jjwt install guide -->
     <resilience4j.version>2.2.0</resilience4j.version>
     <bucket4j.version>8.14.0</bucket4j.version>
-    <springdoc.version>2.6.0</springdoc.version>
+    <springdoc.version>2.7.0</springdoc.version>
    <money.api.version>1.1</money.api.version>
    <moneta.version>1.4.5</moneta.version>
-   <mapstruct.version>1.5.5.Final</mapstruct.version>
+   <mapstruct.version>1.6.3</mapstruct.version>
   <lombok.version>1.18.32</lombok.version>
   <lombokMapstruct.version>0.2.0</lombokMapstruct.version>
   <logstashLogback.version>8.0</logstashLogback.version>
@@ -132,6 +133,13 @@
      <version>${mockito.version}</version>
      <scope>test</scope>
      </dependency>
+     	
+     <dependency>
+    <groupId>com.redis</groupId>
+    <artifactId>testcontainers-redis</artifactId>
+    <version>2.2.4</version>
+    <scope>test</scope>
+  </dependency>
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
@@ -191,11 +199,6 @@
       <artifactId>springdoc-openapi-starter-common</artifactId>
       <version>${springdoc.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.springdoc</groupId>
-      <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
-      <version>${springdoc.version}</version>
-    </dependency>
      <dependency><groupId>javax.money</groupId><artifactId>money-api</artifactId><version>${money.api.version}</version></dependency>
     <dependency><groupId>org.javamoney.moneta</groupId><artifactId>moneta-core</artifactId><version>${moneta.version}</version></dependency>
  <dependency>
@@ -219,12 +222,11 @@
         <artifactId>cache-api</artifactId>
         <version>${cache.api.version}</version>
       </dependency>
-<dependency>
-    <groupId>org.apache.kafka</groupId>
-    <artifactId>kafka-clients</artifactId>
-    <version>${kafka.clients.version}</version>
-</dependency>
-
+    <dependency>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-clients</artifactId>
+        <version>${kafka.clients.version}</version>
+    </dependency>
     </dependencies>
   </dependencyManagement>
 </project>

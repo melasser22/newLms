@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
  <parent>
-    <groupId>com.lms</groupId>
+    <groupId>com.ejada</groupId>
     <artifactId>shared-starter</artifactId>
     <version>1.0.0</version>
     <relativePath>../pom.xml</relativePath>
@@ -23,21 +23,16 @@
       <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>
 
-    <!-- Springdoc common (doesn't force MVC vs WebFlux) -->
+    <!-- Springdoc common (doesn't force MVC) -->
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-common</artifactId>
     </dependency>
 
-    <!-- UI stacks (opt-in; app chooses MVC or WebFlux) -->
+    <!-- UI stack (opt-in for MVC) -->
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.springdoc</groupId>
-      <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
       <optional>true</optional>
     </dependency>
 
@@ -80,7 +75,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>com.shared.starter.openapi</Automatic-Module-Name>
+              <Automatic-Module-Name>com.ejada.starter.openapi</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>

@@ -1,2 +1,2 @@
-com.shared.starter_security.JwtDecoderAutoConfiguration
-com.shared.starter_security.SecurityAutoConfiguration
+com.ejada.starter_security.JwtDecoderAutoConfiguration
+com.ejada.starter_security.SecurityAutoConfiguration

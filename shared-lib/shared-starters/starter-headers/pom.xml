@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.lms</groupId>
+    <groupId>com.ejada</groupId>
     <artifactId>shared-starter</artifactId>
     <version>1.0.0</version>
     <relativePath>../pom.xml</relativePath>
@@ -14,7 +14,7 @@
   <artifactId>starter-headers</artifactId>
   <packaging>jar</packaging>
   <name>Shared Starter - Headers</name>
-  <description>Correlation/request/tenant propagation, security response headers, outbound propagation (MVC/WebFlux/Feign)</description>
+  <description>Correlation/request/tenant propagation, security response headers, outbound propagation (MVC/Feign)</description>
 
   <dependencies>
     <!-- Autoconfiguration infra -->
@@ -30,12 +30,6 @@
       <optional>true</optional>
     </dependency>
 
-    <!-- Reactive (opt-in) -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-webflux</artifactId>
-      <optional>true</optional>
-    </dependency>
 
     <!-- Feign for outbound header propagation (opt-in; version managed in shared-bom) -->
     <dependency>
@@ -62,7 +56,7 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-    	<groupId>com.lms</groupId>
+    	<groupId>com.ejada</groupId>
     	<artifactId>shared-common</artifactId>
     </dependency>
   </dependencies>
@@ -86,7 +80,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>com.shared.starter.headers</Automatic-Module-Name>
+              <Automatic-Module-Name>com.ejada.starter.headers</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>

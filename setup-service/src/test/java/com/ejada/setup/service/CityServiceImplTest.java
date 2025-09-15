@@ -1,0 +1,52 @@
+package com.ejada.setup.service;
+
+import com.ejada.common.dto.BaseResponse;
+import com.ejada.setup.dto.CityDto;
+import com.ejada.setup.mapper.CityMapper;
+import com.ejada.setup.model.City;
+import com.ejada.setup.repository.CityRepository;
+import com.ejada.setup.repository.CountryRepository;
+import com.ejada.setup.service.impl.CityServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+
+import java.util.Collections;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+class CityServiceImplTest {
+
+    @Mock private CityRepository cityRepository;
+    @Mock private CountryRepository countryRepository;
+    @Mock private CityMapper mapper;
+
+    @InjectMocks
+    private CityServiceImpl service;
+
+    @BeforeEach
+    void init() {
+        MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    void list_ok() {
+        var cityPage = new org.springframework.data.domain.PageImpl<>(Collections.singletonList(new City()));
+        when(cityRepository.findAll(
+                ArgumentMatchers.<Specification<City>>any(),
+                any(Pageable.class)))
+                .thenReturn(cityPage);
+        when(mapper.toDtoPage(cityPage)).thenReturn(org.springframework.data.domain.Page.<CityDto>empty());
+
+        BaseResponse<Page<CityDto>> resp = service.list(Pageable.unpaged(), null, false);
+        assertNotNull(resp);
+    }
+}

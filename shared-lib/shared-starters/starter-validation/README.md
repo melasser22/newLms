@@ -11,7 +11,7 @@ Extends Bean Validation with common custom constraints.
 Add the dependency:
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>starter-validation</artifactId>
 </dependency>
 ```

@@ -1,6 +1,6 @@
 # shared-starters
 
-Collection of Spring Boot starters that provide common infrastructure for LMS services.
+Collection of Spring Boot starters that provide common infrastructure for Ejada services.
 
 ## Available starters
 - **starter-actuator** – opinionated actuator endpoints.
@@ -26,7 +26,7 @@ Add the desired starter as a dependency. For example:
 
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>starter-core</artifactId>
 </dependency>
 ```

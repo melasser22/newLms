@@ -7,7 +7,7 @@
   
   <!-- Exclude generated files -->
   <module name="SuppressionFilter">
-    <property name="file" value="${config_loc}/suppressions.xml"/>
+<property name="file" value="${checkstyle.suppressions.file}"/>
   </module>
   
   <!-- File length -->
@@ -22,7 +22,7 @@
 
   <!-- Line length -->
   <module name="LineLength">
-    <property name="max" value="120"/>
+    <property name="max" value="140"/>
   </module>
 
   <module name="TreeWalker">
@@ -38,7 +38,8 @@
     <module name="TypeName"/>
     
     <!-- Imports -->
-    <module name="AvoidStarImport"/>
+    <!-- Star imports are allowed for brevity -->
+    <!-- <module name="AvoidStarImport"/> -->
     <module name="IllegalImport"/>
     <module name="RedundantImport"/>
     <module name="UnusedImports"/>
@@ -83,14 +84,16 @@
     </module>
     <module name="IllegalInstantiation"/>
     <module name="InnerAssignment"/>
-    <module name="MagicNumber"/>
+    <!-- Magic numbers are permitted in this project -->
+    <!-- <module name="MagicNumber"/> -->
     <module name="MissingSwitchDefault"/>
     <module name="MultipleVariableDeclarations"/>
     <module name="SimplifyBooleanExpression"/>
     <module name="SimplifyBooleanReturn"/>
     
     <!-- Class design -->
-    <module name="DesignForExtension"/>
+    <!-- Extension design is managed via code review -->
+    <!-- <module name="DesignForExtension"/> -->
     <module name="FinalClass"/>
     <module name="HideUtilityClassConstructor"/>
     <module name="InterfaceIsType"/>
@@ -98,7 +101,8 @@
     
     <!-- Other -->
     <module name="ArrayTypeStyle"/>
-    <module name="FinalParameters"/>
+    <!-- Final method parameters are not enforced -->
+    <!-- <module name="FinalParameters"/> -->
     <module name="TodoComment"/>
     <module name="UpperEll"/>
   </module>

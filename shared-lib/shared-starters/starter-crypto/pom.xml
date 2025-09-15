@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.lms</groupId>
+    <groupId>com.ejada</groupId>
     <artifactId>shared-starter</artifactId>
     <version>1.0.0</version>
     <relativePath>../pom.xml</relativePath>
@@ -42,9 +42,8 @@
 
     <!-- Crypto library (built in shared-lib reactor) -->
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>shared-lib-crypto</artifactId>
-      <version>${project.version}</version>
     </dependency>
 
     <!-- Observability (opt-in) -->
@@ -112,7 +111,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>com.shared.crypto.starter</Automatic-Module-Name>
+              <Automatic-Module-Name>com.ejada.crypto.starter</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>

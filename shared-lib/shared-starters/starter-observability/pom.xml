@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.lms</groupId>
+    <groupId>com.ejada</groupId>
     <artifactId>shared-starter</artifactId>
     <version>1.0.0</version>
     <relativePath>../pom.xml</relativePath>
@@ -30,7 +30,6 @@
     <dependency>
       <groupId>io.opentelemetry.instrumentation</groupId>
       <artifactId>opentelemetry-logback-mdc-1.0</artifactId>
-      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>net.logstash.logback</groupId>
@@ -74,10 +73,9 @@
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>com.lms</groupId>
+    <dependency> 
+      <groupId>com.ejada</groupId>
       <artifactId>shared-test-support</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -103,7 +101,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>com.shared.starter.observability</Automatic-Module-Name>
+              <Automatic-Module-Name>com.ejada.starter.observability</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>

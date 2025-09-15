@@ -5,7 +5,7 @@ Production-ready, pluggable audit logging starter for Spring Boot (Java https://
 ## Quick start
 ```xml
 <dependency>
-  <groupId>com.lms</groupId>
+  <groupId>com.ejada</groupId>
   <artifactId>starter-audit</artifactId>
   <version>1.0.0</version>
 </dependency>
@@ -19,7 +19,7 @@ shared:
       kafka:
         enabled: true
         topic: audit.events.v1
-        bootstrapServers: localhost:9092
+        bootstrapServers: kafka:9092
       db:
         enabled: true
 ```

@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.lms</groupId>
+    <groupId>com.ejada</groupId>
     <artifactId>shared-starter</artifactId>        
     <version>1.0.0</version>
     <relativePath>../pom.xml</relativePath>        
@@ -25,11 +25,11 @@
 
     <!-- Shared foundation via core starter (version managed in parent) -->
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.lms</groupId>
+      <groupId>com.ejada</groupId>
       <artifactId>shared-common</artifactId>
     </dependency>
 
@@ -113,7 +113,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>com.shared.starter.data</Automatic-Module-Name>
+              <Automatic-Module-Name>com.ejada.starter.data</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>
