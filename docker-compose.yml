@@ -155,12 +155,8 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
-      # If this service uses Redis via shared-lib, uncomment:
-      # SHARED_REDIS_HOST: redis
-      # SHARED_REDIS_PORT: 6379
-      # SHARED_REDIS_TIMEOUT: 5s
-      # SPRING_DATA_REDIS_HOST: redis
-      # SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8080:8080"
     networks:
@@ -181,12 +177,8 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
-      # Optional Redis bindings (see note above)
-      # SHARED_REDIS_HOST: redis
-      # SHARED_REDIS_PORT: 6379
-      # SHARED_REDIS_TIMEOUT: 5s
-      # SPRING_DATA_REDIS_HOST: redis
-      # SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8081:8080"
     networks:
@@ -207,12 +199,8 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
-      # Optional Redis bindings
-      # SHARED_REDIS_HOST: redis
-      # SHARED_REDIS_PORT: 6379
-      # SHARED_REDIS_TIMEOUT: 5s
-      # SPRING_DATA_REDIS_HOST: redis
-      # SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8082:8080"
     networks:
@@ -233,12 +221,8 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
-      # Optional Redis bindings
-      # SHARED_REDIS_HOST: redis
-      # SHARED_REDIS_PORT: 6379
-      # SHARED_REDIS_TIMEOUT: 5s
-      # SPRING_DATA_REDIS_HOST: redis
-      # SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8083:8080"
     networks:
@@ -259,12 +243,8 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
-      # Optional Redis bindings
-      # SHARED_REDIS_HOST: redis
-      # SHARED_REDIS_PORT: 6379
-      # SHARED_REDIS_TIMEOUT: 5s
-      # SPRING_DATA_REDIS_HOST: redis
-      # SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8084:8080"
     networks:
@@ -300,7 +280,13 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8085:8080"
     networks:
       backend:
+<<<<<<< HEAD
+=======
+
+>>>>>>> d39f471a6b2a97e89b1d0ff293c81464eb790b5f
