@@ -1,6 +1,7 @@
 package com.ejada.sec.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.exception.ValidationException;
 import com.ejada.sec.domain.Role;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.mapper.ReferenceResolver;
@@ -98,8 +99,14 @@ public class RoleServiceImpl implements RoleService {
 
   @Override
     public BaseResponse<List<RoleDto>> listByTenant() {
-      UUID tenantId = UUID.fromString(ContextManager.Tenant.get());
-      log.debug("Listing roles for tenant {}", tenantId);
+	  String tenantIdStr = ContextManager.Tenant.get();
+	    UUID tenantId;
+	    try {
+	      tenantId = UUID.fromString(tenantIdStr);
+	    } catch (RuntimeException ex) {
+	      throw new ValidationException("Invalid tenant ID format", ex.getMessage());
+	    }
+	          log.debug("Listing roles for tenant {}", tenantId);
       String key = roleListKey(tenantId);
       @SuppressWarnings("unchecked")
       List<RoleDto> cached = (List<RoleDto>) redisTemplate.opsForValue().get(key);

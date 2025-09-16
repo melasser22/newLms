@@ -178,7 +178,7 @@ shared:
         - com.ejada.security
     jwt-security: false
   redis:
-    host: localhost
+    host: redis
     port: 6379
     timeout: 2s
     key-prefix: security
@@ -209,15 +209,15 @@ shared:
 
 logging:
   level:
-    root: WARN
-    com.ejada: WARN
-    com.ejada.audit.starter: WARN
-    com.ejada.audit.starter.core.dispatch: WARN
-    com.ejada.audit.starter.core.dispatch.sinks: WARN
-    org.hibernate.tool.schema: WARN
-    org.hibernate.SQL: WARN
-    org.hibernate.orm.jdbc.bind: WARN
-    org.springframework.cache: WARN
-    org.springframework.cache.interceptor.CacheAspectSupport: WARN
+    root: ERROR
+    com.ejada: ERROR
+    com.ejada.audit.starter: ERROR
+    com.ejada.audit.starter.core.dispatch: ERROR
+    com.ejada.audit.starter.core.dispatch.sinks: ERROR
+    org.hibernate.tool.schema: ERROR
+    org.hibernate.SQL: ERROR
+    org.hibernate.orm.jdbc.bind: ERROR
+    org.springframework.cache: ERROR
+    org.springframework.cache.interceptor.CacheAspectSupport: ERROR
 
 debug: true

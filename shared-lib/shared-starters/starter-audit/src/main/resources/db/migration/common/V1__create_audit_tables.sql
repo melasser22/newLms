@@ -28,3 +28,6 @@ CREATE TABLE  IF NOT EXISTS audit_outbox (
     payload JSONB       NOT NULL,
     status  VARCHAR(20) NOT NULL
 );
+
+ALTER TABLE audit_outbox ADD COLUMN IF NOT EXISTS correlation_id text;
+

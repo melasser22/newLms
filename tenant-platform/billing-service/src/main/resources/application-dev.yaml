@@ -175,7 +175,7 @@ shared:
         - com.ejada.billing
     jwt-security: false
   redis:
-    host: localhost
+    host: redis
     port: 6379
     timeout: 2s
     key-prefix: billing

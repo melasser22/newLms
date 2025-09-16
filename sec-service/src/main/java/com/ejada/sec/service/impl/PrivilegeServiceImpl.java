@@ -1,6 +1,7 @@
 package com.ejada.sec.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.exception.ValidationException;
 import com.ejada.sec.domain.Privilege;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.mapper.PrivilegeMapper;
@@ -86,8 +87,14 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
   @Override
   public BaseResponse<List<PrivilegeDto>> listByTenant() {
-    UUID tenantId = UUID.fromString(ContextManager.Tenant.get());
-    String key = privListKey(tenantId);
+	  String tenantIdStr = ContextManager.Tenant.get();
+	    UUID tenantId;
+	    try {
+	      tenantId = UUID.fromString(tenantIdStr);
+	    } catch (RuntimeException ex) {
+	      throw new ValidationException("Invalid tenant ID format", ex.getMessage());
+	    }
+	    String key = privListKey(tenantId);
     @SuppressWarnings("unchecked")
     List<PrivilegeDto> cached = (List<PrivilegeDto>) redisTemplate.opsForValue().get(key);
     if (cached != null) {

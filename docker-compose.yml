@@ -1,5 +1,8 @@
-version: '3.8'
+version: "3.8"
 
+# ----------------------------- #
+#          Reusable bits        #
+# ----------------------------- #
 x-health-defaults: &health_defaults
   interval: 10s
   timeout: 5s
@@ -27,7 +30,11 @@ volumes:
   zklog:
   kafkadata:
 
+# ----------------------------- #
+#            Services           #
+# ----------------------------- #
 services:
+
   postgres:
     image: postgres:16
     <<: [*restart_policy, *resources_light]
@@ -36,7 +43,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       TZ: Asia/Riyadh
-    ports: ["5432:5432"]
+    ports:
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -50,7 +58,8 @@ services:
     image: redis:7
     <<: [*restart_policy, *resources_light]
     command: ["redis-server", "--appendonly", "yes"]
-    ports: ["6379:6379"]
+    ports:
+      - "6379:6379"
     healthcheck:
       <<: *health_defaults
       test: ["CMD-SHELL", "redis-cli -h localhost ping | grep -q PONG"]
@@ -65,7 +74,8 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 3000
       ZOOKEEPER_SYNC_LIMIT: 2
-    ports: ["2181:2181"]
+    ports:
+      - "2181:2181"
     volumes:
       - zkdata:/var/lib/zookeeper/data
       - zklog:/var/lib/zookeeper/log
@@ -98,7 +108,9 @@ services:
       KAFKA_MESSAGE_MAX_BYTES: 20971520
       KAFKA_REPLICA_FETCH_MAX_BYTES: 20971520
       KAFKA_HEAP_OPTS: "-Xms512m -Xmx1024m"
-    ports: ["9092:9092", "29092:29092"]
+    ports:
+      - "9092:9092"
+      - "29092:29092"
     volumes:
       - kafkadata:/var/lib/kafka/data
     healthcheck:
@@ -115,14 +127,18 @@ services:
       - "./shared-lib/shared-starters/starter-observability/src/main/resources:/etc/otelcol:ro"
     command: ["--config=/etc/otelcol/otel-collector-config.yaml"]
     ports:
-      - "4317:4317"
-      - "4318:4318"
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
     healthcheck:
       <<: *health_defaults
       test: ["CMD", "/otelcol", "--version"]
     networks:
       backend:
         aliases: [otel-collector]
+
+  # ----------------------------- #
+  #       Application stack       #
+  # ----------------------------- #
 
   tenant-service:
     build: ./tenant-platform/tenant-service
@@ -139,6 +155,12 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
+      # If this service uses Redis via shared-lib, uncomment:
+      # SHARED_REDIS_HOST: redis
+      # SHARED_REDIS_PORT: 6379
+      # SHARED_REDIS_TIMEOUT: 5s
+      # SPRING_DATA_REDIS_HOST: redis
+      # SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8080:8080"
     networks:
@@ -159,6 +181,12 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
+      # Optional Redis bindings (see note above)
+      # SHARED_REDIS_HOST: redis
+      # SHARED_REDIS_PORT: 6379
+      # SHARED_REDIS_TIMEOUT: 5s
+      # SPRING_DATA_REDIS_HOST: redis
+      # SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8081:8080"
     networks:
@@ -179,6 +207,12 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
+      # Optional Redis bindings
+      # SHARED_REDIS_HOST: redis
+      # SHARED_REDIS_PORT: 6379
+      # SHARED_REDIS_TIMEOUT: 5s
+      # SPRING_DATA_REDIS_HOST: redis
+      # SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8082:8080"
     networks:
@@ -199,6 +233,12 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
+      # Optional Redis bindings
+      # SHARED_REDIS_HOST: redis
+      # SHARED_REDIS_PORT: 6379
+      # SHARED_REDIS_TIMEOUT: 5s
+      # SPRING_DATA_REDIS_HOST: redis
+      # SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8083:8080"
     networks:
@@ -219,21 +259,43 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
+      # Optional Redis bindings
+      # SHARED_REDIS_HOST: redis
+      # SHARED_REDIS_PORT: 6379
+      # SHARED_REDIS_TIMEOUT: 5s
+      # SPRING_DATA_REDIS_HOST: redis
+      # SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8084:8080"
     networks:
       backend:
+
   security-service:
     build: ./sec-service
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
+      redis:    { condition: service_healthy }  # ensure Redis is ready
       otel-collector: { condition: service_started }
     environment:
       TZ: Asia/Riyadh
+
+      # --- Database ---
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+
+      # --- Redis via shared-lib (fixes localhost issue in containers) ---
+      SHARED_REDIS_HOST: redis
+      SHARED_REDIS_PORT: 6379
+      SHARED_REDIS_TIMEOUT: 5s
+      SHARED_REDIS_KEY_PREFIX: security
+      SHARED_REDIS_DEFAULT_TTL: 600s
+      # Some Spring parts may read spring.data.redis.* directly:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+      # --- Observability ---
       OTEL_SERVICE_NAME: security-service
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_TRACES_EXPORTER: otlp
@@ -241,5 +303,4 @@ services:
     ports:
       - "8085:8080"
     networks:
-      backend:    
-
+      backend:
