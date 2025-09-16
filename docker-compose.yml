@@ -286,7 +286,3 @@ services:
       - "8085:8080"
     networks:
       backend:
-<<<<<<< HEAD
-=======
-
->>>>>>> d39f471a6b2a97e89b1d0ff293c81464eb790b5f
