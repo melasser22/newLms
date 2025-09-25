@@ -63,4 +63,17 @@ public class SuperadminController {
     public ResponseEntity<BaseResponse<Page<SuperadminDto>>> listSuperadmins(Pageable pageable) {
         return ResponseEntity.ok(superadminService.listSuperadmins(pageable));
     }
+    
+
+    @PostMapping("admin/first-login")
+    @PreAuthorize("hasRole('EJADA_OFFICER')")
+    public ResponseEntity<BaseResponse<Void>> completeFirstLogin(@Valid @RequestBody FirstLoginRequest request) {
+      return ResponseEntity.ok(superadminService.completeFirstLogin(request));
+    }
+
+    @PostMapping("admin/change-password")
+    @PreAuthorize("hasRole('EJADA_OFFICER')")
+    public ResponseEntity<BaseResponse<Void>> changeSuperadminPassword(@Valid @RequestBody ChangePasswordRequest request) {
+      return ResponseEntity.ok(superadminService.changePassword(request));
+    }
 }

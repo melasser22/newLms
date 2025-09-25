@@ -203,12 +203,12 @@ shared:
     resource-server:
       enabled: true
       permit-all:
-        - "/**"
-      disable-csrf: true
+        - "/sec/api/auth/**"
+      disable-csrf: false
     stateless: true
     roles-claim: roles
     tenant-claim: tenant
-    enable-role-check: false
+    enable-role-check: true
 
 logging:
   level:

@@ -87,7 +87,7 @@ shared:
       default-policy: OPTIONAL
       echo-response-header: true
       skip-patterns:
-        - "/sec/api/auth/*"
+        - "/sec/api/auth/**"
         - "/sec/api/superadmin/**"
     cors:
       enabled: true
