@@ -35,6 +35,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -175,7 +177,19 @@ public class SecurityAutoConfiguration {
     if (rs.isDisableCsrf()) {
       http.csrf(AbstractHttpConfigurer::disable);
     } else {
-      http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
+      http.csrf(csrf -> {
+        csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+        String[] ignorePatterns = Optional.ofNullable(rs.getCsrfIgnore()).orElseGet(() -> new String[0]);
+        List<RequestMatcher> ignoreMatchers = Arrays.stream(ignorePatterns)
+            .filter(StringUtils::hasText)
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .map(AntPathRequestMatcher::new)
+            .toList();
+        if (!ignoreMatchers.isEmpty()) {
+          csrf.ignoringRequestMatchers(ignoreMatchers.toArray(new RequestMatcher[0]));
+        }
+      });
       http.addFilterAfter(new CsrfHeaderFilter(), CsrfFilter.class);
     }
     if (rs.isStateless()) {
