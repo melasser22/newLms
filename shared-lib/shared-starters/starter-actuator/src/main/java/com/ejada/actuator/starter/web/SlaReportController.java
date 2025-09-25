@@ -42,8 +42,8 @@ public class SlaReportController {
   public Map<String, Object> report() {
     HealthComponent component = resolveIndicator();
     Map<String, Object> body = new LinkedHashMap<>();
-    Status status = component != null ? component.getStatus() : Status.UNKNOWN;
-    body.put("status", status != null ? status.getCode() : Status.UNKNOWN.getCode());
+    Status status = sanitizeStatus(component);
+    body.put("status", status.getCode());
 
     Map<String, Object> components = new LinkedHashMap<>();
     components.put(INDICATOR_NAME, component != null ? toMap(component) : fallbackComponent());
@@ -86,8 +86,7 @@ public class SlaReportController {
 
   private Map<String, Object> toMap(HealthComponent component) {
     Map<String, Object> result = new LinkedHashMap<>();
-    Status status = component.getStatus();
-    result.put("status", status != null ? status.getCode() : Status.UNKNOWN.getCode());
+    result.put("status", sanitizeStatus(component).getCode());
 
     if (component instanceof Health health) {
       if (!health.getDetails().isEmpty()) {
@@ -110,6 +109,36 @@ public class SlaReportController {
     Map<String, Object> fallback = new LinkedHashMap<>();
     fallback.put("status", Status.UNKNOWN.getCode());
     return fallback;
+  }
 
+  private Status sanitizeStatus(HealthComponent component) {
+    if (component == null) {
+      return Status.UNKNOWN;
+    }
+
+    Status original = component.getStatus();
+    if (hasSlaNonCompliance(component)
+        && (Status.DOWN.equals(original) || Status.OUT_OF_SERVICE.equals(original) || original == null)) {
+      return Status.UP;
+    }
+
+    return original != null ? original : Status.UNKNOWN;
+  }
+
+  private boolean hasSlaNonCompliance(HealthComponent component) {
+    if (component instanceof Health health) {
+      Object value = health.getDetails().get("sla_compliant");
+      return value instanceof Boolean compliant && !compliant;
+    }
+
+    if (component instanceof CompositeHealth composite) {
+      for (HealthComponent child : composite.getComponents().values()) {
+        if (hasSlaNonCompliance(child)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }
