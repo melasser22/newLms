@@ -79,4 +79,34 @@ public class SharedActuatorProperties {
     public void setAvailabilityPercent(double availabilityPercent) { this.availabilityPercent = availabilityPercent; }
 
   }
+
+  public static class SlaMetrics {
+    private String meterName = "http.server.requests";
+    private double sloTarget = 99.9D;
+    private double slaTarget = 99.0D;
+
+    public String getMeterName() {
+      return meterName;
+    }
+
+    public void setMeterName(String meterName) {
+      this.meterName = meterName;
+    }
+
+    public double getSloTarget() {
+      return sloTarget;
+    }
+
+    public void setSloTarget(double sloTarget) {
+      this.sloTarget = sloTarget;
+    }
+
+    public double getSlaTarget() {
+      return slaTarget;
+    }
+
+    public void setSlaTarget(double slaTarget) {
+      this.slaTarget = slaTarget;
+    }
+  }
 }
