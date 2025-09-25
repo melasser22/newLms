@@ -152,7 +152,7 @@ public class SlaMetricsCalculator {
     }
 
     public boolean isSlaMet() {
-      return sli >= slaTarget;
+      return sli >= Math.min(slaTarget, sloTarget);
     }
   }
 }
