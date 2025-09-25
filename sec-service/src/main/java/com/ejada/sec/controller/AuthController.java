@@ -2,6 +2,8 @@ package com.ejada.sec.controller;
 
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.sec.dto.*;
+import com.ejada.sec.dto.admin.ChangePasswordRequest;
+import com.ejada.sec.dto.admin.FirstLoginRequest;
 import com.ejada.sec.dto.admin.SuperadminAuthResponse;
 import com.ejada.sec.dto.admin.SuperadminLoginRequest;
 import com.ejada.sec.service.AuthService;
@@ -11,6 +13,7 @@ import com.ejada.sec.service.SuperadminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -57,5 +60,17 @@ public class AuthController {
   @PostMapping("admin/login")
   public ResponseEntity<BaseResponse<SuperadminAuthResponse>> Adminlogin(@Valid @RequestBody SuperadminLoginRequest request) {
     return ResponseEntity.ok(superadminService.login(request));
+  }
+
+  @PostMapping("admin/first-login")
+  @PreAuthorize("hasRole('EJADA_OFFICER')")
+  public ResponseEntity<BaseResponse<Void>> completeFirstLogin(@Valid @RequestBody FirstLoginRequest request) {
+    return ResponseEntity.ok(superadminService.completeFirstLogin(request));
+  }
+
+  @PostMapping("admin/change-password")
+  @PreAuthorize("hasRole('EJADA_OFFICER')")
+  public ResponseEntity<BaseResponse<Void>> changeSuperadminPassword(@Valid @RequestBody ChangePasswordRequest request) {
+    return ResponseEntity.ok(superadminService.changePassword(request));
   }
 }

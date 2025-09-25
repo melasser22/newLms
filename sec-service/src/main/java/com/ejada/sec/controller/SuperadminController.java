@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/superadmin/admins")
 @RequiredArgsConstructor
 @Tag(name = "Superadmin Management", description = "APIs for managing superadmin accounts")
-@PreAuthorize("hasRole('ROLE_EJADA_OFFICER')")
+@PreAuthorize("hasRole('EJADA_OFFICER')")
 public class SuperadminController {
     
     private final SuperadminService superadminService;

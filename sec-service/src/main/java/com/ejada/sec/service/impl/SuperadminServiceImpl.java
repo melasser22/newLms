@@ -1,14 +1,28 @@
 package com.ejada.sec.service.impl;
+
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.crypto.JwtTokenService;
 import com.ejada.sec.domain.Superadmin;
+import com.ejada.sec.domain.SuperadminPasswordHistory;
 import com.ejada.sec.dto.admin.*;
 import com.ejada.sec.mapper.SuperadminMapper;
+import com.ejada.sec.repository.SuperadminPasswordHistoryRepository;
 import com.ejada.sec.repository.SuperadminRepository;
 import com.ejada.sec.service.SuperadminService;
-import com.ejada.crypto.JwtTokenService;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,12 +30,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +41,8 @@ public class SuperadminServiceImpl implements SuperadminService {
     private final SuperadminMapper superadminMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenService jwtTokenService;
+    private final SuperadminPasswordHistoryRepository passwordHistoryRepository;
+    private final SuperadminAuditService superadminAuditService;
     
     @Value("${shared.security.superadmin.password-expiry-days:90}")
     private int passwordExpiryDays;
@@ -90,9 +100,14 @@ public class SuperadminServiceImpl implements SuperadminService {
         
         // Save to database
         superadmin = superadminRepository.save(superadmin);
-        
+
+        recordPasswordHistory(superadmin);
+
         // Log the action for audit
-        logSuperadminAction("CREATE_SUPERADMIN", 
+        logSuperadminAction(
+            "CREATE_SUPERADMIN",
+            getCurrentSuperadminIdOrNull(),
+            getCurrentSuperadminUsername(),
             String.format("Created new superadmin: %s (%s)", request.getUsername(), request.getEmail()));
         
         // Send welcome email (optional)
@@ -135,7 +150,10 @@ public class SuperadminServiceImpl implements SuperadminService {
         superadmin = superadminRepository.save(superadmin);
         
         // Log the action
-        logSuperadminAction("UPDATE_SUPERADMIN", 
+        logSuperadminAction(
+            "UPDATE_SUPERADMIN",
+            getCurrentSuperadminIdOrNull(),
+            getCurrentSuperadminUsername(),
             String.format("Updated superadmin ID: %d", id));
         
         log.info("Superadmin updated successfully");
@@ -179,7 +197,10 @@ public class SuperadminServiceImpl implements SuperadminService {
         superadminRepository.save(superadmin);
         
         // Log the action
-        logSuperadminAction("DELETE_SUPERADMIN", 
+        logSuperadminAction(
+            "DELETE_SUPERADMIN",
+            getCurrentSuperadminIdOrNull(),
+            getCurrentSuperadminUsername(),
             String.format("Deleted (disabled) superadmin: %s", superadmin.getUsername()));
         
         log.info("Superadmin deleted (disabled) successfully");
@@ -256,12 +277,12 @@ public class SuperadminServiceImpl implements SuperadminService {
             log.info("First login detected for superadmin: {}", superadmin.getUsername());
             String firstLoginToken = generateFirstLoginToken(superadmin);
             
-            return BaseResponse.success("First login - password change required", 
+            return BaseResponse.success("First login - password change required",
                 SuperadminAuthResponse.builder()
                     .accessToken(firstLoginToken)
                     .tokenType("Bearer")
                     .expiresInSeconds(900) // 15 minutes
-                    .role("ROLE_EJADA_OFFICER_FIRST_LOGIN")
+                    .role("EJADA_OFFICER")
                     .permissions(List.of("CHANGE_PASSWORD"))
                     .requiresPasswordChange(true)
                     .build());
@@ -273,12 +294,12 @@ public class SuperadminServiceImpl implements SuperadminService {
             log.info("Password expired for superadmin: {}", superadmin.getUsername());
             String expiredPasswordToken = generateExpiredPasswordToken(superadmin);
             
-            return BaseResponse.success("Password expired - change required", 
+            return BaseResponse.success("Password expired - change required",
                 SuperadminAuthResponse.builder()
                     .accessToken(expiredPasswordToken)
                     .tokenType("Bearer")
                     .expiresInSeconds(900)
-                    .role("ROLE_EJADA_OFFICER_PASSWORD_EXPIRED")
+                    .role("EJADA_OFFICER")
                     .permissions(List.of("CHANGE_PASSWORD"))
                     .passwordExpired(true)
                     .build());
@@ -300,7 +321,7 @@ public class SuperadminServiceImpl implements SuperadminService {
                 .accessToken(token)
                 .tokenType("Bearer")
                 .expiresInSeconds(superadminTokenTtl.getSeconds())
-                .role("ROLE_EJADA_OFFICER")
+                .role("EJADA_OFFICER")
                 .permissions(List.of(
                     "TENANT_CREATE", "TENANT_UPDATE", "TENANT_DELETE", 
                     "TENANT_VIEW", "GLOBAL_CONFIG", "SYSTEM_ADMIN"))
@@ -344,6 +365,8 @@ public class SuperadminServiceImpl implements SuperadminService {
         // Validate password complexity
         validatePasswordComplexity(request.getNewPassword());
         
+        ensurePasswordNotReused(superadmin.getId(), request.getNewPassword());
+
         // Update superadmin record
         superadmin.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         superadmin.setFirstLoginCompleted(true);
@@ -362,9 +385,13 @@ public class SuperadminServiceImpl implements SuperadminService {
         }
         
         superadminRepository.save(superadmin);
-        
+        recordPasswordHistory(superadmin);
+
         // Log the action
-        logSuperadminAction("FIRST_LOGIN_COMPLETED", 
+        logSuperadminAction(
+            "FIRST_LOGIN_COMPLETED",
+            superadmin.getId(),
+            superadmin.getUsername(),
             "First login completed and password changed");
         
         log.info("First login completed successfully for: {}", superadmin.getUsername());
@@ -399,16 +426,22 @@ public class SuperadminServiceImpl implements SuperadminService {
         }
         
         validatePasswordComplexity(request.getNewPassword());
-        
+        ensurePasswordNotReused(superadmin.getId(), request.getNewPassword());
+
         // Update password
         superadmin.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         superadmin.setPasswordChangedAt(LocalDateTime.now());
         superadmin.setPasswordExpiresAt(LocalDateTime.now().plusDays(passwordExpiryDays));
-        
+
         superadminRepository.save(superadmin);
-        
+        recordPasswordHistory(superadmin);
+
         // Log the action
-        logSuperadminAction("PASSWORD_CHANGED", "Password changed successfully");
+        logSuperadminAction(
+            "PASSWORD_CHANGED",
+            superadmin.getId(),
+            superadmin.getUsername(),
+            "Password changed successfully");
         
         log.info("Password changed successfully for: {}", superadmin.getUsername());
         
@@ -432,14 +465,26 @@ public class SuperadminServiceImpl implements SuperadminService {
     }
     
     private Long getCurrentSuperadminId() {
+        Long id = getCurrentSuperadminIdOrNull();
+        if (id != null) {
+            return id;
+        }
+        throw new IllegalStateException("No authenticated superadmin found");
+    }
+
+    private Long getCurrentSuperadminIdOrNull() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
             Object uid = jwt.getClaim("uid");
             if (uid != null) {
-                return Long.valueOf(uid.toString());
+                try {
+                    return Long.valueOf(uid.toString());
+                } catch (NumberFormatException ex) {
+                    log.warn("Invalid uid claim: {}", uid);
+                }
             }
         }
-        throw new IllegalStateException("No authenticated superadmin found");
+        return null;
     }
     
     private String getCurrentSuperadminUsername() {
@@ -500,7 +545,10 @@ public class SuperadminServiceImpl implements SuperadminService {
         
         superadminRepository.save(superadmin);
         
-        logSuperadminAction("LOGIN_FAILED", 
+        logSuperadminAction(
+            "LOGIN_FAILED",
+            superadmin.getId(),
+            superadmin.getUsername(),
             "Failed login attempt #" + superadmin.getFailedLoginAttempts());
     }
     
@@ -509,31 +557,33 @@ public class SuperadminServiceImpl implements SuperadminService {
         claims.put("sub", superadmin.getUsername());
         claims.put("uid", superadmin.getId());
         claims.put("email", superadmin.getEmail());
-        claims.put("roles", List.of("EJADA_OFFICER_FIRST_LOGIN"));
+        claims.put("roles", List.of("EJADA_OFFICER"));
         claims.put("isSuperadmin", true);
         claims.put("requiresPasswordChange", true);
-        
+        claims.put("accountState", "FIRST_LOGIN");
+
         return jwtTokenService.createToken(
             superadmin.getUsername(),
             null,
-            List.of("EJADA_OFFICER_FIRST_LOGIN"),
+            List.of("EJADA_OFFICER"),
             claims,
             Duration.ofMinutes(15));
     }
-    
+
     private String generateExpiredPasswordToken(Superadmin superadmin) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("sub", superadmin.getUsername());
         claims.put("uid", superadmin.getId());
         claims.put("email", superadmin.getEmail());
-        claims.put("roles", List.of("EJADA_OFFICER_PASSWORD_EXPIRED"));
+        claims.put("roles", List.of("EJADA_OFFICER"));
         claims.put("isSuperadmin", true);
         claims.put("passwordExpired", true);
-        
+        claims.put("accountState", "PASSWORD_EXPIRED");
+
         return jwtTokenService.createToken(
             superadmin.getUsername(),
             null,
-            List.of("EJADA_OFFICER_PASSWORD_EXPIRED"),
+            List.of("EJADA_OFFICER"),
             claims,
             Duration.ofMinutes(15));
     }
@@ -545,6 +595,7 @@ public class SuperadminServiceImpl implements SuperadminService {
         claims.put("email", superadmin.getEmail());
         claims.put("roles", List.of("EJADA_OFFICER"));
         claims.put("isSuperadmin", true);
+        claims.put("accountState", "ACTIVE");
         
         String fullName = "";
         if (superadmin.getFirstName() != null && superadmin.getLastName() != null) {
@@ -560,10 +611,41 @@ public class SuperadminServiceImpl implements SuperadminService {
             superadminTokenTtl);
     }
     
-    private void logSuperadminAction(String action, String details) {
-        // In production, this should save to an audit table
-        log.info("SUPERADMIN_AUDIT: Action={}, User={}, Details={}", 
-            action, getCurrentSuperadminUsername(), details);
+    private void logSuperadminAction(String action, Long superadminId, String username, String details) {
+        try {
+            superadminAuditService.logSuperadminAction(action, superadminId, details);
+        } catch (DataAccessException ex) {
+            log.warn("Failed to persist superadmin audit entry for action {}", action, ex);
+        }
+        log.info("SUPERADMIN_AUDIT: Action={}, User={}, Details={}", action, username, details);
+    }
+
+    private void recordPasswordHistory(Superadmin superadmin) {
+        if (superadmin.getId() == null) {
+            return;
+        }
+        SuperadminPasswordHistory history = SuperadminPasswordHistory.builder()
+            .superadminId(superadmin.getId())
+            .passwordHash(superadmin.getPasswordHash())
+            .build();
+        try {
+            passwordHistoryRepository.save(history);
+        } catch (DataAccessException ex) {
+            log.warn("Failed to record password history for superadmin {}", superadmin.getId(), ex);
+        }
+    }
+
+    private void ensurePasswordNotReused(Long superadminId, String candidatePassword) {
+        if (superadminId == null) {
+            return;
+        }
+        List<SuperadminPasswordHistory> recentPasswords =
+            passwordHistoryRepository.findTop5BySuperadminIdOrderByCreatedAtDesc(superadminId);
+        for (SuperadminPasswordHistory entry : recentPasswords) {
+            if (passwordEncoder.matches(candidatePassword, entry.getPasswordHash())) {
+                throw new IllegalArgumentException("New password cannot match any of your last 5 passwords");
+            }
+        }
     }
     
     private void sendWelcomeEmail(Superadmin superadmin) {
