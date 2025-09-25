@@ -17,28 +17,40 @@ import java.io.IOException;
 class JwtTenantFilter extends HttpFilter {
 
     private static final long serialVersionUID = 1L;
-	private final String tenantClaim;
+    private final String tenantClaim;
 
     JwtTenantFilter(String tenantClaim) {
         this.tenantClaim = tenantClaim;
     }
 
     @Override
-    protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+    protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) 
+            throws IOException, ServletException {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth instanceof JwtAuthenticationToken jwtAuth) {
                 Jwt jwt = jwtAuth.getToken();
-                Object tid = jwt.getClaims().get(tenantClaim);
-                if (tid != null) {
+                
+                // Check if this is a superadmin token
+                Boolean isSuperadmin = jwt.getClaim("isSuperadmin");
+                if (Boolean.TRUE.equals(isSuperadmin)) {
+                    // Superadmin doesn't need tenant context
+                    ContextManager.setUserId(String.valueOf(jwt.getClaim("uid")));
+                    response.setHeader("X-Is-Superadmin", "true");
+                } else {
+                    // Regular tenant user
+                    Object tid = jwt.getClaims().get(tenantClaim);
+                    if (tid != null) {
                         String tenant = String.valueOf(tid);
                         ContextManager.Tenant.set(tenant);
                         response.setHeader(HeaderNames.X_TENANT_ID, tenant);
+                    }
                 }
             }
             chain.doFilter(request, response);
         } finally {
-                ContextManager.Tenant.clear();
+            ContextManager.Tenant.clear();
+            ContextManager.clearUserId();;
         }
     }
 }

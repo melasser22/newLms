@@ -2,8 +2,12 @@ package com.ejada.sec.controller;
 
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.sec.dto.*;
+import com.ejada.sec.dto.admin.SuperadminAuthResponse;
+import com.ejada.sec.dto.admin.SuperadminLoginRequest;
 import com.ejada.sec.service.AuthService;
 import com.ejada.sec.service.PasswordResetService;
+import com.ejada.sec.service.SuperadminService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
   private final AuthService authService;
+  private final SuperadminService superadminService;
+
   private final PasswordResetService passwordResetService;
 
   @PostMapping("/register")
@@ -46,5 +52,10 @@ public class AuthController {
   @PostMapping("/reset-password")
   public ResponseEntity<BaseResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
     return ResponseEntity.ok(passwordResetService.reset(req));
+  }
+  
+  @PostMapping("admin/login")
+  public ResponseEntity<BaseResponse<SuperadminAuthResponse>> Adminlogin(@Valid @RequestBody SuperadminLoginRequest request) {
+    return ResponseEntity.ok(superadminService.login(request));
   }
 }

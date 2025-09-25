@@ -60,7 +60,7 @@ management:
     web:
       base-path: /actuator
       exposure:
-        include: health,info,metrics,prometheus,beans,conditions,configprops,loggers,threaddump
+        include: health,info,metrics,prometheus,beans,conditions,configprops,loggers,threaddump,sla-metrics
   endpoint:
     health:
       show-details: always
@@ -86,11 +86,13 @@ shared:
       generate-if-missing: true
       echo-response-header: true
     tenant:
-      enabled: true
+      enabled: false
       header-name: x_tenant_id
       query-param: tenantId
       default-policy: OPTIONAL
       echo-response-header: true
+      skip-patterns:
+        - "/sec/api/auth/*"
     cors:
       enabled: true
       allowed-origins: http://localhost:3000
@@ -171,7 +173,7 @@ shared:
     description: "security service endpoints for tenant/platform configuration."
     version: "1.0.0"
     servers:
-      - http://localhost:8080/core
+      - http://localhost:8085/sec
     group:
       name: security
       packages-to-scan:
@@ -201,7 +203,7 @@ shared:
       enabled: true
       permit-all:
         - "/**"
-      disable-csrf: false
+      disable-csrf: true
     stateless: true
     roles-claim: roles
     tenant-claim: tenant

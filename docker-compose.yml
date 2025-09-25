@@ -20,6 +20,24 @@ x-resources-light: &resources_light
       reservations:
         memory: 256m
 
+# --- Common environment anchors ---
+x-postgres-env: &postgres_env
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+  SPRING_DATASOURCE_USERNAME: postgres
+  SPRING_DATASOURCE_PASSWORD: postgres
+
+x-redis-env: &redis_env
+  SPRING_DATA_REDIS_HOST: redis
+  SPRING_DATA_REDIS_PORT: 6379
+
+x-otel-env: &otel_env
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+  OTEL_TRACES_EXPORTER: otlp
+  OTEL_METRICS_EXPORTER: otlp
+
+# ----------------------------- #
+#       Networks & Volumes      #
+# ----------------------------- #
 networks:
   backend:
     driver: bridge
@@ -148,15 +166,8 @@ services:
       otel-collector: { condition: service_started }
     environment:
       TZ: Asia/Riyadh
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      <<: [*postgres_env, *redis_env, *otel_env]
       OTEL_SERVICE_NAME: tenant-service
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-      OTEL_TRACES_EXPORTER: otlp
-      OTEL_METRICS_EXPORTER: otlp
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8080:8080"
     networks:
@@ -170,15 +181,8 @@ services:
       otel-collector: { condition: service_started }
     environment:
       TZ: Asia/Riyadh
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      <<: [*postgres_env, *redis_env, *otel_env]
       OTEL_SERVICE_NAME: setup-service
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-      OTEL_TRACES_EXPORTER: otlp
-      OTEL_METRICS_EXPORTER: otlp
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8081:8080"
     networks:
@@ -192,15 +196,8 @@ services:
       otel-collector: { condition: service_started }
     environment:
       TZ: Asia/Riyadh
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      <<: [*postgres_env, *redis_env, *otel_env]
       OTEL_SERVICE_NAME: billing-service
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-      OTEL_TRACES_EXPORTER: otlp
-      OTEL_METRICS_EXPORTER: otlp
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8082:8080"
     networks:
@@ -214,15 +211,8 @@ services:
       otel-collector: { condition: service_started }
     environment:
       TZ: Asia/Riyadh
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      <<: [*postgres_env, *redis_env, *otel_env]
       OTEL_SERVICE_NAME: catalog-service
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-      OTEL_TRACES_EXPORTER: otlp
-      OTEL_METRICS_EXPORTER: otlp
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8083:8080"
     networks:
@@ -236,15 +226,8 @@ services:
       otel-collector: { condition: service_started }
     environment:
       TZ: Asia/Riyadh
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      <<: [*postgres_env, *redis_env, *otel_env]
       OTEL_SERVICE_NAME: subscription-service
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-      OTEL_TRACES_EXPORTER: otlp
-      OTEL_METRICS_EXPORTER: otlp
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8084:8080"
     networks:
@@ -255,33 +238,20 @@ services:
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
-      redis:    { condition: service_healthy }  # ensure Redis is ready
+      redis:    { condition: service_healthy }
       otel-collector: { condition: service_started }
     environment:
       TZ: Asia/Riyadh
+      <<: [*postgres_env, *redis_env, *otel_env]
 
-      # --- Database ---
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-
-      # --- Redis via shared-lib (fixes localhost issue in containers) ---
+      # Extra Redis settings (security-specific)
       SHARED_REDIS_HOST: redis
       SHARED_REDIS_PORT: 6379
       SHARED_REDIS_TIMEOUT: 5s
       SHARED_REDIS_KEY_PREFIX: security
       SHARED_REDIS_DEFAULT_TTL: 600s
-      # Some Spring parts may read spring.data.redis.* directly:
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
 
-      # --- Observability ---
       OTEL_SERVICE_NAME: security-service
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-      OTEL_TRACES_EXPORTER: otlp
-      OTEL_METRICS_EXPORTER: otlp
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8085:8080"
     networks:
