@@ -5,8 +5,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
@@ -25,7 +25,7 @@ public class SlaMetricsEndpoint {
   @ReadOperation
   public Map<String, Object> slaMetrics() {
     SharedActuatorProperties.SlaMetrics slaProps = properties.getSlaMetrics();
-    List<Timer> timers = meterRegistry.find(slaProps.getMeterName()).timers();
+    Collection<Timer> timers = meterRegistry.find(slaProps.getMeterName()).timers();
 
     long totalRequests = 0L;
     long successfulRequests = 0L;
