@@ -25,16 +25,22 @@
 
 		<!-- Spring Boot Autoconfigure (for @Configuration, @ConditionalOnClass,
 		etc.) -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-autoconfigure</artifactId>
-		</dependency>
+                <dependency>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-autoconfigure</artifactId>
+                </dependency>
 
-		<!-- Spring Boot Actuator (optional; used only if HealthIndicator beans
-		exist) -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-actuator</artifactId>
+                <!-- Spring Security crypto utilities for password hashing -->
+                <dependency>
+                        <groupId>org.springframework.security</groupId>
+                        <artifactId>spring-security-crypto</artifactId>
+                </dependency>
+
+                <!-- Spring Boot Actuator (optional; used only if HealthIndicator beans
+                exist) -->
+                <dependency>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-actuator</artifactId>
 			<optional>true</optional>
 		</dependency>
 		

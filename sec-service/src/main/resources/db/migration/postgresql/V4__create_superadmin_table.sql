@@ -50,12 +50,12 @@ ALTER TABLE superadmins
 CREATE INDEX IF NOT EXISTS idx_superadmins_username ON superadmins(username);
 CREATE INDEX IF NOT EXISTS idx_superadmins_email ON superadmins(email);
 
--- Default superadmin account (password: Admin@123!)
+-- Default superadmin account (hash generated via shared-crypto PasswordHasher)
 INSERT INTO superadmins (username, email, password_hash, role, created_by)
 VALUES (
     'superadmin',
     'admin@ejada.com',
-    '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a',
+    '${superadminPasswordHash}',
     'EJADA_OFFICER',
     'system'
 )
