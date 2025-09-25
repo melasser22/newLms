@@ -70,8 +70,9 @@ public class SharedActuatorAutoConfiguration {
   @ConditionalOnMissingBean
   public SlaReportController slaReportController(
       ObjectProvider<HealthEndpoint> healthEndpoint,
-      ObjectProvider<HealthContributorRegistry> registry) {
-    return new SlaReportController(healthEndpoint, registry);
+      ObjectProvider<HealthContributorRegistry> registry,
+      ObjectProvider<SlaHealthIndicator> indicator) {
+    return new SlaReportController(healthEndpoint, registry, indicator);
   }
 
   @Bean

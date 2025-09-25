@@ -3,6 +3,7 @@ package com.ejada.actuator.starter.web;
 import java.util.LinkedHashMap;
 
 import java.util.Map;
+import com.ejada.actuator.starter.health.SlaHealthIndicator;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.actuate.health.CompositeHealth;
 import org.springframework.boot.actuate.health.Health;
@@ -26,12 +27,15 @@ public class SlaReportController {
 
   private final ObjectProvider<HealthEndpoint> healthEndpoint;
   private final ObjectProvider<HealthContributorRegistry> registry;
+  private final ObjectProvider<SlaHealthIndicator> indicator;
 
   public SlaReportController(
       ObjectProvider<HealthEndpoint> healthEndpoint,
-      ObjectProvider<HealthContributorRegistry> registry) {
+      ObjectProvider<HealthContributorRegistry> registry,
+      ObjectProvider<SlaHealthIndicator> indicator) {
     this.healthEndpoint = healthEndpoint;
     this.registry = registry;
+    this.indicator = indicator;
   }
 
   @GetMapping("/report")
@@ -62,6 +66,11 @@ public class SlaReportController {
           }
         }
       }
+    }
+
+    SlaHealthIndicator direct = indicator.getIfAvailable();
+    if (direct != null) {
+      return direct.getHealth(true);
     }
 
     HealthEndpoint endpoint = healthEndpoint.getIfAvailable();
