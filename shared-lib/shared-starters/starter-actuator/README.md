@@ -9,6 +9,7 @@ Spring Boot Actuator starter with:
 - Custom endpoint: /actuator/whoami
 - SLA report at `/sla/report` backed by a dedicated health indicator
 
+
 ## Usage
 Add the dependency:
 
@@ -43,6 +44,7 @@ payload mirrors the format of the actuator health endpoint and focuses on the
 
 You can customise the indicator details per service:
 
+
 ```yaml
 shared:
   actuator:
@@ -53,3 +55,4 @@ shared:
 
 Set `shared.actuator.sla-report.enabled=false` if you need to disable either
 the indicator or the `/sla/report` endpoint for a particular service.
+

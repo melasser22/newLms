@@ -1,6 +1,7 @@
 package com.ejada.actuator.starter.web;
 
 import java.util.LinkedHashMap;
+
 import java.util.Map;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.actuate.health.CompositeHealth;
@@ -12,6 +13,7 @@ import org.springframework.boot.actuate.health.HealthContributorRegistry;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.actuate.health.Status;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -99,5 +101,6 @@ public class SlaReportController {
     Map<String, Object> fallback = new LinkedHashMap<>();
     fallback.put("status", Status.UNKNOWN.getCode());
     return fallback;
+
   }
 }

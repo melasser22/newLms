@@ -10,11 +10,14 @@ public class SharedActuatorProperties {
   private final MetricsTags metrics = new MetricsTags();
   private final Security security = new Security();
   private final SlaReport slaReport = new SlaReport();
+  private final SlaMetrics slaMetrics = new SlaMetrics();
+
 
   public HttpExchanges getHttpExchanges() { return httpExchanges; }
   public MetricsTags getMetrics() { return metrics; }
   public Security getSecurity() { return security; }
   public SlaReport getSlaReport() { return slaReport; }
+  public SlaMetrics getSlaMetrics() { return slaMetrics; }
 
   public static class HttpExchanges {
     private boolean enabled = true;
@@ -61,6 +64,7 @@ public class SharedActuatorProperties {
     private boolean slaCompliant = true;
     private double availabilityPercent = 99.95d;
 
+
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
     public String getOwner() { return owner; }
@@ -73,5 +77,6 @@ public class SharedActuatorProperties {
     public void setSlaCompliant(boolean slaCompliant) { this.slaCompliant = slaCompliant; }
     public double getAvailabilityPercent() { return availabilityPercent; }
     public void setAvailabilityPercent(double availabilityPercent) { this.availabilityPercent = availabilityPercent; }
+
   }
 }

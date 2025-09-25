@@ -9,11 +9,16 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.hibernate.Filter;
 import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.orm.jpa.EntityManagerFactoryUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Aspect
 public class TenantHibernateFilterAspect {
+
+    private static final Logger log = LoggerFactory.getLogger(TenantHibernateFilterAspect.class);
 
     private final EntityManagerFactory emf;
     private final StarterDataTenantProps props;
@@ -33,6 +38,11 @@ public class TenantHibernateFilterAspect {
 
         Session session = em.unwrap(Session.class);
 
+        if (!isFilterDefined(session.getSessionFactory())) {
+            log.debug("Tenant filter '{}' is not defined for session factory; skipping filter application.", props.getFilterName());
+            return pjp.proceed();
+        }
+
         boolean includeGlobal = decideIncludeGlobal(pjp);
         String tenantId = ContextManager.Tenant.get(); // may be null
 
@@ -45,6 +55,10 @@ public class TenantHibernateFilterAspect {
         } finally {
             session.disableFilter(props.getFilterName());
         }
+    }
+
+    private boolean isFilterDefined(SessionFactory sessionFactory) {
+        return sessionFactory.getDefinedFilterNames().contains(props.getFilterName());
     }
 
     private boolean decideIncludeGlobal(ProceedingJoinPoint pjp) {
