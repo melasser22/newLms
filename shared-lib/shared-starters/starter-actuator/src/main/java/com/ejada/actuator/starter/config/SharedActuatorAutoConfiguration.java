@@ -81,4 +81,12 @@ public class SharedActuatorAutoConfiguration {
         environment,
         properties);
   }
+
+  @Bean
+  @ConditionalOnClass({Endpoint.class, MeterRegistry.class})
+  @ConditionalOnProperty(prefix = "shared.actuator.sla-metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
+  @ConditionalOnMissingBean
+  public SlaMetricsEndpoint slaMetricsEndpoint(MeterRegistry meterRegistry, SharedActuatorProperties properties) {
+    return new SlaMetricsEndpoint(meterRegistry, properties);
+  }
 }
