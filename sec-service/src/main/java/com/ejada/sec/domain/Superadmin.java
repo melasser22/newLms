@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(
   name = "superadmins",
-  schema = "public",
+  schema = "security",
   uniqueConstraints = {
     @UniqueConstraint(name = "ux_superadmins_username", columnNames = {"username"}),
     @UniqueConstraint(name = "ux_superadmins_email", columnNames = {"email"})
