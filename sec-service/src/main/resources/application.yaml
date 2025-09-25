@@ -38,3 +38,8 @@ shared:
     enable-role-check: true
     jwt:
       token-period: 15m
+
+sec:
+  superadmin:
+    bootstrap:
+      default-password: ${SEC_SUPERADMIN_DEFAULT_PASSWORD:Admin@123!}
