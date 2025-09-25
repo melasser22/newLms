@@ -98,6 +98,9 @@ public class SharedSecurityProps implements BaseStarterProperties {
     /** Disable CSRF for stateless REST APIs. */
     private boolean disableCsrf = true;
 
+    /** Patterns that should bypass CSRF checks when CSRF is enabled. */
+    private String[] csrfIgnore = new String[0];
+
     /** Force stateless sessions for APIs. */
     private boolean stateless = true;
 

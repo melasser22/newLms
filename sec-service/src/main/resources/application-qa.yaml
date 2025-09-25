@@ -202,7 +202,9 @@ shared:
       enabled: true
       permit-all: ["/*"]
       disable-csrf: false
-    stateless: true
+      csrf-ignore:
+        - "/sec/api/auth/**"
+      stateless: true
     roles-claim: roles
     tenant-claim: tenant
     enable-role-check: true
