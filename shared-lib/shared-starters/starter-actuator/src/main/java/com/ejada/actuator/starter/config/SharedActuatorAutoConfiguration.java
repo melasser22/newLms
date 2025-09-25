@@ -4,6 +4,7 @@ package com.ejada.actuator.starter.config;
 import com.ejada.actuator.starter.endpoints.SlaMetricsEndpoint;
 import com.ejada.actuator.starter.endpoints.WhoAmIEndpoint;
 import com.ejada.actuator.starter.health.SlaHealthIndicator;
+import com.ejada.actuator.starter.metrics.SlaMetricsCalculator;
 import com.ejada.actuator.starter.info.SharedInfoContributor;
 import com.ejada.actuator.starter.metrics.CommonTagsCustomizer;
 import com.ejada.actuator.starter.web.SlaReportController;
@@ -76,14 +77,31 @@ public class SharedActuatorAutoConfiguration {
   }
 
   @Bean
+  @ConditionalOnClass(MeterRegistry.class)
+  @ConditionalOnMissingBean
+  public SlaMetricsCalculator slaMetricsCalculator(
+      MeterRegistry meterRegistry, SharedActuatorProperties properties) {
+    return new SlaMetricsCalculator(meterRegistry, properties);
+  }
+
+  @Bean
+  @ConditionalOnClass(MeterRegistry.class)
+  @ConditionalOnBean(SlaMetricsCalculator.class)
+  @ConditionalOnMissingBean
+  public SlaMetricsEndpoint slaMetricsEndpoint(SlaMetricsCalculator calculator) {
+    return new SlaMetricsEndpoint(calculator);
+  }
+
+  @Bean
   @ConditionalOnProperty(
       prefix = "shared.actuator.sla-report",
       name = "enabled",
       havingValue = "true",
       matchIfMissing = true)
+  @ConditionalOnBean(SlaMetricsCalculator.class)
   @ConditionalOnMissingBean(name = "slaHealthIndicator")
-  public SlaHealthIndicator slaHealthIndicator(SharedActuatorProperties properties) {
-    return new SlaHealthIndicator(properties);
+  public SlaHealthIndicator slaHealthIndicator(SlaMetricsCalculator calculator) {
+    return new SlaHealthIndicator(calculator);
 
   }
 }

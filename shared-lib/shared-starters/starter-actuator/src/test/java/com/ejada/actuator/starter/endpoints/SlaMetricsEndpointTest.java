@@ -3,6 +3,7 @@ package com.ejada.actuator.starter.endpoints;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.ejada.actuator.starter.config.SharedActuatorProperties;
+import com.ejada.actuator.starter.metrics.SlaMetricsCalculator;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
@@ -33,7 +34,8 @@ class SlaMetricsEndpointTest {
     props.getSlaMetrics().setSloTarget(94.0D);
     props.getSlaMetrics().setSlaTarget(90.0D);
 
-    SlaMetricsEndpoint endpoint = new SlaMetricsEndpoint(registry, props);
+    SlaMetricsCalculator calculator = new SlaMetricsCalculator(registry, props);
+    SlaMetricsEndpoint endpoint = new SlaMetricsEndpoint(calculator);
 
     var result = endpoint.slaMetrics();
 
@@ -56,7 +58,8 @@ class SlaMetricsEndpointTest {
     SimpleMeterRegistry registry = new SimpleMeterRegistry();
     SharedActuatorProperties props = new SharedActuatorProperties();
 
-    SlaMetricsEndpoint endpoint = new SlaMetricsEndpoint(registry, props);
+    SlaMetricsCalculator calculator = new SlaMetricsCalculator(registry, props);
+    SlaMetricsEndpoint endpoint = new SlaMetricsEndpoint(calculator);
 
     var result = endpoint.slaMetrics();
 
