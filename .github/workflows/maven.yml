@@ -20,4 +20,4 @@ jobs:
       - name: Build tenant platform
         run: mvn -B -DskipTests=true verify -f tenant-platform/pom.xml
       - name: Build setup service
-        run: mvn -B -DskipTests=true verify -f lms-setup/pom.xml
+        run: mvn -B -DskipTests=true verify -f setup-service/pom.xml
