@@ -499,8 +499,8 @@ public class SuperadminServiceImpl implements SuperadminService {
     private void validatePasswordComplexity(String password) {
         List<String> errors = new ArrayList<>();
         
-        if (password == null || password.length() < 12) {
-            errors.add("Password must be at least 12 characters long");
+        if (password == null || password.length() < 8) {
+            errors.add("Password must be at least 8 characters long");
         }
         
         if (!Pattern.compile("[A-Z]").matcher(password).find()) {
