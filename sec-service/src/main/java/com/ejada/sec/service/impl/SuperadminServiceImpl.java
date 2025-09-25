@@ -236,6 +236,7 @@ public class SuperadminServiceImpl implements SuperadminService {
     }
     
     @Override
+    @Transactional(noRollbackFor = NoSuchElementException.class)
     public BaseResponse<SuperadminAuthResponse> login(SuperadminLoginRequest request) {
         log.info("Superadmin login attempt for: {}", request.getIdentifier());
         
