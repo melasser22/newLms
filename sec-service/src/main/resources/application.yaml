@@ -29,6 +29,11 @@ server:
 shared:
   observability:
     application-name: security-service
+  actuator:
+    sla-report:
+      enabled: true
+      sla-compliant: true
+      availability-percent: 99.95
   security:
     enable-role-check: true
     jwt:

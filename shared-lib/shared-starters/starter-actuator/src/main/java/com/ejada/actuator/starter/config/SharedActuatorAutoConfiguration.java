@@ -3,12 +3,15 @@ package com.ejada.actuator.starter.config;
 
 import com.ejada.actuator.starter.endpoints.SlaMetricsEndpoint;
 import com.ejada.actuator.starter.endpoints.WhoAmIEndpoint;
+import com.ejada.actuator.starter.health.SlaHealthIndicator;
 import com.ejada.actuator.starter.info.SharedInfoContributor;
 import com.ejada.actuator.starter.metrics.CommonTagsCustomizer;
 import com.ejada.actuator.starter.web.SlaReportController;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.boot.actuate.autoconfigure.endpoint.condition.ConditionalOnAvailableEndpoint;
 import org.springframework.boot.actuate.autoconfigure.info.InfoContributorAutoConfiguration;
+import org.springframework.boot.actuate.health.HealthContributorRegistry;
+import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.boot.actuate.health.HealthEndpoint;
@@ -62,31 +65,24 @@ public class SharedActuatorAutoConfiguration {
   }
 
   @Bean
-
   @ConditionalOnClass(RestController.class)
   @ConditionalOnProperty(prefix = "shared.actuator.sla-report", name = "enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean
   public SlaReportController slaReportController(
-      ObjectProvider<BuildProperties> buildProperties,
-      ObjectProvider<GitProperties> gitProperties,
       ObjectProvider<HealthEndpoint> healthEndpoint,
-      ObjectProvider<InfoEndpoint> infoEndpoint,
-      Environment environment,
-      SharedActuatorProperties properties) {
-    return new SlaReportController(
-        buildProperties,
-        gitProperties,
-        healthEndpoint,
-        infoEndpoint,
-        environment,
-        properties);
+      ObjectProvider<HealthContributorRegistry> registry) {
+    return new SlaReportController(healthEndpoint, registry);
   }
 
   @Bean
-  @ConditionalOnClass({Endpoint.class, MeterRegistry.class})
-  @ConditionalOnProperty(prefix = "shared.actuator.sla-metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
-  @ConditionalOnMissingBean
-  public SlaMetricsEndpoint slaMetricsEndpoint(MeterRegistry meterRegistry, SharedActuatorProperties properties) {
-    return new SlaMetricsEndpoint(meterRegistry, properties);
+  @ConditionalOnProperty(
+      prefix = "shared.actuator.sla-report",
+      name = "enabled",
+      havingValue = "true",
+      matchIfMissing = true)
+  @ConditionalOnMissingBean(name = "slaHealthIndicator")
+  public SlaHealthIndicator slaHealthIndicator(SharedActuatorProperties properties) {
+    return new SlaHealthIndicator(properties);
+
   }
 }

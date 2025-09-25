@@ -61,6 +61,9 @@ public class SharedActuatorProperties {
     private String owner;
     private String contact;
     private String description;
+    private boolean slaCompliant = true;
+    private double availabilityPercent = 99.95d;
+
 
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
@@ -70,45 +73,10 @@ public class SharedActuatorProperties {
     public void setContact(String contact) { this.contact = contact; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public boolean isSlaCompliant() { return slaCompliant; }
+    public void setSlaCompliant(boolean slaCompliant) { this.slaCompliant = slaCompliant; }
+    public double getAvailabilityPercent() { return availabilityPercent; }
+    public void setAvailabilityPercent(double availabilityPercent) { this.availabilityPercent = availabilityPercent; }
 
-  }
-
-  public static class SlaMetrics {
-    private boolean enabled = true;
-    private String meterName = "http.server.requests";
-    private double sloTarget = 99.9D;
-    private double slaTarget = 99.0D;
-
-    public boolean isEnabled() {
-      return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-      this.enabled = enabled;
-    }
-
-    public String getMeterName() {
-      return meterName;
-    }
-
-    public void setMeterName(String meterName) {
-      this.meterName = meterName;
-    }
-
-    public double getSloTarget() {
-      return sloTarget;
-    }
-
-    public void setSloTarget(double sloTarget) {
-      this.sloTarget = sloTarget;
-    }
-
-    public double getSlaTarget() {
-      return slaTarget;
-    }
-
-    public void setSlaTarget(double slaTarget) {
-      this.slaTarget = slaTarget;
-    }
   }
 }

@@ -7,7 +7,8 @@ Spring Boot Actuator starter with:
 - Http exchanges repository (optional)
 - Actuator-only security chain (optional)
 - Custom endpoint: /actuator/whoami
-- SLA report at `/sla/report` with build/runtime metadata
+- SLA report at `/sla/report` backed by a dedicated health indicator
+
 
 ## Usage
 Add the dependency:
@@ -21,18 +22,37 @@ Add the dependency:
 
 ### SLA report endpoint
 
-The starter registers a lightweight REST controller at `/sla/report`. It provides
-service name, build metadata, uptime, host details, and the current health/info
-snapshots. You can enrich the response with optional contact data:
+The starter registers a lightweight REST controller at `/sla/report`. The
+payload mirrors the format of the actuator health endpoint and focuses on the
+`slaHealthIndicator` component:
+
+```json
+{
+  "status": "UP",
+  "components": {
+    "slaHealthIndicator": {
+      "status": "UP",
+      "details": {
+        "sla_compliant": true,
+        "availability_percent": 99.95,
+        "last_check": "2025-09-24T14:00:00Z"
+      }
+    }
+  }
+}
+```
+
+You can customise the indicator details per service:
+
 
 ```yaml
 shared:
   actuator:
     sla-report:
-      owner: Platform SRE
-      contact: sre@example.com
-      description: Security service availability contact
+      availability-percent: 99.95
+      sla-compliant: true
 ```
 
-Set `shared.actuator.sla-report.enabled=false` if you need to disable the
-endpoint for a particular service.
+Set `shared.actuator.sla-report.enabled=false` if you need to disable either
+the indicator or the `/sla/report` endpoint for a particular service.
+
