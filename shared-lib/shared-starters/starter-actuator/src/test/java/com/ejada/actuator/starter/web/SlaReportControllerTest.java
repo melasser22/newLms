@@ -38,10 +38,10 @@ class SlaReportControllerTest {
     Map<String, Object> report = controller.report();
 
     assertThat(report.get("status")).isEqualTo("UP");
-    Map<?, ?> components = Map.class.cast(report.get("components"));
-    Map<?, ?> indicatorBody = Map.class.cast(components.get("slaHealthIndicator"));
+    Map<String, ?> components = castToMap(report.get("components"));
+    Map<String, ?> indicatorBody = castToMap(components.get("slaHealthIndicator"));
     assertThat(indicatorBody.get("status")).isEqualTo("UP");
-    Map<?, ?> details = Map.class.cast(indicatorBody.get("details"));
+    Map<String, ?> details = castToMap(indicatorBody.get("details"));
     assertThat(details.get("sla_compliant")).isEqualTo(false);
     assertThat(details)
         .containsKeys(
@@ -54,6 +54,11 @@ class SlaReportControllerTest {
             "total_requests",
             "failed_requests",
             "error_budget_remaining");
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Map<String, ?> castToMap(Object value) {
+    return (Map<String, ?>) value;
   }
 
   private static final class EmptyObjectProvider<T> implements ObjectProvider<T> {
