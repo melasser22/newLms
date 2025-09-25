@@ -1,17 +1,21 @@
 
 package com.ejada.actuator.starter.config;
 
+import com.ejada.actuator.starter.endpoints.SlaMetricsEndpoint;
 import com.ejada.actuator.starter.endpoints.WhoAmIEndpoint;
 import com.ejada.actuator.starter.info.SharedInfoContributor;
 import com.ejada.actuator.starter.metrics.CommonTagsCustomizer;
 import com.ejada.actuator.starter.web.SlaReportController;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.boot.actuate.autoconfigure.endpoint.condition.ConditionalOnAvailableEndpoint;
 import org.springframework.boot.actuate.autoconfigure.info.InfoContributorAutoConfiguration;
+import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.info.InfoEndpoint;
 import org.springframework.boot.actuate.web.exchanges.InMemoryHttpExchangeRepository;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -58,6 +62,7 @@ public class SharedActuatorAutoConfiguration {
   }
 
   @Bean
+
   @ConditionalOnClass(RestController.class)
   @ConditionalOnProperty(prefix = "shared.actuator.sla-report", name = "enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean

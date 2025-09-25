@@ -11,6 +11,7 @@ public class SharedActuatorProperties {
   private final Security security = new Security();
   private final SlaReport slaReport = new SlaReport();
 
+
   public HttpExchanges getHttpExchanges() { return httpExchanges; }
   public MetricsTags getMetrics() { return metrics; }
   public Security getSecurity() { return security; }
@@ -67,5 +68,6 @@ public class SharedActuatorProperties {
     public void setContact(String contact) { this.contact = contact; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
   }
 }
