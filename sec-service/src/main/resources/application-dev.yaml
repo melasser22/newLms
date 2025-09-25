@@ -93,6 +93,7 @@ shared:
       echo-response-header: true
       skip-patterns:
         - "/sec/api/auth/*"
+        - "/sec/api/superadmin/**"
     cors:
       enabled: true
       allowed-origins: http://localhost:3000
