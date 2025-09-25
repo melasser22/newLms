@@ -4,9 +4,11 @@ import com.ejada.common.constants.HeaderNames;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ejada.starter_security.web.JsonAccessDeniedHandler;
 import com.ejada.starter_security.web.JsonAuthEntryPoint;
+import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -35,12 +37,15 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
+import org.springframework.web.util.UrlPathHelper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -170,7 +175,8 @@ public class SecurityAutoConfiguration {
                                              SharedSecurityProps props,
                                              JwtAuthenticationConverter jwtAuthConverter,
                                              ObjectMapper objectMapper,
-                                             CorsConfigurationSource corsConfigurationSource) throws Exception {
+                                             CorsConfigurationSource corsConfigurationSource,
+                                             ObjectProvider<HandlerMappingIntrospector> handlerMappingIntrospectorProvider) throws Exception {
 
     var rs = props.getResourceServer();
 
@@ -180,11 +186,15 @@ public class SecurityAutoConfiguration {
       http.csrf(csrf -> {
         csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
         String[] ignorePatterns = Optional.ofNullable(rs.getCsrfIgnore()).orElseGet(() -> new String[0]);
+        HandlerMappingIntrospector introspector = handlerMappingIntrospectorProvider.getIfAvailable();
+        MvcRequestMatcher.Builder mvcMatcherBuilder =
+            introspector != null ? new MvcRequestMatcher.Builder(introspector) : null;
+
         List<RequestMatcher> ignoreMatchers = Arrays.stream(ignorePatterns)
             .filter(StringUtils::hasText)
             .map(String::trim)
             .filter(s -> !s.isEmpty())
-            .map(pattern -> (RequestMatcher) new AntPathRequestMatcher(pattern))
+            .map(pattern -> createRequestMatcher(pattern, mvcMatcherBuilder))
             .collect(Collectors.toCollection(ArrayList::new));
         if (!ignoreMatchers.isEmpty()) {
           csrf.ignoringRequestMatchers(ignoreMatchers.toArray(new RequestMatcher[0]));
@@ -281,6 +291,13 @@ public class SecurityAutoConfiguration {
     return List.copyOf(set);
   }
 
+  private static RequestMatcher createRequestMatcher(String pattern, MvcRequestMatcher.Builder mvcMatcherBuilder) {
+    if (mvcMatcherBuilder != null) {
+      return mvcMatcherBuilder.pattern(pattern);
+    }
+    return new SimpleAntPatternRequestMatcher(pattern);
+  }
+
   private static void require(boolean condition, String message) {
     if (!condition) throw new IllegalStateException(message);
   }
@@ -297,5 +314,23 @@ public class SecurityAutoConfiguration {
       if (cur == null) return null;
     }
     return cur;
+  }
+
+  private static final class SimpleAntPatternRequestMatcher implements RequestMatcher {
+
+    private static final AntPathMatcher ANT_PATH_MATCHER = new AntPathMatcher();
+    private static final UrlPathHelper URL_PATH_HELPER = new UrlPathHelper();
+
+    private final String pattern;
+
+    private SimpleAntPatternRequestMatcher(String pattern) {
+      this.pattern = pattern;
+    }
+
+    @Override
+    public boolean matches(HttpServletRequest request) {
+      String path = URL_PATH_HELPER.getPathWithinApplication(request);
+      return ANT_PATH_MATCHER.match(pattern, path);
+    }
   }
 }

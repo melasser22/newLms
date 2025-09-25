@@ -24,10 +24,10 @@ class SlaReportControllerTest {
     Map<String, Object> report = controller.report();
 
     assertThat(report.get("status")).isEqualTo("UP");
-    Map<String, Object> components = (Map<String, Object>) report.get("components");
-    Map<String, Object> indicatorBody = (Map<String, Object>) components.get("slaHealthIndicator");
+    Map<?, ?> components = Map.class.cast(report.get("components"));
+    Map<?, ?> indicatorBody = Map.class.cast(components.get("slaHealthIndicator"));
     assertThat(indicatorBody.get("status")).isEqualTo("UP");
-    Map<String, Object> details = (Map<String, Object>) indicatorBody.get("details");
+    Map<?, ?> details = Map.class.cast(indicatorBody.get("details"));
     assertThat(details.get("sla_compliant")).isEqualTo(false);
     assertThat(details).containsKeys("availability_percent", "last_check");
   }
