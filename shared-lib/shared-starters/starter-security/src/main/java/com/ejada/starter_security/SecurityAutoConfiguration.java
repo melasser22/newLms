@@ -184,8 +184,8 @@ public class SecurityAutoConfiguration {
             .filter(StringUtils::hasText)
             .map(String::trim)
             .filter(s -> !s.isEmpty())
-            .map(AntPathRequestMatcher::new)
-            .toList();
+            .map(pattern -> (RequestMatcher) new AntPathRequestMatcher(pattern))
+            .collect(Collectors.toCollection(ArrayList::new));
         if (!ignoreMatchers.isEmpty()) {
           csrf.ignoringRequestMatchers(ignoreMatchers.toArray(new RequestMatcher[0]));
         }
