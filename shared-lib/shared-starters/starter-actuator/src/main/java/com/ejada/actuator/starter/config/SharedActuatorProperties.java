@@ -9,12 +9,13 @@ public class SharedActuatorProperties {
   private final HttpExchanges httpExchanges = new HttpExchanges();
   private final MetricsTags metrics = new MetricsTags();
   private final Security security = new Security();
-  private final SlaMetrics slaMetrics = new SlaMetrics();
+  private final SlaReport slaReport = new SlaReport();
+
 
   public HttpExchanges getHttpExchanges() { return httpExchanges; }
   public MetricsTags getMetrics() { return metrics; }
   public Security getSecurity() { return security; }
-  public SlaMetrics getSlaMetrics() { return slaMetrics; }
+  public SlaReport getSlaReport() { return slaReport; }
 
   public static class HttpExchanges {
     private boolean enabled = true;
@@ -53,19 +54,20 @@ public class SharedActuatorProperties {
     public void setPermitPrometheus(boolean permitPrometheus) { this.permitPrometheus = permitPrometheus; }
   }
 
-  public static class SlaMetrics {
+  public static class SlaReport {
     private boolean enabled = true;
-    private String meterName = "http.server.requests";
-    private double sloTarget = 99.9D;
-    private double slaTarget = 99.0D;
+    private String owner;
+    private String contact;
+    private String description;
 
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
-    public String getMeterName() { return meterName; }
-    public void setMeterName(String meterName) { this.meterName = meterName; }
-    public double getSloTarget() { return sloTarget; }
-    public void setSloTarget(double sloTarget) { this.sloTarget = sloTarget; }
-    public double getSlaTarget() { return slaTarget; }
-    public void setSlaTarget(double slaTarget) { this.slaTarget = slaTarget; }
+    public String getOwner() { return owner; }
+    public void setOwner(String owner) { this.owner = owner; }
+    public String getContact() { return contact; }
+    public void setContact(String contact) { this.contact = contact; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
   }
 }
