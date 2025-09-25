@@ -9,10 +9,12 @@ public class SharedActuatorProperties {
   private final HttpExchanges httpExchanges = new HttpExchanges();
   private final MetricsTags metrics = new MetricsTags();
   private final Security security = new Security();
+  private final SlaReport slaReport = new SlaReport();
 
   public HttpExchanges getHttpExchanges() { return httpExchanges; }
   public MetricsTags getMetrics() { return metrics; }
   public Security getSecurity() { return security; }
+  public SlaReport getSlaReport() { return slaReport; }
 
   public static class HttpExchanges {
     private boolean enabled = true;
@@ -49,5 +51,21 @@ public class SharedActuatorProperties {
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
     public boolean isPermitPrometheus() { return permitPrometheus; }
     public void setPermitPrometheus(boolean permitPrometheus) { this.permitPrometheus = permitPrometheus; }
+  }
+
+  public static class SlaReport {
+    private boolean enabled = true;
+    private String owner;
+    private String contact;
+    private String description;
+
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public String getOwner() { return owner; }
+    public void setOwner(String owner) { this.owner = owner; }
+    public String getContact() { return contact; }
+    public void setContact(String contact) { this.contact = contact; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
   }
 }
