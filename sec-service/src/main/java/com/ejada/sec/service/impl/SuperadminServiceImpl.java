@@ -711,7 +711,9 @@ public class SuperadminServiceImpl implements SuperadminService {
                     log.error("Invalid password hash detected for superadmin {} in history entry {}",
                         superadminId, entry.getId());
                     throw new PasswordHistoryUnavailableException(
-                        "Unable to verify password history at the moment. Please try again later or contact support.");
+                        "Unable to verify password history at the moment. Please try again later or contact support.",
+                        new IllegalStateException(
+                            "Invalid password hash format for history entry " + entry.getId()));
                 }
 
                 try {
