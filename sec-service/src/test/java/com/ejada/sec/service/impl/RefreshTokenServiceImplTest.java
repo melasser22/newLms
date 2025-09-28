@@ -49,8 +49,9 @@ class RefreshTokenServiceImplTest {
     when(refreshTokenRepository.findActiveTokensByTenant(eq(tenantId), any())).thenReturn(java.util.Collections.emptyList());
     when(refreshTokenRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
+    UUID generated = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
     try (var mockedUuid = mockStatic(UUID.class)) {
-      mockedUuid.when(UUID::randomUUID).thenReturn(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
+      mockedUuid.when(UUID::randomUUID).thenReturn(generated);
       String issued = service.issue(5L, true, "prev-token");
       assertThat(issued).isEqualTo("123e4567-e89b-12d3-a456-426614174000");
     }

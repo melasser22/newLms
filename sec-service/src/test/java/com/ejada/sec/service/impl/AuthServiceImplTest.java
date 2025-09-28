@@ -111,8 +111,11 @@ class AuthServiceImplTest {
     when(userRepository.findByTenantIdAndUsername(tenantId, "locked-user"))
         .thenReturn(Optional.of(lockedUser));
 
-    assertThatThrownBy(() -> service.login(request))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("Account disabled or locked");
+    BaseResponse<AuthResponse> response = service.login(request);
+
+    assertThat(response.isSuccess()).isFalse();
+    assertThat(response.getCode()).isEqualTo("ERR-AUTH-LOCKED");
+    assertThat(response.getMessage()).contains("Account disabled or locked");
+    assertThat(response.getData()).isNull();
   }
 }
