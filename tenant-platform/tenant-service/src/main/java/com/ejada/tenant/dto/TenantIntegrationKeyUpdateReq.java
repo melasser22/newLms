@@ -2,6 +2,8 @@ package com.ejada.tenant.dto;
 
 import static com.ejada.tenant.model.TenantIntegrationKey.LABEL_LENGTH;
 import static com.ejada.tenant.model.TenantIntegrationKey.SCOPE_LENGTH;
+import static com.ejada.tenant.model.TenantIntegrationKey.AUDIT_NAME_LENGTH;
+import static com.ejada.tenant.model.TenantIntegrationKey.PLAIN_SECRET_LENGTH;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Future;
@@ -35,7 +37,15 @@ public record TenantIntegrationKeyUpdateReq(
         Integer dailyQuota,
 
         @Schema(description = "Arbitrary JSON metadata")
-        String meta
+        String meta,
+
+        @Size(max = PLAIN_SECRET_LENGTH)
+        @Schema(description = "Provide to rotate the secret; hashed and never persisted in plaintext")
+        String newPlainSecret,
+
+        @Size(max = AUDIT_NAME_LENGTH)
+        @Schema(description = "Actor rotating the secret", example = "tenant-admin")
+        String rotatedBy
 ) {
     public TenantIntegrationKeyUpdateReq {
         scopes = scopes == null ? List.of() : List.copyOf(scopes);

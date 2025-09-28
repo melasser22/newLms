@@ -1,20 +1,30 @@
 package com.ejada.setup.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.setup.dto.LookupCreateRequest;
+import com.ejada.setup.dto.LookupResponse;
+import com.ejada.setup.dto.LookupUpdateRequest;
 import com.ejada.setup.model.Lookup;
 import com.ejada.setup.repository.LookupRepository;
 import com.ejada.setup.service.LookupService;
 import com.ejada.audit.starter.api.AuditAction;
 import com.ejada.audit.starter.api.DataClass;
 import com.ejada.audit.starter.api.annotations.Audited;
+import jakarta.annotation.Nullable;
 import jakarta.transaction.Transactional;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -23,9 +33,11 @@ public class LookupServiceImpl implements LookupService {
     private static final Logger LOGGER = LoggerFactory.getLogger(LookupServiceImpl.class);
 
     private final LookupRepository lookupRepository;
+    private final CacheManager cacheManager;
 
-    public LookupServiceImpl(final LookupRepository lookupRepository) {
+    public LookupServiceImpl(final LookupRepository lookupRepository, final CacheManager cacheManager) {
         this.lookupRepository = lookupRepository;
+        this.cacheManager = cacheManager;
     }
 
     /**
@@ -34,15 +46,17 @@ public class LookupServiceImpl implements LookupService {
      * when using JSON Redis serializers (root cause of ClassCastException you saw).
      */
     @Cacheable(cacheNames = "lookups:all", key = "'all'")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<Lookup> getAllRaw() {
         return lookupRepository.findAll();
     }
 
     @Override
     @Audited(action = AuditAction.READ, entity = "Lookup", dataClass = DataClass.HEALTH, message = "Fetch all lookups")
-    public BaseResponse<List<Lookup>> getAll() {
+    public BaseResponse<List<LookupResponse>> getAll() {
         try {
-            return BaseResponse.success("Fetched all lookups", getAllRaw());
+            List<LookupResponse> responses = mapToResponses(getAllRaw());
+            return BaseResponse.success("Fetched all lookups", responses);
         } catch (Exception ex) {
             LOGGER.error("Exception while retrieving lookups", ex);
             return BaseResponse.error("ERR_LOOKUP_ALL", "Failed to fetch lookups");
@@ -50,18 +64,20 @@ public class LookupServiceImpl implements LookupService {
     }
 
     @Cacheable(cacheNames = "lookups:byGroup", key = "#groupCode")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<Lookup> getByGroupRaw(final String groupCode) {
         return lookupRepository.findByLookupGroupCodeAndIsActiveTrueOrderByLookupItemEnNmAsc(groupCode);
     }
 
     @Override
     @Audited(action = AuditAction.READ, entity = "Lookup", dataClass = DataClass.HEALTH, message = "Fetch lookups by group")
-    public BaseResponse<List<Lookup>> getByGroup(final String groupCode) {
+    public BaseResponse<List<LookupResponse>> getByGroup(final String groupCode) {
         try {
-            if (groupCode == null || groupCode.isBlank()) {
+            if (StringUtils.isBlank(groupCode)) {
                 return BaseResponse.error("ERR_LOOKUP_GROUP_REQUIRED", "Group code is required");
             }
-            return BaseResponse.success("Fetched lookups by group", getByGroupRaw(groupCode));
+            List<LookupResponse> responses = mapToResponses(getByGroupRaw(groupCode));
+            return BaseResponse.success("Fetched lookups by group", responses);
         } catch (Exception ex) {
             LOGGER.error("Exception while retrieving lookups by group", ex);
             return BaseResponse.error("ERR_LOOKUP_GROUP", "Failed to fetch lookups by group");
@@ -70,20 +86,15 @@ public class LookupServiceImpl implements LookupService {
 
     @Override
     @Audited(action = AuditAction.CREATE, entity = "Lookup", dataClass = DataClass.HEALTH, message = "Create lookup")
-    @CacheEvict(cacheNames = {"lookups:all", "lookups:byGroup"}, allEntries = true)
-    public BaseResponse<Lookup> add(final Lookup request) {
+    public BaseResponse<LookupResponse> add(final LookupCreateRequest request) {
         try {
-            if (request.getLookupItemId() == null) {
-                return BaseResponse.error("ERR_LOOKUP_ID_REQUIRED", "Lookup item id is required");
-            }
-            if (request.getLookupItemCd() == null || request.getLookupItemCd().isBlank()) {
-                return BaseResponse.error("ERR_LOOKUP_CD_REQUIRED", "Lookup item code is required");
-            }
-            if (lookupRepository.existsById(request.getLookupItemId())) {
-                return BaseResponse.error("ERR_LOOKUP_DUP_ID", "Lookup item id already exists");
-            }
-            Lookup saved = lookupRepository.save(request);
-            return BaseResponse.success("Lookup created", saved);
+            Lookup toSave = mapCreate(request);
+            Lookup saved = lookupRepository.save(toSave);
+            evictCaches(saved.getLookupGroupCode());
+            return BaseResponse.success("Lookup created", toResponse(saved));
+        } catch (DataIntegrityViolationException ex) {
+            LOGGER.warn("Lookup creation failed because of duplicate key: {}", ex.getMessage());
+            return BaseResponse.error("ERR_LOOKUP_DUPLICATE", "Lookup already exists");
         } catch (Exception ex) {
             LOGGER.error("Add lookup failed", ex);
             return BaseResponse.error("ERR_LOOKUP_ADD", "Failed to create lookup");
@@ -92,49 +103,114 @@ public class LookupServiceImpl implements LookupService {
 
     @Override
     @Audited(action = AuditAction.UPDATE, entity = "Lookup", dataClass = DataClass.HEALTH, message = "Update lookup")
-    @CacheEvict(cacheNames = {"lookups:all", "lookups:byGroup"}, allEntries = true)
-    public BaseResponse<Lookup> update(final Integer lookupItemId, final Lookup request) {
+    public BaseResponse<LookupResponse> update(final Integer lookupItemId, final LookupUpdateRequest request) {
         try {
             Lookup existing = lookupRepository.findById(lookupItemId).orElse(null);
             if (existing == null) {
                 return BaseResponse.error("ERR_LOOKUP_NOT_FOUND", "Lookup not found");
             }
 
-            if (request.getLookupItemCd() != null) {
-                existing.setLookupItemCd(request.getLookupItemCd());
-            }
-            if (request.getLookupItemEnNm() != null) {
-                existing.setLookupItemEnNm(request.getLookupItemEnNm());
-            }
-            if (request.getLookupItemArNm() != null) {
-                existing.setLookupItemArNm(request.getLookupItemArNm());
-            }
-            if (request.getLookupGroupCode() != null) {
-                existing.setLookupGroupCode(request.getLookupGroupCode());
-            }
-            if (request.getParentLookupId() != null) {
-                existing.setParentLookupId(request.getParentLookupId());
-            }
-            if (request.getIsActive() != null) {
-                existing.setIsActive(request.getIsActive());
-            }
-            if (request.getItemEnDescription() != null) {
-                existing.setItemEnDescription(request.getItemEnDescription());
-            }
-            if (request.getItemArDescription() != null) {
-                existing.setItemArDescription(request.getItemArDescription());
-            }
+            String previousGroup = existing.getLookupGroupCode();
+            applyUpdate(existing, request);
 
             Lookup saved = lookupRepository.save(existing);
-            return BaseResponse.success("Lookup updated", saved);
+            evictCaches(previousGroup, saved.getLookupGroupCode());
+            return BaseResponse.success("Lookup updated", toResponse(saved));
+        } catch (DataIntegrityViolationException ex) {
+            LOGGER.warn("Lookup update failed because of duplicate key: {}", ex.getMessage());
+            return BaseResponse.error("ERR_LOOKUP_DUPLICATE", "Lookup already exists");
         } catch (Exception ex) {
             LOGGER.error("Update lookup failed", ex);
             return BaseResponse.error("ERR_LOOKUP_UPDATE", "Failed to update lookup");
         }
     }
-    
+
     @Override
-    public BaseResponse<List<Lookup>> getAllLookups() {
+    public BaseResponse<List<LookupResponse>> getAllLookups() {
         return getAll();
+    }
+
+    private Lookup mapCreate(final LookupCreateRequest request) {
+        return Lookup.builder()
+                .lookupItemId(request.lookupItemId())
+                .lookupItemCd(request.lookupItemCd())
+                .lookupItemEnNm(request.lookupItemEnNm())
+                .lookupItemArNm(request.lookupItemArNm())
+                .lookupGroupCode(request.lookupGroupCode())
+                .parentLookupId(request.parentLookupId())
+                .isActive(request.isActive())
+                .itemEnDescription(request.itemEnDescription())
+                .itemArDescription(request.itemArDescription())
+                .build();
+    }
+
+    private void applyUpdate(final Lookup existing, final LookupUpdateRequest request) {
+        if (request.lookupItemCd() != null) {
+            existing.setLookupItemCd(request.lookupItemCd());
+        }
+        if (request.lookupItemEnNm() != null) {
+            existing.setLookupItemEnNm(request.lookupItemEnNm());
+        }
+        if (request.lookupItemArNm() != null) {
+            existing.setLookupItemArNm(request.lookupItemArNm());
+        }
+        if (request.lookupGroupCode() != null) {
+            existing.setLookupGroupCode(request.lookupGroupCode());
+        }
+        if (request.parentLookupId() != null) {
+            existing.setParentLookupId(request.parentLookupId());
+        }
+        if (request.isActive() != null) {
+            existing.setIsActive(request.isActive());
+        }
+        if (request.itemEnDescription() != null) {
+            existing.setItemEnDescription(request.itemEnDescription());
+        }
+        if (request.itemArDescription() != null) {
+            existing.setItemArDescription(request.itemArDescription());
+        }
+    }
+
+    private List<LookupResponse> mapToResponses(final List<Lookup> lookups) {
+        if (lookups == null || lookups.isEmpty()) {
+            return List.of();
+        }
+        return lookups.stream().filter(Objects::nonNull)
+                .map(this::toResponse)
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    private LookupResponse toResponse(final Lookup lookup) {
+        if (lookup == null) {
+            return null;
+        }
+        return new LookupResponse(
+                lookup.getLookupItemId(),
+                lookup.getLookupItemCd(),
+                lookup.getLookupItemEnNm(),
+                lookup.getLookupItemArNm(),
+                lookup.getLookupGroupCode(),
+                lookup.getParentLookupId(),
+                lookup.getIsActive(),
+                lookup.getItemEnDescription(),
+                lookup.getItemArDescription()
+        );
+    }
+
+    private void evictCaches(@Nullable final String... groupCodes) {
+        Cache allCache = cacheManager.getCache("lookups:all");
+        if (allCache != null) {
+            allCache.evict("all");
+        }
+        if (groupCodes != null) {
+            Cache groupCache = cacheManager.getCache("lookups:byGroup");
+            if (groupCache != null) {
+                for (String groupCode : groupCodes) {
+                    if (StringUtils.isNotBlank(groupCode)) {
+                        groupCache.evict(groupCode);
+                    }
+                }
+            }
+        }
     }
 }

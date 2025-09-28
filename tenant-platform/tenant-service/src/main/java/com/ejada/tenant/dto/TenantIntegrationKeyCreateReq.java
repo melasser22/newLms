@@ -4,6 +4,7 @@ import static com.ejada.tenant.model.TenantIntegrationKey.KEY_ID_LENGTH;
 import static com.ejada.tenant.model.TenantIntegrationKey.LABEL_LENGTH;
 import static com.ejada.tenant.model.TenantIntegrationKey.PLAIN_SECRET_LENGTH;
 import static com.ejada.tenant.model.TenantIntegrationKey.SCOPE_LENGTH;
+import static com.ejada.tenant.model.TenantIntegrationKey.AUDIT_NAME_LENGTH;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Future;
@@ -52,7 +53,11 @@ public record TenantIntegrationKeyCreateReq(
         Integer dailyQuota,
 
         @Schema(description = "Arbitrary JSON metadata (stringified if not using json type mapping)")
-        String meta
+        String meta,
+
+        @Size(max = AUDIT_NAME_LENGTH)
+        @Schema(description = "Actor that created the key", example = "system")
+        String createdBy
 ) {
     public TenantIntegrationKeyCreateReq {
         scopes = scopes == null ? List.of() : List.copyOf(scopes);

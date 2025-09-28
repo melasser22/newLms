@@ -49,6 +49,7 @@ public class TenantIntegrationKey {
     public static final int STATUS_LENGTH = 16;
     public static final int PLAIN_SECRET_LENGTH = 256;
     public static final int SCOPE_LENGTH = 64;
+    public static final int AUDIT_NAME_LENGTH = 128;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -117,6 +118,15 @@ public class TenantIntegrationKey {
 
     @Column(name = "updated_at", insertable = false)
     private java.time.OffsetDateTime updatedAt;
+
+    @Column(name = "created_by", length = AUDIT_NAME_LENGTH)
+    private String createdBy;
+
+    @Column(name = "secret_last_rotated_at")
+    private java.time.OffsetDateTime secretLastRotatedAt;
+
+    @Column(name = "secret_last_rotated_by", length = AUDIT_NAME_LENGTH)
+    private String secretLastRotatedBy;
 
     public final Tenant getTenant() {
         return tenant == null ? null : Tenant.ref(tenant.getId());
