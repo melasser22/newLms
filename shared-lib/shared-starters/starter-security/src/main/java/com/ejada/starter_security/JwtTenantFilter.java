@@ -13,6 +13,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 
 class JwtTenantFilter extends HttpFilter {
 
@@ -33,9 +35,9 @@ class JwtTenantFilter extends HttpFilter {
                 
                 // Check if this is a superadmin token
                 Boolean isSuperadmin = jwt.getClaim("isSuperadmin");
-                Object uidClaim = jwt.getClaims().get("uid");
-                if (uidClaim != null) {
-                    ContextManager.setUserId(uidClaim.toString());
+                String userId = asString(jwt.getClaims().get("uid"));
+                if (userId != null && !userId.isBlank()) {
+                    ContextManager.setUserId(userId);
                 }
 
                 if (Boolean.TRUE.equals(isSuperadmin)) {
@@ -43,9 +45,8 @@ class JwtTenantFilter extends HttpFilter {
                     response.setHeader("X-Is-Superadmin", "true");
                 } else {
                     // Regular tenant user
-                    Object tid = jwt.getClaims().get(tenantClaim);
-                    if (tid != null) {
-                        String tenant = tid.toString();
+                    String tenant = asString(jwt.getClaims().get(tenantClaim));
+                    if (tenant != null && !tenant.isBlank()) {
                         ContextManager.Tenant.set(tenant);
                         request.setAttribute(HeaderNames.X_TENANT_ID, tenant);
                         response.setHeader(HeaderNames.X_TENANT_ID, tenant);
@@ -57,5 +58,32 @@ class JwtTenantFilter extends HttpFilter {
             ContextManager.Tenant.clear();
             ContextManager.clearUserId();
         }
+    }
+
+    private static String asString(Object claim) {
+        if (claim == null) {
+            return null;
+        }
+        if (claim instanceof String str) {
+            return str;
+        }
+        if (claim instanceof char[] chars) {
+            return new String(chars);
+        }
+        if (claim instanceof Object[] array) {
+            return Arrays.stream(array)
+                    .map(JwtTenantFilter::asString)
+                    .filter(str -> str != null && !str.isBlank())
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (claim instanceof Collection<?> collection) {
+            return collection.stream()
+                    .map(JwtTenantFilter::asString)
+                    .filter(str -> str != null && !str.isBlank())
+                    .findFirst()
+                    .orElse(null);
+        }
+        return String.valueOf(claim);
     }
 }
