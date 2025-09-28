@@ -22,6 +22,9 @@ public record TenantIntegrationKeyRes(
         Boolean isDeleted,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
+        String createdBy,
+        OffsetDateTime secretLastRotatedAt,
+        String secretLastRotatedBy,
         @Schema(description = "Plain secret returned only on creation")
         String plainSecret
 ) {
@@ -37,6 +40,6 @@ public record TenantIntegrationKeyRes(
     public TenantIntegrationKeyRes withPlainSecret(final String secret) {
         return new TenantIntegrationKeyRes(tikId, tenantId, keyId, label, scopes, status,
                 validFrom, expiresAt, lastUsedAt, useCount, dailyQuota, meta, isDeleted,
-                createdAt, updatedAt, secret);
+                createdAt, updatedAt, createdBy, secretLastRotatedAt, secretLastRotatedBy, secret);
     }
 }

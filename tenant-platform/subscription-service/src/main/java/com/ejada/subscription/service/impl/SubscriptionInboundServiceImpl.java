@@ -242,43 +242,127 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
 
     private void replaceFeatures(final Subscription sub, final List<SubscriptionFeatureDto> dtos) {
         var existing = featureRepo.findBySubscriptionSubscriptionId(sub.getSubscriptionId());
-        if (!existing.isEmpty()) {
-            featureRepo.deleteAllInBatch(existing);
-        }
-        if (dtos != null && !dtos.isEmpty()) {
-            var mapped = new ArrayList<SubscriptionFeature>(dtos.size());
-            for (var d : dtos) {
-                mapped.add(featureMapper.toEntity(d, sub));
+        if (dtos == null || dtos.isEmpty()) {
+            if (!existing.isEmpty()) {
+                featureRepo.deleteAll(existing);
             }
-            featureRepo.saveAll(mapped);
+            return;
+        }
+
+        var existingByCode = new java.util.HashMap<String, SubscriptionFeature>(existing.size());
+        for (SubscriptionFeature feature : existing) {
+            existingByCode.put(feature.getFeatureCd(), feature);
+        }
+
+        var toCreate = new ArrayList<SubscriptionFeature>();
+        var toUpdate = new ArrayList<SubscriptionFeature>();
+
+        for (SubscriptionFeatureDto dto : dtos) {
+            SubscriptionFeature entity = existingByCode.remove(dto.featureCd());
+            if (entity == null) {
+                toCreate.add(featureMapper.toEntity(dto, sub));
+            } else {
+                entity.setFeatureCount(dto.featureCount());
+                entity.setUpdatedAt(OffsetDateTime.now());
+                toUpdate.add(entity);
+            }
+        }
+
+        if (!existingByCode.isEmpty()) {
+            featureRepo.deleteAll(existingByCode.values());
+        }
+        if (!toUpdate.isEmpty()) {
+            featureRepo.saveAll(toUpdate);
+        }
+        if (!toCreate.isEmpty()) {
+            featureRepo.saveAll(toCreate);
         }
     }
 
     private void replaceAdditionalServices(final Subscription sub, final List<SubscriptionAdditionalServiceDto> dtos) {
         var existing = additionalServiceRepo.findBySubscriptionSubscriptionId(sub.getSubscriptionId());
-        if (!existing.isEmpty()) {
-            additionalServiceRepo.deleteAllInBatch(existing);
-        }
-        if (dtos != null && !dtos.isEmpty()) {
-            var mapped = new ArrayList<SubscriptionAdditionalService>(dtos.size());
-            for (var d : dtos) {
-                mapped.add(additionalServiceMapper.toEntity(d, sub));
+        if (dtos == null || dtos.isEmpty()) {
+            if (!existing.isEmpty()) {
+                additionalServiceRepo.deleteAll(existing);
             }
-            additionalServiceRepo.saveAll(mapped);
+            return;
+        }
+
+        var existingById = new java.util.HashMap<Long, SubscriptionAdditionalService>(existing.size());
+        for (SubscriptionAdditionalService svc : existing) {
+            existingById.put(svc.getProductAdditionalServiceId(), svc);
+        }
+
+        var toCreate = new ArrayList<SubscriptionAdditionalService>();
+        var toUpdate = new ArrayList<SubscriptionAdditionalService>();
+
+        for (SubscriptionAdditionalServiceDto dto : dtos) {
+            SubscriptionAdditionalService entity = existingById.remove(dto.productAdditionalServiceId());
+            if (entity == null) {
+                toCreate.add(additionalServiceMapper.toEntity(dto, sub));
+            } else {
+                entity.setServiceCd(dto.serviceCd());
+                entity.setServiceNameEn(dto.serviceNameEn());
+                entity.setServiceNameAr(dto.serviceNameAr());
+                entity.setServiceDescEn(dto.serviceDescEn());
+                entity.setServiceDescAr(dto.serviceDescAr());
+                entity.setServicePrice(dto.servicePrice());
+                entity.setTotalAmount(dto.totalAmount());
+                entity.setCurrency(dto.currency());
+                entity.setIsCountable(Boolean.TRUE.equals(dto.isCountable()));
+                entity.setRequestedCount(dto.requestedCount());
+                entity.setPaymentTypeCd(dto.paymentTypeCd());
+                entity.setUpdatedAt(OffsetDateTime.now());
+                toUpdate.add(entity);
+            }
+        }
+
+        if (!existingById.isEmpty()) {
+            additionalServiceRepo.deleteAll(existingById.values());
+        }
+        if (!toUpdate.isEmpty()) {
+            additionalServiceRepo.saveAll(toUpdate);
+        }
+        if (!toCreate.isEmpty()) {
+            additionalServiceRepo.saveAll(toCreate);
         }
     }
 
     private void replaceProductProperties(final Subscription sub, final List<ProductPropertyDto> dtos) {
         var existing = propertyRepo.findBySubscriptionSubscriptionId(sub.getSubscriptionId());
-        if (!existing.isEmpty()) {
-            propertyRepo.deleteAllInBatch(existing);
-        }
-        if (dtos != null && !dtos.isEmpty()) {
-            var mapped = new ArrayList<SubscriptionProductProperty>(dtos.size());
-            for (var d : dtos) {
-                mapped.add(propertyMapper.toEntity(d, sub));
+        if (dtos == null || dtos.isEmpty()) {
+            if (!existing.isEmpty()) {
+                propertyRepo.deleteAll(existing);
             }
-            propertyRepo.saveAll(mapped);
+            return;
+        }
+
+        var existingByCode = new java.util.HashMap<String, SubscriptionProductProperty>(existing.size());
+        for (SubscriptionProductProperty prop : existing) {
+            existingByCode.put(prop.getPropertyCd(), prop);
+        }
+
+        var toCreate = new ArrayList<SubscriptionProductProperty>();
+        var toUpdate = new ArrayList<SubscriptionProductProperty>();
+
+        for (ProductPropertyDto dto : dtos) {
+            SubscriptionProductProperty entity = existingByCode.remove(dto.propertyCd());
+            if (entity == null) {
+                toCreate.add(propertyMapper.toEntity(dto, sub));
+            } else {
+                entity.setPropertyValue(dto.propertyValue());
+                toUpdate.add(entity);
+            }
+        }
+
+        if (!existingByCode.isEmpty()) {
+            propertyRepo.deleteAll(existingByCode.values());
+        }
+        if (!toUpdate.isEmpty()) {
+            propertyRepo.saveAll(toUpdate);
+        }
+        if (!toCreate.isEmpty()) {
+            propertyRepo.saveAll(toCreate);
         }
     }
 

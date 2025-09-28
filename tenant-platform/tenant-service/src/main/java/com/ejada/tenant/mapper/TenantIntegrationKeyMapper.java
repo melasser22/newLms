@@ -42,6 +42,9 @@ public interface TenantIntegrationKeyMapper {
     @Mapping(target = "dailyQuota", source = "dailyQuota")
     @Mapping(target = "meta", source = "meta")
     @Mapping(target = "isDeleted", constant = "false")
+    @Mapping(target = "createdBy", source = "createdBy")
+    @Mapping(target = "secretLastRotatedAt", ignore = true)
+    @Mapping(target = "secretLastRotatedBy", ignore = true)
     // DB-managed timestamps
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
@@ -74,6 +77,9 @@ public interface TenantIntegrationKeyMapper {
     @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "secretLastRotatedAt", ignore = true)
+    @Mapping(target = "secretLastRotatedBy", ignore = true)
     @Mapping(target = "scopes", source = "scopes", qualifiedByName = "toArray")
     @Mapping(target = "status", source = "status", qualifiedByName = "toEntityStatus")
     void update(@MappingTarget @NonNull TenantIntegrationKey entity, @NonNull TenantIntegrationKeyUpdateReq req);
@@ -84,6 +90,9 @@ public interface TenantIntegrationKeyMapper {
     @Mapping(target = "scopes", source = "scopes", qualifiedByName = "toList")
     @Mapping(target = "status", source = "status", qualifiedByName = "toDtoStatus")
     @Mapping(target = "isDeleted", source = "isDeleted")
+    @Mapping(target = "createdBy", source = "createdBy")
+    @Mapping(target = "secretLastRotatedAt", source = "secretLastRotatedAt")
+    @Mapping(target = "secretLastRotatedBy", source = "secretLastRotatedBy")
     @Mapping(target = "plainSecret", expression = "java(null)")
     @Mapping(target = "withPlainSecret", ignore = true)
     TenantIntegrationKeyRes toRes(@NonNull TenantIntegrationKey entity);
