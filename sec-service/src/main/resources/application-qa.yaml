@@ -196,6 +196,7 @@ shared:
     jwt:
       secret: ${JWT_SECRET}
       token-period: 15m
+      superadmin-ttl: PT24H
     hs256:
       secret: ${JWT_SECRET}
     resource-server:
@@ -208,6 +209,10 @@ shared:
     roles-claim: roles
     tenant-claim: tenant
     enable-role-check: true
+    superadmin:
+      password-expiry-days: 90
+      min-active-admins: 1
+      max-failed-attempts: 5
 
 logging:
   level:

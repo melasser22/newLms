@@ -38,6 +38,11 @@ shared:
     enable-role-check: true
     jwt:
       token-period: 15m
+      superadmin-ttl: PT24H
+    superadmin:
+      password-expiry-days: 90
+      min-active-admins: 1
+      max-failed-attempts: 5
 
 sec:
   superadmin:
