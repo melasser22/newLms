@@ -184,7 +184,9 @@ public class SecurityAutoConfiguration {
       http.csrf(AbstractHttpConfigurer::disable);
     } else {
       http.csrf(csrf -> {
-        csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+        CookieCsrfTokenRepository tokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        tokenRepository.setHeaderName(HeaderNames.CSRF_TOKEN);
+        csrf.csrfTokenRepository(tokenRepository);
         String[] ignorePatterns = Optional.ofNullable(rs.getCsrfIgnore()).orElseGet(() -> new String[0]);
         HandlerMappingIntrospector introspector = handlerMappingIntrospectorProvider.getIfAvailable();
         MvcRequestMatcher.Builder mvcMatcherBuilder =
