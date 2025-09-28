@@ -33,10 +33,10 @@ spring:
     default-schema: security
 
   kafka:
-    bootstrap-servers: kafka:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     client-id: ejada-security-dev
     consumer:
-      group-id: ejada-backend-dev
+      group-id: ${KAFKA_CONSUMER_GROUP:ejada-backend-dev}
       auto-offset-reset: earliest
       enable-auto-commit: false
       properties:
@@ -125,10 +125,20 @@ shared:
         enabled: true
         max-age: 31536000
         include-subdomains: true
+        preload: true
       frame-options: SAMEORIGIN
       content-type-options: nosniff
       referrer-policy: no-referrer
+      permissions-policy: "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+      csp: "default-src 'self'; frame-ancestors 'self'; img-src 'self' data: blob:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' ws://localhost:8085; form-action 'self'"
+      coop: same-origin
+      coep: require-corp
+      x-download-options: noopen
       xss-protection: "0"
+      exclude-paths:
+        - /sec/swagger-ui/**
+        - /sec/v3/api-docs/**
+        - /sec/actuator/**
     propagation:
       enabled: true
       include:
@@ -174,18 +184,18 @@ shared:
     description: "security service endpoints for tenant/platform configuration."
     version: "1.0.0"
     servers:
-      - http://localhost:8085/sec
+      - ${OPENAPI_SERVER_URL:http://localhost:8085/sec}
     group:
       name: security
       packages-to-scan:
         - com.ejada.security
     jwt-security: false
   redis:
-    host: redis
-    port: 6379
-    timeout: 2s
-    key-prefix: security
-    default-ttl: 600s
+    host: ${REDIS_HOST:redis}
+    port: ${REDIS_PORT:6379}
+    timeout: ${REDIS_TIMEOUT:2s}
+    key-prefix: ${REDIS_KEY_PREFIX:security}
+    default-ttl: ${REDIS_DEFAULT_TTL:600s}
     reactive: false
   crypto:
     algorithm: AES_GCM
@@ -205,9 +215,14 @@ shared:
       enabled: true
       permit-all:
         - "/api/auth/**"
+        - "/v3/api-docs/**"
+        - "/swagger-ui/**"
+        - "/actuator/health/**"
       disable-csrf: false
       csrf-ignore:
         - "/api/auth/**"
+        - "/v3/api-docs/**"
+        - "/swagger-ui/**"
     stateless: true
     roles-claim: roles
     tenant-claim: tenant
