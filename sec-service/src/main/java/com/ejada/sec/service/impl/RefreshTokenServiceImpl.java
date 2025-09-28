@@ -38,7 +38,17 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   @Override
   public String issue(Long userId, boolean revokeExistingSessions, String rotatedFrom) {
     var now = Instant.now();
-    repo.deleteByUserId(userId);
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
+
+    if (revokeExistingSessions) {
+      int removed = repo.deleteByUserId(userId);
+      if (removed > 0) {
+        log.debug("Revoked {} existing refresh tokens for user {}", removed, userId);
+      }
+    }
+
+    String token = UUID.randomUUID().toString();
 
     var rt = RefreshToken.builder()
         .user(user)
@@ -50,6 +60,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     repo.save(rt);
 
     enforceUserLimit(userId, now);
+    enforceTenantLimit(user.getTenantId(), now);
 
     return token;
   }

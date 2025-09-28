@@ -106,6 +106,10 @@ public class AuthServiceImpl implements AuthService {
     return BaseResponse.success("Logged out", null);
   }
 
+  private AuthResponse issueTokens(UUID tenantId, String username, Long userId) {
+    return issueTokens(tenantId, username, userId, false, null);
+  }
+
   private AuthResponse issueTokens(UUID tenantId, String username, Long userId, boolean revokeExistingSessions, String rotatedFrom) {
     String access = tokenIssuer.issueAccessToken(tenantId, userId, username);
     String refresh = refreshTokenService.issue(userId, revokeExistingSessions, rotatedFrom);
