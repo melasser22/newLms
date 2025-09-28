@@ -282,7 +282,7 @@ public class SuperadminServiceImpl implements SuperadminService {
                 SuperadminAuthResponse.builder()
                     .accessToken(firstLoginToken)
                     .tokenType("Bearer")
-                    .expiresInSeconds(900) // 15 minutes
+                    .expiresInSeconds(superadminTokenTtl.getSeconds())
                     .role("EJADA_OFFICER")
                     .permissions(List.of("CHANGE_PASSWORD"))
                     .requiresPasswordChange(true)
@@ -299,7 +299,7 @@ public class SuperadminServiceImpl implements SuperadminService {
                 SuperadminAuthResponse.builder()
                     .accessToken(expiredPasswordToken)
                     .tokenType("Bearer")
-                    .expiresInSeconds(900)
+                    .expiresInSeconds(superadminTokenTtl.getSeconds())
                     .role("EJADA_OFFICER")
                     .permissions(List.of("CHANGE_PASSWORD"))
                     .passwordExpired(true)
@@ -568,7 +568,7 @@ public class SuperadminServiceImpl implements SuperadminService {
             null,
             List.of("EJADA_OFFICER"),
             claims,
-            Duration.ofMinutes(15));
+            superadminTokenTtl);
     }
 
     private String generateExpiredPasswordToken(Superadmin superadmin) {
@@ -586,7 +586,7 @@ public class SuperadminServiceImpl implements SuperadminService {
             null,
             List.of("EJADA_OFFICER"),
             claims,
-            Duration.ofMinutes(15));
+            superadminTokenTtl);
     }
     
     private String generateSuperadminToken(Superadmin superadmin) {
