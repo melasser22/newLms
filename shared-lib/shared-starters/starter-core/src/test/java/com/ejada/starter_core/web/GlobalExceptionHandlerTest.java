@@ -8,7 +8,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class GlobalExceptionHandlerTest {
 
@@ -63,5 +65,6 @@ class GlobalExceptionHandlerTest {
         assertEquals(404, resp.getStatusCode().value());
         assertEquals("ERR_RESOURCE_NOT_FOUND", resp.getBody().getCode());
     }
+
 
 }
