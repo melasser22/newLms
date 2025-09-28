@@ -44,19 +44,17 @@ public class AuthServiceImpl implements AuthService {
             .build()
     );
 
-    if (creationResponse == null || !creationResponse.isSuccess() || creationResponse.getData() == null) {
-      String code = creationResponse != null && creationResponse.getCode() != null
-          ? creationResponse.getCode()
-          : CODE_USER_CREATE_FAILED;
-      String message = creationResponse != null && creationResponse.getMessage() != null
-          ? creationResponse.getMessage()
-          : "Failed to create user";
-      log.warn("User registration failed for tenant {}: {}", req.getTenantId(), message);
-      return BaseResponse.error(code, message);
+    if (!creationResponse.isSuccess() || creationResponse.getData() == null) {
+      log.warn(
+          "User '{}' registration failed for tenant {} with code {}",
+          req.getUsername(),
+          req.getTenantId(),
+          creationResponse.getCode());
+      return creationResponse.map(data -> null);
     }
 
     var created = creationResponse.getData();
-    var tokens = issueTokens(created.getTenantId(), created.getUsername(), created.getId(), true, null);
+    var tokens = issueTokens(created.getTenantId(), created.getUsername(), created.getId());
     log.info("User '{}' registered for tenant {}", created.getUsername(), created.getTenantId());
     return BaseResponse.success("User registered", tokens);
   }

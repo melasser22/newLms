@@ -48,6 +48,8 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     }
 
     String token = UUID.randomUUID().toString();
+    tokenRepository.deleteByUserId(user.getId());
+
     var prt = PasswordResetToken.builder()
         .user(user)
         .token(token)

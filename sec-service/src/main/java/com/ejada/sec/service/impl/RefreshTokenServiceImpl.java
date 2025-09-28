@@ -38,19 +38,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   @Override
   public String issue(Long userId, boolean revokeExistingSessions, String rotatedFrom) {
     var now = Instant.now();
-    var user = userRepository.findById(userId)
-        .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
+    repo.deleteByUserId(userId);
 
-    if (revokeExistingSessions) {
-      var revoked = revokeTokens(repo.findActiveTokensByUserId(userId, now), now);
-      if (revoked > 0) {
-        log.debug("Revoked {} active refresh tokens for user {} prior to issuing a new session", revoked, userId);
-      }
-    }
-
-    enforceTenantLimit(user.getTenantId(), now);
-
-    String token = UUID.randomUUID().toString();
     var rt = RefreshToken.builder()
         .user(user)
         .token(token)
