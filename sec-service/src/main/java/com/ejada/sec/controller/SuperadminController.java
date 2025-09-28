@@ -65,13 +65,13 @@ public class SuperadminController {
     }
     
 
-    @PostMapping("/admin/first-login")
+    @PostMapping("/first-login")
     @PreAuthorize("hasRole('EJADA_OFFICER')")
     public ResponseEntity<BaseResponse<Void>> completeFirstLogin(@Valid @RequestBody FirstLoginRequest request) {
       return ResponseEntity.ok(superadminService.completeFirstLogin(request));
     }
 
-    @PostMapping("/admin/change-password")
+    @PostMapping("/change-password")
     @PreAuthorize("hasRole('EJADA_OFFICER')")
     public ResponseEntity<BaseResponse<Void>> changeSuperadminPassword(@Valid @RequestBody ChangePasswordRequest request) {
       return ResponseEntity.ok(superadminService.changePassword(request));
