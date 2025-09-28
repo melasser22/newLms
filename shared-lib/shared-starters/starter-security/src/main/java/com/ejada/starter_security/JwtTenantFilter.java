@@ -33,16 +33,21 @@ class JwtTenantFilter extends HttpFilter {
                 
                 // Check if this is a superadmin token
                 Boolean isSuperadmin = jwt.getClaim("isSuperadmin");
+                Object uidClaim = jwt.getClaims().get("uid");
+                if (uidClaim != null) {
+                    ContextManager.setUserId(uidClaim.toString());
+                }
+
                 if (Boolean.TRUE.equals(isSuperadmin)) {
                     // Superadmin doesn't need tenant context
-                    ContextManager.setUserId(String.valueOf(jwt.getClaim("uid")));
                     response.setHeader("X-Is-Superadmin", "true");
                 } else {
                     // Regular tenant user
                     Object tid = jwt.getClaims().get(tenantClaim);
                     if (tid != null) {
-                        String tenant = String.valueOf(tid);
+                        String tenant = tid.toString();
                         ContextManager.Tenant.set(tenant);
+                        request.setAttribute(HeaderNames.X_TENANT_ID, tenant);
                         response.setHeader(HeaderNames.X_TENANT_ID, tenant);
                     }
                 }
@@ -50,7 +55,7 @@ class JwtTenantFilter extends HttpFilter {
             chain.doFilter(request, response);
         } finally {
             ContextManager.Tenant.clear();
-            ContextManager.clearUserId();;
+            ContextManager.clearUserId();
         }
     }
 }
