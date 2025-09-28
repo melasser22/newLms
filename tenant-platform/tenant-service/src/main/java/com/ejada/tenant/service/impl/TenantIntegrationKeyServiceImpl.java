@@ -112,8 +112,8 @@ public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyServ
 
         // Validate window if either side is changing
         OffsetDateTime vf = req.validFrom() != null ? req.validFrom() : e.getValidFrom();
-        OffsetDateTime ex = req.expiresAt() != null ? req.expiresAt() : e.getExpiresAt();
-        if (vf != null && ex != null && !ex.isAfter(vf)) {
+        OffsetDateTime effectiveExpiresAt = req.expiresAt() != null ? req.expiresAt() : e.getExpiresAt();
+        if (vf != null && effectiveExpiresAt != null && !effectiveExpiresAt.isAfter(vf)) {
             throw new IllegalArgumentException("expiresAt must be after validFrom");
         }
 
