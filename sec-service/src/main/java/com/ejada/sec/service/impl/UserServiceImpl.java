@@ -7,12 +7,15 @@ import com.ejada.sec.domain.User;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.mapper.ReferenceResolver;
 import com.ejada.sec.mapper.UserMapper;
+import com.ejada.sec.repository.PasswordResetTokenRepository;
 import com.ejada.sec.repository.UserRepository;
 import com.ejada.sec.service.UserService;
+import com.ejada.sec.service.RefreshTokenService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -25,6 +28,8 @@ public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
   private final UserMapper userMapper;
   private final ReferenceResolver resolver;
+  private final RefreshTokenService refreshTokenService;
+  private final PasswordResetTokenRepository passwordResetTokenRepository;
 
   @Transactional
   @Override
@@ -53,9 +58,11 @@ public class UserServiceImpl implements UserService {
   @Transactional
   @Override
   public BaseResponse<Void> delete(Long userId) {
-    if (userRepository.existsById(userId)) {
-      userRepository.deleteById(userId);
-    }
+    userRepository.findById(userId).ifPresent(user -> {
+      revokeUserCredentials(userId);
+      passwordResetTokenRepository.deleteByUserId(userId);
+      userRepository.delete(user);
+    });
     return BaseResponse.success("User deleted", null);
   }
 
@@ -108,6 +115,9 @@ public class UserServiceImpl implements UserService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
     user.setEnabled(flag);
+    if (!flag) {
+      revokeUserCredentials(userId);
+    }
     userRepository.save(user);
     return BaseResponse.success(message, null);
   }
@@ -115,7 +125,15 @@ public class UserServiceImpl implements UserService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
     user.setLocked(flag);
+    if (flag) {
+      revokeUserCredentials(userId);
+    }
     userRepository.save(user);
     return BaseResponse.success(message, null);
+  }
+
+  private void revokeUserCredentials(Long userId) {
+    refreshTokenService.revokeAllForUser(userId);
+    passwordResetTokenRepository.invalidateActiveTokens(userId, Instant.now());
   }
 }

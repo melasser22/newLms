@@ -118,17 +118,18 @@ public class CityServiceImpl implements CityService {
                                 ? Pageable.unpaged()
                                 : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
 
+                var spec = CitySpecifications.nameContains(q);
+
                 if (unpaged) {
-                        var spec = Specification.allOf(CitySpecifications.isActive())
-                                        .and(CitySpecifications.nameContains(q));
-                        var entities = cityRepo.findAll(spec, sort);
+                        var entities = spec == null
+                                        ? cityRepo.findAll(sort)
+                                        : cityRepo.findAll(Specification.where(spec), sort);
                         return BaseResponse.success("City list", new PageImpl<>(mapper.toDtoList(entities)));
                 }
 
-                var spec = Specification.allOf(CitySpecifications.isActive())
-                                .and(CitySpecifications.nameContains(q));
-
-                var page = cityRepo.findAll(spec, pg);
+                var page = spec == null
+                                ? cityRepo.findAll(pg)
+                                : cityRepo.findAll(Specification.where(spec), pg);
                 return BaseResponse.success("Cities page", mapper.toDtoPage(page));
         }
 

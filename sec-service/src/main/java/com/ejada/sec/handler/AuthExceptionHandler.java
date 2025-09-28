@@ -4,10 +4,11 @@ import com.ejada.common.dto.ErrorResponse;
 import com.ejada.common.exception.ValidationException;
 
 import com.ejada.sec.exception.PasswordHistoryUnavailableException;
-import java.util.NoSuchElementException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -19,6 +20,12 @@ public class AuthExceptionHandler {
 
     @ExceptionHandler({NoSuchElementException.class, IllegalStateException.class})
     public ResponseEntity<ErrorResponse> handleAuthExceptions(RuntimeException ex) {
+        ErrorResponse body = ErrorResponse.of("ERR_AUTH", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
+    @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleMissingCredentials(AuthenticationCredentialsNotFoundException ex) {
         ErrorResponse body = ErrorResponse.of("ERR_AUTH", ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
     }

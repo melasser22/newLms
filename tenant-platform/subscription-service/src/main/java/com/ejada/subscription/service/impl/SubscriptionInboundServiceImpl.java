@@ -9,6 +9,7 @@ import com.ejada.subscription.dto.SubscriptionAdditionalServiceDto;
 import com.ejada.subscription.dto.SubscriptionFeatureDto;
 import com.ejada.subscription.dto.SubscriptionInfoDto;
 import com.ejada.subscription.dto.SubscriptionUpdateType;
+import com.ejada.subscription.exception.ServiceResultException;
 import com.ejada.subscription.mapper.SubscriptionAdditionalServiceMapper;
 import com.ejada.subscription.mapper.SubscriptionEnvironmentIdentifierMapper;
 import com.ejada.subscription.mapper.SubscriptionFeatureMapper;
@@ -16,6 +17,7 @@ import com.ejada.subscription.mapper.SubscriptionMapper;
 import com.ejada.subscription.mapper.SubscriptionProductPropertyMapper;
 import com.ejada.subscription.mapper.SubscriptionUpdateEventMapper;
 import com.ejada.subscription.model.InboundNotificationAudit;
+import com.ejada.subscription.model.IdempotentRequest;
 import com.ejada.subscription.model.OutboxEvent;
 import com.ejada.subscription.model.Subscription;
 import com.ejada.subscription.model.SubscriptionAdditionalService;
@@ -38,7 +40,11 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -50,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * Handles marketplace callbacks:
@@ -71,7 +78,6 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     private final InboundNotificationAuditRepository auditRepo;
     private final SubscriptionUpdateEventRepository updateEventRepo;
     private final OutboxEventRepository outboxRepo;
-    @SuppressWarnings("unused")
     private final IdempotentRequestRepository idemRepo; // optional second guard by rqUID
 
     // Mappers
@@ -85,6 +91,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     // JSON
     @SuppressFBWarnings("EI_EXPOSE_REP2")
     private final ObjectMapper objectMapper;
+    private final PlatformTransactionManager transactionManager;
 
     private static final String EP_NOTIFICATION = "RECEIVE_NOTIFICATION";
     private static final String EP_UPDATE       = "RECEIVE_UPDATE";
@@ -118,7 +125,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         audit.setEndpoint(EP_NOTIFICATION);
         audit.setTokenHash(sha256(token));
         audit.setPayload(writeJson(rq));
-        audit = auditRepo.save(audit);
+        audit = executeInNewTransaction(() -> auditRepo.save(audit), "persist inbound notification audit");
 
         try {
             // 3) Upsert subscription
@@ -148,18 +155,22 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
                     envIdRepo.findBySubscriptionSubscriptionId(sub.getSubscriptionId());
 
             // 6) Mark success and emit outbox
-            markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
             emitOutbox("SUBSCRIPTION", sub.getSubscriptionId().toString(), "CREATED_OR_UPDATED",
                     Map.of("extSubscriptionId", sub.getExtSubscriptionId(), "extCustomerId", sub.getExtCustomerId()));
+
+            recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
+            markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
 
             var rs = new ReceiveSubscriptionNotificationRs(Boolean.TRUE, envIdMapper.toDtoList(envIds));
             return okNotification(rs);
 
         } catch (Exception ex) {
             log.error("receiveSubscriptionNotification failed", ex);
+            var failure = err("EINT000", "Unexpected Error", jsonMsg("processing failed"));
             markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
                     jsonMsg(ex.getMessage()));
-            return err("EINT000", "Unexpected Error", jsonMsg("processing failed"));
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            throw new ServiceResultException(failure, ex);
         }
     }
 
@@ -181,7 +192,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         audit.setEndpoint(EP_UPDATE);
         audit.setTokenHash(sha256(token));
         audit.setPayload(writeJson(rq));
-        audit = auditRepo.save(audit);
+        audit = executeInNewTransaction(() -> auditRepo.save(audit), "persist inbound notification audit");
 
         try {
             // 3) Persist raw update event (for trace)
@@ -200,22 +211,28 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             event.setProcessed(true);
             event.setProcessedAt(OffsetDateTime.now());
 
-            markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
             emitOutbox("SUBSCRIPTION", sub.getSubscriptionId().toString(), "STATUS_CHANGED",
                     Map.of("newStatus", sub.getSubscriptionSttsCd()));
+
+            recordIdempotentRequest(rqUid, EP_UPDATE, rq);
+            markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
 
             return okVoid();
 
         } catch (EntityNotFoundException nf) {
+            var failure = err("EINT000", "Unexpected Error", jsonMsg("subscription not found for update"));
             markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
                     jsonMsg(nf.getMessage()));
-            return err("EINT000", "Unexpected Error", jsonMsg("subscription not found for update"));
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            throw new ServiceResultException(failure, nf);
 
         } catch (Exception ex) {
             log.error("receiveSubscriptionUpdate failed", ex);
+            var failure = err("EINT000", "Unexpected Error", jsonMsg("processing failed"));
             markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
                     jsonMsg(ex.getMessage()));
-            return err("EINT000", "Unexpected Error", jsonMsg("processing failed"));
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            throw new ServiceResultException(failure, ex);
         }
     }
 
@@ -225,43 +242,127 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
 
     private void replaceFeatures(final Subscription sub, final List<SubscriptionFeatureDto> dtos) {
         var existing = featureRepo.findBySubscriptionSubscriptionId(sub.getSubscriptionId());
-        if (!existing.isEmpty()) {
-            featureRepo.deleteAllInBatch(existing);
-        }
-        if (dtos != null && !dtos.isEmpty()) {
-            var mapped = new ArrayList<SubscriptionFeature>(dtos.size());
-            for (var d : dtos) {
-                mapped.add(featureMapper.toEntity(d, sub));
+        if (dtos == null || dtos.isEmpty()) {
+            if (!existing.isEmpty()) {
+                featureRepo.deleteAll(existing);
             }
-            featureRepo.saveAll(mapped);
+            return;
+        }
+
+        var existingByCode = new java.util.HashMap<String, SubscriptionFeature>(existing.size());
+        for (SubscriptionFeature feature : existing) {
+            existingByCode.put(feature.getFeatureCd(), feature);
+        }
+
+        var toCreate = new ArrayList<SubscriptionFeature>();
+        var toUpdate = new ArrayList<SubscriptionFeature>();
+
+        for (SubscriptionFeatureDto dto : dtos) {
+            SubscriptionFeature entity = existingByCode.remove(dto.featureCd());
+            if (entity == null) {
+                toCreate.add(featureMapper.toEntity(dto, sub));
+            } else {
+                entity.setFeatureCount(dto.featureCount());
+                entity.setUpdatedAt(OffsetDateTime.now());
+                toUpdate.add(entity);
+            }
+        }
+
+        if (!existingByCode.isEmpty()) {
+            featureRepo.deleteAll(existingByCode.values());
+        }
+        if (!toUpdate.isEmpty()) {
+            featureRepo.saveAll(toUpdate);
+        }
+        if (!toCreate.isEmpty()) {
+            featureRepo.saveAll(toCreate);
         }
     }
 
     private void replaceAdditionalServices(final Subscription sub, final List<SubscriptionAdditionalServiceDto> dtos) {
         var existing = additionalServiceRepo.findBySubscriptionSubscriptionId(sub.getSubscriptionId());
-        if (!existing.isEmpty()) {
-            additionalServiceRepo.deleteAllInBatch(existing);
-        }
-        if (dtos != null && !dtos.isEmpty()) {
-            var mapped = new ArrayList<SubscriptionAdditionalService>(dtos.size());
-            for (var d : dtos) {
-                mapped.add(additionalServiceMapper.toEntity(d, sub));
+        if (dtos == null || dtos.isEmpty()) {
+            if (!existing.isEmpty()) {
+                additionalServiceRepo.deleteAll(existing);
             }
-            additionalServiceRepo.saveAll(mapped);
+            return;
+        }
+
+        var existingById = new java.util.HashMap<Long, SubscriptionAdditionalService>(existing.size());
+        for (SubscriptionAdditionalService svc : existing) {
+            existingById.put(svc.getProductAdditionalServiceId(), svc);
+        }
+
+        var toCreate = new ArrayList<SubscriptionAdditionalService>();
+        var toUpdate = new ArrayList<SubscriptionAdditionalService>();
+
+        for (SubscriptionAdditionalServiceDto dto : dtos) {
+            SubscriptionAdditionalService entity = existingById.remove(dto.productAdditionalServiceId());
+            if (entity == null) {
+                toCreate.add(additionalServiceMapper.toEntity(dto, sub));
+            } else {
+                entity.setServiceCd(dto.serviceCd());
+                entity.setServiceNameEn(dto.serviceNameEn());
+                entity.setServiceNameAr(dto.serviceNameAr());
+                entity.setServiceDescEn(dto.serviceDescEn());
+                entity.setServiceDescAr(dto.serviceDescAr());
+                entity.setServicePrice(dto.servicePrice());
+                entity.setTotalAmount(dto.totalAmount());
+                entity.setCurrency(dto.currency());
+                entity.setIsCountable(Boolean.TRUE.equals(dto.isCountable()));
+                entity.setRequestedCount(dto.requestedCount());
+                entity.setPaymentTypeCd(dto.paymentTypeCd());
+                entity.setUpdatedAt(OffsetDateTime.now());
+                toUpdate.add(entity);
+            }
+        }
+
+        if (!existingById.isEmpty()) {
+            additionalServiceRepo.deleteAll(existingById.values());
+        }
+        if (!toUpdate.isEmpty()) {
+            additionalServiceRepo.saveAll(toUpdate);
+        }
+        if (!toCreate.isEmpty()) {
+            additionalServiceRepo.saveAll(toCreate);
         }
     }
 
     private void replaceProductProperties(final Subscription sub, final List<ProductPropertyDto> dtos) {
         var existing = propertyRepo.findBySubscriptionSubscriptionId(sub.getSubscriptionId());
-        if (!existing.isEmpty()) {
-            propertyRepo.deleteAllInBatch(existing);
-        }
-        if (dtos != null && !dtos.isEmpty()) {
-            var mapped = new ArrayList<SubscriptionProductProperty>(dtos.size());
-            for (var d : dtos) {
-                mapped.add(propertyMapper.toEntity(d, sub));
+        if (dtos == null || dtos.isEmpty()) {
+            if (!existing.isEmpty()) {
+                propertyRepo.deleteAll(existing);
             }
-            propertyRepo.saveAll(mapped);
+            return;
+        }
+
+        var existingByCode = new java.util.HashMap<String, SubscriptionProductProperty>(existing.size());
+        for (SubscriptionProductProperty prop : existing) {
+            existingByCode.put(prop.getPropertyCd(), prop);
+        }
+
+        var toCreate = new ArrayList<SubscriptionProductProperty>();
+        var toUpdate = new ArrayList<SubscriptionProductProperty>();
+
+        for (ProductPropertyDto dto : dtos) {
+            SubscriptionProductProperty entity = existingByCode.remove(dto.propertyCd());
+            if (entity == null) {
+                toCreate.add(propertyMapper.toEntity(dto, sub));
+            } else {
+                entity.setPropertyValue(dto.propertyValue());
+                toUpdate.add(entity);
+            }
+        }
+
+        if (!existingByCode.isEmpty()) {
+            propertyRepo.deleteAll(existingByCode.values());
+        }
+        if (!toUpdate.isEmpty()) {
+            propertyRepo.saveAll(toUpdate);
+        }
+        if (!toCreate.isEmpty()) {
+            propertyRepo.saveAll(toCreate);
         }
     }
 
@@ -319,11 +420,13 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     }
 
     private void markAuditSuccess(final Long id, final String code, final String desc, final String detailsJson) {
-        auditRepo.markProcessed(id, code, desc, detailsJson);
+        runInNewTransaction(() -> auditRepo.markProcessed(id, code, desc, detailsJson),
+                "mark inbound audit success");
     }
 
     private void markAuditFailure(final Long id, final String code, final String desc, final String detailsJson) {
-        auditRepo.markProcessed(id, code, desc, detailsJson);
+        runInNewTransaction(() -> auditRepo.markProcessed(id, code, desc, detailsJson),
+                "mark inbound audit failure");
     }
 
     private void emitOutbox(final String aggregate, final String id, final String type, final Map<String, ?> payload) {
@@ -336,6 +439,51 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             outboxRepo.save(ev);
         } catch (Exception e) {
             log.warn("Outbox emit failed: {} {} - {}", type, id, e.toString());
+            throw new IllegalStateException("Unable to persist outbox event", e);
+        }
+    }
+
+    private void recordIdempotentRequest(final UUID rqUid, final String endpoint, final Object payload) {
+        if (rqUid == null) {
+            return;
+        }
+        runInNewTransaction(() -> {
+            if (idemRepo.existsByIdempotencyKey(rqUid)) {
+                return;
+            }
+            IdempotentRequest request = new IdempotentRequest();
+            request.setIdempotencyKey(rqUid);
+            request.setEndpoint(endpoint);
+            request.setRequestHash(sha256(writeJson(payload)));
+            try {
+                idemRepo.save(request);
+            } catch (Exception ex) {
+                log.warn("Failed to persist idempotent request {} for endpoint {}", rqUid, endpoint, ex);
+            }
+        }, "persist idempotent request");
+    }
+
+    private void runInNewTransaction(final Runnable task, final String description) {
+        try {
+            executeInNewTransaction(
+                    () -> {
+                        task.run();
+                        return null;
+                    },
+                    description);
+        } catch (RuntimeException ignored) {
+            // already logged inside executeInNewTransaction
+        }
+    }
+
+    private <T> T executeInNewTransaction(final Supplier<T> supplier, final String description) {
+        TransactionTemplate template = new TransactionTemplate(transactionManager);
+        template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        try {
+            return template.execute(status -> supplier.get());
+        } catch (RuntimeException txEx) {
+            log.error("{}", description, txEx);
+            throw txEx;
         }
     }
 

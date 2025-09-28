@@ -14,6 +14,9 @@ import com.ejada.tenant.repository.TenantRepository;
 import com.ejada.tenant.service.TenantIntegrationKeyService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityNotFoundException;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,8 +30,12 @@ import java.util.Base64;
 @Transactional
 public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(TenantIntegrationKeyServiceImpl.class);
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final int SECRET_BYTES_LENGTH = 32;
+    private static final int MIN_SECRET_LENGTH = 32;
+    private static final int MIN_DISTINCT_CHARS = 6;
+    private static final String DEFAULT_ACTOR = "system";
     private final TenantIntegrationKeyRepository repo;
     private final TenantRepository tenantRepo;
     private final TenantIntegrationKeyMapper mapper;
@@ -67,21 +74,34 @@ public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyServ
         e.setTenant(tenant);
         e.setValidFrom(validFrom);
 
-        // Secret handling
+        String actor = resolveActor(req.createdBy());
+        e.setCreatedBy(actor);
+
         String plainSecret = req.plainSecret();
-        if (plainSecret == null || plainSecret.isBlank()) {
-            byte[] secretBytes = new byte[SECRET_BYTES_LENGTH];
-            RANDOM.nextBytes(secretBytes);
-            plainSecret = Base64.getUrlEncoder().withoutPadding().encodeToString(secretBytes);
-        }
+        String resolvedSecret;
         try {
-            e.setKeySecret(crypto.signToBase64(plainSecret));
+            if (StringUtils.isBlank(plainSecret)) {
+                resolvedSecret = generateSecret();
+            } else {
+                resolvedSecret = validateSecret(plainSecret);
+            }
+        } catch (IllegalArgumentException policyEx) {
+            LOGGER.warn("Secret policy violation on create: {}", policyEx.getMessage());
+            return BaseResponse.error("ERR_TIK_SECRET_POLICY", policyEx.getMessage());
+        }
+
+        try {
+            e.setKeySecret(crypto.signToBase64(resolvedSecret));
         } catch (Exception ex) {
             throw new IllegalStateException("Could not sign integration key secret", ex);
         }
+        OffsetDateTime rotationTs = OffsetDateTime.now();
+        e.setSecretLastRotatedAt(rotationTs);
+        e.setSecretLastRotatedBy(actor);
 
         e = repo.save(e);
-        TenantIntegrationKeyRes res = mapper.toRes(e).withPlainSecret(plainSecret);
+        TenantIntegrationKeyRes res = mapper.toRes(e)
+                .withPlainSecret(resolvedSecret);
         return BaseResponse.success("Tenant integration key created", res);
     }
 
@@ -100,13 +120,34 @@ public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyServ
         // Apply patch
         mapper.update(e, req);
 
+        String rotatedSecret = null;
+        if (StringUtils.isNotBlank(req.newPlainSecret())) {
+            try {
+                rotatedSecret = validateSecret(req.newPlainSecret());
+            } catch (IllegalArgumentException policyEx) {
+                LOGGER.warn("Secret policy violation on update: {}", policyEx.getMessage());
+                return BaseResponse.error("ERR_TIK_SECRET_POLICY", policyEx.getMessage());
+            }
+            try {
+                e.setKeySecret(crypto.signToBase64(rotatedSecret));
+            } catch (Exception ex) {
+                throw new IllegalStateException("Could not sign integration key secret", ex);
+            }
+            e.setSecretLastRotatedAt(OffsetDateTime.now());
+            e.setSecretLastRotatedBy(resolveActor(req.rotatedBy()));
+        }
+
         // Auto-mark EXPIRED if window says so
         if (e.getExpiresAt() != null && !e.getExpiresAt().isAfter(OffsetDateTime.now())) {
             e.setStatus(Status.EXPIRED);
         }
 
         e = repo.save(e);
-        return BaseResponse.success("Tenant integration key updated", mapper.toRes(e));
+        TenantIntegrationKeyRes res = mapper.toRes(e);
+        if (rotatedSecret != null) {
+            res = res.withPlainSecret(rotatedSecret);
+        }
+        return BaseResponse.success("Tenant integration key updated", res);
     }
 
     @Override
@@ -136,5 +177,54 @@ public class TenantIntegrationKeyServiceImpl implements TenantIntegrationKeyServ
         Page<TenantIntegrationKeyRes> page =
                 repo.findByTenantIdAndIsDeletedFalse(tenantId, pageable).map(mapper::toRes);
         return BaseResponse.success("Tenant integration keys listed", page);
+    }
+
+    private String resolveActor(final String actor) {
+        return StringUtils.isBlank(actor) ? DEFAULT_ACTOR : actor.trim();
+    }
+
+    private String generateSecret() {
+        byte[] secretBytes = new byte[SECRET_BYTES_LENGTH];
+        RANDOM.nextBytes(secretBytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(secretBytes);
+    }
+
+    private String validateSecret(final String secret) {
+        if (StringUtils.isBlank(secret)) {
+            throw new IllegalArgumentException("Secret must not be blank");
+        }
+        String trimmed = secret.trim();
+        if (trimmed.length() < MIN_SECRET_LENGTH) {
+            throw new IllegalArgumentException(
+                    "Secret must be at least " + MIN_SECRET_LENGTH + " characters long");
+        }
+        if (trimmed.length() > TenantIntegrationKey.PLAIN_SECRET_LENGTH) {
+            throw new IllegalArgumentException("Secret exceeds maximum length");
+        }
+
+        int categories = 0;
+        if (trimmed.chars().anyMatch(Character::isLowerCase)) {
+            categories++;
+        }
+        if (trimmed.chars().anyMatch(Character::isUpperCase)) {
+            categories++;
+        }
+        if (trimmed.chars().anyMatch(Character::isDigit)) {
+            categories++;
+        }
+        if (trimmed.chars().anyMatch(ch -> !Character.isLetterOrDigit(ch))) {
+            categories++;
+        }
+        if (categories < 3) {
+            throw new IllegalArgumentException(
+                    "Secret must include at least three character classes (upper, lower, digit, symbol)");
+        }
+
+        long distinct = trimmed.chars().distinct().count();
+        if (distinct < MIN_DISTINCT_CHARS) {
+            throw new IllegalArgumentException(
+                    "Secret must contain at least " + MIN_DISTINCT_CHARS + " unique characters");
+        }
+        return trimmed;
     }
 }

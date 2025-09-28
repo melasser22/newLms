@@ -47,8 +47,7 @@ public class AuthController {
   }
 
   @PostMapping("/forgot-password")
-  public ResponseEntity<BaseResponse<String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
-    // Return token for demo; in production, send via email/SMS and return 204
+  public ResponseEntity<BaseResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
     return ResponseEntity.ok(passwordResetService.createToken(req));
   }
 

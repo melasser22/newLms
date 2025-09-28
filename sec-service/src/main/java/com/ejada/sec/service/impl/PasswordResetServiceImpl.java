@@ -8,9 +8,11 @@ import com.ejada.sec.dto.ForgotPasswordRequest;
 import com.ejada.sec.dto.ResetPasswordRequest;
 import com.ejada.sec.repository.PasswordResetTokenRepository;
 import com.ejada.sec.repository.UserRepository;
+import com.ejada.sec.service.PasswordResetNotifier;
 import com.ejada.sec.service.PasswordResetService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -20,22 +22,30 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PasswordResetServiceImpl implements PasswordResetService {
 
   private final UserRepository userRepository;
   private final PasswordResetTokenRepository tokenRepository;
+  private final PasswordResetNotifier passwordResetNotifier;
 
   @Value("${security.reset.ttl-seconds:900}") // 15 minutes
   private long resetTtl;
 
   @Transactional
   @Override
-  public BaseResponse<String> createToken(ForgotPasswordRequest req) {
+  public BaseResponse<Void> createToken(ForgotPasswordRequest req) {
     // locate user by username OR email within tenant
     UUID tenantId = req.getTenantId();
     User user = userRepository.findByTenantIdAndUsername(tenantId, req.getIdentifier())
         .or(() -> userRepository.findByTenantIdAndEmail(tenantId, req.getIdentifier()))
         .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+    Instant now = Instant.now();
+    int revoked = tokenRepository.invalidateActiveTokens(user.getId(), now);
+    if (revoked > 0) {
+      log.debug("Expired {} previous password reset tokens for user '{}'", revoked, user.getUsername());
+    }
 
     String token = UUID.randomUUID().toString();
     tokenRepository.deleteByUserId(user.getId());
@@ -43,10 +53,11 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     var prt = PasswordResetToken.builder()
         .user(user)
         .token(token)
-        .expiresAt(Instant.now().plusSeconds(resetTtl))
+        .expiresAt(now.plusSeconds(resetTtl))
         .build();
     tokenRepository.save(prt);
-    return BaseResponse.success("Reset token generated", token); // deliver via mail/SMS service externally
+    passwordResetNotifier.notify(user, token);
+    return BaseResponse.success("Reset token generated", null);
   }
 
   @Transactional

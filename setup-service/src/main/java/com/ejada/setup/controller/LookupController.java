@@ -1,7 +1,9 @@
 package com.ejada.setup.controller;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.setup.model.Lookup;
+import com.ejada.setup.dto.LookupCreateRequest;
+import com.ejada.setup.dto.LookupResponse;
+import com.ejada.setup.dto.LookupUpdateRequest;
 import com.ejada.setup.security.SetupAuthorized;
 import com.ejada.setup.service.LookupService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -51,7 +53,8 @@ public class LookupController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "409", description = "Lookup already exists")
     })
-    public ResponseEntity<BaseResponse<Lookup>> add(@Valid @RequestBody final Lookup body) {
+    public ResponseEntity<BaseResponse<LookupResponse>> add(
+            @Valid @RequestBody final LookupCreateRequest body) {
         return ResponseEntity.ok(lookupService.add(body));
     }
 
@@ -64,10 +67,10 @@ public class LookupController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "404", description = "Lookup not found")
     })
-    public ResponseEntity<BaseResponse<Lookup>> update(
+    public ResponseEntity<BaseResponse<LookupResponse>> update(
             @Parameter(description = "ID of the lookup to update", required = true)
             @PathVariable @Min(1) final Integer lookupItemId,
-            @Valid @RequestBody final Lookup body) {
+            @Valid @RequestBody final LookupUpdateRequest body) {
         return ResponseEntity.ok(lookupService.update(lookupItemId, body));
     }
 
@@ -78,7 +81,7 @@ public class LookupController {
         @ApiResponse(responseCode = "200", description = "Lookups retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<BaseResponse<List<Lookup>>> getAllLookups() {
+    public ResponseEntity<BaseResponse<List<LookupResponse>>> getAllLookups() {
         return ResponseEntity.ok(lookupService.getAllLookups());
     }
 
@@ -89,7 +92,7 @@ public class LookupController {
         @ApiResponse(responseCode = "200", description = "Lookups retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<BaseResponse<List<Lookup>>> getByGroup(
+    public ResponseEntity<BaseResponse<List<LookupResponse>>> getByGroup(
             @Parameter(description = "Group code of lookups to retrieve", required = true)
             @PathVariable @NotBlank final String groupCode) {
         return ResponseEntity.ok(lookupService.getByGroup(groupCode));
@@ -105,7 +108,7 @@ public class LookupController {
         @ApiResponse(responseCode = "200", description = "Lookups retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<BaseResponse<List<Lookup>>> getAll() {
+    public ResponseEntity<BaseResponse<List<LookupResponse>>> getAll() {
         return ResponseEntity.ok(lookupService.getAll());
     }
 }

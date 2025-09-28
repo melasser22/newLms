@@ -1,21 +1,23 @@
 package com.ejada.setup.service;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.setup.model.Lookup;
+import com.ejada.setup.dto.LookupCreateRequest;
+import com.ejada.setup.dto.LookupResponse;
+import com.ejada.setup.dto.LookupUpdateRequest;
 
 import java.util.List;
 
 public interface LookupService {
 
-    BaseResponse<List<Lookup>> getAll();                 // full list
+    BaseResponse<List<LookupResponse>> getAll();
 
-    BaseResponse<List<Lookup>> getByGroup(String groupCode);
+    BaseResponse<List<LookupResponse>> getByGroup(String groupCode);
 
-    BaseResponse<Lookup> add(Lookup request);
+    BaseResponse<LookupResponse> add(LookupCreateRequest request);
 
-    BaseResponse<Lookup> update(Integer lookupItemId, Lookup request);
+    BaseResponse<LookupResponse> update(Integer lookupItemId, LookupUpdateRequest request);
 
-    default BaseResponse<List<Lookup>> getAllLookups() {
+    default BaseResponse<List<LookupResponse>> getAllLookups() {
         return getAll();
     }
 

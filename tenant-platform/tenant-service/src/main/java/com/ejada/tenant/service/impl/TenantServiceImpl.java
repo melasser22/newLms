@@ -4,6 +4,8 @@ import com.ejada.common.dto.BaseResponse;
 import com.ejada.tenant.dto.TenantCreateReq;
 import com.ejada.tenant.dto.TenantRes;
 import com.ejada.tenant.dto.TenantUpdateReq;
+import com.ejada.tenant.exception.TenantConflictException;
+import com.ejada.tenant.exception.TenantErrorCode;
 import com.ejada.tenant.mapper.TenantMapper;
 import com.ejada.tenant.model.Tenant;
 import com.ejada.tenant.repository.TenantRepository;
@@ -31,10 +33,10 @@ public class TenantServiceImpl implements TenantService {
     @Override
     public BaseResponse<TenantRes> create(final TenantCreateReq req) {
         if (repo.existsByCodeAndIsDeletedFalse(req.code())) {
-            throw new IllegalStateException("tenant code exists: " + req.code());
+            throw new TenantConflictException(TenantErrorCode.CODE_EXISTS, "tenant code exists: " + req.code());
         }
         if (repo.existsByNameIgnoreCaseAndIsDeletedFalse(req.name())) {
-            throw new IllegalStateException("tenant name exists: " + req.name());
+            throw new TenantConflictException(TenantErrorCode.NAME_EXISTS, "tenant name exists: " + req.name());
         }
         Tenant e = mapper.toEntity(req);
         e = repo.save(e);
@@ -48,11 +50,11 @@ public class TenantServiceImpl implements TenantService {
 
         if (req.code() != null && !req.code().equals(e.getCode())
                 && repo.existsByCodeAndIdNot(req.code(), id)) {
-            throw new IllegalStateException("tenant code exists: " + req.code());
+            throw new TenantConflictException(TenantErrorCode.CODE_EXISTS, "tenant code exists: " + req.code());
         }
         if (req.name() != null && !req.name().equalsIgnoreCase(e.getName())
                 && repo.existsByNameIgnoreCaseAndIdNot(req.name(), id)) {
-            throw new IllegalStateException("tenant name exists: " + req.name());
+            throw new TenantConflictException(TenantErrorCode.NAME_EXISTS, "tenant name exists: " + req.name());
         }
 
         mapper.update(e, req);

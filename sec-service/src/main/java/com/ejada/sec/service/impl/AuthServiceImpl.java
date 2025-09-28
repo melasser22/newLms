@@ -14,13 +14,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthServiceImpl implements AuthService {
+
+  private static final String CODE_USER_CREATE_FAILED = "ERR-USER-CREATE";
+  private static final String CODE_AUTH_INVALID = "ERR-AUTH-INVALID";
+  private static final String CODE_AUTH_LOCKED = "ERR-AUTH-LOCKED";
 
   private final UserRepository userRepository;
   private final UserService userService;
@@ -62,19 +65,25 @@ public class AuthServiceImpl implements AuthService {
     UUID tenantId = req.getTenantId();
     log.info("User '{}' attempting login for tenant {}", req.getIdentifier(), tenantId);
     // identifier can be username or email
-    User user = userRepository.findByTenantIdAndUsername(tenantId, req.getIdentifier())
-        .or(() -> userRepository.findByTenantIdAndEmail(tenantId, req.getIdentifier()))
-        .orElseThrow(() -> new NoSuchElementException("Invalid credentials"));
+    var userOpt = userRepository.findByTenantIdAndUsername(tenantId, req.getIdentifier())
+        .or(() -> userRepository.findByTenantIdAndEmail(tenantId, req.getIdentifier()));
+
+    if (userOpt.isEmpty()) {
+      log.warn("Invalid credentials for identifier '{}' in tenant {}", req.getIdentifier(), tenantId);
+      return BaseResponse.error(CODE_AUTH_INVALID, "Invalid credentials");
+    }
+
+    User user = userOpt.get();
 
     if (!user.isEnabled() || user.isLocked()) {
       log.warn("Login denied for user '{}' in tenant {}: disabled or locked", user.getUsername(), tenantId);
-      throw new IllegalStateException("Account disabled or locked");
+      return BaseResponse.error(CODE_AUTH_LOCKED, "Account disabled or locked");
     }
     if (!PasswordHasher.matchesBcrypt(req.getPassword(), user.getPasswordHash())) {
       log.warn("Invalid credentials for user '{}' in tenant {}", req.getIdentifier(), tenantId);
-      throw new NoSuchElementException("Invalid credentials");
+      return BaseResponse.error(CODE_AUTH_INVALID, "Invalid credentials");
     }
-    var tokens = issueTokens(user.getTenantId(), user.getUsername(), user.getId());
+    var tokens = issueTokens(user.getTenantId(), user.getUsername(), user.getId(), true, null);
     log.info("User '{}' logged in for tenant {}", user.getUsername(), tenantId);
     return BaseResponse.success("Login successful", tokens);
   }
@@ -84,7 +93,8 @@ public class AuthServiceImpl implements AuthService {
   public BaseResponse<AuthResponse> refresh(RefreshTokenRequest req) {
     var user = refreshTokenService.validateAndGetUser(req.getRefreshToken());
     log.info("Refreshing token for user '{}' in tenant {}", user.getUsername(), user.getTenantId());
-    var tokens = issueTokens(user.getTenantId(), user.getUsername(), user.getId());
+    refreshTokenService.revoke(req.getRefreshToken());
+    var tokens = issueTokens(user.getTenantId(), user.getUsername(), user.getId(), false, req.getRefreshToken());
     return BaseResponse.success("Token refreshed", tokens);
   }
 
@@ -96,9 +106,9 @@ public class AuthServiceImpl implements AuthService {
     return BaseResponse.success("Logged out", null);
   }
 
-  private AuthResponse issueTokens(UUID tenantId, String username, Long userId) {
+  private AuthResponse issueTokens(UUID tenantId, String username, Long userId, boolean revokeExistingSessions, String rotatedFrom) {
     String access = tokenIssuer.issueAccessToken(tenantId, userId, username);
-    String refresh = refreshTokenService.issue(userId);
+    String refresh = refreshTokenService.issue(userId, revokeExistingSessions, rotatedFrom);
     return AuthResponse.builder()
         .accessToken(access)
         .refreshToken(refresh)

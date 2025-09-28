@@ -41,7 +41,7 @@ class TenantIntegrationKeyServiceImplTest {
 
         TenantIntegrationKeyCreateReq req = new TenantIntegrationKeyCreateReq(
                 1, "KEY", null, "label", List.of(), TikStatus.ACTIVE,
-                null, OffsetDateTime.now().plusDays(1), null, null
+                null, OffsetDateTime.now().plusDays(1), null, null, null
         );
 
         TenantIntegrationKeyServiceImpl service =
@@ -54,6 +54,8 @@ class TenantIntegrationKeyServiceImplTest {
         ArgumentCaptor<TenantIntegrationKey> captor = ArgumentCaptor.forClass(TenantIntegrationKey.class);
         verify(repo).save(captor.capture());
         assertEquals("hashed-secret", captor.getValue().getKeySecret());
+        assertEquals("system", captor.getValue().getCreatedBy());
+        assertNotNull(captor.getValue().getSecretLastRotatedAt());
     }
 }
 
