@@ -3,6 +3,7 @@ package com.ejada.billing.controller;
 import com.ejada.billing.dto.ServiceResult;
 import com.ejada.billing.dto.TrackProductConsumptionRq;
 import com.ejada.billing.dto.TrackProductConsumptionRs;
+import com.ejada.billing.exception.ServiceResultException;
 import com.ejada.billing.service.ConsumptionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,10 @@ public class ConsumptionController {
             @RequestHeader("token") final String token,
             @Valid @RequestBody final TrackProductConsumptionRq body) {
 
-        return ResponseEntity.ok(service.trackProductConsumption(rqUid, token, body));
+        try {
+            return ResponseEntity.ok(service.trackProductConsumption(rqUid, token, body));
+        } catch (ServiceResultException ex) {
+            return ResponseEntity.ok(ex.getResult());
+        }
     }
 }

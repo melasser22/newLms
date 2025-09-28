@@ -9,6 +9,7 @@ import com.ejada.subscription.dto.SubscriptionAdditionalServiceDto;
 import com.ejada.subscription.dto.SubscriptionFeatureDto;
 import com.ejada.subscription.dto.SubscriptionInfoDto;
 import com.ejada.subscription.dto.SubscriptionUpdateType;
+import com.ejada.subscription.exception.ServiceResultException;
 import com.ejada.subscription.mapper.SubscriptionAdditionalServiceMapper;
 import com.ejada.subscription.mapper.SubscriptionEnvironmentIdentifierMapper;
 import com.ejada.subscription.mapper.SubscriptionFeatureMapper;
@@ -16,6 +17,7 @@ import com.ejada.subscription.mapper.SubscriptionMapper;
 import com.ejada.subscription.mapper.SubscriptionProductPropertyMapper;
 import com.ejada.subscription.mapper.SubscriptionUpdateEventMapper;
 import com.ejada.subscription.model.InboundNotificationAudit;
+import com.ejada.subscription.model.IdempotentRequest;
 import com.ejada.subscription.model.OutboxEvent;
 import com.ejada.subscription.model.Subscription;
 import com.ejada.subscription.model.SubscriptionAdditionalService;
@@ -38,7 +40,11 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -50,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * Handles marketplace callbacks:
@@ -71,7 +78,6 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     private final InboundNotificationAuditRepository auditRepo;
     private final SubscriptionUpdateEventRepository updateEventRepo;
     private final OutboxEventRepository outboxRepo;
-    @SuppressWarnings("unused")
     private final IdempotentRequestRepository idemRepo; // optional second guard by rqUID
 
     // Mappers
@@ -85,6 +91,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     // JSON
     @SuppressFBWarnings("EI_EXPOSE_REP2")
     private final ObjectMapper objectMapper;
+    private final PlatformTransactionManager transactionManager;
 
     private static final String EP_NOTIFICATION = "RECEIVE_NOTIFICATION";
     private static final String EP_UPDATE       = "RECEIVE_UPDATE";
@@ -118,7 +125,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         audit.setEndpoint(EP_NOTIFICATION);
         audit.setTokenHash(sha256(token));
         audit.setPayload(writeJson(rq));
-        audit = auditRepo.save(audit);
+        audit = executeInNewTransaction(() -> auditRepo.save(audit), "persist inbound notification audit");
 
         try {
             // 3) Upsert subscription
@@ -148,18 +155,22 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
                     envIdRepo.findBySubscriptionSubscriptionId(sub.getSubscriptionId());
 
             // 6) Mark success and emit outbox
-            markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
             emitOutbox("SUBSCRIPTION", sub.getSubscriptionId().toString(), "CREATED_OR_UPDATED",
                     Map.of("extSubscriptionId", sub.getExtSubscriptionId(), "extCustomerId", sub.getExtCustomerId()));
+
+            recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
+            markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
 
             var rs = new ReceiveSubscriptionNotificationRs(Boolean.TRUE, envIdMapper.toDtoList(envIds));
             return okNotification(rs);
 
         } catch (Exception ex) {
             log.error("receiveSubscriptionNotification failed", ex);
+            var failure = err("EINT000", "Unexpected Error", jsonMsg("processing failed"));
             markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
                     jsonMsg(ex.getMessage()));
-            return err("EINT000", "Unexpected Error", jsonMsg("processing failed"));
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            throw new ServiceResultException(failure, ex);
         }
     }
 
@@ -181,7 +192,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         audit.setEndpoint(EP_UPDATE);
         audit.setTokenHash(sha256(token));
         audit.setPayload(writeJson(rq));
-        audit = auditRepo.save(audit);
+        audit = executeInNewTransaction(() -> auditRepo.save(audit), "persist inbound notification audit");
 
         try {
             // 3) Persist raw update event (for trace)
@@ -200,22 +211,28 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             event.setProcessed(true);
             event.setProcessedAt(OffsetDateTime.now());
 
-            markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
             emitOutbox("SUBSCRIPTION", sub.getSubscriptionId().toString(), "STATUS_CHANGED",
                     Map.of("newStatus", sub.getSubscriptionSttsCd()));
+
+            recordIdempotentRequest(rqUid, EP_UPDATE, rq);
+            markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
 
             return okVoid();
 
         } catch (EntityNotFoundException nf) {
+            var failure = err("EINT000", "Unexpected Error", jsonMsg("subscription not found for update"));
             markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
                     jsonMsg(nf.getMessage()));
-            return err("EINT000", "Unexpected Error", jsonMsg("subscription not found for update"));
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            throw new ServiceResultException(failure, nf);
 
         } catch (Exception ex) {
             log.error("receiveSubscriptionUpdate failed", ex);
+            var failure = err("EINT000", "Unexpected Error", jsonMsg("processing failed"));
             markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
                     jsonMsg(ex.getMessage()));
-            return err("EINT000", "Unexpected Error", jsonMsg("processing failed"));
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            throw new ServiceResultException(failure, ex);
         }
     }
 
@@ -319,11 +336,13 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     }
 
     private void markAuditSuccess(final Long id, final String code, final String desc, final String detailsJson) {
-        auditRepo.markProcessed(id, code, desc, detailsJson);
+        runInNewTransaction(() -> auditRepo.markProcessed(id, code, desc, detailsJson),
+                "mark inbound audit success");
     }
 
     private void markAuditFailure(final Long id, final String code, final String desc, final String detailsJson) {
-        auditRepo.markProcessed(id, code, desc, detailsJson);
+        runInNewTransaction(() -> auditRepo.markProcessed(id, code, desc, detailsJson),
+                "mark inbound audit failure");
     }
 
     private void emitOutbox(final String aggregate, final String id, final String type, final Map<String, ?> payload) {
@@ -336,6 +355,51 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             outboxRepo.save(ev);
         } catch (Exception e) {
             log.warn("Outbox emit failed: {} {} - {}", type, id, e.toString());
+            throw new IllegalStateException("Unable to persist outbox event", e);
+        }
+    }
+
+    private void recordIdempotentRequest(final UUID rqUid, final String endpoint, final Object payload) {
+        if (rqUid == null) {
+            return;
+        }
+        runInNewTransaction(() -> {
+            if (idemRepo.existsByIdempotencyKey(rqUid)) {
+                return;
+            }
+            IdempotentRequest request = new IdempotentRequest();
+            request.setIdempotencyKey(rqUid);
+            request.setEndpoint(endpoint);
+            request.setRequestHash(sha256(writeJson(payload)));
+            try {
+                idemRepo.save(request);
+            } catch (Exception ex) {
+                log.warn("Failed to persist idempotent request {} for endpoint {}", rqUid, endpoint, ex);
+            }
+        }, "persist idempotent request");
+    }
+
+    private void runInNewTransaction(final Runnable task, final String description) {
+        try {
+            executeInNewTransaction(
+                    () -> {
+                        task.run();
+                        return null;
+                    },
+                    description);
+        } catch (RuntimeException ignored) {
+            // already logged inside executeInNewTransaction
+        }
+    }
+
+    private <T> T executeInNewTransaction(final Supplier<T> supplier, final String description) {
+        TransactionTemplate template = new TransactionTemplate(transactionManager);
+        template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        try {
+            return template.execute(status -> supplier.get());
+        } catch (RuntimeException txEx) {
+            log.error("{}", description, txEx);
+            throw txEx;
         }
     }
 
