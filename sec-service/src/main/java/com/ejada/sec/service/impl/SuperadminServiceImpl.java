@@ -2,6 +2,7 @@ package com.ejada.sec.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.crypto.JwtTokenService;
+import com.ejada.crypto.password.PasswordHasher;
 import com.ejada.sec.domain.Superadmin;
 import com.ejada.sec.domain.SuperadminPasswordHistory;
 import com.ejada.sec.dto.admin.*;
@@ -27,7 +28,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,7 +40,6 @@ public class SuperadminServiceImpl implements SuperadminService {
     
     private final SuperadminRepository superadminRepository;
     private final SuperadminMapper superadminMapper;
-    private final PasswordEncoder passwordEncoder;
     private final JwtTokenService jwtTokenService;
     private final SuperadminPasswordHistoryRepository passwordHistoryRepository;
     private final SuperadminAuditService superadminAuditService;
@@ -86,7 +85,7 @@ public class SuperadminServiceImpl implements SuperadminService {
         Superadmin superadmin = superadminMapper.toEntity(request);
         
         // Set password hash
-        superadmin.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        superadmin.setPasswordHash(PasswordHasher.bcrypt(request.getPassword()));
         
         // Set initial password expiry
         superadmin.setPasswordExpiresAt(LocalDateTime.now().plusDays(passwordExpiryDays));
@@ -257,7 +256,7 @@ public class SuperadminServiceImpl implements SuperadminService {
         }
         
         // Verify password
-        if (!passwordEncoder.matches(request.getPassword(), superadmin.getPasswordHash())) {
+        if (!PasswordHasher.matchesBcrypt(request.getPassword(), superadmin.getPasswordHash())) {
             handleFailedLogin(superadmin);
             log.warn("Invalid password for superadmin: {}", request.getIdentifier());
             throw new NoSuchElementException("Invalid credentials");
@@ -349,7 +348,7 @@ public class SuperadminServiceImpl implements SuperadminService {
         }
         
         // Verify current password
-        if (!passwordEncoder.matches(request.getCurrentPassword(), superadmin.getPasswordHash())) {
+        if (!PasswordHasher.matchesBcrypt(request.getCurrentPassword(), superadmin.getPasswordHash())) {
             log.warn("Invalid current password during first login for: {}", superadmin.getUsername());
             throw new IllegalArgumentException("Current password is incorrect");
         }
@@ -370,7 +369,7 @@ public class SuperadminServiceImpl implements SuperadminService {
         ensurePasswordNotReused(superadmin.getId(), request.getNewPassword());
 
         // Update superadmin record
-        superadmin.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        superadmin.setPasswordHash(PasswordHasher.bcrypt(request.getNewPassword()));
         superadmin.setFirstLoginCompleted(true);
         superadmin.setPasswordChangedAt(LocalDateTime.now());
         superadmin.setPasswordExpiresAt(LocalDateTime.now().plusDays(passwordExpiryDays));
@@ -413,7 +412,7 @@ public class SuperadminServiceImpl implements SuperadminService {
             .orElseThrow(() -> new NoSuchElementException("Superadmin not found"));
         
         // Verify current password
-        if (!passwordEncoder.matches(request.getCurrentPassword(), superadmin.getPasswordHash())) {
+        if (!PasswordHasher.matchesBcrypt(request.getCurrentPassword(), superadmin.getPasswordHash())) {
             log.warn("Invalid current password for password change: {}", superadmin.getUsername());
             throw new IllegalArgumentException("Current password is incorrect");
         }
@@ -431,7 +430,7 @@ public class SuperadminServiceImpl implements SuperadminService {
         ensurePasswordNotReused(superadmin.getId(), request.getNewPassword());
 
         // Update password
-        superadmin.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        superadmin.setPasswordHash(PasswordHasher.bcrypt(request.getNewPassword()));
         superadmin.setPasswordChangedAt(LocalDateTime.now());
         superadmin.setPasswordExpiresAt(LocalDateTime.now().plusDays(passwordExpiryDays));
 
@@ -645,7 +644,7 @@ public class SuperadminServiceImpl implements SuperadminService {
             List<SuperadminPasswordHistory> recentPasswords =
                 passwordHistoryRepository.findTop5BySuperadminIdOrderByCreatedAtDesc(superadminId);
             for (SuperadminPasswordHistory entry : recentPasswords) {
-                if (passwordEncoder.matches(candidatePassword, entry.getPasswordHash())) {
+                if (PasswordHasher.matchesBcrypt(candidatePassword, entry.getPasswordHash())) {
                     throw new IllegalArgumentException("New password cannot match any of your last 5 passwords");
                 }
             }

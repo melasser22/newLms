@@ -1,6 +1,7 @@
 package com.ejada.sec.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.crypto.password.PasswordHasher;
 import com.ejada.sec.domain.User;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.repository.UserRepository;
@@ -11,7 +12,6 @@ import com.ejada.sec.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.NoSuchElementException;
@@ -25,7 +25,6 @@ public class AuthServiceImpl implements AuthService {
   private final UserRepository userRepository;
   private final UserService userService;
   private final RefreshTokenService refreshTokenService;
-  private final PasswordEncoder passwordEncoder;
   private final TokenIssuer tokenIssuer; // see below
 
   @Transactional
@@ -60,7 +59,7 @@ public class AuthServiceImpl implements AuthService {
       log.warn("Login denied for user '{}' in tenant {}: disabled or locked", user.getUsername(), tenantId);
       throw new IllegalStateException("Account disabled or locked");
     }
-    if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
+    if (!PasswordHasher.matchesBcrypt(req.getPassword(), user.getPasswordHash())) {
       log.warn("Invalid credentials for user '{}' in tenant {}", req.getIdentifier(), tenantId);
       throw new NoSuchElementException("Invalid credentials");
     }
