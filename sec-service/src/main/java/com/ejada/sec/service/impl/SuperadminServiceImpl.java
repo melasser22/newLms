@@ -5,6 +5,7 @@ import com.ejada.crypto.JwtTokenService;
 import com.ejada.sec.domain.Superadmin;
 import com.ejada.sec.domain.SuperadminPasswordHistory;
 import com.ejada.sec.dto.admin.*;
+import com.ejada.sec.exception.PasswordHistoryUnavailableException;
 import com.ejada.sec.mapper.SuperadminMapper;
 import com.ejada.sec.repository.SuperadminPasswordHistoryRepository;
 import com.ejada.sec.repository.SuperadminRepository;
@@ -640,12 +641,18 @@ public class SuperadminServiceImpl implements SuperadminService {
         if (superadminId == null) {
             return;
         }
-        List<SuperadminPasswordHistory> recentPasswords =
-            passwordHistoryRepository.findTop5BySuperadminIdOrderByCreatedAtDesc(superadminId);
-        for (SuperadminPasswordHistory entry : recentPasswords) {
-            if (passwordEncoder.matches(candidatePassword, entry.getPasswordHash())) {
-                throw new IllegalArgumentException("New password cannot match any of your last 5 passwords");
+        try {
+            List<SuperadminPasswordHistory> recentPasswords =
+                passwordHistoryRepository.findTop5BySuperadminIdOrderByCreatedAtDesc(superadminId);
+            for (SuperadminPasswordHistory entry : recentPasswords) {
+                if (passwordEncoder.matches(candidatePassword, entry.getPasswordHash())) {
+                    throw new IllegalArgumentException("New password cannot match any of your last 5 passwords");
+                }
             }
+        } catch (DataAccessException ex) {
+            log.error("Unable to verify password history for superadmin {}", superadminId, ex);
+            throw new PasswordHistoryUnavailableException(
+                "Unable to verify password history at the moment. Please try again later or contact support.", ex);
         }
     }
     
