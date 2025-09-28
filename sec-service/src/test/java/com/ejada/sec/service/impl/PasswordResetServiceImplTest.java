@@ -56,8 +56,9 @@ class PasswordResetServiceImplTest {
         .identifier("user")
         .build();
 
+    UUID generated = UUID.fromString("123e4567-e89b-12d3-a456-426614174001");
     try (var mockedUuid = mockStatic(UUID.class)) {
-      mockedUuid.when(UUID::randomUUID).thenReturn(UUID.fromString("123e4567-e89b-12d3-a456-426614174001"));
+      mockedUuid.when(UUID::randomUUID).thenReturn(generated);
 
       BaseResponse<Void> response = service.createToken(request);
 
