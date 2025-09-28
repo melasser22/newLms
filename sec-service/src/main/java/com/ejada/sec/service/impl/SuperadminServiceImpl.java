@@ -27,6 +27,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -454,23 +456,23 @@ public class SuperadminServiceImpl implements SuperadminService {
     private void validateSuperadminAccess() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getPrincipal() == null) {
-            throw new SecurityException("No authenticated user found");
+            throw new AuthenticationCredentialsNotFoundException("No authenticated user found");
         }
-        
+
         boolean isSuperadmin = authentication.getAuthorities().stream()
             .anyMatch(auth -> auth.getAuthority().equals("ROLE_EJADA_OFFICER"));
-        
+
         if (!isSuperadmin) {
-            throw new SecurityException("Access denied. Only superadmins can perform this action");
+            throw new AccessDeniedException("Access denied. Only superadmins can perform this action");
         }
     }
-    
+
     private Long getCurrentSuperadminId() {
         Long id = getCurrentSuperadminIdOrNull();
         if (id != null) {
             return id;
         }
-        throw new IllegalStateException("No authenticated superadmin found");
+        throw new AuthenticationCredentialsNotFoundException("No authenticated superadmin found");
     }
 
     private Long getCurrentSuperadminIdOrNull() {
