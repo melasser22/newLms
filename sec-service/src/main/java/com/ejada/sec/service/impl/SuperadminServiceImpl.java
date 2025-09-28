@@ -494,17 +494,51 @@ public class SuperadminServiceImpl implements SuperadminService {
 
     private Long getCurrentSuperadminIdOrNull() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
-            Object uid = jwt.getClaim("uid");
-            if (uid != null) {
-                try {
-                    return Long.valueOf(uid.toString());
-                } catch (NumberFormatException ex) {
-                    log.warn("Invalid uid claim: {}", uid);
-                }
+        if (authentication == null) {
+            return null;
+        }
+
+        if (authentication.getPrincipal() instanceof Jwt jwt) {
+            Long idFromClaim = extractIdFromUidClaim(jwt);
+            if (idFromClaim != null) {
+                return idFromClaim;
+            }
+
+            String subject = jwt.getSubject();
+            if (subject != null && !subject.isBlank()) {
+                return resolveSuperadminId(subject);
             }
         }
+
+        String authenticationName = authentication.getName();
+        if (authenticationName != null && !authenticationName.isBlank()) {
+            return resolveSuperadminId(authenticationName);
+        }
+
         return null;
+    }
+
+    private Long extractIdFromUidClaim(Jwt jwt) {
+        Object uid = jwt.getClaim("uid");
+        if (uid == null) {
+            return null;
+        }
+        try {
+            return Long.valueOf(uid.toString());
+        } catch (NumberFormatException ex) {
+            log.warn("Invalid uid claim: {}", uid);
+            return null;
+        }
+    }
+
+    private Long resolveSuperadminId(String identifier) {
+        if (identifier == null || identifier.isBlank()) {
+            return null;
+        }
+
+        return superadminRepository.findByIdentifier(identifier)
+            .map(Superadmin::getId)
+            .orElse(null);
     }
     
     private String getCurrentSuperadminUsername() {
