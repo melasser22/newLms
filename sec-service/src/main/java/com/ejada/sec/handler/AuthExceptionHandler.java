@@ -9,6 +9,7 @@ import java.util.NoSuchElementException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -49,6 +50,14 @@ public class AuthExceptionHandler {
     @ExceptionHandler(PasswordHistoryUnavailableException.class)
     public ResponseEntity<ErrorResponse> handlePasswordHistoryUnavailable(PasswordHistoryUnavailableException ex) {
         ErrorResponse body = ErrorResponse.of("ERR_AUTH_HISTORY", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ErrorResponse> handleDataAccess(DataAccessException ex) {
+        ErrorResponse body = ErrorResponse.of(
+            "ERR_AUTH_DATA_ACCESS",
+            "Authentication data is temporarily unavailable. Please try again later.");
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
     }
 
