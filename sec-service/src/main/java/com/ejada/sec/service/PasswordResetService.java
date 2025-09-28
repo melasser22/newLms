@@ -5,6 +5,6 @@ import com.ejada.sec.dto.ForgotPasswordRequest;
 import com.ejada.sec.dto.ResetPasswordRequest;
 
 public interface PasswordResetService {
-  BaseResponse<String> createToken(ForgotPasswordRequest req); // returns token to deliver via email/SMS
+  BaseResponse<Void> createToken(ForgotPasswordRequest req);
   BaseResponse<Void> reset(ResetPasswordRequest req);
 }
