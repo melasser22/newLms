@@ -4,6 +4,7 @@ import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRq;
 import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRs;
 import com.ejada.subscription.dto.ReceiveSubscriptionUpdateRq;
 import com.ejada.subscription.dto.ServiceResult;
+import com.ejada.subscription.exception.ServiceResultException;
 import com.ejada.subscription.service.SubscriptionInboundService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,9 +36,13 @@ public class SubscriptionInboundController {
             @RequestHeader(value = "token", required = false) final String token,
             @Valid @RequestBody final ReceiveSubscriptionNotificationRq body) {
 
-        ServiceResult<ReceiveSubscriptionNotificationRs> result =
-                service.receiveSubscriptionNotification(rqUid, token, body);
-        return ResponseEntity.ok(result);
+        try {
+            ServiceResult<ReceiveSubscriptionNotificationRs> result =
+                    service.receiveSubscriptionNotification(rqUid, token, body);
+            return ResponseEntity.ok(result);
+        } catch (ServiceResultException ex) {
+            return ResponseEntity.ok(ex.getResult());
+        }
     }
 
     @PostMapping(
@@ -49,7 +54,11 @@ public class SubscriptionInboundController {
             @RequestHeader(value = "token", required = false) final String token,
             @Valid @RequestBody final ReceiveSubscriptionUpdateRq body) {
 
-        ServiceResult<Void> result = service.receiveSubscriptionUpdate(rqUid, token, body);
-        return ResponseEntity.ok(result);
+        try {
+            ServiceResult<Void> result = service.receiveSubscriptionUpdate(rqUid, token, body);
+            return ResponseEntity.ok(result);
+        } catch (ServiceResultException ex) {
+            return ResponseEntity.ok(ex.getResult());
+        }
     }
 }
