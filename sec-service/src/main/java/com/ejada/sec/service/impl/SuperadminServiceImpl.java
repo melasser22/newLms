@@ -258,7 +258,9 @@ public class SuperadminServiceImpl implements SuperadminService {
         }
         
         // Verify password
-        if (!PasswordHasher.matchesBcrypt(request.getPassword(), superadmin.getPasswordHash())) {
+        String currentPasswordHash = requirePasswordHash(superadmin);
+
+        if (!PasswordHasher.matchesBcrypt(request.getPassword(), currentPasswordHash)) {
             handleFailedLogin(superadmin);
             log.warn("Invalid password for superadmin: {}", request.getIdentifier());
             throw new NoSuchElementException("Invalid credentials");
@@ -350,7 +352,9 @@ public class SuperadminServiceImpl implements SuperadminService {
         }
         
         // Verify current password
-        if (!PasswordHasher.matchesBcrypt(request.getCurrentPassword(), superadmin.getPasswordHash())) {
+        String currentPasswordHash = requirePasswordHash(superadmin);
+
+        if (!PasswordHasher.matchesBcrypt(request.getCurrentPassword(), currentPasswordHash)) {
             log.warn("Invalid current password during first login for: {}", superadmin.getUsername());
             throw new IllegalArgumentException("Current password is incorrect");
         }
@@ -414,7 +418,9 @@ public class SuperadminServiceImpl implements SuperadminService {
             .orElseThrow(() -> new NoSuchElementException("Superadmin not found"));
         
         // Verify current password
-        if (!PasswordHasher.matchesBcrypt(request.getCurrentPassword(), superadmin.getPasswordHash())) {
+        String currentPasswordHash = requirePasswordHash(superadmin);
+
+        if (!PasswordHasher.matchesBcrypt(request.getCurrentPassword(), currentPasswordHash)) {
             log.warn("Invalid current password for password change: {}", superadmin.getUsername());
             throw new IllegalArgumentException("Current password is incorrect");
         }
@@ -453,6 +459,17 @@ public class SuperadminServiceImpl implements SuperadminService {
     
     // Helper methods
     
+    private String requirePasswordHash(Superadmin superadmin) {
+        String passwordHash = superadmin.getPasswordHash();
+        if (passwordHash == null || passwordHash.isBlank()) {
+            log.error("Missing password hash for superadmin id={} username={}",
+                superadmin.getId(), superadmin.getUsername());
+            throw new IllegalStateException(
+                "The account password is not set. Please contact a system administrator.");
+        }
+        return passwordHash;
+    }
+
     private void validateSuperadminAccess() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getPrincipal() == null) {
