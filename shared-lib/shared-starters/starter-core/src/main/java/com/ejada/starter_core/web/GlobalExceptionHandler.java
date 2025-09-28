@@ -1,11 +1,13 @@
 package com.ejada.starter_core.web;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.enums.StatusEnums.ApiStatus;
 import com.ejada.common.exception.BusinessException;
 import com.ejada.common.exception.BusinessRuleException;
 import com.ejada.common.exception.NotFoundException;
 import com.ejada.common.exception.DuplicateResourceException;
 import com.ejada.common.exception.ValidationException;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -21,6 +23,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 /**
  * Global exception handler producing {@link BaseResponse} payloads.
@@ -76,21 +79,39 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex, WebRequest request) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
+            String fieldName = error instanceof FieldError fieldError ? fieldError.getField() : error.getObjectName();
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
 
-        log.warn("Validation errors: {}", errors);
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_VALIDATION", "Validation failed with " + errors.size() + " errors"));
+        log.warn("Validation errors for [{}]: {}", request != null ? request.getDescription(false) : "unknown", errors, ex);
+        BaseResponse<Map<String, String>> body = BaseResponse.<Map<String, String>>builder()
+                .status(ApiStatus.ERROR)
+                .code("ERR_VALIDATION")
+                .message("Validation failed")
+                .data(errors)
+                .build();
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<BaseResponse<?>> handleConstraintViolation(ConstraintViolationException ex, WebRequest request) {
-        log.warn("Constraint violation: {}", ex.getMessage());
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_CONSTRAINT_VIOLATION", "Constraint violation: " + ex.getMessage()));
+    public ResponseEntity<BaseResponse<Map<String, String>>> handleConstraintViolation(ConstraintViolationException ex, WebRequest request) {
+        Map<String, String> violations = ex.getConstraintViolations()
+                .stream()
+                .collect(Collectors.toMap(
+                        violation -> violation.getPropertyPath().toString(),
+                        ConstraintViolation::getMessage,
+                        (first, second) -> second,
+                        HashMap::new));
+
+        log.warn("Constraint violation for [{}]: {}", request != null ? request.getDescription(false) : "unknown", violations, ex);
+        BaseResponse<Map<String, String>> body = BaseResponse.<Map<String, String>>builder()
+                .status(ApiStatus.ERROR)
+                .code("ERR_CONSTRAINT_VIOLATION")
+                .message("Constraint violation")
+                .data(violations)
+                .build();
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
