@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -235,8 +236,17 @@ public class SuperadminServiceImpl implements SuperadminService {
         validateSuperadminAccess();
         
         Page<Superadmin> superadminPage = superadminRepository.findAll(pageable);
+
+        if (superadminPage.isEmpty()
+            && superadminPage.getTotalElements() > 0
+            && pageable.getPageNumber() >= superadminPage.getTotalPages()) {
+            int lastPageIndex = Math.max(0, superadminPage.getTotalPages() - 1);
+            Pageable lastPageable = PageRequest.of(lastPageIndex, pageable.getPageSize(), pageable.getSort());
+            superadminPage = superadminRepository.findAll(lastPageable);
+        }
+
         Page<SuperadminDto> dtoPage = superadminPage.map(superadminMapper::toDto);
-        
+
         return BaseResponse.success("Superadmins listed successfully", dtoPage);
     }
     
