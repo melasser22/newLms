@@ -48,15 +48,16 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 import org.springframework.web.util.UrlPathHelper;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.Map;
 
 /**
  * Default Resource Server security:
@@ -145,7 +146,7 @@ public class SecurityAutoConfiguration {
       case "hs256" -> {
         String secret = Optional.ofNullable(props.getHs256()).map(SharedSecurityProps.Hs256::getSecret).orElse(null);
         require(StringUtils.hasText(secret), "shared.security.hs256.secret is required when mode=hs256");
-        SecretKey key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        SecretKey key = new SecretKeySpec(resolveHs256Secret(secret), "HmacSHA256");
         decoder = NimbusJwtDecoder.withSecretKey(key).macAlgorithm(MacAlgorithm.HS256).build();
       }
       default -> throw new IllegalArgumentException("Invalid shared.security.mode: " + mode);
@@ -303,6 +304,23 @@ public class SecurityAutoConfiguration {
 
   private static void require(boolean condition, String message) {
     if (!condition) throw new IllegalStateException(message);
+  }
+
+  private static byte[] resolveHs256Secret(String secret) {
+    byte[] decoded = tryDecodeBase64(secret);
+    if (decoded != null && decoded.length >= 32) {
+      return decoded;
+    }
+    return secret.getBytes(StandardCharsets.UTF_8);
+  }
+
+  private static byte[] tryDecodeBase64(String value) {
+    try {
+      byte[] decoded = Base64.getDecoder().decode(value);
+      return decoded.length == 0 ? null : decoded;
+    } catch (IllegalArgumentException ex) {
+      return null;
+    }
   }
 
   /**
