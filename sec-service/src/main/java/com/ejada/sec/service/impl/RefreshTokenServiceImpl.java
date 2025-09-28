@@ -29,6 +29,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   public String issue(Long userId) {
     String token = UUID.randomUUID().toString();
     var now = Instant.now();
+    repo.deleteByUserId(userId);
     var rt = RefreshToken.builder()
         .user(userRepository.findById(userId).orElseThrow())
         .token(token)

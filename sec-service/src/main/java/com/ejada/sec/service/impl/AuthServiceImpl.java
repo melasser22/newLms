@@ -31,7 +31,7 @@ public class AuthServiceImpl implements AuthService {
   @Override
   public BaseResponse<AuthResponse> register(RegisterRequest req) {
     log.info("Registering user '{}' for tenant {}", req.getUsername(), req.getTenantId());
-    var created = userService.create(
+    var creationResponse = userService.create(
         CreateUserRequest.builder()
             .tenantId(req.getTenantId())
             .username(req.getUsername())
@@ -39,7 +39,18 @@ public class AuthServiceImpl implements AuthService {
             .password(req.getPassword())
             .roles(req.getRoles())
             .build()
-    ).getData();
+    );
+
+    if (!creationResponse.isSuccess() || creationResponse.getData() == null) {
+      log.warn(
+          "User '{}' registration failed for tenant {} with code {}",
+          req.getUsername(),
+          req.getTenantId(),
+          creationResponse.getCode());
+      return creationResponse.map(data -> null);
+    }
+
+    var created = creationResponse.getData();
     var tokens = issueTokens(created.getTenantId(), created.getUsername(), created.getId());
     log.info("User '{}' registered for tenant {}", created.getUsername(), created.getTenantId());
     return BaseResponse.success("User registered", tokens);
