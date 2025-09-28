@@ -1,7 +1,9 @@
 package com.ejada.sec.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -9,7 +11,9 @@ import com.ejada.common.dto.BaseResponse;
 import com.ejada.crypto.JwtTokenService;
 import com.ejada.crypto.password.PasswordHasher;
 import com.ejada.sec.domain.Superadmin;
+import com.ejada.sec.domain.SuperadminPasswordHistory;
 import com.ejada.sec.dto.admin.FirstLoginRequest;
+import com.ejada.sec.exception.PasswordHistoryUnavailableException;
 import com.ejada.sec.mapper.SuperadminMapper;
 import com.ejada.sec.repository.SuperadminPasswordHistoryRepository;
 import com.ejada.sec.repository.SuperadminRepository;
@@ -112,5 +116,90 @@ class SuperadminServiceImplTest {
         verify(superadminRepository).findByIdentifier("superadmin");
         verify(superadminRepository).save(superadmin);
         verify(passwordHistoryRepository).save(any());
+    }
+
+    @Test
+    void completeFirstLoginSkipsBlankPasswordHistoryEntries() {
+        Superadmin superadmin = Superadmin.builder()
+            .id(7L)
+            .username("superadmin")
+            .email("admin@ejada.com")
+            .firstLoginCompleted(false)
+            .passwordHash(PasswordHasher.bcrypt("Admin@123!"))
+            .build();
+
+        when(superadminRepository.findById(7L)).thenReturn(Optional.of(superadmin));
+        when(superadminRepository.save(superadmin)).thenReturn(superadmin);
+        when(passwordHistoryRepository.findTop5BySuperadminIdOrderByCreatedAtDesc(7L))
+            .thenReturn(List.of(
+                SuperadminPasswordHistory.builder().id(1L).superadminId(7L).passwordHash(null).build(),
+                SuperadminPasswordHistory.builder().id(2L).superadminId(7L).passwordHash("   ").build()
+            ));
+
+        Jwt jwt = Jwt.withTokenValue("token")
+            .header("alg", "HS256")
+            .claim("uid", 7)
+            .claim("roles", List.of("EJADA_OFFICER"))
+            .issuedAt(Instant.now().minusSeconds(60))
+            .expiresAt(Instant.now().plusSeconds(3600))
+            .build();
+
+        JwtAuthenticationToken authentication = new JwtAuthenticationToken(
+            jwt,
+            List.of(new SimpleGrantedAuthority("ROLE_EJADA_OFFICER")));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        FirstLoginRequest request = FirstLoginRequest.builder()
+            .currentPassword("Admin@123!")
+            .newPassword("AnotherPass123!")
+            .confirmPassword("AnotherPass123!")
+            .build();
+
+        BaseResponse<Void> response = service.completeFirstLogin(request);
+
+        assertThat(response.isSuccess()).isTrue();
+        verify(superadminRepository).save(superadmin);
+        verify(passwordHistoryRepository).save(any());
+    }
+
+    @Test
+    void completeFirstLoginThrowsWhenHistoryHashInvalid() {
+        Superadmin superadmin = Superadmin.builder()
+            .id(9L)
+            .username("superadmin")
+            .email("admin@ejada.com")
+            .firstLoginCompleted(false)
+            .passwordHash(PasswordHasher.bcrypt("Admin@123!"))
+            .build();
+
+        when(superadminRepository.findById(9L)).thenReturn(Optional.of(superadmin));
+        when(passwordHistoryRepository.findTop5BySuperadminIdOrderByCreatedAtDesc(9L))
+            .thenReturn(List.of(
+                SuperadminPasswordHistory.builder().id(3L).superadminId(9L).passwordHash("not-a-bcrypt-hash").build()
+            ));
+
+        Jwt jwt = Jwt.withTokenValue("token")
+            .header("alg", "HS256")
+            .claim("uid", 9)
+            .claim("roles", List.of("EJADA_OFFICER"))
+            .issuedAt(Instant.now().minusSeconds(60))
+            .expiresAt(Instant.now().plusSeconds(3600))
+            .build();
+
+        JwtAuthenticationToken authentication = new JwtAuthenticationToken(
+            jwt,
+            List.of(new SimpleGrantedAuthority("ROLE_EJADA_OFFICER")));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        FirstLoginRequest request = FirstLoginRequest.builder()
+            .currentPassword("Admin@123!")
+            .newPassword("NextPassword123!")
+            .confirmPassword("NextPassword123!")
+            .build();
+
+        assertThatThrownBy(() -> service.completeFirstLogin(request))
+            .isInstanceOf(PasswordHistoryUnavailableException.class);
+        verify(superadminRepository, never()).save(any(Superadmin.class));
+        verify(passwordHistoryRepository, never()).save(any());
     }
 }
