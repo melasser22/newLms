@@ -17,6 +17,7 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -24,6 +25,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 /**
@@ -100,6 +102,47 @@ public class ApiResponseEntityExceptionHandler extends ResponseEntityExceptionHa
         );
         enrich(body, request);
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    // ---- Common business exceptions ---------------------------------------------
+
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    public ResponseEntity<Object> handleIllegalArgument(RuntimeException ex, WebRequest request) {
+        String message = (ex.getMessage() != null && !ex.getMessage().isBlank())
+            ? ex.getMessage()
+            : "Request validation failed";
+
+        List<String> details = List.of();
+        if (ex.getMessage() != null && ex.getMessage().contains(":")) {
+            String[] parts = ex.getMessage().split(":", 2);
+            if (parts.length == 2 && !parts[1].isBlank()) {
+                details = List.of(parts[1].trim());
+                message = parts[0].trim();
+            }
+        }
+
+        ErrorResponse body = ErrorResponse.of(
+            ErrorCodes.API_BAD_REQUEST,
+            message,
+            details
+        );
+        enrich(body, request);
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<Object> handleNotFound(NoSuchElementException ex, WebRequest request) {
+        String message = (ex.getMessage() != null && !ex.getMessage().isBlank())
+            ? ex.getMessage()
+            : "Requested resource was not found";
+
+        ErrorResponse body = ErrorResponse.of(
+            ErrorCodes.NOT_FOUND,
+            message,
+            List.of()
+        );
+        enrich(body, request);
+        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
     // ---- Validation: method-level (@Validated) constraint violations --------------
