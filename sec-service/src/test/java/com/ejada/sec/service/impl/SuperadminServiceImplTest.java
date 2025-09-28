@@ -202,4 +202,51 @@ class SuperadminServiceImplTest {
         verify(superadminRepository, never()).save(any(Superadmin.class));
         verify(passwordHistoryRepository, never()).save(any());
     }
+
+    @Test
+    void completeFirstLoginRejectsRecentlyUsedPassword() {
+        Superadmin superadmin = Superadmin.builder()
+            .id(11L)
+            .username("superadmin")
+            .email("admin@ejada.com")
+            .firstLoginCompleted(false)
+            .passwordHash(PasswordHasher.bcrypt("Admin@123!"))
+            .build();
+
+        when(superadminRepository.findById(11L)).thenReturn(Optional.of(superadmin));
+        when(passwordHistoryRepository.findTop5BySuperadminIdOrderByCreatedAtDesc(11L))
+            .thenReturn(List.of(
+                SuperadminPasswordHistory.builder()
+                    .id(4L)
+                    .superadminId(11L)
+                    .passwordHash(PasswordHasher.bcrypt("ReusedPass123!"))
+                    .build()
+            ));
+
+        Jwt jwt = Jwt.withTokenValue("token")
+            .header("alg", "HS256")
+            .claim("uid", 11)
+            .claim("roles", List.of("EJADA_OFFICER"))
+            .issuedAt(Instant.now().minusSeconds(60))
+            .expiresAt(Instant.now().plusSeconds(3600))
+            .build();
+
+        JwtAuthenticationToken authentication = new JwtAuthenticationToken(
+            jwt,
+            List.of(new SimpleGrantedAuthority("ROLE_EJADA_OFFICER")));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        FirstLoginRequest request = FirstLoginRequest.builder()
+            .currentPassword("Admin@123!")
+            .newPassword("ReusedPass123!")
+            .confirmPassword("ReusedPass123!")
+            .build();
+
+        assertThatThrownBy(() -> service.completeFirstLogin(request))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("New password cannot match any of your last 5 passwords");
+
+        verify(superadminRepository, never()).save(any(Superadmin.class));
+        verify(passwordHistoryRepository, never()).save(any());
+    }
 }
