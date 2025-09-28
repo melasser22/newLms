@@ -21,6 +21,8 @@
     <!-- shared BOM version -->
     <ejada.shared.version>1.0.0</ejada.shared.version>
     <plugin.spotbugs.version>4.8.6.5</plugin.spotbugs.version>
+    <mockito.inline.version>5.2.0</mockito.inline.version>
+    <bytebuddy.agent.version>1.17.7</bytebuddy.agent.version>
 
   </properties>
 
@@ -190,11 +192,18 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>-javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${bytebuddy.agent.version}/byte-buddy-agent-${bytebuddy.agent.version}.jar</argLine>
+        </configuration>
+      </plugin>
      <plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-checkstyle-plugin</artifactId>
-    <version>3.5.0</version>
-    <configuration>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>3.5.0</version>
+        <configuration>
         <configLocation>../shared-lib/shared-quality/checkstyle.xml</configLocation>
         <suppressionsLocation>${project.basedir}/../shared-lib/shared-quality/suppressions.xml</suppressionsLocation>
         <consoleOutput>true</consoleOutput>
