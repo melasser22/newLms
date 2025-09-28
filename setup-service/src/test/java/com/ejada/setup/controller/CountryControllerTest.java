@@ -26,7 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.ejada.starter_security.RoleChecker;
 import com.ejada.starter_security.SharedSecurityProps;
-import com.ejada.starter_core.web.SecurityExceptionHandler;
+import com.ejada.starter_core.web.GlobalExceptionHandler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -40,7 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 @WithMockUser(roles = {"ADMIN", "USER"})
-@Import({CountryControllerTest.TestSecurityConfig.class, SecurityExceptionHandler.class})
+@Import({CountryControllerTest.TestSecurityConfig.class, GlobalExceptionHandler.class})
 @ImportAutoConfiguration(AopAutoConfiguration.class)
 class CountryControllerTest {
 
