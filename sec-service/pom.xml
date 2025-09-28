@@ -24,6 +24,8 @@
         <!-- Import shared BOM version so we use the same versions of shared libraries as other services -->
         <ejada.shared.version>1.0.0</ejada.shared.version>
         <plugin.spotbugs.version>4.8.6.5</plugin.spotbugs.version>
+        <mockito.inline.version>5.2.0</mockito.inline.version>
+        <bytebuddy.agent.version>1.17.7</bytebuddy.agent.version>
 
     </properties>
 
@@ -196,6 +198,13 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>-javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${bytebuddy.agent.version}/byte-buddy-agent-${bytebuddy.agent.version}.jar</argLine>
+        </configuration>
       </plugin>
      <plugin>
     <groupId>org.apache.maven.plugins</groupId>

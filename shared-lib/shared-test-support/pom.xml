@@ -47,6 +47,16 @@
       <artifactId>kafka</artifactId>
     </dependency>
 
+    <!-- Mockito inline mock maker requires dedicated agent -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-inline</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy-agent</artifactId>
+    </dependency>
+
     <!-- JJWT: versions come from jjwt-bom imported in shared-bom -->
      <dependency>
     <groupId>io.jsonwebtoken</groupId>
