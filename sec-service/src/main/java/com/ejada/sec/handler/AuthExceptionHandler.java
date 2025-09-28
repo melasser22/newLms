@@ -18,4 +18,10 @@ public class AuthExceptionHandler {
         ErrorResponse body = ErrorResponse.of("ERR_AUTH", ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException ex) {
+        ErrorResponse body = ErrorResponse.of("ERR_AUTH", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
 }
