@@ -58,7 +58,7 @@ class AuthServiceImplTest {
         .build();
 
     when(userService.create(any())).thenReturn(BaseResponse.success("created", dto));
-    when(refreshTokenService.issue(42L)).thenReturn("refresh-token");
+    when(refreshTokenService.issue(42L, false, null)).thenReturn("refresh-token");
     when(tokenIssuer.issueAccessToken(tenantId, 42L, "jane")).thenReturn("access-token");
     when(tokenIssuer.getAccessTokenTtlSeconds()).thenReturn(3600L);
 

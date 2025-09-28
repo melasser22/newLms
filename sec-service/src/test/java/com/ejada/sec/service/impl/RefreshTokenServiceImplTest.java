@@ -3,6 +3,7 @@ package com.ejada.sec.service.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -35,17 +36,22 @@ class RefreshTokenServiceImplTest {
   void setUp() {
     service = new RefreshTokenServiceImpl(refreshTokenRepository, userRepository);
     ReflectionTestUtils.setField(service, "ttlSeconds", 120L);
+    ReflectionTestUtils.setField(service, "maxActivePerUser", 10);
+    ReflectionTestUtils.setField(service, "maxActivePerTenant", 100);
   }
 
   @Test
   void issueGeneratesTokenWithConfiguredTtlAndDeletesExistingOnes() {
-    User user = User.builder().id(5L).build();
+    UUID tenantId = UUID.randomUUID();
+    User user = User.builder().id(5L).tenantId(tenantId).build();
     when(userRepository.findById(5L)).thenReturn(Optional.of(user));
+    when(refreshTokenRepository.findActiveTokensByUserId(eq(5L), any())).thenReturn(java.util.Collections.emptyList());
+    when(refreshTokenRepository.findActiveTokensByTenant(eq(tenantId), any())).thenReturn(java.util.Collections.emptyList());
     when(refreshTokenRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
     try (var mockedUuid = mockStatic(UUID.class)) {
       mockedUuid.when(UUID::randomUUID).thenReturn(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
-      String issued = service.issue(5L);
+      String issued = service.issue(5L, true, "prev-token");
       assertThat(issued).isEqualTo("123e4567-e89b-12d3-a456-426614174000");
     }
 
@@ -56,6 +62,7 @@ class RefreshTokenServiceImplTest {
     assertThat(saved.getToken()).isEqualTo("123e4567-e89b-12d3-a456-426614174000");
     assertThat(saved.getExpiresAt()).isAfter(saved.getIssuedAt());
     assertThat(saved.getExpiresAt()).isEqualTo(saved.getIssuedAt().plusSeconds(120L));
+    assertThat(saved.getRotatedFrom()).isEqualTo("prev-token");
   }
 
   @Test
