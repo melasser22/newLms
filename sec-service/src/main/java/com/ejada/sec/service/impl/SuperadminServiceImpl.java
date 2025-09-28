@@ -716,16 +716,19 @@ public class SuperadminServiceImpl implements SuperadminService {
                             "Invalid password hash format for history entry " + entry.getId()));
                 }
 
+                boolean matches;
                 try {
-                    if (PasswordHasher.matchesBcrypt(candidatePassword, historicalHash)) {
-                        throw new IllegalArgumentException("New password cannot match any of your last 5 passwords");
-                    }
+                    matches = PasswordHasher.matchesBcrypt(candidatePassword, historicalHash);
                 } catch (IllegalArgumentException ex) {
                     log.error("Invalid password hash detected for superadmin {} in history entry {}",
                         superadminId, entry.getId(), ex);
                     throw new PasswordHistoryUnavailableException(
                         "Unable to verify password history at the moment. Please try again later or contact support.",
                         ex);
+                }
+
+                if (matches) {
+                    throw new IllegalArgumentException("New password cannot match any of your last 5 passwords");
                 }
             }
         } catch (DataAccessException ex) {
