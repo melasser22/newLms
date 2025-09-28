@@ -45,6 +45,9 @@ public class SuperadminServiceImpl implements SuperadminService {
     private final JwtTokenService jwtTokenService;
     private final SuperadminPasswordHistoryRepository passwordHistoryRepository;
     private final SuperadminAuditService superadminAuditService;
+
+    private static final Pattern BCRYPT_PATTERN =
+        Pattern.compile("^\\$2[aby]\\$\\d\\d\\$[./0-9A-Za-z]{53}$");
     
     @Value("${shared.security.superadmin.password-expiry-days:90}")
     private int passwordExpiryDays;
@@ -702,6 +705,13 @@ public class SuperadminServiceImpl implements SuperadminService {
                     log.warn("Skipping password history entry {} for superadmin {} due to empty hash",
                         entry.getId(), superadminId);
                     continue;
+                }
+
+                if (!BCRYPT_PATTERN.matcher(historicalHash).matches()) {
+                    log.error("Invalid password hash detected for superadmin {} in history entry {}",
+                        superadminId, entry.getId());
+                    throw new PasswordHistoryUnavailableException(
+                        "Unable to verify password history at the moment. Please try again later or contact support.");
                 }
 
                 try {
