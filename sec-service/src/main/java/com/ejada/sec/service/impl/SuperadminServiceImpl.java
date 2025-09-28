@@ -697,8 +697,23 @@ public class SuperadminServiceImpl implements SuperadminService {
             List<SuperadminPasswordHistory> recentPasswords =
                 passwordHistoryRepository.findTop5BySuperadminIdOrderByCreatedAtDesc(superadminId);
             for (SuperadminPasswordHistory entry : recentPasswords) {
-                if (PasswordHasher.matchesBcrypt(candidatePassword, entry.getPasswordHash())) {
-                    throw new IllegalArgumentException("New password cannot match any of your last 5 passwords");
+                String historicalHash = entry.getPasswordHash();
+                if (historicalHash == null || historicalHash.isBlank()) {
+                    log.warn("Skipping password history entry {} for superadmin {} due to empty hash",
+                        entry.getId(), superadminId);
+                    continue;
+                }
+
+                try {
+                    if (PasswordHasher.matchesBcrypt(candidatePassword, historicalHash)) {
+                        throw new IllegalArgumentException("New password cannot match any of your last 5 passwords");
+                    }
+                } catch (IllegalArgumentException ex) {
+                    log.error("Invalid password hash detected for superadmin {} in history entry {}",
+                        superadminId, entry.getId(), ex);
+                    throw new PasswordHistoryUnavailableException(
+                        "Unable to verify password history at the moment. Please try again later or contact support.",
+                        ex);
                 }
             }
         } catch (DataAccessException ex) {
