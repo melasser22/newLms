@@ -94,4 +94,27 @@ class JwtTenantFilterTest {
         assertEquals("true", res.getHeader("X-Is-Superadmin"));
         assertNull(res.getHeader(HeaderNames.X_TENANT_ID));
     }
+
+    @Test
+    void convertsArrayBasedClaimsToString() throws ServletException, IOException {
+        Jwt jwt = new Jwt(
+                "token",
+                Instant.now(),
+                Instant.now().plusSeconds(60),
+                Map.of("alg", "none"),
+                Map.of("tenant", new char[] {'a', 'c', 'm', 'e'}, "uid", new Object[] {123L, "ignored"})
+        );
+        SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt));
+
+        JwtTenantFilter filter = new JwtTenantFilter("tenant");
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        MockHttpServletResponse res = new MockHttpServletResponse();
+
+        filter.doFilter(req, res, (request, response) -> {
+            assertEquals("acme", ContextManager.Tenant.get());
+            assertEquals("123", ContextManager.getUserId());
+        });
+
+        assertEquals("acme", res.getHeader(HeaderNames.X_TENANT_ID));
+    }
 }
