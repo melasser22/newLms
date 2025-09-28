@@ -2,6 +2,7 @@ package com.ejada.sec.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.common.exception.ValidationException;
+import com.ejada.crypto.password.PasswordHasher;
 import com.ejada.sec.domain.User;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.mapper.ReferenceResolver;
@@ -10,7 +11,6 @@ import com.ejada.sec.repository.UserRepository;
 import com.ejada.sec.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,13 +25,12 @@ public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
   private final UserMapper userMapper;
   private final ReferenceResolver resolver;
-  private final PasswordEncoder passwordEncoder;
 
   @Transactional
   @Override
   public BaseResponse<UserDto> create(CreateUserRequest req) {
     User user = userMapper.toEntity(req);
-    user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+    user.setPasswordHash(PasswordHasher.bcrypt(req.getPassword()));
     user = userRepository.save(user);
     // attach roles by codes (if any)
     userMapper.setRolesByCodes(user, req.getRoles(), req.getTenantId(), resolver);

@@ -1,6 +1,7 @@
 package com.ejada.sec.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.crypto.password.PasswordHasher;
 import com.ejada.sec.domain.PasswordResetToken;
 import com.ejada.sec.domain.User;
 import com.ejada.sec.dto.ForgotPasswordRequest;
@@ -11,7 +12,6 @@ import com.ejada.sec.service.PasswordResetService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -24,7 +24,6 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
   private final UserRepository userRepository;
   private final PasswordResetTokenRepository tokenRepository;
-  private final PasswordEncoder passwordEncoder;
 
   @Value("${security.reset.ttl-seconds:900}") // 15 minutes
   private long resetTtl;
@@ -56,7 +55,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     ).orElseThrow(() -> new NoSuchElementException("Invalid or expired reset token"));
 
     var user = prt.getUser();
-    user.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
+    user.setPasswordHash(PasswordHasher.bcrypt(req.getNewPassword()));
     prt.setUsedAt(Instant.now());
     // repositories will update through transaction
     return BaseResponse.success("Password reset", null);
