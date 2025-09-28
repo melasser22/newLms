@@ -1,12 +1,15 @@
 package com.ejada.setup.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.exception.DuplicateResourceException;
+import com.ejada.common.exception.NotFoundException;
+import com.ejada.common.service.BaseCrudService;
+import com.ejada.common.sort.SortUtils;
 import com.ejada.setup.dto.ResourceDto;
 import com.ejada.setup.mapper.ResourceMapper;
 import com.ejada.setup.model.Resource;
 import com.ejada.setup.repository.ResourceRepository;
 import com.ejada.setup.service.ResourceService;
-import com.ejada.common.sort.SortUtils;
 import com.ejada.audit.starter.api.AuditAction;
 import com.ejada.audit.starter.api.DataClass;
 import com.ejada.audit.starter.api.annotations.Audited;
@@ -26,7 +29,9 @@ import java.util.List;
 
 @Service
 @Transactional
-public class ResourceServiceImpl implements ResourceService {
+public class ResourceServiceImpl
+        extends BaseCrudService<Resource, Integer, ResourceDto, ResourceDto, ResourceDto>
+        implements ResourceService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceServiceImpl.class);
     private static final int LARGE_PAGE_SIZE = 1000;
@@ -40,6 +45,87 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
+    protected ResourceRepository getRepository() {
+        return resourceRepository;
+    }
+
+    @Override
+    protected boolean existsByUniqueField(final ResourceDto dto) {
+        return dto != null
+                && dto.getResourceCd() != null
+                && resourceRepository.existsByResourceCdIgnoreCase(dto.getResourceCd());
+    }
+
+    @Override
+    protected Resource mapToEntity(final ResourceDto dto) {
+        return mapper.toEntity(dto);
+    }
+
+    @Override
+    protected void updateEntity(final Resource entity, final ResourceDto dto) {
+        if (dto.getResourceCd() != null
+                && !dto.getResourceCd().equalsIgnoreCase(entity.getResourceCd())
+                && resourceRepository.existsByResourceCdIgnoreCase(dto.getResourceCd())) {
+            throw new DuplicateResourceException("Resource code already exists");
+        }
+        ensureUniqueEndpoint(dto.getPath(), dto.getHttpMethod(), entity.getResourceId());
+
+        if (dto.getResourceCd() != null) {
+            entity.setResourceCd(dto.getResourceCd());
+        }
+        if (dto.getResourceEnNm() != null) {
+            entity.setResourceEnNm(dto.getResourceEnNm());
+        }
+        if (dto.getResourceArNm() != null) {
+            entity.setResourceArNm(dto.getResourceArNm());
+        }
+        if (dto.getPath() != null) {
+            entity.setPath(dto.getPath());
+        }
+        if (dto.getHttpMethod() != null) {
+            entity.setHttpMethod(dto.getHttpMethod());
+        }
+        if (dto.getParentResourceId() != null) {
+            entity.setParentResourceId(dto.getParentResourceId());
+        }
+        if (dto.getIsActive() != null) {
+            entity.setIsActive(dto.getIsActive());
+        }
+        if (dto.getEnDescription() != null) {
+            entity.setEnDescription(dto.getEnDescription());
+        }
+        if (dto.getArDescription() != null) {
+            entity.setArDescription(dto.getArDescription());
+        }
+    }
+
+    @Override
+    protected ResourceDto mapToDto(final Resource entity) {
+        return mapper.toDto(entity);
+    }
+
+    @Override
+    protected String getEntityName() {
+        return "Resource";
+    }
+
+    @Override
+    protected String duplicateResourceMessage(final ResourceDto dto) {
+        return "Resource code already exists";
+    }
+
+    private void ensureUniqueEndpoint(final String path, final String method, final Integer currentId) {
+        if (path == null || method == null) {
+            return;
+        }
+        resourceRepository.findByPathIgnoreCaseAndHttpMethodIgnoreCase(path, method)
+                .filter(r -> currentId == null || !r.getResourceId().equals(currentId))
+                .ifPresent(r -> {
+                    throw new IllegalStateException("A resource with same path+method exists");
+                });
+    }
+
+    @Override
     @Audited(action = AuditAction.CREATE, entity = "Resource", dataClass = DataClass.HEALTH, message = "Create resource")
     @CacheEvict(cacheNames = {"resources:children"}, allEntries = true)
     public BaseResponse<ResourceDto> add(final ResourceDto request) {
@@ -47,18 +133,12 @@ public class ResourceServiceImpl implements ResourceService {
             if (request.getResourceCd() == null || request.getResourceCd().isBlank()) {
                 return BaseResponse.error("ERR_RESOURCE_CD_REQUIRED", "Resource code is required");
             }
-            if (resourceRepository.existsByResourceCdIgnoreCase(request.getResourceCd())) {
-                return BaseResponse.error("ERR_RESOURCE_DUP_CD", "Resource code already exists");
-            }
-            if (request.getPath() != null && request.getHttpMethod() != null
-                    && resourceRepository
-                            .findByPathIgnoreCaseAndHttpMethodIgnoreCase(request.getPath(), request.getHttpMethod())
-                            .isPresent()) {
-                return BaseResponse.error("ERR_RESOURCE_DUP_ENDPOINT", "A resource with same path+method exists");
-            }
-            Resource entity = mapper.toEntity(request);
-            Resource saved = resourceRepository.save(entity);
-            return BaseResponse.success("Resource created", mapper.toDto(saved));
+            ensureUniqueEndpoint(request.getPath(), request.getHttpMethod(), null);
+            return super.create(request);
+        } catch (DuplicateResourceException ex) {
+            return BaseResponse.error("ERR_RESOURCE_DUP_CD", ex.getMessage());
+        } catch (IllegalStateException ex) {
+            return BaseResponse.error("ERR_RESOURCE_DUP_ENDPOINT", ex.getMessage());
         } catch (Exception ex) {
             LOGGER.error("Add resource failed", ex);
             return BaseResponse.error("ERR_RESOURCE_ADD", "Failed to create resource");
@@ -70,56 +150,13 @@ public class ResourceServiceImpl implements ResourceService {
     @CacheEvict(cacheNames = {"resources:children"}, allEntries = true)
     public BaseResponse<ResourceDto> update(final Integer resourceId, final ResourceDto request) {
         try {
-            Resource existing = resourceRepository.findById(resourceId).orElse(null);
-            if (existing == null) {
-                return BaseResponse.error("ERR_RESOURCE_NOT_FOUND", "Resource not found");
-            }
-
-            if (request.getResourceCd() != null
-                    && !request.getResourceCd().equalsIgnoreCase(existing.getResourceCd())
-                    && resourceRepository.existsByResourceCdIgnoreCase(request.getResourceCd())) {
-                return BaseResponse.error("ERR_RESOURCE_DUP_CD", "Resource code already exists");
-            }
-            if (request.getPath() != null && request.getHttpMethod() != null) {
-                resourceRepository.findByPathIgnoreCaseAndHttpMethodIgnoreCase(request.getPath(), request.getHttpMethod())
-                        .filter(r -> !r.getResourceId().equals(existing.getResourceId()))
-                        .ifPresent(r -> {
-                            throw new IllegalStateException("A resource with same path+method exists");
-                        });
-            }
-
-            if (request.getResourceCd() != null) {
-                existing.setResourceCd(request.getResourceCd());
-            }
-            if (request.getResourceEnNm() != null) {
-                existing.setResourceEnNm(request.getResourceEnNm());
-            }
-            if (request.getResourceArNm() != null) {
-                existing.setResourceArNm(request.getResourceArNm());
-            }
-            if (request.getPath() != null) {
-                existing.setPath(request.getPath());
-            }
-            if (request.getHttpMethod() != null) {
-                existing.setHttpMethod(request.getHttpMethod());
-            }
-            if (request.getParentResourceId() != null) {
-                existing.setParentResourceId(request.getParentResourceId());
-            }
-            if (request.getIsActive() != null) {
-                existing.setIsActive(request.getIsActive());
-            }
-            if (request.getEnDescription() != null) {
-                existing.setEnDescription(request.getEnDescription());
-            }
-            if (request.getArDescription() != null) {
-                existing.setArDescription(request.getArDescription());
-            }
-
-            Resource saved = resourceRepository.save(existing);
-            return BaseResponse.success("Resource updated", mapper.toDto(saved));
-        } catch (IllegalStateException ise) {
-            return BaseResponse.error("ERR_RESOURCE_DUP_ENDPOINT", ise.getMessage());
+            return super.update(resourceId, request);
+        } catch (DuplicateResourceException ex) {
+            return BaseResponse.error("ERR_RESOURCE_DUP_CD", ex.getMessage());
+        } catch (IllegalStateException ex) {
+            return BaseResponse.error("ERR_RESOURCE_DUP_ENDPOINT", ex.getMessage());
+        } catch (NotFoundException ex) {
+            return BaseResponse.error("ERR_RESOURCE_NOT_FOUND", ex.getMessage());
         } catch (Exception ex) {
             LOGGER.error("Update resource failed", ex);
             return BaseResponse.error("ERR_RESOURCE_UPDATE", "Failed to update resource");
@@ -131,9 +168,9 @@ public class ResourceServiceImpl implements ResourceService {
     @Audited(action = AuditAction.READ, entity = "Resource", dataClass = DataClass.HEALTH, message = "Get resource")
     public BaseResponse<ResourceDto> get(final Integer resourceId) {
         try {
-            return resourceRepository.findById(resourceId)
-                    .map(r -> BaseResponse.success("Resource", mapper.toDto(r)))
-                    .orElseGet(() -> BaseResponse.error("ERR_RESOURCE_NOT_FOUND", "Resource not found"));
+            return super.get(resourceId);
+        } catch (NotFoundException ex) {
+            return BaseResponse.error("ERR_RESOURCE_NOT_FOUND", ex.getMessage());
         } catch (Exception ex) {
             LOGGER.error("Get resource failed", ex);
             return BaseResponse.error("ERR_RESOURCE_GET", "Failed to get resource");

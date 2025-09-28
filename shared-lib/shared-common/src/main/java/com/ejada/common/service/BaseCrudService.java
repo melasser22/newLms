@@ -25,6 +25,14 @@ public abstract class BaseCrudService<E, ID, C, U, R> {
     /** Check for a unique constraint prior to creation. */
     protected abstract boolean existsByUniqueField(C dto);
 
+    /**
+     * Message used when a duplicate resource is detected during creation.
+     * Subclasses may override to provide a domain specific description.
+     */
+    protected String duplicateResourceMessage(C dto) {
+        return getEntityName() + " already exists";
+    }
+
     /** Map a create DTO to an entity instance. */
     protected abstract E mapToEntity(C dto);
 
@@ -40,7 +48,7 @@ public abstract class BaseCrudService<E, ID, C, U, R> {
     @Transactional
     public BaseResponse<R> create(C dto) {
         if (existsByUniqueField(dto)) {
-            throw new DuplicateResourceException(getEntityName() + " already exists");
+            throw new DuplicateResourceException(duplicateResourceMessage(dto));
         }
         E entity = mapToEntity(dto);
         E saved = getRepository().save(entity);
@@ -51,7 +59,7 @@ public abstract class BaseCrudService<E, ID, C, U, R> {
     public BaseResponse<R> get(ID id) {
         E entity = getRepository().findById(id)
                 .orElseThrow(() -> new NotFoundException(getEntityName() + " not found", String.valueOf(id)));
-        return BaseResponse.success("OK", mapToDto(entity));
+        return BaseResponse.success(getEntityName(), mapToDto(entity));
     }
 
     @Transactional
