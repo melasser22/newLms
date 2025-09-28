@@ -9,7 +9,9 @@
         <pattern>
           <pattern>{"message":"%message","X-Correlation-Id":"%X{X-Correlation-Id}"}</pattern>
         </pattern>
-        <mdc/>
+        <mdc>
+          <excludeMdcKeyName>X-Correlation-Id</excludeMdcKeyName>
+        </mdc>
       </providers>
     </encoder>
   </appender>
