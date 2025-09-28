@@ -1,6 +1,7 @@
 package com.ejada.sec.handler;
 
 import com.ejada.common.dto.ErrorResponse;
+import com.ejada.sec.exception.PasswordHistoryUnavailableException;
 import java.util.NoSuchElementException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,4 +25,11 @@ public class AuthExceptionHandler {
         ErrorResponse body = ErrorResponse.of("ERR_AUTH", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
+
+    @ExceptionHandler(PasswordHistoryUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handlePasswordHistoryUnavailable(PasswordHistoryUnavailableException ex) {
+        ErrorResponse body = ErrorResponse.of("ERR_AUTH_HISTORY", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
+    }
+
 }
