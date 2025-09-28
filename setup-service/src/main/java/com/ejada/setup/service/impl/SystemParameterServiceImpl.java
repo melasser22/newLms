@@ -1,6 +1,9 @@
 package com.ejada.setup.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.exception.DuplicateResourceException;
+import com.ejada.common.exception.NotFoundException;
+import com.ejada.common.service.BaseCrudService;
 import com.ejada.setup.model.SystemParameter;
 import com.ejada.setup.repository.SystemParameterRepository;
 import com.ejada.setup.service.SystemParameterService;
@@ -24,7 +27,9 @@ import java.util.List;
 
 @Service
 @Transactional
-public class SystemParameterServiceImpl implements SystemParameterService {
+public class SystemParameterServiceImpl
+        extends BaseCrudService<SystemParameter, Integer, SystemParameter, SystemParameter, SystemParameter>
+        implements SystemParameterService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SystemParameterServiceImpl.class);
 
@@ -35,6 +40,62 @@ public class SystemParameterServiceImpl implements SystemParameterService {
     }
 
     @Override
+    protected SystemParameterRepository getRepository() {
+        return systemParameterRepository;
+    }
+
+    @Override
+    protected boolean existsByUniqueField(final SystemParameter request) {
+        return request != null
+                && request.getParamKey() != null
+                && systemParameterRepository.existsByParamKeyIgnoreCase(request.getParamKey());
+    }
+
+    @Override
+    protected SystemParameter mapToEntity(final SystemParameter dto) {
+        return dto;
+    }
+
+    @Override
+    protected void updateEntity(final SystemParameter entity, final SystemParameter request) {
+        if (request.getParamKey() != null
+                && !request.getParamKey().equalsIgnoreCase(entity.getParamKey())
+                && systemParameterRepository.existsByParamKeyIgnoreCase(request.getParamKey())) {
+            throw new DuplicateResourceException("Parameter key already exists");
+        }
+        if (request.getParamKey() != null) {
+            entity.setParamKey(request.getParamKey());
+        }
+        if (request.getParamValue() != null) {
+            entity.setParamValue(request.getParamValue());
+        }
+        if (request.getParamGroup() != null) {
+            entity.setParamGroup(request.getParamGroup());
+        }
+        if (request.getIsActive() != null) {
+            entity.setIsActive(request.getIsActive());
+        }
+        if (request.getDescription() != null) {
+            entity.setDescription(request.getDescription());
+        }
+    }
+
+    @Override
+    protected SystemParameter mapToDto(final SystemParameter entity) {
+        return entity;
+    }
+
+    @Override
+    protected String getEntityName() {
+        return "System parameter";
+    }
+
+    @Override
+    protected String duplicateResourceMessage(final SystemParameter dto) {
+        return "Parameter key already exists";
+    }
+
+    @Override
     @Audited(action = AuditAction.CREATE, entity = "SystemParameter", dataClass = DataClass.HEALTH, message = "Create system parameter")
     @CacheEvict(cacheNames = {"sysparams:byKeys"}, allEntries = true)
     public BaseResponse<SystemParameter> add(final SystemParameter request) {
@@ -42,11 +103,9 @@ public class SystemParameterServiceImpl implements SystemParameterService {
             if (request.getParamKey() == null || request.getParamKey().isBlank()) {
                 return BaseResponse.error("ERR_PARAM_KEY_REQUIRED", "Parameter key is required");
             }
-            if (systemParameterRepository.existsByParamKeyIgnoreCase(request.getParamKey())) {
-                return BaseResponse.error("ERR_PARAM_DUP_KEY", "Parameter key already exists");
-            }
-            SystemParameter saved = systemParameterRepository.save(request);
-            return BaseResponse.success("System parameter created", saved);
+            return super.create(request);
+        } catch (DuplicateResourceException ex) {
+            return BaseResponse.error("ERR_PARAM_DUP_KEY", ex.getMessage());
         } catch (Exception ex) {
             LOGGER.error("Add system parameter failed", ex);
             return BaseResponse.error("ERR_PARAM_ADD", "Failed to create system parameter");
@@ -58,34 +117,11 @@ public class SystemParameterServiceImpl implements SystemParameterService {
     @CacheEvict(cacheNames = {"sysparams:byKeys"}, allEntries = true)
     public BaseResponse<SystemParameter> update(final Integer paramId, final SystemParameter request) {
         try {
-            SystemParameter existing = systemParameterRepository.findById(paramId).orElse(null);
-            if (existing == null) {
-                return BaseResponse.error("ERR_PARAM_NOT_FOUND", "System parameter not found");
-            }
-
-            if (request.getParamKey() != null
-                    && !request.getParamKey().equalsIgnoreCase(existing.getParamKey())
-                    && systemParameterRepository.existsByParamKeyIgnoreCase(request.getParamKey())) {
-                return BaseResponse.error("ERR_PARAM_DUP_KEY", "Parameter key already exists");
-            }
-            if (request.getParamKey() != null) {
-                existing.setParamKey(request.getParamKey());
-            }
-            if (request.getParamValue() != null) {
-                existing.setParamValue(request.getParamValue());
-            }
-            if (request.getParamGroup() != null) {
-                existing.setParamGroup(request.getParamGroup());
-            }
-            if (request.getIsActive() != null) {
-                existing.setIsActive(request.getIsActive());
-            }
-            if (request.getDescription() != null) {
-                existing.setDescription(request.getDescription());
-            }
-
-            SystemParameter saved = systemParameterRepository.save(existing);
-            return BaseResponse.success("System parameter updated", saved);
+            return super.update(paramId, request);
+        } catch (DuplicateResourceException ex) {
+            return BaseResponse.error("ERR_PARAM_DUP_KEY", ex.getMessage());
+        } catch (NotFoundException ex) {
+            return BaseResponse.error("ERR_PARAM_NOT_FOUND", ex.getMessage());
         } catch (Exception ex) {
             LOGGER.error("Update system parameter failed", ex);
             return BaseResponse.error("ERR_PARAM_UPDATE", "Failed to update system parameter");
@@ -97,9 +133,9 @@ public class SystemParameterServiceImpl implements SystemParameterService {
     @Audited(action = AuditAction.READ, entity = "SystemParameter", dataClass = DataClass.HEALTH, message = "Get system parameter")
     public BaseResponse<SystemParameter> get(final Integer paramId) {
         try {
-            return systemParameterRepository.findById(paramId)
-                    .map(p -> BaseResponse.success("System parameter", p))
-                    .orElseGet(() -> BaseResponse.error("ERR_PARAM_NOT_FOUND", "System parameter not found"));
+            return super.get(paramId);
+        } catch (NotFoundException ex) {
+            return BaseResponse.error("ERR_PARAM_NOT_FOUND", ex.getMessage());
         } catch (Exception ex) {
             LOGGER.error("Get system parameter failed", ex);
             return BaseResponse.error("ERR_PARAM_GET", "Failed to get system parameter");

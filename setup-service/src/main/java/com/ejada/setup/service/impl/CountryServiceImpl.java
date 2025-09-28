@@ -1,11 +1,14 @@
 package com.ejada.setup.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.setup.model.Country;
+import com.ejada.common.exception.DuplicateResourceException;
+import com.ejada.common.exception.NotFoundException;
+import com.ejada.common.service.BaseCrudService;
+import com.ejada.common.sort.SortUtils;
 import com.ejada.setup.dto.CountryDto;
+import com.ejada.setup.model.Country;
 import com.ejada.setup.repository.CountryRepository;
 import com.ejada.setup.service.CountryService;
-import com.ejada.common.sort.SortUtils;
 import com.ejada.audit.starter.api.AuditAction;
 import com.ejada.audit.starter.api.DataClass;
 import com.ejada.audit.starter.api.annotations.Audited;
@@ -23,12 +26,88 @@ import java.util.List;
 
 @Service
 @Transactional
-public class CountryServiceImpl implements CountryService {
+public class CountryServiceImpl
+        extends BaseCrudService<Country, Integer, CountryDto, CountryDto, Country>
+        implements CountryService {
 
     private final CountryRepository countryRepository;
 
     public CountryServiceImpl(final CountryRepository countryRepository) {
         this.countryRepository = countryRepository;
+    }
+
+    @Override
+    protected CountryRepository getRepository() {
+        return countryRepository;
+    }
+
+    @Override
+    protected boolean existsByUniqueField(final CountryDto dto) {
+        return dto != null
+                && dto.getCountryCd() != null
+                && countryRepository.existsByCountryCdIgnoreCase(dto.getCountryCd());
+    }
+
+    @Override
+    protected Country mapToEntity(final CountryDto dto) {
+        Country entity = new Country();
+        apply(dto, entity);
+        return entity;
+    }
+
+    @Override
+    protected void updateEntity(final Country entity, final CountryDto dto) {
+        if (dto.getCountryCd() != null
+                && !dto.getCountryCd().equalsIgnoreCase(entity.getCountryCd())
+                && countryRepository.existsByCountryCdIgnoreCase(dto.getCountryCd())) {
+            throw new DuplicateResourceException("Country code already exists");
+        }
+        apply(dto, entity);
+    }
+
+    @Override
+    protected Country mapToDto(final Country entity) {
+        return entity;
+    }
+
+    @Override
+    protected String getEntityName() {
+        return "Country";
+    }
+
+    @Override
+    protected String duplicateResourceMessage(final CountryDto dto) {
+        return "Country code already exists";
+    }
+
+    private void apply(final CountryDto source, final Country target) {
+        if (source.getCountryCd() != null) {
+            target.setCountryCd(source.getCountryCd());
+        }
+        if (source.getCountryEnNm() != null) {
+            target.setCountryEnNm(source.getCountryEnNm());
+        }
+        if (source.getCountryArNm() != null) {
+            target.setCountryArNm(source.getCountryArNm());
+        }
+        if (source.getDialingCode() != null) {
+            target.setDialingCode(source.getDialingCode());
+        }
+        if (source.getNationalityEn() != null) {
+            target.setNationalityEn(source.getNationalityEn());
+        }
+        if (source.getNationalityAr() != null) {
+            target.setNationalityAr(source.getNationalityAr());
+        }
+        if (source.getIsActive() != null) {
+            target.setIsActive(source.getIsActive());
+        }
+        if (source.getEnDescription() != null) {
+            target.setEnDescription(source.getEnDescription());
+        }
+        if (source.getArDescription() != null) {
+            target.setArDescription(source.getArDescription());
+        }
     }
 
     @Override
@@ -38,22 +117,11 @@ public class CountryServiceImpl implements CountryService {
             @CacheEvict(cacheNames = "countries:active", key = "'active'")
     })
     public BaseResponse<Country> add(final CountryDto request) {
-        if (countryRepository.existsByCountryCdIgnoreCase(request.getCountryCd())) {
-            return BaseResponse.error("ERR_COUNTRY_DUP_CD", "Country code already exists");
+        try {
+            return super.create(request);
+        } catch (DuplicateResourceException ex) {
+            return BaseResponse.error("ERR_COUNTRY_DUP_CD", ex.getMessage());
         }
-        Country entity = new Country();
-        entity.setCountryCd(request.getCountryCd());
-        entity.setCountryEnNm(request.getCountryEnNm());
-        entity.setCountryArNm(request.getCountryArNm());
-        entity.setDialingCode(request.getDialingCode());
-        entity.setNationalityEn(request.getNationalityEn());
-        entity.setNationalityAr(request.getNationalityAr());
-        entity.setIsActive(request.getIsActive());
-        entity.setEnDescription(request.getEnDescription());
-        entity.setArDescription(request.getArDescription());
-
-        Country saved = countryRepository.save(entity);
-        return BaseResponse.success("Country created", saved);
     }
 
     @Override
@@ -63,28 +131,13 @@ public class CountryServiceImpl implements CountryService {
             @CacheEvict(cacheNames = "countries:active", key = "'active'")
     })
     public BaseResponse<Country> update(final Integer countryId, final CountryDto request) {
-        Country existing = countryRepository.findById(countryId)
-                .orElse(null);
-        if (existing == null) {
-            return BaseResponse.error("ERR_COUNTRY_NOT_FOUND", "Country not found");
+        try {
+            return super.update(countryId, request);
+        } catch (DuplicateResourceException ex) {
+            return BaseResponse.error("ERR_COUNTRY_DUP_CD", ex.getMessage());
+        } catch (NotFoundException ex) {
+            return BaseResponse.error("ERR_COUNTRY_NOT_FOUND", ex.getMessage());
         }
-        if (request.getCountryCd() != null
-                && !request.getCountryCd().equalsIgnoreCase(existing.getCountryCd())
-                && countryRepository.existsByCountryCdIgnoreCase(request.getCountryCd())) {
-            return BaseResponse.error("ERR_COUNTRY_DUP_CD", "Country code already exists");
-        }
-        existing.setCountryCd(request.getCountryCd());
-        existing.setCountryEnNm(request.getCountryEnNm());
-        existing.setCountryArNm(request.getCountryArNm());
-        existing.setDialingCode(request.getDialingCode());
-        existing.setNationalityEn(request.getNationalityEn());
-        existing.setNationalityAr(request.getNationalityAr());
-        existing.setIsActive(request.getIsActive());
-        existing.setEnDescription(request.getEnDescription());
-        existing.setArDescription(request.getArDescription());
-
-        Country saved = countryRepository.save(existing);
-        return BaseResponse.success("Country updated", saved);
     }
 
     @Override
@@ -92,9 +145,11 @@ public class CountryServiceImpl implements CountryService {
     @Audited(action = AuditAction.READ, entity = "Country", dataClass = DataClass.HEALTH, message = "Get country")
     @Cacheable(cacheNames = "countries", key = "#countryId")
     public BaseResponse<Country> get(final Integer countryId) {
-        return countryRepository.findById(countryId)
-                .map(c -> BaseResponse.success("Country", c))
-                .orElseGet(() -> BaseResponse.error("ERR_COUNTRY_NOT_FOUND", "Country not found"));
+        try {
+            return super.get(countryId);
+        } catch (NotFoundException ex) {
+            return BaseResponse.error("ERR_COUNTRY_NOT_FOUND", ex.getMessage());
+        }
     }
 
     @Override
