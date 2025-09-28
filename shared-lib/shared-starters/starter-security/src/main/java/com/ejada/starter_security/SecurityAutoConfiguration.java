@@ -268,7 +268,8 @@ public class SecurityAutoConfiguration {
         HeaderNames.CORRELATION_ID,
         HeaderNames.X_TENANT_ID,
         HeaderNames.CSRF_TOKEN));
-    configuration.setAllowCredentials(false);
+    boolean csrfEnabled = !props.getResourceServer().isDisableCsrf();
+    configuration.setAllowCredentials(csrfEnabled);
     configuration.setMaxAge(3600L);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
