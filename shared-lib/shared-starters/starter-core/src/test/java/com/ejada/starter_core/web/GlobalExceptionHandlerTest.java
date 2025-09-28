@@ -17,4 +17,25 @@ class GlobalExceptionHandlerTest {
         assertEquals("ERR_INTERNAL", resp.getBody().getCode());
     }
 
+    @Test
+    void handleIllegalArgumentReturnsBadRequest() {
+        ResponseEntity<BaseResponse<?>> resp = handler.handleIllegalArgument(new IllegalArgumentException("invalid"), null);
+        assertEquals(400, resp.getStatusCode().value());
+        assertEquals("ERR_INVALID_ARGUMENT", resp.getBody().getCode());
+    }
+
+    @Test
+    void handleIllegalStateReturnsConflict() {
+        ResponseEntity<BaseResponse<?>> resp = handler.handleIllegalState(new IllegalStateException("already done"), null);
+        assertEquals(409, resp.getStatusCode().value());
+        assertEquals("ERR_ILLEGAL_STATE", resp.getBody().getCode());
+    }
+
+    @Test
+    void handleNoSuchElementReturnsNotFound() {
+        ResponseEntity<BaseResponse<?>> resp = handler.handleNoSuchElement(new java.util.NoSuchElementException("missing"), null);
+        assertEquals(404, resp.getStatusCode().value());
+        assertEquals("ERR_RESOURCE_NOT_FOUND", resp.getBody().getCode());
+    }
+
 }

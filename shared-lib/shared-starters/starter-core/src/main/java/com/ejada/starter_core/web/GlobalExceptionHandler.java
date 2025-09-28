@@ -20,6 +20,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * Global exception handler producing {@link BaseResponse} payloads.
@@ -54,6 +55,20 @@ public class GlobalExceptionHandler {
         log.warn("Business logic violation: {}", ex.getMessage());
         return ResponseEntity.badRequest()
                 .body(BaseResponse.error("ERR_BUSINESS_LOGIC", ex.getMessage()));
+    }
+
+    @ExceptionHandler({IllegalArgumentException.class})
+    public ResponseEntity<BaseResponse<?>> handleIllegalArgument(IllegalArgumentException ex, WebRequest request) {
+        log.warn("Invalid argument: {}", ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(BaseResponse.error("ERR_INVALID_ARGUMENT", ex.getMessage()));
+    }
+
+    @ExceptionHandler({IllegalStateException.class})
+    public ResponseEntity<BaseResponse<?>> handleIllegalState(IllegalStateException ex, WebRequest request) {
+        log.warn("Illegal state: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(BaseResponse.error("ERR_ILLEGAL_STATE", ex.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -104,6 +119,13 @@ public class GlobalExceptionHandler {
         log.warn("Duplicate resource: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(BaseResponse.error(ex.getErrorCode(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<BaseResponse<?>> handleNoSuchElement(NoSuchElementException ex, WebRequest request) {
+        log.warn("Resource missing: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(BaseResponse.error("ERR_RESOURCE_NOT_FOUND", ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
