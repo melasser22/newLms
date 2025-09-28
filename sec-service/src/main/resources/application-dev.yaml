@@ -60,7 +60,7 @@ management:
     web:
       base-path: /actuator
       exposure:
-        include: health,info,metrics,prometheus,beans,conditions,configprops,loggers,threaddump,sla-metrics
+        include: health,info,metrics,prometheus,beans,conditions,configprops,loggers,threaddump,slametrics
   endpoint:
     health:
       show-details: always

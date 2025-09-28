@@ -9,7 +9,7 @@ import java.util.Map;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 
-@Endpoint(id = "sla-metrics")
+@Endpoint(id = "slametrics")
 public class SlaMetricsEndpoint {
 
   private final SlaMetricsCalculator calculator;
