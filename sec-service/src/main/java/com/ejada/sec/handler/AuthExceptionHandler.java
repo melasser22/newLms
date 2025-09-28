@@ -31,4 +31,5 @@ public class AuthExceptionHandler {
         ErrorResponse body = ErrorResponse.of("ERR_AUTH_HISTORY", ex.getMessage());
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
     }
+
 }
