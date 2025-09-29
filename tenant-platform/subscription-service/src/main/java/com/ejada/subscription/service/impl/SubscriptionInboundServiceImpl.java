@@ -142,11 +142,10 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             replaceAdditionalServices(sub, si.subscriptionAdditionalServicesLst());
             replaceProductProperties(sub, rq.productProperties());
 
-
-            ReceiveSubscriptionNotificationRs rs = new ReceiveSubscriptionNotificationRs(
+            List<SubscriptionEnvironmentIdentifier> envIds = fetchEnvironmentIdentifiers(sub);
+            ReceiveSubscriptionNotificationRs response = new ReceiveSubscriptionNotificationRs(
                     Boolean.TRUE,
-                    envIdMapper.toDtoList(envIds)
-            );
+                    envIdMapper.toDtoList(envIds));
 
             finalizeNotificationSuccess(audit, rqUid, rq, sub);
 
@@ -154,12 +153,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
                 approvalPublisher.publishApprovalRequest(rqUid, rq, sub);
             }
 
-            recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
-            markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
-
-            var rs = new ReceiveSubscriptionNotificationRs(Boolean.TRUE, envIdMapper.toDtoList(envIds));
-
-            return okNotification(rs);
+            return okNotification(response);
 
         } catch (Exception ex) {
             return handleNotificationFailure(audit, ex);
