@@ -1,7 +1,6 @@
 package com.ejada.sec.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.exception.ValidationException;
 import com.ejada.crypto.password.PasswordHasher;
 import com.ejada.sec.domain.User;
 import com.ejada.sec.dto.*;
@@ -11,6 +10,7 @@ import com.ejada.sec.repository.PasswordResetTokenRepository;
 import com.ejada.sec.repository.UserRepository;
 import com.ejada.sec.service.UserService;
 import com.ejada.sec.service.RefreshTokenService;
+import com.ejada.sec.util.TenantContextResolver;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import com.ejada.common.context.ContextManager;
 
 @Service
 @RequiredArgsConstructor
@@ -76,15 +75,9 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public BaseResponse<List<UserDto>> listByTenant() {
-	  String tenantIdStr = ContextManager.Tenant.get();
-	    UUID tenantId;
-	    try {
-	      tenantId = UUID.fromString(tenantIdStr);
-	    } catch (RuntimeException ex) {
-	      throw new ValidationException("Invalid tenant ID format", ex.getMessage());
-	    }
-	        return BaseResponse.success("Users listed",
-        userMapper.toDto(userRepository.findAllByTenantId(tenantId), resolver));
+    UUID tenantId = TenantContextResolver.requireTenantId();
+    return BaseResponse.success(
+        "Users listed", userMapper.toDto(userRepository.findAllByTenantId(tenantId), resolver));
   }
 
   @Transactional

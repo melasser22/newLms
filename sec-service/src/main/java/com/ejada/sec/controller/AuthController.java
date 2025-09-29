@@ -42,8 +42,8 @@ public class AuthController {
   }
 
   @PostMapping("/logout")
-  public ResponseEntity<BaseResponse<Void>> logout(@RequestParam("refreshToken") String refreshToken) {
-    return ResponseEntity.ok(authService.logout(refreshToken));
+  public ResponseEntity<BaseResponse<Void>> logout(@Valid @RequestBody RefreshTokenRequest request) {
+    return ResponseEntity.ok(authService.logout(request.getRefreshToken()));
   }
 
   @PostMapping("/forgot-password")

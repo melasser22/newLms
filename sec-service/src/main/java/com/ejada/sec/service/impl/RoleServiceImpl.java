@@ -1,13 +1,13 @@
 package com.ejada.sec.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.exception.ValidationException;
 import com.ejada.sec.domain.Role;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.mapper.ReferenceResolver;
 import com.ejada.sec.mapper.RoleMapper;
 import com.ejada.sec.repository.RoleRepository;
 import com.ejada.sec.service.RoleService;
+import com.ejada.sec.util.TenantContextResolver;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,6 @@ import com.ejada.redis.starter.config.KeyPrefixStrategy;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import com.ejada.common.context.ContextManager;
 
 @Service
 @RequiredArgsConstructor
@@ -66,14 +65,16 @@ public class RoleServiceImpl implements RoleService {
   @Override
     public BaseResponse<Void> delete(Long roleId) {
       log.info("Deleting role {}", roleId);
-      if (roleRepository.existsById(roleId)) {
-        roleRepository.deleteById(roleId);
-        redisTemplate.delete(roleKey(roleId));
-      }
-      // invalidate tenant role list cache - tenant cannot be determined from id, so clear all
-      // role lists
-      String prefix = keyPrefixStrategy.resolvePrefix() + ROLE_LIST_KEY_PREFIX;
-      redisTemplate.keys(prefix + "*").forEach(redisTemplate::delete);
+      roleRepository
+          .findById(roleId)
+          .ifPresent(role -> {
+            roleRepository.delete(role);
+            redisTemplate.delete(roleKey(roleId));
+            UUID tenantId = role.getTenantId();
+            if (tenantId != null) {
+              redisTemplate.delete(roleListKey(tenantId));
+            }
+          });
       log.info("Role {} deleted", roleId);
       return BaseResponse.success("Role deleted", null);
     }
@@ -99,14 +100,8 @@ public class RoleServiceImpl implements RoleService {
 
   @Override
     public BaseResponse<List<RoleDto>> listByTenant() {
-	  String tenantIdStr = ContextManager.Tenant.get();
-	    UUID tenantId;
-	    try {
-	      tenantId = UUID.fromString(tenantIdStr);
-	    } catch (RuntimeException ex) {
-	      throw new ValidationException("Invalid tenant ID format", ex.getMessage());
-	    }
-	          log.debug("Listing roles for tenant {}", tenantId);
+      UUID tenantId = TenantContextResolver.requireTenantId();
+      log.debug("Listing roles for tenant {}", tenantId);
       String key = roleListKey(tenantId);
       @SuppressWarnings("unchecked")
       List<RoleDto> cached = (List<RoleDto>) redisTemplate.opsForValue().get(key);
