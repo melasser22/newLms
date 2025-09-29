@@ -6,6 +6,7 @@ import com.ejada.catalog.model.Addon;
 import com.ejada.catalog.repository.AddonRepository;
 import com.ejada.catalog.service.AddonService;
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.exception.NotFoundException;
 import com.ejada.common.service.BaseCrudService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -59,7 +60,9 @@ public class AddonServiceImpl extends BaseCrudService<Addon, Integer, AddonCreat
     @Override
     @Cacheable(cacheNames = "addons", key = "#id")
     public BaseResponse<AddonRes> get(Integer id) {
-        return super.get(id);
+        Addon addon = repo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Addon not found", String.valueOf(id)));
+        return BaseResponse.success("OK", mapper.toRes(addon));
     }
 
     @Override
