@@ -8,7 +8,6 @@ import com.ejada.setup.model.Lookup;
 import com.ejada.setup.model.Resource;
 import com.ejada.setup.model.SystemParameter;
 import com.ejada.setup.dto.CountryDto;
-import com.ejada.testsupport.IntegrationTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -31,7 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @ActiveProfiles("test")
 @Transactional
 @WithMockUser(roles = {"ADMIN", "USER"})
-public abstract class TestBase extends IntegrationTestSupport {
+public abstract class TestBase {
 
     @Autowired
     protected MockMvc mockMvc;
@@ -44,7 +43,6 @@ public abstract class TestBase extends IntegrationTestSupport {
     @BeforeEach
     void setUp() {
         // Common setup for all tests
-        // IntegrationTestSupport automatically provides Postgres and Redis containers
     }
 
     // Helper methods for creating test data
