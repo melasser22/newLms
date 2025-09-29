@@ -215,7 +215,7 @@ public class CoreAutoConfiguration {
       private boolean enabled = true;
 
       /** Header and query parameter names */
-      private String headerName = HeaderNames.X_TENANT_ID;   // "x_tenant_id"
+      private String headerName = HeaderNames.X_TENANT_ID;   // "X-Tenant-Id"
       private String queryParam = "tenantId";
 
       /** MDC key for logs */
