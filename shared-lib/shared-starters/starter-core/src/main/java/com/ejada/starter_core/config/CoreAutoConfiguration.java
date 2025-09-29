@@ -2,9 +2,11 @@ package com.ejada.starter_core.config;
 
 import com.ejada.common.constants.HeaderNames;
 import com.ejada.starter_core.context.ContextFilter;
-import com.ejada.starter_core.logging.CorrelationIdFilter;
+import com.ejada.starter_core.context.CorrelationContextContributor;
+import com.ejada.starter_core.context.RequestContextContributor;
+import com.ejada.starter_core.context.TenantContextContributor;
+import com.ejada.starter_core.context.UserContextContributor;
 import com.ejada.starter_core.tenant.DefaultTenantResolver;
-import com.ejada.starter_core.tenant.TenantFilter;
 import com.ejada.starter_core.tenant.TenantRequirementInterceptor;
 import com.ejada.starter_core.tenant.TenantResolver;
 import com.ejada.starter_core.web.FilterSkipUtils;
@@ -12,6 +14,7 @@ import com.ejada.starter_core.web.FilterSkipUtils;
 import jakarta.servlet.Filter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -26,9 +29,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * Core Shared auto-configuration:
- *  - Registers ContextFilter (correlation/tenant propagation)
- *  - Registers CorrelationIdFilter (independent correlation id)
- *  - Registers Tenant resolver + filter + enforcement interceptor
+ *  - Registers ContextFilter (pluggable correlation/tenant/user propagation)
+ *  - Registers default RequestContextContributors
+ *  - Registers Tenant resolver + enforcement interceptor
  *  - Optional global CORS
  *
  * Keep JacksonConfig, ValidationConfig, LoggingAutoConfiguration in separate classes.
@@ -47,8 +50,18 @@ public class CoreAutoConfiguration {
   @ConditionalOnClass(Filter.class)
   @ConditionalOnMissingBean(ContextFilter.class)
   @ConditionalOnProperty(prefix = "shared.core.context", name = "enabled", havingValue = "true", matchIfMissing = true)
-  public ContextFilter contextFilterBean(ObjectProvider<TenantResolver> tenantResolver) {
-    return new ContextFilter(tenantResolver.getIfAvailable(TenantResolver::noop));
+  public ContextFilter contextFilterBean(CoreProps props, ObjectProvider<RequestContextContributor> contributors) {
+    var skipPatterns = new java.util.LinkedHashSet<String>();
+    if (props.getCorrelation().isEnabled() && props.getCorrelation().getSkipPatterns() != null) {
+      java.util.Collections.addAll(skipPatterns, props.getCorrelation().getSkipPatterns());
+    }
+    if (props.getTenant().isEnabled() && props.getTenant().getSkipPatterns() != null) {
+      java.util.Collections.addAll(skipPatterns, props.getTenant().getSkipPatterns());
+    }
+    var contributorList = contributors.orderedStream()
+        .collect(java.util.stream.Collectors.toList());
+    return new ContextFilter(contributorList, java.util.Set.of(), new java.util.ArrayList<>(skipPatterns));
+
   }
 
   @Bean(name = "contextFilterRegistration")
@@ -58,42 +71,44 @@ public class CoreAutoConfiguration {
   public FilterRegistrationBean<ContextFilter> contextFilterRegistration(ContextFilter filter, CoreProps props) {
     FilterRegistrationBean<ContextFilter> reg = new FilterRegistrationBean<>(filter);
     reg.addUrlPatterns("/*");
-    reg.setOrder(props.getContext().getOrder());
+    reg.setOrder(determineContextFilterOrder(props));
     reg.setName("contextFilter");
     return reg;
   }
 
   /* -------------------------------------------
-   *  CorrelationId filter
-   *  - same pattern: bean + registration bean
+   *  Request context contributors
    * ------------------------------------------- */
+
   @Bean
-  @ConditionalOnMissingBean(CorrelationIdFilter.class)
+  @ConditionalOnMissingBean(CorrelationContextContributor.class)
   @ConditionalOnProperty(prefix = "shared.core.correlation", name = "enabled", havingValue = "true", matchIfMissing = true)
-  public CorrelationIdFilter correlationIdFilterBean(CoreProps props) {
-      var c = props.getCorrelation();
-      return new CorrelationIdFilter(
-          c.getHeaderName(),
-          c.getMdcKey(),
-          c.isGenerateIfMissing(),
-          c.isEchoResponseHeader(),
-          c.getSkipPatterns()
-      );
+  public CorrelationContextContributor correlationContextContributor(CoreProps props) {
+    var c = props.getCorrelation();
+    return new CorrelationContextContributor(
+        c.getHeaderName(),
+        c.getMdcKey(),
+        c.isGenerateIfMissing(),
+        c.isEchoResponseHeader()
+    );
   }
 
-  @Bean(name = "correlationIdFilterRegistration")
-  @ConditionalOnMissingBean(name = "correlationIdFilterRegistration")
-  @ConditionalOnProperty(prefix = "shared.core.correlation", name = "enabled", havingValue = "true", matchIfMissing = true)
-  public FilterRegistrationBean<CorrelationIdFilter> correlationIdFilterRegistration(CorrelationIdFilter filter, CoreProps props) {
-      var reg = new FilterRegistrationBean<>(filter);
-      reg.setOrder(props.getCorrelation().getOrder()); // Highest precedence (run before context/tenant)
-      reg.setName("correlationIdFilter");
-      reg.addUrlPatterns("/*");
-      return reg;
+  @Bean
+  @ConditionalOnBean(TenantResolver.class)
+  @ConditionalOnMissingBean(TenantContextContributor.class)
+  @ConditionalOnProperty(prefix = "shared.core.tenant", name = "enabled", havingValue = "true", matchIfMissing = true)
+  public TenantContextContributor tenantContextContributor(TenantResolver resolver, CoreProps props) {
+    return new TenantContextContributor(resolver, props.getTenant());
+  }
+
+  @Bean
+  @ConditionalOnMissingBean(UserContextContributor.class)
+  public UserContextContributor userContextContributor() {
+    return new UserContextContributor();
   }
 
   /* -------------------------------------------
-   *  Tenant: resolver + filter + enforcement interceptor
+   *  Tenant: resolver + enforcement interceptor
    * ------------------------------------------- */
 
   @Bean
@@ -101,24 +116,6 @@ public class CoreAutoConfiguration {
   @ConditionalOnMissingBean(TenantResolver.class)
   public TenantResolver tenantResolver(CoreProps props) {
     return new DefaultTenantResolver(props.getTenant());
-  }
-
-  @Bean
-  @ConditionalOnProperty(prefix = "shared.core.tenant", name = "enabled", havingValue = "true", matchIfMissing = true)
-  @ConditionalOnMissingBean(TenantFilter.class)
-  public TenantFilter tenantFilter(TenantResolver resolver, CoreProps props) {
-    return new TenantFilter(resolver, props.getTenant());
-  }
-
-  @Bean(name = "tenantFilterRegistration")
-  @ConditionalOnProperty(prefix = "shared.core.tenant", name = "enabled", havingValue = "true", matchIfMissing = true)
-  @ConditionalOnMissingBean(name = "tenantFilterRegistration")
-  public FilterRegistrationBean<TenantFilter> tenantFilterRegistration(TenantFilter filter, CoreProps props) {
-    var reg = new FilterRegistrationBean<>(filter);
-    reg.setOrder(props.getTenant().getOrder()); // after correlation, before most others
-    reg.setName("tenantFilter");
-    reg.addUrlPatterns("/*");
-    return reg;
   }
 
   /** Registers the @RequireTenant/@OptionalTenant enforcement (400 if missing). */
@@ -156,6 +153,14 @@ public class CoreAutoConfiguration {
     };
   }
 
+  private int determineContextFilterOrder(CoreProps props) {
+    int contextOrder = props.getContext().getOrder();
+    int correlationOrder = props.getCorrelation().isEnabled() ? props.getCorrelation().getOrder() : Integer.MAX_VALUE;
+    int tenantOrder = props.getTenant().isEnabled() ? props.getTenant().getOrder() : Integer.MAX_VALUE;
+    int computed = Math.min(contextOrder, Math.min(correlationOrder, tenantOrder));
+    return computed == Integer.MAX_VALUE ? contextOrder : computed;
+  }
+
   /* -------------------------------------------
    *  Properties (bindable via application.yml)
    * ------------------------------------------- */
@@ -184,7 +189,7 @@ public class CoreAutoConfiguration {
       public void setOrder(int order) { this.order = order; }
     }
 
-    /** Controls CorrelationIdFilter registration. */
+    /** Controls correlation handling. */
     public static class Correlation {
       private boolean enabled = true;
       private String headerName = HeaderNames.CORRELATION_ID; // "X-Correlation-Id"

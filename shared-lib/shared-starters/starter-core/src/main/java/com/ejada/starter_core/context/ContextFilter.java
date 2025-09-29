@@ -19,113 +19,115 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.annotation.AnnotationAwareOrderComparator;
+import org.springframework.lang.NonNull;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
-@Order(Ordered.HIGHEST_PRECEDENCE)
+/**
+ * Single servlet filter responsible for wiring correlation/tenant/user context handling.
+ *
+ * <p>The filter delegates to pluggable {@link RequestContextContributor RequestContextContributors} which
+ * can extend or replace default behaviour.  Downstream applications may register additional
+ * contributors to populate custom MDC keys or thread-local state.</p>
+ */
 public class ContextFilter extends OncePerRequestFilter {
 
-    private final String[] skipPatterns;
-    private TenantResolver tenantResolver;
+    /** Default URI prefixes that skip context propagation altogether. */
+    public static final Set<String> DEFAULT_SKIP_PREFIXES = Set.of(
+        "/actuator", "/health", "/error", "/v3/api-docs", "/swagger", "/swagger-ui", "/docs"
+    );
 
-    public ContextFilter() {
-        this(TenantResolver.noop(), FilterSkipUtils.defaultPatterns());
-    }
 
-    public ContextFilter(TenantResolver tenantResolver) {
-        this(tenantResolver, FilterSkipUtils.defaultPatterns());
-    }
+    private static final Logger logger = LoggerFactory.getLogger(ContextFilter.class);
 
-    public ContextFilter(TenantResolver tenantResolver, String[] skipPatterns) {
-        this.skipPatterns = FilterSkipUtils.copyOrDefault(skipPatterns);
-        this.tenantResolver = tenantResolver != null ? tenantResolver : TenantResolver.noop();
-    }
+    private final List<RequestContextContributor> contributors;
+    private final Set<String> skipPrefixes;
+    private final List<String> skipPatterns;
+    private final PathMatcherDelegate matcher = new PathMatcherDelegate();
 
-    @Autowired(required = false)
-    public void setTenantResolver(TenantResolver tenantResolver) {
-        if (tenantResolver != null) {
-            this.tenantResolver = tenantResolver;
+    public ContextFilter(List<RequestContextContributor> contributors,
+                         Set<String> skipPrefixes,
+                         List<String> skipPatterns) {
+        List<RequestContextContributor> ordered = new ArrayList<>(contributors == null ? List.of() : contributors);
+        AnnotationAwareOrderComparator.sort(ordered);
+        this.contributors = Collections.unmodifiableList(ordered);
+        Set<String> combinedPrefixes = new LinkedHashSet<>(DEFAULT_SKIP_PREFIXES);
+        if (skipPrefixes != null) {
+            combinedPrefixes.addAll(skipPrefixes);
         }
+        this.skipPrefixes = Collections.unmodifiableSet(combinedPrefixes);
+        this.skipPatterns = (skipPatterns == null) ? List.of() : List.copyOf(skipPatterns);
     }
-
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        return FilterSkipUtils.shouldSkip(request.getRequestURI(), skipPatterns);
+        final String path = request.getRequestURI();
+        for (String prefix : skipPrefixes) {
+            if (path.startsWith(prefix)) {
+                return true;
+            }
+        }
+        for (String pattern : skipPatterns) {
+            if (matcher.matches(pattern, path)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
-    protected void doFilterInternal(
-            @NonNull HttpServletRequest request,
-            @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain
-    ) throws ServletException, IOException {
-
-        TenantResolution tenantResolution = tenantResolver.resolve(request);
-        if (tenantResolution.isInvalid()) {
-
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + HeaderNames.X_TENANT_ID);
-            return;
-        }
-        String tenantId = tenantResolution.tenantId();
-        String incomingCorrelation = trimToNull(
-                request.getHeader(HeaderNames.CORRELATION_ID)
-        );
-        String userId        = trimToNull(firstNonNull(
-                request.getHeader(HeaderNames.USER_ID),
-                (String) request.getAttribute(HeaderNames.USER_ID)  // some stacks set it as an attribute
-        ));
-
-        // Initialize correlation (generates a new one if missing) and tenant context
-        CorrelationContextUtil.init(incomingCorrelation, tenantId);
-        String correlationId = CorrelationContextUtil.getCorrelationId();
-
-        // If you want hard enforcement for protected APIs, uncomment:
-        // if (tenantId == null) {
-        //     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing " + HDR_TENANT_ID);
-        //     return;
-        // }
-
-        try (ContextManager.Tenant.Scope ignored = ContextManager.Tenant.openScope(tenantId)) {
-            // ---- Enrich logging context (appears on every log line)
-            putMdc(HeaderNames.X_TENANT_ID, tenantId);
-            putMdc(HeaderNames.USER_ID, userId);
-            putMdc(HeaderNames.CORRELATION_ID, correlationId);
-
-            // ---- Echo correlation for clients & downstream services
-            response.setHeader(HeaderNames.CORRELATION_ID, correlationId);
-
-            filterChain.doFilter(request, response);
-        } finally {
-            // ---- Always cleanup
-            CorrelationContextUtil.clear();
-            MDC.remove(HeaderNames.X_TENANT_ID);
-            MDC.remove(HeaderNames.USER_ID);
-            MDC.remove(HeaderNames.CORRELATION_ID);
-        }
-    }
-
-    // ---------- Helpers
-
-    private static String firstNonNull(String... values) {
-        if (values == null) {
-            return null;
-        }
-        for (String value : values) {
-            if (value != null) {
-                return value;
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+        List<RequestContextContributor.ContextScope> scopes = new ArrayList<>(contributors.size());
+        try {
+            for (RequestContextContributor contributor : contributors) {
+                RequestContextContributor.ContextScope scope = contributor.contribute(request, response);
+                if (scope != null) {
+                    scopes.add(scope);
+                }
+                if (response.isCommitted()) {
+                    break;
+                }
             }
+            if (!response.isCommitted()) {
+                filterChain.doFilter(request, response);
+            }
+        } finally {
+            for (int i = scopes.size() - 1; i >= 0; i--) {
+                RequestContextContributor.ContextScope scope = scopes.get(i);
+                try {
+                    scope.close();
+                } catch (Exception ex) {
+                    logger.warn("Failed to cleanup request context scope from {}", scope.getClass().getName(), ex);
+                }
+            }
+
         }
-        return null;
     }
 
-    private static String trimToNull(String s) {
-        if (s == null) return null;
-        String t = s.trim();
-        return t.isEmpty() ? null : t;
-    }
+    /**
+     * Minimal Ant-style path matcher delegate so we do not pull in the entire Spring utility
+     * namespace.  We only need a matcher when skip patterns are configured.
+     */
+    static final class PathMatcherDelegate {
+        private final org.springframework.util.AntPathMatcher delegate = new org.springframework.util.AntPathMatcher();
 
-    private static void putMdc(String key, String value) {
-        if (value != null) MDC.put(key, value);
+        boolean matches(String pattern, String path) {
+            if (pattern == null || pattern.isBlank()) {
+                return false;
+            }
+            return delegate.match(pattern, path);
+        }
+
     }
 }
