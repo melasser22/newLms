@@ -44,6 +44,7 @@
     <plugin.site.version>3.12.1</plugin.site.version>
     <plugin.checkstyle.version>3.5.0</plugin.checkstyle.version>
     <plugin.spotbugs.version>4.8.6.5</plugin.spotbugs.version>
+    <plugin.spotless.version>2.44.0</plugin.spotless.version>
     <plugin.pmd.version>3.25.0</plugin.pmd.version>
     <findsecbugs.version>1.13.0</findsecbugs.version>
     <jacoco.coverage.minimum>0.00</jacoco.coverage.minimum>
@@ -260,6 +261,12 @@
           <groupId>org.springframework.boot</groupId>
           <artifactId>spring-boot-maven-plugin</artifactId>
           <version>${spring.boot.version}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>com.diffplug.spotless</groupId>
+          <artifactId>spotless-maven-plugin</artifactId>
+          <version>${plugin.spotless.version}</version>
         </plugin>
         
         <!-- SonarQube integration -->
