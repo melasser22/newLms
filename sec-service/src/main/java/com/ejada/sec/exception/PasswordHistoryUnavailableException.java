@@ -10,6 +10,8 @@ package com.ejada.sec.exception;
  */
 public class PasswordHistoryUnavailableException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     public PasswordHistoryUnavailableException(String message, Throwable cause) {
         super(message, cause);
     }

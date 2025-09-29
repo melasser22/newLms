@@ -10,9 +10,7 @@
     <relativePath>../shared-lib/pom.xml</relativePath>
   </parent>
 
-  <groupId>com.ejada</groupId>
   <artifactId>tenant-platform</artifactId>
-  <version>1.0.0</version>
   <packaging>pom</packaging>
   <name>tenant-platform</name>
 

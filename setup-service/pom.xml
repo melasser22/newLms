@@ -10,9 +10,7 @@
     <relativePath>../shared-lib/pom.xml</relativePath>
   </parent>
 
-  <groupId>com.ejada</groupId>
   <artifactId>setup-service</artifactId>
-  <version>1.0.0</version>
   <name>setup-service</name>
 
   <properties>

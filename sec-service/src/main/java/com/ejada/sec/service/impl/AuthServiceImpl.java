@@ -21,7 +21,6 @@ import java.util.UUID;
 @Slf4j
 public class AuthServiceImpl implements AuthService {
 
-  private static final String CODE_USER_CREATE_FAILED = "ERR-USER-CREATE";
   private static final String CODE_AUTH_INVALID = "ERR-AUTH-INVALID";
   private static final String CODE_AUTH_LOCKED = "ERR-AUTH-LOCKED";
 

@@ -9,6 +9,8 @@ import com.ejada.subscription.dto.ServiceResult;
  */
 public class ServiceResultException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     private final transient ServiceResult<?> result;
 
     public ServiceResultException(final ServiceResult<?> result) {

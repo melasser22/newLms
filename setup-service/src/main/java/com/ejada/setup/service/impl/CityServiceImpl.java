@@ -123,13 +123,13 @@ public class CityServiceImpl implements CityService {
                 if (unpaged) {
                         var entities = spec == null
                                         ? cityRepo.findAll(sort)
-                                        : cityRepo.findAll(Specification.where(spec), sort);
+                                        : cityRepo.findAll(spec, sort);
                         return BaseResponse.success("City list", new PageImpl<>(mapper.toDtoList(entities)));
                 }
 
                 var page = spec == null
                                 ? cityRepo.findAll(pg)
-                                : cityRepo.findAll(Specification.where(spec), pg);
+                                : cityRepo.findAll(spec, pg);
                 return BaseResponse.success("Cities page", mapper.toDtoPage(page));
         }
 
