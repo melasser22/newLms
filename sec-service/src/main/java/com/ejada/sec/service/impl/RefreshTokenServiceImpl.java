@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -100,7 +101,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   }
 
   private void enforceUserLimit(Long userId, Instant now) {
-    List<RefreshToken> active = repo.findActiveTokensByUserId(userId, now);
+    List<RefreshToken> active = new ArrayList<>(repo.findActiveTokensByUserId(userId, now));
     if (maxActivePerUser <= 0) {
       return;
     }
@@ -117,7 +118,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     if (maxActivePerTenant <= 0) {
       return;
     }
-    List<RefreshToken> active = repo.findActiveTokensByTenant(tenantId, now);
+    List<RefreshToken> active = new ArrayList<>(repo.findActiveTokensByTenant(tenantId, now));
     if (active.size() <= maxActivePerTenant) {
       return;
     }
