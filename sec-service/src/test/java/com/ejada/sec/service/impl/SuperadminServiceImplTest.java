@@ -2,6 +2,7 @@ package com.ejada.sec.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -22,12 +23,14 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.TimeZone;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -248,5 +251,61 @@ class SuperadminServiceImplTest {
 
         verify(superadminRepository, never()).save(any(Superadmin.class));
         verify(passwordHistoryRepository, never()).save(any());
+    }
+
+    @Test
+    void ensureTokenFreshnessRejectsTokenIssuedBeforePasswordChange() {
+        Superadmin superadmin = Superadmin.builder()
+            .id(13L)
+            .username("admin")
+            .passwordChangedAt(LocalDateTime.of(2025, 9, 29, 16, 6, 0))
+            .build();
+
+        Jwt jwt = Jwt.withTokenValue("token")
+            .header("alg", "HS256")
+            .claim("uid", 13)
+            .issuedAt(Instant.parse("2025-09-29T13:05:00Z"))
+            .expiresAt(Instant.parse("2025-09-29T14:05:00Z"))
+            .build();
+
+        assertThatThrownBy(() ->
+            ReflectionTestUtils.invokeMethod(service, "ensureTokenFreshness", jwt, superadmin))
+            .isInstanceOf(AuthenticationCredentialsNotFoundException.class)
+            .hasMessageContaining("Authentication token is no longer valid because the password was changed");
+    }
+
+    @Test
+    void ensureTokenFreshnessAllowsNewTokenAfterPasswordChangeWithTimezoneOffset() {
+        TimeZone originalTimeZone = TimeZone.getDefault();
+        String originalTimeZoneId = System.getProperty("user.timezone");
+
+        try {
+            TimeZone testZone = TimeZone.getTimeZone("Asia/Riyadh");
+            TimeZone.setDefault(testZone);
+            System.setProperty("user.timezone", testZone.getID());
+
+            Superadmin superadmin = Superadmin.builder()
+                .id(15L)
+                .username("admin")
+                .passwordChangedAt(LocalDateTime.of(2025, 9, 29, 16, 6, 0))
+                .build();
+
+            Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "HS256")
+                .claim("uid", 15)
+                .issuedAt(Instant.parse("2025-09-29T13:07:00Z"))
+                .expiresAt(Instant.parse("2025-09-29T14:07:00Z"))
+                .build();
+
+            assertDoesNotThrow(() ->
+                ReflectionTestUtils.invokeMethod(service, "ensureTokenFreshness", jwt, superadmin));
+        } finally {
+            TimeZone.setDefault(originalTimeZone);
+            if (originalTimeZoneId != null) {
+                System.setProperty("user.timezone", originalTimeZoneId);
+            } else {
+                System.clearProperty("user.timezone");
+            }
+        }
     }
 }
