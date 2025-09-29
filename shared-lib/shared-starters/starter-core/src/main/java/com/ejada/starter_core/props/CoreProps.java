@@ -1,14 +1,12 @@
 package com.ejada.starter_core.props;
 
 import com.ejada.common.BaseStarterProperties;
+import com.ejada.common.constants.HeaderNames;
+import com.ejada.starter_core.config.SkipPatternDefaults;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.Ordered;
-
-// If you already have this constant elsewhere, keep using it.
-// Otherwise create the simple HeaderNames class shown below.
-import com.ejada.common.constants.HeaderNames;
 
 @Getter
 @ConfigurationProperties(prefix = "shared.core")
@@ -36,10 +34,7 @@ public class CoreProps implements BaseStarterProperties {
         private int order = Ordered.HIGHEST_PRECEDENCE + 5; // -2147483643
 
         /** URL patterns to skip */
-        private String[] skipPatterns = new String[] {
-                "/actuator/**", "/swagger-ui/**", "/v3/api-docs/**",
-                "/static/**", "/webjars/**", "/error", "/favicon.ico"
-        };
+        private String[] skipPatterns = SkipPatternDefaults.correlationAndTenantSkipPatterns();
     }
 
     @Getter
@@ -49,7 +44,7 @@ public class CoreProps implements BaseStarterProperties {
         private boolean enabled = true;
 
         /** Header and query parameter names */
-        private String headerName = HeaderNames.X_TENANT_ID;   // "x_tenant_id"
+        private String headerName = HeaderNames.X_TENANT_ID;   // "X-Tenant-Id"
         private String queryParam = "tenantId";
 
         /** MDC key for logs */
@@ -74,9 +69,6 @@ public class CoreProps implements BaseStarterProperties {
         private int order = Ordered.HIGHEST_PRECEDENCE + 10;
 
         /** Skip patterns */
-        private String[] skipPatterns = new String[]{
-            "/actuator/**","/swagger-ui/**","/v3/api-docs/**",
-            "/static/**","/webjars/**","/error","/favicon.ico"
-        };
+        private String[] skipPatterns = SkipPatternDefaults.correlationAndTenantSkipPatterns();
     }
 }

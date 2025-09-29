@@ -1,5 +1,20 @@
 package com.ejada.starter_core.context;
 
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.lang.NonNull;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.ejada.common.constants.HeaderNames;
+import com.ejada.common.context.ContextManager;
+import com.ejada.common.context.CorrelationContextUtil;
+import com.ejada.starter_core.tenant.TenantResolution;
+import com.ejada.starter_core.tenant.TenantResolver;
+import com.ejada.starter_core.web.FilterSkipUtils;
+
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,6 +45,7 @@ public class ContextFilter extends OncePerRequestFilter {
     public static final Set<String> DEFAULT_SKIP_PREFIXES = Set.of(
         "/actuator", "/health", "/error", "/v3/api-docs", "/swagger", "/swagger-ui", "/docs"
     );
+
 
     private static final Logger logger = LoggerFactory.getLogger(ContextFilter.class);
 
@@ -95,6 +111,7 @@ public class ContextFilter extends OncePerRequestFilter {
                     logger.warn("Failed to cleanup request context scope from {}", scope.getClass().getName(), ex);
                 }
             }
+
         }
     }
 
@@ -111,5 +128,6 @@ public class ContextFilter extends OncePerRequestFilter {
             }
             return delegate.match(pattern, path);
         }
+
     }
 }

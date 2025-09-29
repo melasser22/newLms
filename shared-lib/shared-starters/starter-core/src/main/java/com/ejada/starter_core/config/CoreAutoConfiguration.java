@@ -9,6 +9,8 @@ import com.ejada.starter_core.context.UserContextContributor;
 import com.ejada.starter_core.tenant.DefaultTenantResolver;
 import com.ejada.starter_core.tenant.TenantRequirementInterceptor;
 import com.ejada.starter_core.tenant.TenantResolver;
+import com.ejada.starter_core.web.FilterSkipUtils;
+
 import jakarta.servlet.Filter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -59,6 +61,7 @@ public class CoreAutoConfiguration {
     var contributorList = contributors.orderedStream()
         .collect(java.util.stream.Collectors.toList());
     return new ContextFilter(contributorList, java.util.Set.of(), new java.util.ArrayList<>(skipPatterns));
+
   }
 
   @Bean(name = "contextFilterRegistration")
@@ -194,9 +197,7 @@ public class CoreAutoConfiguration {
       private boolean generateIfMissing = true;
       private boolean echoResponseHeader = true;
       private int order = Integer.MIN_VALUE + 5; // effectively Ordered.HIGHEST_PRECEDENCE
-      private String[] skipPatterns = new String[]{
-        "/actuator/**","/swagger-ui/**","/v3/api-docs/**","/static/**","/webjars/**","/error","/favicon.ico"
-      };
+      private String[] skipPatterns = FilterSkipUtils.defaultPatterns();
 
       public boolean isEnabled() { return enabled; }
       public void setEnabled(boolean enabled) { this.enabled = enabled; }
@@ -220,7 +221,7 @@ public class CoreAutoConfiguration {
       private boolean enabled = true;
 
       /** Header and query parameter names */
-      private String headerName = HeaderNames.X_TENANT_ID;   // "x_tenant_id"
+      private String headerName = HeaderNames.X_TENANT_ID;   // "X-Tenant-Id"
       private String queryParam = "tenantId";
 
       /** MDC key for logs */
@@ -245,10 +246,7 @@ public class CoreAutoConfiguration {
       private int order = Integer.MIN_VALUE + 10;
 
       /** Skip patterns */
-      private String[] skipPatterns = new String[]{
-          "/actuator/**","/swagger-ui/**","/v3/api-docs/**",
-          "/static/**","/webjars/**","/error","/favicon.ico"
-      };
+      private String[] skipPatterns = FilterSkipUtils.defaultPatterns();
 
       public boolean isEnabled() { return enabled; }
       public void setEnabled(boolean enabled) { this.enabled = enabled; }

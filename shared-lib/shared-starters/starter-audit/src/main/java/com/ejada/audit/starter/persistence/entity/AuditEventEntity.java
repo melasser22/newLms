@@ -11,7 +11,7 @@ public class AuditEventEntity {
   @Id
   private UUID id;
   @Column(name="ts_utc") private Instant tsUtc;
-  @Column(name = HeaderNames.X_TENANT_ID) private String xTenantId;
+  @Column(name = HeaderNames.X_TENANT_ID_LEGACY) private String xTenantId;
   @Column(name="actor_id") private String actorId;
   @Column(name="actor_username") private String actorUsername;
   @Column(name="action") private String action;
