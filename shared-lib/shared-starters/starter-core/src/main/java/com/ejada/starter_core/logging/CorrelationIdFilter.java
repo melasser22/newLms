@@ -3,7 +3,6 @@ package com.ejada.starter_core.logging;
 import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.context.CorrelationContextUtil;
 import com.ejada.starter_core.web.FilterSkipUtils;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,6 +35,7 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
         this.generateIfMissing = generateIfMissing;
         this.echoResponseHeader = echoResponseHeader;
         this.skipPatterns = FilterSkipUtils.copyOrDefault(skipPatterns);
+
     }
 
     @Override

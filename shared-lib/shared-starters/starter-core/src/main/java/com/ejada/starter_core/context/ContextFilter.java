@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.ejada.common.constants.HeaderNames;
@@ -15,6 +14,7 @@ import com.ejada.starter_core.tenant.TenantResolution;
 import com.ejada.starter_core.tenant.TenantResolver;
 import com.ejada.starter_core.web.FilterSkipUtils;
 
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,7 +22,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
-@Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class ContextFilter extends OncePerRequestFilter {
 
@@ -49,6 +48,7 @@ public class ContextFilter extends OncePerRequestFilter {
         }
     }
 
+
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         return FilterSkipUtils.shouldSkip(request.getRequestURI(), skipPatterns);
@@ -63,6 +63,7 @@ public class ContextFilter extends OncePerRequestFilter {
 
         TenantResolution tenantResolution = tenantResolver.resolve(request);
         if (tenantResolution.isInvalid()) {
+
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + HeaderNames.X_TENANT_ID);
             return;
         }
@@ -106,8 +107,16 @@ public class ContextFilter extends OncePerRequestFilter {
 
     // ---------- Helpers
 
-    private static String firstNonNull(String a, String b) {
-        return a != null ? a : b;
+    private static String firstNonNull(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private static String trimToNull(String s) {
