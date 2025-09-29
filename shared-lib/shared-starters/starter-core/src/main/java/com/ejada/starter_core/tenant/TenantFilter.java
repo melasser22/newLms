@@ -13,6 +13,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+/**
+ * @deprecated The tenant responsibilities now live in
+ * {@link com.ejada.starter_core.context.ContextFilter} via
+ * {@link com.ejada.starter_core.context.TenantContextContributor}. This legacy
+ * filter will be removed in a future release.
+ */
+@Deprecated(since = "1.6.0", forRemoval = true)
 public class TenantFilter extends OncePerRequestFilter {
 
     private final TenantResolver resolver;

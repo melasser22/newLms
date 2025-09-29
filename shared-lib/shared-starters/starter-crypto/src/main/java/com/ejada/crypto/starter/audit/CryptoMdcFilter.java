@@ -9,7 +9,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.ejada.common.constants.HeaderNames;
+import com.ejada.common.context.ContextManager;
 import com.ejada.common.context.CorrelationContextUtil;
+import com.ejada.common.context.TenantMdcUtil;
 
 import java.io.IOException;
 
@@ -40,9 +42,18 @@ public class CryptoMdcFilter extends OncePerRequestFilter {
         String incomingCorrelation = headerOrNull(request, HeaderNames.CORRELATION_ID);
         String incomingTenant = headerOrNull(request, HeaderNames.X_TENANT_ID);
         String incomingUser = headerOrNull(request, HeaderNames.USER_ID);
- // Initialize correlation and tenant context (generates new id if missing)
-        CorrelationContextUtil.init(incomingCorrelation, incomingTenant);
-        String correlationId = CorrelationContextUtil.getCorrelationId();
+
+        String correlationId = CorrelationContextUtil.init(incomingCorrelation);
+
+        ContextManager.Tenant.Scope tenantScope = null;
+        boolean tenantAddedToMdc = false;
+        if (StringUtils.hasText(incomingTenant)) {
+            tenantScope = ContextManager.Tenant.openScope(incomingTenant);
+            if (!StringUtils.hasText(MDC.get(HeaderNames.X_TENANT_ID))) {
+                TenantMdcUtil.setTenantId(incomingTenant);
+                tenantAddedToMdc = true;
+            }
+        }
 
         boolean putUser = false;
         if (!StringUtils.hasText(MDC.get(HeaderNames.USER_ID)) && StringUtils.hasText(incomingUser)) {
@@ -55,7 +66,15 @@ public class CryptoMdcFilter extends OncePerRequestFilter {
             response.setHeader(HeaderNames.CORRELATION_ID, correlationId);
             chain.doFilter(request, response);
         } finally {
-            if (putUser) MDC.remove(HeaderNames.USER_ID);
+            if (putUser) {
+                MDC.remove(HeaderNames.USER_ID);
+            }
+            if (tenantAddedToMdc) {
+                TenantMdcUtil.clear();
+            }
+            if (tenantScope != null) {
+                tenantScope.close();
+            }
             CorrelationContextUtil.clear();
         }
     }

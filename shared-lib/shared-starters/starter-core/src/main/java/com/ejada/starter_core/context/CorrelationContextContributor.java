@@ -46,8 +46,10 @@ public class CorrelationContextContributor implements RequestContextContributor 
 
         final String cid = correlationId;
         MDC.put(mdcKey, cid);
-        MDC.put(HeaderNames.CORRELATION_ID, cid);
-        CorrelationContextUtil.put(HeaderNames.CORRELATION_ID, cid);
+        if (!HeaderNames.CORRELATION_ID.equals(mdcKey)) {
+            MDC.put(HeaderNames.CORRELATION_ID, cid);
+        }
+        CorrelationContextUtil.setCorrelationId(cid);
         ContextManager.setCorrelationId(cid);
         if (echoResponseHeader) {
             response.setHeader(headerName, cid);
@@ -55,7 +57,10 @@ public class CorrelationContextContributor implements RequestContextContributor 
 
         return () -> {
             MDC.remove(mdcKey);
-            MDC.remove(HeaderNames.CORRELATION_ID);
+            if (!HeaderNames.CORRELATION_ID.equals(mdcKey)) {
+                MDC.remove(HeaderNames.CORRELATION_ID);
+            }
+            CorrelationContextUtil.clear();
             ContextManager.clearCorrelationId();
         };
     }

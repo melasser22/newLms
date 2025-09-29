@@ -15,6 +15,12 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * @deprecated Use {@link com.ejada.starter_core.context.ContextFilter} with a
+ * {@link com.ejada.starter_core.context.CorrelationContextContributor}
+ * instead. The dedicated filter will be removed in a future release.
+ */
+@Deprecated(since = "1.6.0", forRemoval = true)
 public class CorrelationIdFilter extends OncePerRequestFilter {
 
     private final String headerName;
@@ -52,9 +58,11 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
             correlationId = UUID.randomUUID().toString();
         }
 
+        boolean correlationApplied = false;
         if (!isBlank(correlationId)) {
+            correlationApplied = true;
             MDC.put(mdcKey, correlationId);
-            CorrelationContextUtil.put(CorrelationContextUtil.CORRELATION_ID, correlationId);
+            CorrelationContextUtil.setCorrelationId(correlationId);
             // Set early to ensure response always has the header (even on exceptions)
             if (echoResponseHeader) {
                 res.setHeader(headerName, correlationId);
@@ -65,7 +73,9 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
             chain.doFilter(req, res);
         } finally {
             MDC.remove(mdcKey);
-            CorrelationContextUtil.clear();
+            if (correlationApplied) {
+                CorrelationContextUtil.clear();
+            }
         }
     }
 
