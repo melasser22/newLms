@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.setup.dto.LookupResponse;
 import com.ejada.setup.model.Lookup;
 import com.ejada.setup.repository.LookupRepository;
 import java.util.List;
@@ -58,7 +59,7 @@ class LookupServiceImplTest {
   void getAllReturnsErrorWhenRepositoryFails() {
     when(lookupRepository.findAll()).thenThrow(new IllegalStateException("boom"));
 
-    BaseResponse<List<Lookup>> response = service.getAll();
+    BaseResponse<List<LookupResponse>> response = service.getAll();
 
     assertThat(response.isSuccess()).isFalse();
     assertThat(response.getCode()).isEqualTo("ERR_LOOKUP_ALL");
@@ -79,13 +80,13 @@ class LookupServiceImplTest {
         .when(lookupRepository)
         .findByLookupGroupCodeAndIsActiveTrueOrderByLookupItemEnNmAsc("ERR");
 
-    BaseResponse<List<Lookup>> error = service.getByGroup("ERR");
+    BaseResponse<List<LookupResponse>> error = service.getByGroup("ERR");
     assertThat(error.isSuccess()).isFalse();
     assertThat(error.getCode()).isEqualTo("ERR_LOOKUP_GROUP");
   }
 
   @Configuration
-  @EnableCaching
+  @EnableCaching(proxyTargetClass = true)
   static class TestConfig {
     @Bean
     LookupRepository lookupRepository() {
@@ -93,8 +94,8 @@ class LookupServiceImplTest {
     }
 
     @Bean
-    LookupServiceImpl lookupServiceImpl(LookupRepository repository) {
-      return new LookupServiceImpl(repository);
+    LookupServiceImpl lookupServiceImpl(LookupRepository repository, CacheManager cacheManager) {
+      return new LookupServiceImpl(repository, cacheManager);
     }
 
     @Bean

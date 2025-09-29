@@ -1,7 +1,7 @@
 package com.ejada.setup.controller;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.setup.model.Lookup;
+import com.ejada.setup.dto.LookupResponse;
 import com.ejada.setup.service.LookupService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +36,7 @@ class LookupControllerTest {
 
   @Test
   void getAllLookups_ok() throws Exception {
-    BaseResponse<List<Lookup>> resp = BaseResponse.success("ok", List.of());
+    BaseResponse<List<LookupResponse>> resp = BaseResponse.success("ok", List.of());
     when(lookupService.getAllLookups()).thenReturn(resp);
 
     mockMvc.perform(get("/setup/lookups").accept(MediaType.APPLICATION_JSON))
