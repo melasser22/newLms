@@ -1,6 +1,7 @@
 package com.ejada.sec.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.redis.starter.support.RedisCacheHelper;
 import com.ejada.sec.domain.Privilege;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.mapper.PrivilegeMapper;
@@ -9,9 +10,7 @@ import com.ejada.sec.service.PrivilegeService;
 import com.ejada.sec.util.TenantContextResolver;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import com.ejada.redis.starter.config.KeyPrefixStrategy;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -23,8 +22,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
   private final PrivilegeRepository repository;
   private final PrivilegeMapper mapper;
-  private final RedisTemplate<String, Object> redisTemplate;
-  private final KeyPrefixStrategy keyPrefixStrategy;
+  private final RedisCacheHelper cache;
 
   private static final String PRIV_KEY_PREFIX = "priv:";
   private static final String PRIV_LIST_KEY_PREFIX = "privs:tenant:";
@@ -34,8 +32,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
   public BaseResponse<PrivilegeDto> create(CreatePrivilegeRequest req) {
     Privilege p = repository.save(mapper.toEntity(req));
     PrivilegeDto dto = mapper.toDto(p);
-    redisTemplate.opsForValue().set(privKey(p.getId()), dto);
-    redisTemplate.delete(privListKey(p.getTenantId()));
+    cachePrivilege(dto);
     return BaseResponse.success("Privilege created", dto);
   }
 
@@ -49,8 +46,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
     mapper.updateEntity(p, req);
     p = repository.save(p);
     PrivilegeDto dto = mapper.toDto(p);
-    redisTemplate.opsForValue().set(privKey(p.getId()), dto);
-    redisTemplate.delete(privListKey(p.getTenantId()));
+    cachePrivilege(dto);
     return BaseResponse.success("Privilege updated", dto);
   }
 
@@ -63,9 +59,9 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             privilege -> {
               UUID tenantId = privilege.getTenantId();
               repository.delete(privilege);
-              redisTemplate.delete(privKey(id));
+              cache.delete(privKeySuffix(privilege.getId()));
               if (tenantId != null) {
-                redisTemplate.delete(privListKey(tenantId));
+                cache.delete(privListKeySuffix(tenantId));
               }
               return BaseResponse.<Void>success("Privilege deleted", null);
             })
@@ -74,40 +70,46 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
   @Override
   public BaseResponse<PrivilegeDto> get(Long id) {
-    String key = privKey(id);
-    PrivilegeDto cached = (PrivilegeDto) redisTemplate.opsForValue().get(key);
-    if (cached != null) {
-      return BaseResponse.success("Privilege fetched", cached);
-    }
-    return repository.findById(id)
-        .map(mapper::toDto)
-        .map(
-            dto -> {
-              redisTemplate.opsForValue().set(key, dto);
-              return BaseResponse.success("Privilege fetched", dto);
-            })
-        .orElseThrow(() -> new NoSuchElementException("Privilege not found: " + id));
+    return cache.<PrivilegeDto>get(privKeySuffix(id))
+        .map(dto -> BaseResponse.success("Privilege fetched", dto))
+        .orElseGet(
+            () ->
+                repository
+                    .findById(id)
+                    .map(mapper::toDto)
+                    .map(
+                        dto -> {
+                          cache.set(privKeySuffix(dto.getId()), dto);
+                          return BaseResponse.success("Privilege fetched", dto);
+                        })
+                    .orElseThrow(() -> new NoSuchElementException("Privilege not found: " + id)));
   }
 
   @Override
   public BaseResponse<List<PrivilegeDto>> listByTenant() {
     UUID tenantId = TenantContextResolver.requireTenantId();
-    String key = privListKey(tenantId);
-    @SuppressWarnings("unchecked")
-    List<PrivilegeDto> cached = (List<PrivilegeDto>) redisTemplate.opsForValue().get(key);
-    if (cached != null) {
-      return BaseResponse.success("Privileges listed", cached);
+    return cache.<List<PrivilegeDto>>get(privListKeySuffix(tenantId))
+        .map(list -> BaseResponse.success("Privileges listed", list))
+        .orElseGet(
+            () -> {
+              List<PrivilegeDto> list = mapper.toDto(repository.findAllByTenantId(tenantId));
+              cache.set(privListKeySuffix(tenantId), list);
+              return BaseResponse.success("Privileges listed", list);
+            });
+  }
+
+  private void cachePrivilege(PrivilegeDto dto) {
+    cache.set(privKeySuffix(dto.getId()), dto);
+    if (dto.getTenantId() != null) {
+      cache.delete(privListKeySuffix(dto.getTenantId()));
     }
-    List<PrivilegeDto> list = mapper.toDto(repository.findAllByTenantId(tenantId));
-    redisTemplate.opsForValue().set(key, list);
-    return BaseResponse.success("Privileges listed", list);
   }
 
-  private String privKey(Long id) {
-    return keyPrefixStrategy.resolvePrefix() + PRIV_KEY_PREFIX + id;
+  private String privKeySuffix(Long id) {
+    return PRIV_KEY_PREFIX + id;
   }
 
-  private String privListKey(UUID tenantId) {
-    return keyPrefixStrategy.resolvePrefix() + PRIV_LIST_KEY_PREFIX + tenantId;
+  private String privListKeySuffix(UUID tenantId) {
+    return PRIV_LIST_KEY_PREFIX + tenantId;
   }
 }

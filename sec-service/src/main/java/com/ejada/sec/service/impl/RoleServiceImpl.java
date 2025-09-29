@@ -1,6 +1,7 @@
 package com.ejada.sec.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.redis.starter.support.RedisCacheHelper;
 import com.ejada.sec.domain.Role;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.mapper.ReferenceResolver;
@@ -11,9 +12,7 @@ import com.ejada.sec.util.TenantContextResolver;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import com.ejada.redis.starter.config.KeyPrefixStrategy;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -27,52 +26,49 @@ public class RoleServiceImpl implements RoleService {
   private final RoleRepository roleRepository;
   private final RoleMapper roleMapper;
   private final ReferenceResolver resolver;
-  private final RedisTemplate<String, Object> redisTemplate;
-  private final KeyPrefixStrategy keyPrefixStrategy;
+  private final RedisCacheHelper cache;
 
   private static final String ROLE_KEY_PREFIX = "role:";
   private static final String ROLE_LIST_KEY_PREFIX = "roles:tenant:";
 
   @Transactional
   @Override
-    public BaseResponse<RoleDto> create(CreateRoleRequest req) {
+  public BaseResponse<RoleDto> create(CreateRoleRequest req) {
       log.info("Creating role '{}' for tenant {}", req.getName(), req.getTenantId());
       Role role = roleMapper.toEntity(req);
       role = roleRepository.save(role);
       RoleDto dto = roleMapper.toDto(role, resolver);
-      redisTemplate.opsForValue().set(roleKey(role.getId()), dto);
-      redisTemplate.delete(roleListKey(role.getTenantId()));
+      cacheRole(dto);
       log.info("Role '{}' created with id {}", role.getName(), role.getId());
       return BaseResponse.success("Role created", dto);
     }
 
   @Transactional
   @Override
-    public BaseResponse<RoleDto> update(Long roleId, UpdateRoleRequest req) {
+  public BaseResponse<RoleDto> update(Long roleId, UpdateRoleRequest req) {
       log.info("Updating role {}", roleId);
       Role role = roleRepository.findById(roleId)
           .orElseThrow(() -> new NoSuchElementException("Role not found: " + roleId));
       roleMapper.updateEntity(role, req);
       role = roleRepository.save(role);
       RoleDto dto = roleMapper.toDto(role, resolver);
-      redisTemplate.opsForValue().set(roleKey(role.getId()), dto);
-      redisTemplate.delete(roleListKey(role.getTenantId()));
+      cacheRole(dto);
       log.info("Role {} updated", roleId);
       return BaseResponse.success("Role updated", dto);
     }
 
   @Transactional
   @Override
-    public BaseResponse<Void> delete(Long roleId) {
+  public BaseResponse<Void> delete(Long roleId) {
       log.info("Deleting role {}", roleId);
       roleRepository
           .findById(roleId)
           .ifPresent(role -> {
             roleRepository.delete(role);
-            redisTemplate.delete(roleKey(roleId));
+            cache.delete(roleKeySuffix(role.getId()));
             UUID tenantId = role.getTenantId();
             if (tenantId != null) {
-              redisTemplate.delete(roleListKey(tenantId));
+              cache.delete(roleListKeySuffix(tenantId));
             }
           });
       log.info("Role {} deleted", roleId);
@@ -80,46 +76,57 @@ public class RoleServiceImpl implements RoleService {
     }
 
   @Override
-    public BaseResponse<RoleDto> get(Long roleId) {
+  public BaseResponse<RoleDto> get(Long roleId) {
       log.debug("Fetching role {}", roleId);
-      String key = roleKey(roleId);
-      RoleDto cached = (RoleDto) redisTemplate.opsForValue().get(key);
-      if (cached != null) {
-        log.debug("Role {} served from cache", roleId);
-        return BaseResponse.success("Role fetched", cached);
-      }
-      return roleRepository.findById(roleId)
-          .map(r -> roleMapper.toDto(r, resolver))
+      return cache.<RoleDto>get(roleKeySuffix(roleId))
           .map(
               dto -> {
-                redisTemplate.opsForValue().set(key, dto);
+                log.debug("Role {} served from cache", roleId);
                 return BaseResponse.success("Role fetched", dto);
               })
-          .orElseThrow(() -> new NoSuchElementException("Role not found: " + roleId));
+          .orElseGet(
+              () ->
+                  roleRepository.findById(roleId)
+                      .map(r -> roleMapper.toDto(r, resolver))
+                      .map(
+                          dto -> {
+                            cache.set(roleKeySuffix(dto.getId()), dto);
+                            return BaseResponse.success("Role fetched", dto);
+                          })
+                      .orElseThrow(() -> new NoSuchElementException("Role not found: " + roleId)));
     }
 
   @Override
-    public BaseResponse<List<RoleDto>> listByTenant() {
+  public BaseResponse<List<RoleDto>> listByTenant() {
       UUID tenantId = TenantContextResolver.requireTenantId();
       log.debug("Listing roles for tenant {}", tenantId);
-      String key = roleListKey(tenantId);
-      @SuppressWarnings("unchecked")
-      List<RoleDto> cached = (List<RoleDto>) redisTemplate.opsForValue().get(key);
-      if (cached != null) {
-        log.debug("Returning cached role list for tenant {}", tenantId);
-        return BaseResponse.success("Roles listed", cached);
-      }
-      List<RoleDto> list =
-          roleMapper.toDto(roleRepository.findAllByTenantId(tenantId), resolver);
-      redisTemplate.opsForValue().set(key, list);
-      return BaseResponse.success("Roles listed", list);
+      return cache.<List<RoleDto>>get(roleListKeySuffix(tenantId))
+          .map(
+              list -> {
+                log.debug("Returning cached role list for tenant {}", tenantId);
+                return BaseResponse.success("Roles listed", list);
+              })
+          .orElseGet(
+              () -> {
+                List<RoleDto> list =
+                    roleMapper.toDto(roleRepository.findAllByTenantId(tenantId), resolver);
+                cache.set(roleListKeySuffix(tenantId), list);
+                return BaseResponse.success("Roles listed", list);
+              });
     }
 
-  private String roleKey(Long id) {
-    return keyPrefixStrategy.resolvePrefix() + ROLE_KEY_PREFIX + id;
+  private void cacheRole(RoleDto dto) {
+    cache.set(roleKeySuffix(dto.getId()), dto);
+    if (dto.getTenantId() != null) {
+      cache.delete(roleListKeySuffix(dto.getTenantId()));
+    }
   }
 
-  private String roleListKey(UUID tenantId) {
-    return keyPrefixStrategy.resolvePrefix() + ROLE_LIST_KEY_PREFIX + tenantId;
+  private String roleKeySuffix(Long id) {
+    return ROLE_KEY_PREFIX + id;
+  }
+
+  private String roleListKeySuffix(UUID tenantId) {
+    return ROLE_LIST_KEY_PREFIX + tenantId;
   }
 }
