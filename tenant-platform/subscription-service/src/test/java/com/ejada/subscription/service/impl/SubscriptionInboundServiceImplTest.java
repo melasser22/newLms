@@ -16,6 +16,7 @@ import com.ejada.subscription.dto.ReceiveSubscriptionUpdateRq;
 import com.ejada.subscription.dto.ServiceResult;
 import com.ejada.subscription.dto.SubscriptionInfoDto;
 import com.ejada.subscription.dto.SubscriptionUpdateType;
+import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
 import com.ejada.subscription.mapper.SubscriptionAdditionalServiceMapper;
 import com.ejada.subscription.mapper.SubscriptionEnvironmentIdentifierMapper;
 import com.ejada.subscription.mapper.SubscriptionFeatureMapper;
@@ -46,9 +47,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.SimpleTransactionStatus;
+import org.springframework.transaction.support.ResourcelessTransactionManager;
+
 
 @ExtendWith(MockitoExtension.class)
 class SubscriptionInboundServiceImplTest {
@@ -68,11 +68,14 @@ class SubscriptionInboundServiceImplTest {
   @Mock private SubscriptionProductPropertyMapper propertyMapper;
   @Mock private SubscriptionEnvironmentIdentifierMapper envIdMapper;
   @Mock private SubscriptionUpdateEventMapper updateEventMapper;
+  @Mock private SubscriptionApprovalPublisher approvalPublisher;
 
   private SubscriptionInboundServiceImpl service;
+  private PlatformTransactionManager transactionManager;
 
   @BeforeEach
   void setUp() {
+    transactionManager = new ResourcelessTransactionManager();
     service = new SubscriptionInboundServiceImpl(
         subscriptionRepo,
         featureRepo,
@@ -90,7 +93,81 @@ class SubscriptionInboundServiceImplTest {
         envIdMapper,
         updateEventMapper,
         new ObjectMapper(),
-        new NoOpTransactionManager());
+        transactionManager,
+        approvalPublisher);
+  }
+
+  @Test
+  void receiveSubscriptionNotificationPublishesApprovalRequestForNewSubscription() {
+    UUID rqUid = UUID.randomUUID();
+    SubscriptionInfoDto subscriptionInfo = new SubscriptionInfoDto(
+        123L,
+        456L,
+        789L,
+        1L,
+        "Tier",
+        "طبقة",
+        LocalDate.now(),
+        LocalDate.now().plusDays(30),
+        BigDecimal.TEN,
+        BigDecimal.ZERO,
+        BigDecimal.ZERO,
+        "ACTIVE",
+        "PORTAL",
+        Boolean.TRUE,
+        5L,
+        "FULL",
+        Boolean.TRUE,
+        10L,
+        "PERIOD",
+        BigDecimal.ONE,
+        "MONTH",
+        "L",
+        Boolean.TRUE,
+        null,
+        null,
+        List.of(),
+        List.of());
+
+    ReceiveSubscriptionNotificationRq request = new ReceiveSubscriptionNotificationRq(
+        new CustomerInfoDto("Ejada", "اجادة", null, null, null, null, null, null, "ops@example.com", "+966500000000"),
+        new AdminUserInfoDto("admin", "EN", "1234567890", "admin@example.com"),
+        subscriptionInfo,
+        List.of());
+
+    InboundNotificationAudit savedAudit = new InboundNotificationAudit();
+    savedAudit.setInboundNotificationAuditId(15L);
+    when(auditRepo.save(any())).thenReturn(savedAudit);
+    when(auditRepo.markProcessed(any(), any(), any(), any())).thenReturn(1);
+    when(auditRepo.findByRqUidAndEndpoint(rqUid, "RECEIVE_NOTIFICATION"))
+        .thenReturn(Optional.empty());
+
+    when(subscriptionRepo.findByExtSubscriptionIdAndExtCustomerId(123L, 456L))
+        .thenReturn(Optional.empty());
+
+    Subscription mapped = new Subscription();
+    mapped.setExtSubscriptionId(123L);
+    mapped.setExtCustomerId(456L);
+    when(subscriptionMapper.toEntity(subscriptionInfo)).thenReturn(mapped);
+
+    Subscription persisted = new Subscription();
+    persisted.setSubscriptionId(200L);
+    persisted.setExtSubscriptionId(123L);
+    persisted.setExtCustomerId(456L);
+    when(subscriptionRepo.save(any(Subscription.class))).thenReturn(persisted);
+
+    when(featureRepo.findBySubscriptionSubscriptionId(200L)).thenReturn(List.of());
+    when(additionalServiceRepo.findBySubscriptionSubscriptionId(200L)).thenReturn(List.of());
+    when(propertyRepo.findBySubscriptionSubscriptionId(200L)).thenReturn(List.of());
+    when(envIdRepo.findBySubscriptionSubscriptionId(200L)).thenReturn(List.of());
+    when(envIdMapper.toDtoList(List.of())).thenReturn(List.of());
+    when(idemRepo.existsByIdempotencyKey(rqUid)).thenReturn(false);
+
+    ServiceResult<ReceiveSubscriptionNotificationRs> result =
+        service.receiveSubscriptionNotification(rqUid, "token", request);
+
+    assertThat(result.success()).isTrue();
+    verify(approvalPublisher).publishApprovalRequest(rqUid, request, persisted);
   }
 
   @Test

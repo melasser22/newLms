@@ -11,6 +11,7 @@ import com.ejada.subscription.dto.SubscriptionInfoDto;
 import com.ejada.subscription.dto.SubscriptionUpdateType;
 import com.ejada.subscription.exception.ServiceResultException;
 import com.ejada.subscription.mapper.SubscriptionAdditionalServiceMapper;
+import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
 import com.ejada.subscription.mapper.SubscriptionEnvironmentIdentifierMapper;
 import com.ejada.subscription.mapper.SubscriptionFeatureMapper;
 import com.ejada.subscription.mapper.SubscriptionMapper;
@@ -93,6 +94,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     @SuppressFBWarnings("EI_EXPOSE_REP2")
     private final ObjectMapper objectMapper;
     private final PlatformTransactionManager transactionManager;
+    private final SubscriptionApprovalPublisher approvalPublisher;
 
     private static final String EP_NOTIFICATION = "RECEIVE_NOTIFICATION";
     private static final String EP_UPDATE       = "RECEIVE_UPDATE";
@@ -116,9 +118,30 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         InboundNotificationAudit audit = recordInboundAudit(rqUid, token, rq, EP_NOTIFICATION);
 
         try {
-            Subscription sub = upsertSubscription(rq.subscriptionInfo());
-            synchronizeSubscriptionChildren(sub, rq);
-            List<SubscriptionEnvironmentIdentifier> envIds = fetchEnvironmentIdentifiers(sub);
+            // 3) Upsert subscription
+            SubscriptionInfoDto si = rq.subscriptionInfo();
+            Subscription sub = subscriptionRepo
+                    .findByExtSubscriptionIdAndExtCustomerId(si.subscriptionId(), si.customerId())
+                    .orElse(null);
+
+            boolean isNewSubscription = (sub == null);
+
+            if (sub == null) {
+                sub = subscriptionMapper.toEntity(si);
+            } else {
+                subscriptionMapper.update(sub, si);
+            }
+
+            if (sub.getEndDt() == null) {
+                sub.setEndDt(Optional.ofNullable(si.endDt()).orElse(LocalDate.now()));
+            }
+            sub = subscriptionRepo.save(sub);
+
+            // 4) Replace children from payload
+            replaceFeatures(sub, si.subscriptionFeatureLst());
+            replaceAdditionalServices(sub, si.subscriptionAdditionalServicesLst());
+            replaceProductProperties(sub, rq.productProperties());
+
 
             ReceiveSubscriptionNotificationRs rs = new ReceiveSubscriptionNotificationRs(
                     Boolean.TRUE,
@@ -126,6 +149,15 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             );
 
             finalizeNotificationSuccess(audit, rqUid, rq, sub);
+
+            if (isNewSubscription) {
+                approvalPublisher.publishApprovalRequest(rqUid, rq, sub);
+            }
+
+            recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
+            markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
+
+            var rs = new ReceiveSubscriptionNotificationRs(Boolean.TRUE, envIdMapper.toDtoList(envIds));
 
             return okNotification(rs);
 

@@ -204,6 +204,12 @@ shared:
     subscription-claim: subscription
     enable-role-check: true
 
+app:
+  subscription-approval:
+    topic: tenant.subscription-approvals
+    approval-role: ejada-officer
+    consumer-group: tenant-approval-listener
+
 logging:
   level:
     root: ERROR                
