@@ -21,11 +21,6 @@ public final class HeaderNames {
      * header only and avoid using any legacy variants.
      */
     public static final String X_TENANT_ID = "X-Tenant-Id";
-    /**
-     * Legacy tenant header variant kept for backwards compatibility with
-     * services that still emit/expect the underscore format.
-     */
-    public static final String X_TENANT_ID_LEGACY = "x_tenant_id";
     public static final String TENANT_KEY = "X-Tenant-Key";
     public static final String MESSAGE_ID = "x-msg-id";
 
