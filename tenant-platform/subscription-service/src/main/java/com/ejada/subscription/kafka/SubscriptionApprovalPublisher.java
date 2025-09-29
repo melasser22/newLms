@@ -50,7 +50,6 @@ public class SubscriptionApprovalPublisher {
             SendResult<String, Object> result =
                     kafkaTemplate
                             .send(properties.getTopic(), requestId.toString(), message)
-                            .completable()
                             .join();
 
             log.info(
