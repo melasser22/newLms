@@ -46,6 +46,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.nio.charset.StandardCharsets;
@@ -282,7 +283,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         var failure = err("EINT000", "Unexpected Error", jsonMsg("processing failed"));
         markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
                 jsonMsg(ex.getMessage()));
-        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        markRollbackOnlyIfActive();
         throw new ServiceResultException(failure, ex);
     }
 
@@ -322,7 +323,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         var failure = err("EINT000", "Unexpected Error", jsonMsg(message));
         markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
                 jsonMsg(ex.getMessage()));
-        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        markRollbackOnlyIfActive();
         throw new ServiceResultException(failure, ex);
     }
 
@@ -525,7 +526,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             outboxRepo.save(ev);
         } catch (Exception e) {
             log.warn("Outbox emit failed: {} {} - {}", type, id, e.toString());
-            throw new IllegalStateException("Unable to persist outbox event", e);
+            log.debug("Outbox emit failure details", e);
         }
     }
 
@@ -570,6 +571,12 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         } catch (RuntimeException txEx) {
             log.error("{}", description, txEx);
             throw txEx;
+        }
+    }
+
+    private void markRollbackOnlyIfActive() {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
         }
     }
 
