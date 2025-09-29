@@ -16,8 +16,7 @@ Each service follows a standard Maven layout and provides an
 | [catalog-service](catalog-service/README.md) | Plans, features, limits and tenant overrides. |
 | [subscription-service](subscription-service/README.md) | Tracks active subscription and billing period. |
 | [billing-service](billing-service/README.md) | Usage and overage tracking with export feeds. |
-| [admin-api-gateway](tenant-api/README.md) | Thin façade aggregating read models for the Admin UI. |
-| [policy-service](policy-service/README.md) | Evaluates access policies across tenant modules. |
+| shared-lib (parent) | Spring Boot starters and common DTOs consumed by the services below. |
 
 ## Build
 ```bash

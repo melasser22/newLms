@@ -67,9 +67,9 @@ public class PrivilegeServiceImpl implements PrivilegeService {
               if (tenantId != null) {
                 redisTemplate.delete(privListKey(tenantId));
               }
-              return BaseResponse.success("Privilege deleted", null);
+              return BaseResponse.<Void>success("Privilege deleted", null);
             })
-        .orElseGet(() -> BaseResponse.success("Privilege deleted", null));
+        .orElseGet(() -> BaseResponse.<Void>success("Privilege deleted", null));
   }
 
   @Override

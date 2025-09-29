@@ -49,6 +49,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.ResourcelessTransactionManager;
 
+
 @ExtendWith(MockitoExtension.class)
 class SubscriptionInboundServiceImplTest {
 
@@ -221,7 +222,7 @@ class SubscriptionInboundServiceImplTest {
     ServiceResult<ReceiveSubscriptionNotificationRs> result =
         service.receiveSubscriptionNotification(rqUid, "token", request);
 
-    assertThat(result.success()).isTrue();
+    assertThat(result.statusCode()).isEqualTo("I000000");
     verify(auditRepo, never()).save(any());
     verify(outboxRepo, never()).save(any());
   }
@@ -254,10 +255,27 @@ class SubscriptionInboundServiceImplTest {
 
     ServiceResult<Void> result = service.receiveSubscriptionUpdate(rqUid, "token", request);
 
-    assertThat(result.success()).isTrue();
+    assertThat(result.statusCode()).isEqualTo("I000000");
     assertThat(subscription.getSubscriptionSttsCd()).isEqualTo("CANCELED");
     assertThat(subscription.getIsDeleted()).isTrue();
     verify(auditRepo).markProcessed(eq(10L), eq("I000000"), eq("Successful Operation"), eq(null));
     verify(outboxRepo).save(any());
+  }
+
+  private static final class NoOpTransactionManager implements PlatformTransactionManager {
+    @Override
+    public TransactionStatus getTransaction(TransactionDefinition definition) {
+      return new SimpleTransactionStatus();
+    }
+
+    @Override
+    public void commit(TransactionStatus status) {
+      // no-op
+    }
+
+    @Override
+    public void rollback(TransactionStatus status) {
+      // no-op
+    }
   }
 }

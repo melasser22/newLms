@@ -21,6 +21,7 @@ class CountryRepositoryIT extends IntegrationTestSupport {
         Country country = new Country();
         country.setCountryCd("US");
         country.setCountryEnNm("United States");
+        country.setCountryArNm("الولايات المتحدة");
         country.setIsActive(true);
 
         Country saved = repository.save(country);

@@ -14,12 +14,12 @@ public class ServiceResultException extends RuntimeException {
     private final transient ServiceResult<?> result;
 
     public ServiceResultException(final ServiceResult<?> result) {
-        super(result != null ? result.statusDesc() : null);
+        super(result != null ? result.statusDescription() : null);
         this.result = result;
     }
 
     public ServiceResultException(final ServiceResult<?> result, final Throwable cause) {
-        super(result != null ? result.statusDesc() : null, cause);
+        super(result != null ? result.statusDescription() : null, cause);
         this.result = result;
     }
 

@@ -47,7 +47,8 @@ class TenantIntegrationKeyServiceImplTest {
     existing.setExpiresAt(OffsetDateTime.now().plusDays(2));
     when(repository.findByTikIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(existing));
 
-    TenantIntegrationKeyUpdateReq req = new TenantIntegrationKeyUpdateReq(null, null, OffsetDateTime.now());
+    TenantIntegrationKeyUpdateReq req =
+        new TenantIntegrationKeyUpdateReq(null, null, null, null, OffsetDateTime.now(), null, null, null, null);
 
     assertThatThrownBy(() -> service.update(1L, req))
         .isInstanceOf(IllegalArgumentException.class)
@@ -79,10 +80,14 @@ class TenantIntegrationKeyServiceImplTest {
         null,
         null,
         null,
+        null,
+        null,
+        null,
         null);
     when(mapper.toRes(any(TenantIntegrationKey.class))).thenReturn(mapped);
 
-    BaseResponse<TenantIntegrationKeyRes> response = service.update(2L, new TenantIntegrationKeyUpdateReq(null, null, null));
+    BaseResponse<TenantIntegrationKeyRes> response =
+        service.update(2L, new TenantIntegrationKeyUpdateReq(null, null, null, null, null, null, null, null, null));
 
     assertThat(response.isSuccess()).isTrue();
     assertThat(response.getData().status()).isEqualTo(TikStatus.EXPIRED);
@@ -92,7 +97,8 @@ class TenantIntegrationKeyServiceImplTest {
   void updateThrowsWhenKeyMissing() {
     when(repository.findByTikIdAndIsDeletedFalse(55L)).thenReturn(Optional.empty());
 
-    TenantIntegrationKeyUpdateReq req = new TenantIntegrationKeyUpdateReq(null, null, null);
+    TenantIntegrationKeyUpdateReq req =
+        new TenantIntegrationKeyUpdateReq(null, null, null, null, null, null, null, null, null);
 
     assertThatThrownBy(() -> service.update(55L, req))
         .isInstanceOf(EntityNotFoundException.class);

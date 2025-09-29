@@ -66,49 +66,10 @@ public class ConsumptionServiceImpl implements ConsumptionService {
                                                                             final String token,
                                                                             final TrackProductConsumptionRq rq) {
         try {
-            // Build response per subscription
-            List<ProductSubscriptionStts> subs = new ArrayList<>();
-            if (rq.activeSubscriptions() != null) {
-                for (var sub : rq.activeSubscriptions()) {
-                    List<ProductConsumptionStts> perTypes = new ArrayList<>();
+            List<ProductSubscriptionStts> subscriptions = buildSubscriptionStatuses(rq);
+            TrackProductConsumptionRs body = responseMapper.toResponse(rq.productId(), subscriptions);
 
-                    if (sub.productConsumption() != null && !sub.productConsumption().isEmpty()) {
-                        for (var pc : sub.productConsumption()) {
-                            String typ = pc.consumptionTypCd().name(); // TRANSACTION|USER|BALANCE
-
-                            // upsert snapshot rows if missing (no mutation/increment per swagger)
-                            UsageCounter c = counterRepo
-                                    .findByExtSubscriptionIdAndConsumptionTypCd(sub.subscriptionId(), typ)
-                                    .orElseGet(() -> UsageCounter.builder()
-                                            .extSubscriptionId(sub.subscriptionId())
-                                            .extCustomerId(sub.customerId())
-                                            .consumptionTypCd(typ)
-                                            .currentConsumption(0L)
-                                            .currentConsumedAmt(BigDecimal.ZERO)
-                                            .build());
-                            c = saveCounterSnapshot(c, sub.subscriptionId(), typ);
-
-                            // map entity snapshot -> DTO respecting enum rules
-                            perTypes.add(counterMapper.toDto(c));
-                        }
-                    }
-
-                    subs.add(responseMapper.toSubscriptionStts(sub.customerId(), sub.subscriptionId(), perTypes));
-                }
-            }
-
-            TrackProductConsumptionRs body = responseMapper.toResponse(rq.productId(), subs);
-
-            // persist immutable audit row
-            eventRepo.save(eventMapper.build(
-                    rqUid,
-                    sha256(token),
-                    toJson(rq),
-                    rq.productId(),
-                    "I000000",
-                    "Successful Operation",
-                    null
-            ));
+            persistSuccessAudit(rqUid, token, rq);
 
             return ServiceResult.ok(rqUid.toString(), body);
 
@@ -120,6 +81,58 @@ public class ConsumptionServiceImpl implements ConsumptionService {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new ServiceResultException(failure, ex);
         }
+    }
+
+    private List<ProductSubscriptionStts> buildSubscriptionStatuses(final TrackProductConsumptionRq rq) {
+        List<ProductSubscriptionStts> subs = new ArrayList<>();
+        if (rq == null || rq.activeSubscriptions() == null) {
+            return subs;
+        }
+        for (var subscription : rq.activeSubscriptions()) {
+            subs.add(buildSubscriptionStatus(subscription));
+        }
+        return subs;
+    }
+
+    private ProductSubscriptionStts buildSubscriptionStatus(final com.ejada.billing.dto.ProductSubscription sub) {
+        List<ProductConsumptionStts> perTypes = new ArrayList<>();
+        if (sub.productConsumption() != null) {
+            for (var consumption : sub.productConsumption()) {
+                perTypes.add(resolveConsumptionSnapshot(sub, consumption));
+            }
+        }
+        return responseMapper.toSubscriptionStts(sub.customerId(), sub.subscriptionId(), perTypes);
+    }
+
+    private ProductConsumptionStts resolveConsumptionSnapshot(
+            final com.ejada.billing.dto.ProductSubscription sub,
+            final com.ejada.billing.dto.ProductConsumption consumption) {
+        String typeCode = consumption.consumptionTypCd().name();
+        UsageCounter counter = counterRepo
+                .findByExtSubscriptionIdAndConsumptionTypCd(sub.subscriptionId(), typeCode)
+                .orElseGet(() -> UsageCounter.builder()
+                        .extSubscriptionId(sub.subscriptionId())
+                        .extCustomerId(sub.customerId())
+                        .consumptionTypCd(typeCode)
+                        .currentConsumption(0L)
+                        .currentConsumedAmt(BigDecimal.ZERO)
+                        .build());
+        UsageCounter snapshot = saveCounterSnapshot(counter, sub.subscriptionId(), typeCode);
+        return counterMapper.toDto(snapshot);
+    }
+
+    private void persistSuccessAudit(final UUID rqUid,
+                                     final String token,
+                                     final TrackProductConsumptionRq rq) {
+        eventRepo.save(eventMapper.build(
+                rqUid,
+                sha256(token),
+                toJson(rq),
+                rq != null ? rq.productId() : null,
+                "I000000",
+                "Successful Operation",
+                null
+        ));
     }
 
     private UsageCounter saveCounterSnapshot(final UsageCounter counter,
