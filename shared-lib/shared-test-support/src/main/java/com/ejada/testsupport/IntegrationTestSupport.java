@@ -34,6 +34,13 @@ public abstract class IntegrationTestSupport {
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.data.redis.host", REDIS::getHost);
         registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(6379));
+        registry.add("spring.jpa.properties.hibernate.default_schema", () -> "setup");
+        registry.add("spring.jpa.properties.hibernate.hbm2ddl.create_namespaces", () -> "true");
+        registry.add("spring.jpa.properties.hibernate.format_sql", () -> "true");
+        registry.add("spring.flyway.enabled", () -> true);
+        registry.add("spring.flyway.schemas", () -> "public,setup");
+        registry.add("spring.flyway.default-schema", () -> "setup");
+        registry.add("spring.flyway.locations", () -> "classpath:db/migration/common,classpath:db/migration/{vendor}");
     }
 }
 
