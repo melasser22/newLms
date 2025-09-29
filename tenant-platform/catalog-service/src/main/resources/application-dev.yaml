@@ -219,4 +219,9 @@ logging:
     org.springframework.cache: ERROR
     org.springframework.cache.interceptor.CacheAspectSupport: ERROR
 
+app:
+  tenant-provisioning:
+    topic: tenant.provisioning
+    consumer-group: catalog-tenant-provisioning
+
 debug: true

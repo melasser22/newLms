@@ -206,11 +206,17 @@ shared:
 
 logging:
   level:
-    root: ERROR                
+    root: ERROR
     com.ejada: ERROR
-    org.hibernate.SQL: ERROR   
+    org.hibernate.SQL: ERROR
     org.hibernate.orm.jdbc.bind: ERROR
     org.springframework.cache: ERROR
     org.springframework.cache.interceptor.CacheAspectSupport: ERROR
 
+app:
+  tenant-provisioning:
+    topic: tenant.provisioning
+    consumer-group: catalog-tenant-provisioning
+
 debug: false
+

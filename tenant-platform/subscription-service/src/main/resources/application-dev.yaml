@@ -210,7 +210,10 @@ app:
   subscription-approval:
     topic: tenant.subscription-approvals
     approval-role: ejada-officer
-    consumer-group: tenant-approval-listener
+    consumer-group: tenant-approval-provisioner
+  tenant-provisioning:
+    topic: tenant.provisioning
+    consumer-group: tenant-provisioning-publisher
 
 logging:
   level:
