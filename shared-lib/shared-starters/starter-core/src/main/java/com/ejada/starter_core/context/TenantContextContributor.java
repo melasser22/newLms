@@ -2,7 +2,9 @@ package com.ejada.starter_core.context;
 
 import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.context.ContextManager;
+import com.ejada.common.context.TenantMdcUtil;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
+import com.ejada.starter_core.tenant.TenantResolution;
 import com.ejada.starter_core.tenant.TenantResolver;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,11 +38,17 @@ public class TenantContextContributor implements RequestContextContributor {
     @Override
     public ContextScope contribute(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String tenant = trimToNull(tenantResolver.resolve(request));
-        if (tenant == null) {
+        TenantResolution resolution = tenantResolver.resolve(request);
+        if (resolution == null || resolution.isAbsent()) {
             return ContextScope.noop();
         }
-        if (!TENANT_PATTERN.matcher(tenant).matches()) {
+        if (resolution.isInvalid()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + HeaderNames.X_TENANT_ID);
+            return () -> { };
+        }
+
+        String tenant = trimToNull(resolution.tenantId());
+        if (tenant == null || !TENANT_PATTERN.matcher(tenant).matches()) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + HeaderNames.X_TENANT_ID);
             return () -> { };
         }
@@ -50,12 +58,12 @@ public class TenantContextContributor implements RequestContextContributor {
         }
 
         MDC.put(properties.getMdcKey(), tenant);
-        MDC.put(HeaderNames.X_TENANT_ID, tenant);
+        TenantMdcUtil.setTenantId(tenant);
         ContextManager.Tenant.Scope scope = ContextManager.Tenant.openScope(tenant);
 
         return () -> {
             MDC.remove(properties.getMdcKey());
-            MDC.remove(HeaderNames.X_TENANT_ID);
+            TenantMdcUtil.clear();
             scope.close();
         };
     }

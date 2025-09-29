@@ -6,15 +6,14 @@ import org.slf4j.MDC;
 import java.util.UUID;
 
 /**
- * Consolidated correlation context utility. This class lives in the {@code com.ejada.common.context}
- * package and should be used for putting and getting values from the SLF4J MDC.
- *
- * <p>All correlation handling should be done through this class.</p>
-
+ * Utility for working with correlation identifiers inside the SLF4J MDC.
+ * <p>
+ * The utility intentionally focuses on correlation data only – tenant/user MDC
+ * management lives in their respective helpers to avoid accidental coupling.
  */
 public final class CorrelationContextUtil {
 
-    /** MDC key for the correlation identifier. */
+    /** Canonical MDC key for correlation identifiers. */
     public static final String CORRELATION_ID = HeaderNames.CORRELATION_ID;
 
     private CorrelationContextUtil() {
@@ -22,51 +21,57 @@ public final class CorrelationContextUtil {
     }
 
     /**
-     * Initialize correlation context. Generates a UUID if no correlation id is provided.
+     * Initialise the MDC with the provided correlation identifier. When the
+     * value is {@code null} or blank, a random UUID is generated and stored.
      *
-     * @param correlationId correlation identifier (optional)
-     * @param tenantId      tenant identifier (optional)
+     * @param correlationId suggested correlation identifier (optional)
+     * @return the correlation identifier stored in MDC
      */
-    public static void init(String correlationId, String tenantId) {
-        if (correlationId == null || correlationId.isBlank()) {
-            correlationId = UUID.randomUUID().toString();
-        }
-        MDC.put(CORRELATION_ID, correlationId);
-        if (tenantId != null && !tenantId.isBlank()) {
-            MDC.put(HeaderNames.X_TENANT_ID, tenantId);
-        }
-    }
-
-    /**
-     * Retrieve the current correlation identifier. If none exists in the MDC a new
-
-     * identifier is generated, stored and returned. This guarantees that callers
-     * always receive a non-null correlation id even if no filter initialized it.
-     *
-     * @return the existing or newly generated correlation identifier
-     */
-    public static String getCorrelationId() {
-        String cid = MDC.get(CORRELATION_ID);
+    public static String init(String correlationId) {
+        String cid = correlationId;
         if (cid == null || cid.isBlank()) {
             cid = UUID.randomUUID().toString();
-            MDC.put(CORRELATION_ID, cid);
         }
+        MDC.put(CORRELATION_ID, cid);
         return cid;
     }
 
     /**
-     * @return the current tenant identifier from MDC or {@code null}
+     * Backwards compatible overload that ignores the tenant identifier. Callers
+     * should migrate to {@link #init(String)} and the dedicated tenant helpers.
      */
-    public static String getTenantId() {
-        return MDC.get(HeaderNames.X_TENANT_ID);
+    @Deprecated(since = "1.6.0", forRemoval = true)
+    public static String init(String correlationId, String ignoredTenantId) {
+        return init(correlationId);
     }
 
     /**
-     * Clear correlation and tenant identifiers from MDC.
+     * Store the provided correlation identifier in MDC. Passing {@code null}
+     * clears the entry.
      */
+    public static void setCorrelationId(String correlationId) {
+        if (correlationId == null || correlationId.isBlank()) {
+            MDC.remove(CORRELATION_ID);
+        } else {
+            MDC.put(CORRELATION_ID, correlationId);
+        }
+    }
+
+    /**
+     * Retrieve the current correlation identifier, generating a new one when
+     * missing. This guarantees a non-null value for log statements.
+     */
+    public static String getCorrelationId() {
+        String cid = MDC.get(CORRELATION_ID);
+        if (cid == null || cid.isBlank()) {
+            cid = init(null);
+        }
+        return cid;
+    }
+
+    /** Remove the correlation identifier from MDC. */
     public static void clear() {
         MDC.remove(CORRELATION_ID);
-        MDC.remove(HeaderNames.X_TENANT_ID);
     }
 
     /**
@@ -76,7 +81,14 @@ public final class CorrelationContextUtil {
      * @param value value to associate with the key
      */
     public static void put(String key, String value) {
-        MDC.put(key, value);
+        if (key == null) {
+            return;
+        }
+        if (value == null) {
+            MDC.remove(key);
+        } else {
+            MDC.put(key, value);
+        }
     }
 
     /**
@@ -86,6 +98,6 @@ public final class CorrelationContextUtil {
      * @return value associated with the key or {@code null}
      */
     public static String get(String key) {
-        return MDC.get(key);
+        return key == null ? null : MDC.get(key);
     }
 }
