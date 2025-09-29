@@ -2,6 +2,7 @@ package com.ejada.starter_core.logging;
 
 import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.context.CorrelationContextUtil;
+import com.ejada.starter_core.config.SkipPatternDefaults;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,7 +37,7 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
         this.echoResponseHeader = echoResponseHeader;
         this.skipPatterns = (skipPatterns != null && skipPatterns.length > 0)
                 ? skipPatterns
-                : new String[]{"/actuator/**", "/swagger-ui/**", "/v3/api-docs/**", "/static/**", "/webjars/**", "/error", "/favicon.ico"};
+                : SkipPatternDefaults.correlationAndTenantSkipPatterns();
     }
 
     @Override
