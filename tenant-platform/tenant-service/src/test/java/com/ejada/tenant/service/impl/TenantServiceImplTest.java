@@ -3,12 +3,14 @@ package com.ejada.tenant.service.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.tenant.dto.TenantCreateReq;
 import com.ejada.tenant.dto.TenantRes;
 import com.ejada.tenant.dto.TenantUpdateReq;
+import com.ejada.tenant.exception.TenantConflictException;
 import com.ejada.tenant.mapper.TenantMapper;
 import com.ejada.tenant.model.Tenant;
 import com.ejada.tenant.repository.TenantRepository;
@@ -39,7 +41,7 @@ class TenantServiceImplTest {
     when(repository.existsByCodeAndIsDeletedFalse("CODE")).thenReturn(true);
 
     assertThatThrownBy(() -> service.create(req))
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(TenantConflictException.class)
         .hasMessageContaining("tenant code exists");
   }
 
@@ -50,7 +52,7 @@ class TenantServiceImplTest {
     when(repository.existsByNameIgnoreCaseAndIsDeletedFalse("Tenant")).thenReturn(true);
 
     assertThatThrownBy(() -> service.create(req))
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(TenantConflictException.class)
         .hasMessageContaining("tenant name exists");
   }
 
@@ -65,7 +67,7 @@ class TenantServiceImplTest {
     TenantUpdateReq req = new TenantUpdateReq("NEW", null, null, null, null, null);
 
     assertThatThrownBy(() -> service.update(5, req))
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(TenantConflictException.class)
         .hasMessageContaining("tenant code exists");
   }
 
@@ -80,7 +82,7 @@ class TenantServiceImplTest {
     TenantUpdateReq req = new TenantUpdateReq(null, "NewName", null, null, null, null);
 
     assertThatThrownBy(() -> service.update(7, req))
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(TenantConflictException.class)
         .hasMessageContaining("tenant name exists");
   }
 
@@ -111,5 +113,20 @@ class TenantServiceImplTest {
 
     assertThatThrownBy(() -> service.update(99, req))
         .isInstanceOf(EntityNotFoundException.class);
+  }
+
+  @Test
+  void softDeleteMarksTenantInactiveAndDeleted() {
+    Tenant tenant = new Tenant();
+    tenant.setId(44);
+    tenant.setActive(true);
+    tenant.setIsDeleted(false);
+    when(repository.findByIdAndIsDeletedFalse(44)).thenReturn(Optional.of(tenant));
+
+    service.softDelete(44);
+
+    assertThat(tenant.getIsDeleted()).isTrue();
+    assertThat(tenant.getActive()).isFalse();
+    verify(repository).save(tenant);
   }
 }
