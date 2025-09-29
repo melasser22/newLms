@@ -11,6 +11,7 @@ import com.ejada.subscription.dto.SubscriptionInfoDto;
 import com.ejada.subscription.dto.SubscriptionUpdateType;
 import com.ejada.subscription.exception.ServiceResultException;
 import com.ejada.subscription.mapper.SubscriptionAdditionalServiceMapper;
+import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
 import com.ejada.subscription.mapper.SubscriptionEnvironmentIdentifierMapper;
 import com.ejada.subscription.mapper.SubscriptionFeatureMapper;
 import com.ejada.subscription.mapper.SubscriptionMapper;
@@ -92,6 +93,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     @SuppressFBWarnings("EI_EXPOSE_REP2")
     private final ObjectMapper objectMapper;
     private final PlatformTransactionManager transactionManager;
+    private final SubscriptionApprovalPublisher approvalPublisher;
 
     private static final String EP_NOTIFICATION = "RECEIVE_NOTIFICATION";
     private static final String EP_UPDATE       = "RECEIVE_UPDATE";
@@ -134,6 +136,8 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
                     .findByExtSubscriptionIdAndExtCustomerId(si.subscriptionId(), si.customerId())
                     .orElse(null);
 
+            boolean isNewSubscription = (sub == null);
+
             if (sub == null) {
                 sub = subscriptionMapper.toEntity(si);
             } else {
@@ -157,6 +161,10 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             // 6) Mark success and emit outbox
             emitOutbox("SUBSCRIPTION", sub.getSubscriptionId().toString(), "CREATED_OR_UPDATED",
                     Map.of("extSubscriptionId", sub.getExtSubscriptionId(), "extCustomerId", sub.getExtCustomerId()));
+
+            if (isNewSubscription) {
+                approvalPublisher.publishApprovalRequest(rqUid, rq, sub);
+            }
 
             recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
             markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
