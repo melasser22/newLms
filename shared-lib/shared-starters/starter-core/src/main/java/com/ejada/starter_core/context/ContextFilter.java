@@ -1,6 +1,7 @@
 package com.ejada.starter_core.context;
 
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
@@ -9,30 +10,48 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.context.ContextManager;
 import com.ejada.common.context.CorrelationContextUtil;
-import com.ejada.starter_core.config.SkipPatternDefaults;
+import com.ejada.starter_core.tenant.TenantResolution;
+import com.ejada.starter_core.tenant.TenantResolver;
+import com.ejada.starter_core.web.FilterSkipUtils;
+
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
-import java.util.Set;
-import java.util.regex.Pattern;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class ContextFilter extends OncePerRequestFilter {
 
+    private final String[] skipPatterns;
+    private TenantResolver tenantResolver;
 
-    // Paths we don't want to enforce tenant/correlation for
-    private static final Set<String> SKIP_PREFIXES = SkipPatternDefaults.contextSkipPrefixes();
+    public ContextFilter() {
+        this(TenantResolver.noop(), FilterSkipUtils.defaultPatterns());
+    }
+
+    public ContextFilter(TenantResolver tenantResolver) {
+        this(tenantResolver, FilterSkipUtils.defaultPatterns());
+    }
+
+    public ContextFilter(TenantResolver tenantResolver, String[] skipPatterns) {
+        this.skipPatterns = FilterSkipUtils.copyOrDefault(skipPatterns);
+        this.tenantResolver = tenantResolver != null ? tenantResolver : TenantResolver.noop();
+    }
+
+    @Autowired(required = false)
+    public void setTenantResolver(TenantResolver tenantResolver) {
+        if (tenantResolver != null) {
+            this.tenantResolver = tenantResolver;
+        }
+    }
+
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        final String path = request.getRequestURI();
-        for (String p : SKIP_PREFIXES) {
-            if (path.startsWith(p)) return true;
-        }
-        return false;
+        return FilterSkipUtils.shouldSkip(request.getRequestURI(), skipPatterns);
     }
 
     @Override
@@ -42,16 +61,13 @@ public class ContextFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String tenantId      = trimToNull(firstNonNull(
-                request.getHeader(HeaderNames.X_TENANT_ID),
-                request.getHeader(HeaderNames.X_TENANT_ID_LEGACY),
-                request.getParameter(HeaderNames.X_TENANT_ID),           // optional fallback
-                request.getParameter(HeaderNames.X_TENANT_ID_LEGACY)
-        ));
-        if (tenantId != null && !TENANT_PATTERN.matcher(tenantId).matches()) {
+        TenantResolution tenantResolution = tenantResolver.resolve(request);
+        if (tenantResolution.isInvalid()) {
+
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + HeaderNames.X_TENANT_ID);
             return;
         }
+        String tenantId = tenantResolution.tenantId();
         String incomingCorrelation = trimToNull(
                 request.getHeader(HeaderNames.CORRELATION_ID)
         );
@@ -70,11 +86,7 @@ public class ContextFilter extends OncePerRequestFilter {
         //     return;
         // }
 
-        try {
-            // ---- Propagate to thread-local holders used elsewhere in the stack
-            if (tenantId != null) {
-                ContextManager.Tenant.set(tenantId);
-            }
+        try (ContextManager.Tenant.Scope ignored = ContextManager.Tenant.openScope(tenantId)) {
             // ---- Enrich logging context (appears on every log line)
             putMdc(HeaderNames.X_TENANT_ID, tenantId);
             putMdc(HeaderNames.USER_ID, userId);
@@ -86,7 +98,6 @@ public class ContextFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } finally {
             // ---- Always cleanup
-            ContextManager.Tenant.clear();
             CorrelationContextUtil.clear();
             MDC.remove(HeaderNames.X_TENANT_ID);
             MDC.remove(HeaderNames.USER_ID);
@@ -117,6 +128,4 @@ public class ContextFilter extends OncePerRequestFilter {
     private static void putMdc(String key, String value) {
         if (value != null) MDC.put(key, value);
     }
-
-    private static final Pattern TENANT_PATTERN = Pattern.compile("[A-Za-z0-9_-]{1,36}");
 }

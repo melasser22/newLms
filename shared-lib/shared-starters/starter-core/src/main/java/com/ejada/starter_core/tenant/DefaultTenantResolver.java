@@ -1,7 +1,9 @@
 package com.ejada.starter_core.tenant;
 
 import com.ejada.starter_core.config.CoreAutoConfiguration.CoreProps;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.slf4j.MDC;
 
 import java.util.Map;
@@ -17,30 +19,34 @@ public class DefaultTenantResolver implements TenantResolver {
     }
 
     @Override
-    public String resolve(HttpServletRequest request) {
-        // 1) header
+    public TenantResolution resolve(HttpServletRequest request) {
         String fromHeader = trimToNull(request.getHeader(cfg.getHeaderName()));
-        // 2) query param
         String fromQuery = trimToNull(request.getParameter(cfg.getQueryParam()));
-        // 3) jwt (optional)
         String fromJwt = null;
         if (cfg.isResolveFromJwt()) {
             fromJwt = tenantFromJwtIfAvailable(cfg.getJwtClaimNames());
         }
 
-        String tenant = cfg.isPreferHeaderOverJwt()
-                ? coalesce(fromHeader, fromQuery, fromJwt)
-                : coalesce(fromJwt, fromHeader, fromQuery);
+        TenantResolution resolution = cfg.isPreferHeaderOverJwt()
+                ? resolveInOrder(fromHeader, fromQuery, fromJwt)
+                : resolveInOrder(fromJwt, fromHeader, fromQuery);
 
-        if (tenant != null) {
-            MDC.put(cfg.getMdcKey(), tenant);
+        if (resolution.hasTenant()) {
+            MDC.put(cfg.getMdcKey(), resolution.tenantId());
+        } else {
+            MDC.remove(cfg.getMdcKey());
         }
-        return tenant;
+        return resolution;
     }
 
-    private static String coalesce(String... values) {
-        for (String v : values) if (v != null && !v.isBlank()) return v;
-        return null;
+    private static TenantResolution resolveInOrder(String... candidates) {
+        for (String candidate : candidates) {
+            TenantResolution resolution = TenantIdValidator.validate(candidate);
+            if (!resolution.isAbsent()) {
+                return resolution;
+            }
+        }
+        return TenantResolution.absent();
     }
 
     private static String trimToNull(String s) {

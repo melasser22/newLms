@@ -2,13 +2,13 @@ package com.ejada.starter_core.logging;
 
 import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.context.CorrelationContextUtil;
-import com.ejada.starter_core.config.SkipPatternDefaults;
+import com.ejada.starter_core.web.FilterSkipUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import org.slf4j.MDC;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -22,7 +22,6 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
     private final boolean generateIfMissing;
     private final boolean echoResponseHeader;
     private final String[] skipPatterns;
-    private final AntPathMatcher matcher = new AntPathMatcher();
 
     public CorrelationIdFilter(
             String headerName,
@@ -35,18 +34,13 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
         this.mdcKey = Objects.requireNonNullElse(mdcKey, HeaderNames.CORRELATION_ID);
         this.generateIfMissing = generateIfMissing;
         this.echoResponseHeader = echoResponseHeader;
-        this.skipPatterns = (skipPatterns != null && skipPatterns.length > 0)
-                ? skipPatterns
-                : SkipPatternDefaults.correlationAndTenantSkipPatterns();
+        this.skipPatterns = FilterSkipUtils.copyOrDefault(skipPatterns);
+
     }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        for (String p : skipPatterns) {
-            if (matcher.match(p, uri)) return true;
-        }
-        return false;
+        return FilterSkipUtils.shouldSkip(request.getRequestURI(), skipPatterns);
     }
 
     @Override
