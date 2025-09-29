@@ -33,6 +33,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 
 @ExtendWith(MockitoExtension.class)
 class ConsumptionServiceImplTest {
@@ -53,7 +57,8 @@ class ConsumptionServiceImplTest {
         counterMapper,
         responseMapper,
         eventMapper,
-        new ObjectMapper());
+        new ObjectMapper(),
+        new NoOpTransactionManager());
   }
 
   @Test
@@ -136,6 +141,23 @@ class ConsumptionServiceImplTest {
       return sb.toString();
     } catch (Exception e) {
       throw new AssertionError("Hash failure", e);
+    }
+  }
+
+  private static final class NoOpTransactionManager implements PlatformTransactionManager {
+    @Override
+    public TransactionStatus getTransaction(TransactionDefinition definition) {
+      return new SimpleTransactionStatus();
+    }
+
+    @Override
+    public void commit(TransactionStatus status) {
+      // no-op
+    }
+
+    @Override
+    public void rollback(TransactionStatus status) {
+      // no-op
     }
   }
 }

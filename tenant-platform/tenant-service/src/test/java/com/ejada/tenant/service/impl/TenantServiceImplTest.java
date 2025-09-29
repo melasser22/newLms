@@ -57,7 +57,7 @@ class TenantServiceImplTest {
   @Test
   void updateRejectsDuplicateCodeForDifferentTenant() {
     Tenant existing = new Tenant();
-    existing.setTenantId(5);
+    existing.setId(5);
     existing.setCode("OLD");
     when(repository.findByIdAndIsDeletedFalse(5)).thenReturn(Optional.of(existing));
     when(repository.existsByCodeAndIdNot("NEW", 5)).thenReturn(true);
@@ -72,7 +72,7 @@ class TenantServiceImplTest {
   @Test
   void updateRejectsDuplicateNameForDifferentTenant() {
     Tenant existing = new Tenant();
-    existing.setTenantId(7);
+    existing.setId(7);
     existing.setName("Current");
     when(repository.findByIdAndIsDeletedFalse(7)).thenReturn(Optional.of(existing));
     when(repository.existsByNameIgnoreCaseAndIdNot("NewName", 7)).thenReturn(true);
@@ -87,7 +87,7 @@ class TenantServiceImplTest {
   @Test
   void updateReturnsSuccessWhenNoConflicts() {
     Tenant existing = new Tenant();
-    existing.setTenantId(11);
+    existing.setId(11);
     existing.setCode("CODE");
     existing.setName("Name");
     when(repository.findByIdAndIsDeletedFalse(11)).thenReturn(Optional.of(existing));
