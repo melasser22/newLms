@@ -118,7 +118,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
       return;
     }
     List<RefreshToken> active = repo.findActiveTokensByTenant(tenantId, now);
-    int capacity = Math.max(maxActivePerTenant - 1, 0);
+    int capacity = Math.max(maxActivePerTenant, 0);
     int toCull = active.size() - capacity;
     if (toCull <= 0) {
       return;

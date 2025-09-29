@@ -14,6 +14,8 @@ import com.ejada.sec.domain.User;
 import com.ejada.sec.repository.RefreshTokenRepository;
 import com.ejada.sec.repository.UserRepository;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,6 +66,52 @@ class RefreshTokenServiceImplTest {
     assertThat(saved.getExpiresAt()).isAfter(saved.getIssuedAt());
     assertThat(saved.getExpiresAt()).isEqualTo(saved.getIssuedAt().plusSeconds(120L));
     assertThat(saved.getRotatedFrom()).isEqualTo("prev-token");
+  }
+
+  @Test
+  void issueEnforcesTenantLimitWithoutRevokingTooManyTokens() {
+    ReflectionTestUtils.setField(service, "maxActivePerTenant", 2);
+
+    UUID tenantId = UUID.randomUUID();
+    User user = User.builder().id(7L).tenantId(tenantId).build();
+    when(userRepository.findById(7L)).thenReturn(Optional.of(user));
+
+    var stored = new ArrayList<RefreshToken>();
+    Instant base = Instant.now();
+    RefreshToken oldest = RefreshToken.builder()
+        .token("oldest")
+        .user(user)
+        .issuedAt(base.minusSeconds(300))
+        .expiresAt(base.plusSeconds(600))
+        .build();
+    RefreshToken newer = RefreshToken.builder()
+        .token("newer")
+        .user(user)
+        .issuedAt(base.minusSeconds(60))
+        .expiresAt(base.plusSeconds(600))
+        .build();
+    stored.add(oldest);
+    stored.add(newer);
+
+    when(refreshTokenRepository.findActiveTokensByUserId(eq(7L), any()))
+        .thenReturn(java.util.Collections.emptyList());
+    when(refreshTokenRepository.findActiveTokensByTenant(eq(tenantId), any()))
+        .thenAnswer(invocation -> List.copyOf(stored));
+    when(refreshTokenRepository.save(any())).thenAnswer(invocation -> {
+      RefreshToken token = invocation.getArgument(0);
+      if (stored.stream().noneMatch(existing -> existing == token)) {
+        stored.add(token);
+      }
+      return token;
+    });
+
+    String issued = service.issue(7L, false, null);
+    assertThat(issued).isNotBlank();
+
+    long revokedCount = stored.stream().filter(t -> t.getRevokedAt() != null).count();
+    assertThat(revokedCount).isEqualTo(1);
+    assertThat(oldest.getRevokedAt()).isNotNull();
+    assertThat(newer.getRevokedAt()).isNull();
   }
 
   @Test
