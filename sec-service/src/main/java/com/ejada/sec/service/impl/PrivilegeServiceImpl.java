@@ -1,12 +1,12 @@
 package com.ejada.sec.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.exception.ValidationException;
 import com.ejada.sec.domain.Privilege;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.mapper.PrivilegeMapper;
 import com.ejada.sec.repository.PrivilegeRepository;
 import com.ejada.sec.service.PrivilegeService;
+import com.ejada.sec.util.TenantContextResolver;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -16,7 +16,6 @@ import com.ejada.redis.starter.config.KeyPrefixStrategy;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import com.ejada.common.context.ContextManager;
 
 @Service
 @RequiredArgsConstructor
@@ -58,14 +57,19 @@ public class PrivilegeServiceImpl implements PrivilegeService {
   @Transactional
   @Override
   public BaseResponse<Void> delete(Long id) {
-    if (repository.existsById(id)) {
-      repository.deleteById(id);
-      redisTemplate.delete(privKey(id));
-    }
-    // invalidate all privilege lists since tenant is unknown
-    String prefix = keyPrefixStrategy.resolvePrefix() + PRIV_LIST_KEY_PREFIX;
-    redisTemplate.keys(prefix + "*").forEach(redisTemplate::delete);
-    return BaseResponse.success("Privilege deleted", null);
+    return repository
+        .findById(id)
+        .map(
+            privilege -> {
+              UUID tenantId = privilege.getTenantId();
+              repository.delete(privilege);
+              redisTemplate.delete(privKey(id));
+              if (tenantId != null) {
+                redisTemplate.delete(privListKey(tenantId));
+              }
+              return BaseResponse.success("Privilege deleted", null);
+            })
+        .orElseGet(() -> BaseResponse.success("Privilege deleted", null));
   }
 
   @Override
@@ -87,14 +91,8 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
   @Override
   public BaseResponse<List<PrivilegeDto>> listByTenant() {
-	  String tenantIdStr = ContextManager.Tenant.get();
-	    UUID tenantId;
-	    try {
-	      tenantId = UUID.fromString(tenantIdStr);
-	    } catch (RuntimeException ex) {
-	      throw new ValidationException("Invalid tenant ID format", ex.getMessage());
-	    }
-	    String key = privListKey(tenantId);
+    UUID tenantId = TenantContextResolver.requireTenantId();
+    String key = privListKey(tenantId);
     @SuppressWarnings("unchecked")
     List<PrivilegeDto> cached = (List<PrivilegeDto>) redisTemplate.opsForValue().get(key);
     if (cached != null) {

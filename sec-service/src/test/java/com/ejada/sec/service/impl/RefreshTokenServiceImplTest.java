@@ -115,6 +115,47 @@ class RefreshTokenServiceImplTest {
   }
 
   @Test
+  void issueHonorsTenantLimitOfOne() {
+    ReflectionTestUtils.setField(service, "maxActivePerTenant", 1);
+
+    UUID tenantId = UUID.randomUUID();
+    User user = User.builder().id(11L).tenantId(tenantId).build();
+    when(userRepository.findById(11L)).thenReturn(Optional.of(user));
+
+    var stored = new ArrayList<RefreshToken>();
+    Instant base = Instant.now();
+    RefreshToken existing = RefreshToken.builder()
+        .token("existing")
+        .user(user)
+        .issuedAt(base.minusSeconds(120))
+        .expiresAt(base.plusSeconds(600))
+        .build();
+    stored.add(existing);
+
+    when(refreshTokenRepository.findActiveTokensByUserId(eq(11L), any()))
+        .thenReturn(java.util.Collections.emptyList());
+    when(refreshTokenRepository.findActiveTokensByTenant(eq(tenantId), any()))
+        .thenAnswer(invocation -> List.copyOf(stored));
+    when(refreshTokenRepository.save(any()))
+        .thenAnswer(
+            invocation -> {
+              RefreshToken token = invocation.getArgument(0);
+              if (stored.stream().noneMatch(existingToken -> existingToken == token)) {
+                stored.add(token);
+              }
+              return token;
+            });
+
+    String issued = service.issue(11L, false, null);
+    assertThat(issued).isNotBlank();
+
+    long activeCount =
+        stored.stream().filter(t -> t.getRevokedAt() == null && t.getExpiresAt().isAfter(base)).count();
+    assertThat(activeCount).isEqualTo(1);
+    assertThat(existing.getRevokedAt()).isNotNull();
+  }
+
+  @Test
   void validateAndGetUserRejectsExpiredOrRevokedTokens() {
     when(refreshTokenRepository.findByToken("bad"))
         .thenReturn(Optional.of(RefreshToken.builder()
