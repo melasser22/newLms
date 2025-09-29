@@ -4,7 +4,6 @@ import org.slf4j.MDC;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.ejada.common.constants.HeaderNames;
@@ -19,7 +18,6 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-@Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class ContextFilter extends OncePerRequestFilter {
 
