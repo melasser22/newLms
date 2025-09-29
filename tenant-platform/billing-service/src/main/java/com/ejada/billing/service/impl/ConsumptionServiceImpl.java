@@ -5,7 +5,6 @@ import com.ejada.billing.dto.ProductSubscriptionStts;
 import com.ejada.billing.dto.ServiceResult;
 import com.ejada.billing.dto.TrackProductConsumptionRq;
 import com.ejada.billing.dto.TrackProductConsumptionRs;
-import com.ejada.billing.exception.ServiceResultException;
 import com.ejada.billing.mapper.ConsumptionResponseMapper;
 import com.ejada.billing.mapper.UsageCounterMapper;
 import com.ejada.billing.mapper.UsageEventMapper;
@@ -78,8 +77,15 @@ public class ConsumptionServiceImpl implements ConsumptionService {
             ServiceResult<TrackProductConsumptionRs> failure =
                     ServiceResult.error(rqUid.toString(), debugId, List.of("Unexpected Error"));
             recordFailureAudit(rqUid, token, rq, ex);
+            markCurrentTransactionForRollback();
+            return failure;
+        }
+    }
+
+    private void markCurrentTransactionForRollback() {
+        if (org.springframework.transaction.support.TransactionSynchronizationManager
+                .isActualTransactionActive()) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            throw new ServiceResultException(failure, ex);
         }
     }
 
