@@ -120,12 +120,13 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         }
 
         // 2) Persist inbound audit row
-        InboundNotificationAudit audit = new InboundNotificationAudit();
+        final InboundNotificationAudit audit = new InboundNotificationAudit();
         audit.setRqUid(rqUid);
         audit.setEndpoint(EP_NOTIFICATION);
         audit.setTokenHash(sha256(token));
         audit.setPayload(writeJson(rq));
-        audit = executeInNewTransaction(() -> auditRepo.save(audit), "persist inbound notification audit");
+        final InboundNotificationAudit persistedAudit =
+                executeInNewTransaction(() -> auditRepo.save(audit), "persist inbound notification audit");
 
         try {
             // 3) Upsert subscription
@@ -159,7 +160,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
                     Map.of("extSubscriptionId", sub.getExtSubscriptionId(), "extCustomerId", sub.getExtCustomerId()));
 
             recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
-            markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
+            markAuditSuccess(persistedAudit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
 
             var rs = new ReceiveSubscriptionNotificationRs(Boolean.TRUE, envIdMapper.toDtoList(envIds));
             return okNotification(rs);
@@ -167,7 +168,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         } catch (Exception ex) {
             log.error("receiveSubscriptionNotification failed", ex);
             var failure = err("EINT000", "Unexpected Error", jsonMsg("processing failed"));
-            markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
+            markAuditFailure(persistedAudit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
                     jsonMsg(ex.getMessage()));
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new ServiceResultException(failure, ex);
@@ -187,12 +188,13 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         }
 
         // 2) Audit row
-        InboundNotificationAudit audit = new InboundNotificationAudit();
+        final InboundNotificationAudit audit = new InboundNotificationAudit();
         audit.setRqUid(rqUid);
         audit.setEndpoint(EP_UPDATE);
         audit.setTokenHash(sha256(token));
         audit.setPayload(writeJson(rq));
-        audit = executeInNewTransaction(() -> auditRepo.save(audit), "persist inbound notification audit");
+        final InboundNotificationAudit persistedAudit =
+                executeInNewTransaction(() -> auditRepo.save(audit), "persist inbound notification audit");
 
         try {
             // 3) Persist raw update event (for trace)
@@ -215,13 +217,13 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
                     Map.of("newStatus", sub.getSubscriptionSttsCd()));
 
             recordIdempotentRequest(rqUid, EP_UPDATE, rq);
-            markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
+            markAuditSuccess(persistedAudit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
 
             return okVoid();
 
         } catch (EntityNotFoundException nf) {
             var failure = err("EINT000", "Unexpected Error", jsonMsg("subscription not found for update"));
-            markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
+            markAuditFailure(persistedAudit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
                     jsonMsg(nf.getMessage()));
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new ServiceResultException(failure, nf);
@@ -229,7 +231,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         } catch (Exception ex) {
             log.error("receiveSubscriptionUpdate failed", ex);
             var failure = err("EINT000", "Unexpected Error", jsonMsg("processing failed"));
-            markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
+            markAuditFailure(persistedAudit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
                     jsonMsg(ex.getMessage()));
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new ServiceResultException(failure, ex);
