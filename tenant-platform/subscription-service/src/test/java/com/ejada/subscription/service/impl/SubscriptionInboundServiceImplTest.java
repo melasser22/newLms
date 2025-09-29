@@ -47,7 +47,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.ResourcelessTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -75,7 +77,7 @@ class SubscriptionInboundServiceImplTest {
 
   @BeforeEach
   void setUp() {
-    transactionManager = new ResourcelessTransactionManager();
+    transactionManager = new NoOpTransactionManager();
     service = new SubscriptionInboundServiceImpl(
         subscriptionRepo,
         featureRepo,
