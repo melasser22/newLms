@@ -89,7 +89,7 @@ class TierServiceImplTest {
         when(repository.findById(10)).thenReturn(Optional.of(tier));
         when(mapper.toRes(tier)).thenReturn(new TierRes(10, "CODE", "EN", "AR", "desc", 1, true, false));
 
-        TierUpdateReq req = new TierUpdateReq("CODE", "EN", "AR", "desc", 1, true);
+        TierUpdateReq req = new TierUpdateReq("EN", "AR", "desc", 1, true, false);
         BaseResponse<TierRes> response = service.update(10, req);
 
         verify(mapper).update(tier, req);
