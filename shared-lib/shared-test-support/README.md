@@ -3,7 +3,7 @@
 Utilities for integration tests using Testcontainers.
 
 ## Features
-- `IntegrationTestSupport` base class to spin up Postgres 16 and Redis 7 via Testcontainers.
+- `PostgresTestExtension`, `RedisTestExtension`, and `SetupSchemaExtension` for opt-in container and schema support.
 - Helpers for generating JWTs in tests.
 
 ## Usage
