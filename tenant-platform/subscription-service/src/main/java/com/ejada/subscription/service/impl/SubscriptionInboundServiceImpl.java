@@ -131,6 +131,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
 
         } catch (Exception ex) {
             return handleNotificationFailure(audit, ex);
+
         }
     }
 
@@ -147,6 +148,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
 
         InboundNotificationAudit audit = recordInboundAudit(rqUid, token, rq, EP_UPDATE);
 
+
         try {
             var event = persistUpdateEvent(rq, rqUid);
             Subscription sub = findSubscriptionOrThrow(rq.subscriptionId());
@@ -156,6 +158,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
 
             finalizeUpdateSuccess(audit, rqUid, rq, event, sub);
 
+
             return okVoid();
 
         } catch (EntityNotFoundException nf) {
@@ -163,6 +166,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
 
         } catch (Exception ex) {
             return handleUpdateFailure(audit, ex, "processing failed");
+
         }
     }
 
