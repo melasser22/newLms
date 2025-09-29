@@ -12,7 +12,9 @@ import com.ejada.sec.repository.SuperadminPasswordHistoryRepository;
 import com.ejada.sec.repository.SuperadminRepository;
 import com.ejada.sec.service.SuperadminService;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -92,8 +94,9 @@ public class SuperadminServiceImpl implements SuperadminService {
         // Set password hash
         superadmin.setPasswordHash(PasswordHasher.bcrypt(request.getPassword()));
         
-        // Set initial password expiry
+        // Set initial password tracking
         superadmin.setPasswordExpiresAt(LocalDateTime.now().plusDays(passwordExpiryDays));
+        superadmin.setPasswordChangedAt(LocalDateTime.now());
         
         // Set audit fields (only if they exist in your AuditableEntity)
         // If AuditableEntity handles these automatically, you can remove these lines
@@ -511,15 +514,7 @@ public class SuperadminServiceImpl implements SuperadminService {
         }
 
         if (authentication.getPrincipal() instanceof Jwt jwt) {
-            Long idFromClaim = extractIdFromUidClaim(jwt);
-            if (idFromClaim != null) {
-                return idFromClaim;
-            }
-
-            String subject = jwt.getSubject();
-            if (subject != null && !subject.isBlank()) {
-                return resolveSuperadminId(subject);
-            }
+            return resolveSuperadminIdFromJwt(jwt);
         }
 
         String authenticationName = authentication.getName();
@@ -540,6 +535,46 @@ public class SuperadminServiceImpl implements SuperadminService {
         } catch (NumberFormatException ex) {
             log.warn("Invalid uid claim: {}", uid);
             return null;
+        }
+    }
+
+    private Long resolveSuperadminIdFromJwt(Jwt jwt) {
+        Superadmin superadmin = null;
+
+        Long idFromClaim = extractIdFromUidClaim(jwt);
+        if (idFromClaim != null) {
+            superadmin = superadminRepository.findById(idFromClaim).orElse(null);
+        }
+
+        if (superadmin == null) {
+            String subject = jwt.getSubject();
+            if (subject != null && !subject.isBlank()) {
+                superadmin = superadminRepository.findByIdentifier(subject).orElse(null);
+            }
+        }
+
+        if (superadmin == null) {
+            return null;
+        }
+
+        ensureTokenFreshness(jwt, superadmin);
+        return superadmin.getId();
+    }
+
+    private void ensureTokenFreshness(Jwt jwt, Superadmin superadmin) {
+        LocalDateTime passwordChangedAt = superadmin.getPasswordChangedAt();
+        if (passwordChangedAt == null) {
+            return;
+        }
+
+        Instant issuedAt = jwt.getIssuedAt();
+        Instant passwordChangedInstant = passwordChangedAt.atOffset(ZoneOffset.UTC).toInstant();
+
+        if (issuedAt == null || issuedAt.isBefore(passwordChangedInstant)) {
+            log.info("Rejecting stale JWT for superadmin {} issued at {} (password changed at {})",
+                superadmin.getUsername(), issuedAt, passwordChangedAt);
+            throw new AuthenticationCredentialsNotFoundException(
+                "Authentication token is no longer valid because the password was changed. Please sign in again.");
         }
     }
 
