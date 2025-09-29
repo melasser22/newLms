@@ -45,7 +45,9 @@ public class ContextFilter extends OncePerRequestFilter {
 
         String tenantId      = trimToNull(firstNonNull(
                 request.getHeader(HeaderNames.X_TENANT_ID),
-                request.getParameter(HeaderNames.X_TENANT_ID)           // optional fallback
+                request.getHeader(HeaderNames.X_TENANT_ID_LEGACY),
+                request.getParameter(HeaderNames.X_TENANT_ID),           // optional fallback
+                request.getParameter(HeaderNames.X_TENANT_ID_LEGACY)
         ));
         if (tenantId != null && !TENANT_PATTERN.matcher(tenantId).matches()) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + HeaderNames.X_TENANT_ID);
@@ -95,8 +97,16 @@ public class ContextFilter extends OncePerRequestFilter {
 
     // ---------- Helpers
 
-    private static String firstNonNull(String a, String b) {
-        return a != null ? a : b;
+    private static String firstNonNull(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private static String trimToNull(String s) {
