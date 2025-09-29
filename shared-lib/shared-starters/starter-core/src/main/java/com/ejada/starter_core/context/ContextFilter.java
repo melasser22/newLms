@@ -9,6 +9,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.context.ContextManager;
 import com.ejada.common.context.CorrelationContextUtil;
+import com.ejada.starter_core.config.SkipPatternDefaults;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,9 +24,7 @@ public class ContextFilter extends OncePerRequestFilter {
 
 
     // Paths we don't want to enforce tenant/correlation for
-    private static final Set<String> SKIP_PREFIXES = Set.of(
-        "/actuator", "/health", "/error", "/v3/api-docs", "/swagger", "/swagger-ui", "/docs"
-    );
+    private static final Set<String> SKIP_PREFIXES = SkipPatternDefaults.contextSkipPrefixes();
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {

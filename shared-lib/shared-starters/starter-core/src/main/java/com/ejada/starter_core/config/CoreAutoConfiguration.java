@@ -189,9 +189,7 @@ public class CoreAutoConfiguration {
       private boolean generateIfMissing = true;
       private boolean echoResponseHeader = true;
       private int order = Integer.MIN_VALUE + 5; // effectively Ordered.HIGHEST_PRECEDENCE
-      private String[] skipPatterns = new String[]{
-        "/actuator/**","/swagger-ui/**","/v3/api-docs/**","/static/**","/webjars/**","/error","/favicon.ico"
-      };
+      private String[] skipPatterns = SkipPatternDefaults.correlationAndTenantSkipPatterns();
 
       public boolean isEnabled() { return enabled; }
       public void setEnabled(boolean enabled) { this.enabled = enabled; }
@@ -240,10 +238,7 @@ public class CoreAutoConfiguration {
       private int order = Integer.MIN_VALUE + 10;
 
       /** Skip patterns */
-      private String[] skipPatterns = new String[]{
-          "/actuator/**","/swagger-ui/**","/v3/api-docs/**",
-          "/static/**","/webjars/**","/error","/favicon.ico"
-      };
+      private String[] skipPatterns = SkipPatternDefaults.correlationAndTenantSkipPatterns();
 
       public boolean isEnabled() { return enabled; }
       public void setEnabled(boolean enabled) { this.enabled = enabled; }
