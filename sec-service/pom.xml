@@ -13,9 +13,7 @@
     </parent>
 
     <!-- Project coordinates -->
-    <groupId>com.ejada</groupId>
     <artifactId>sec-service</artifactId>
-    <version>1.0.0</version>
     <name>sec-service</name>
 
     <!-- Java language level -->

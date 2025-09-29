@@ -2,8 +2,6 @@ package com.ejada.sec.controller;
 
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.sec.dto.*;
-import com.ejada.sec.dto.admin.ChangePasswordRequest;
-import com.ejada.sec.dto.admin.FirstLoginRequest;
 import com.ejada.sec.dto.admin.SuperadminAuthResponse;
 import com.ejada.sec.dto.admin.SuperadminLoginRequest;
 import com.ejada.sec.service.AuthService;
@@ -13,7 +11,6 @@ import com.ejada.sec.service.SuperadminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

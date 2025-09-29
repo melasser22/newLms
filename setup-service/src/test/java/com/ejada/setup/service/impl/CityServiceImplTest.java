@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.mockito.ArgumentMatchers;
 
 import java.util.List;
 
@@ -64,7 +65,7 @@ class CityServiceImplTest {
                 .containsExactlyInAnyOrder(Boolean.TRUE, Boolean.FALSE);
 
         verify(cityRepository).findAll(any(Pageable.class));
-        verify(cityRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+        verify(cityRepository, never()).findAll(ArgumentMatchers.<Specification<City>>any(), any(Pageable.class));
     }
 
     private static City city(int id, String code, boolean active) {
