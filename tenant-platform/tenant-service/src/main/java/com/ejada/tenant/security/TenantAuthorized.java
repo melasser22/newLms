@@ -11,6 +11,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@PreAuthorize("@roleChecker.hasRole(authentication, T(com.ejada.starter_security.Role).EJADA_OFFICER)")
+@PreAuthorize("@tenantAccessPolicy.isAllowed(authentication)")
 public @interface TenantAuthorized {
 }

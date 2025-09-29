@@ -3,6 +3,8 @@ package com.ejada.catalog.service.impl;
 import com.ejada.catalog.dto.TierCreateReq;
 import com.ejada.catalog.dto.TierRes;
 import com.ejada.catalog.dto.TierUpdateReq;
+import com.ejada.catalog.exception.CatalogConflictException;
+import com.ejada.catalog.exception.CatalogErrorCode;
 import com.ejada.catalog.mapper.TierMapper;
 import com.ejada.catalog.model.Tier;
 import com.ejada.catalog.repository.TierRepository;
@@ -26,7 +28,8 @@ public class TierServiceImpl implements TierService {
     @Override
     public BaseResponse<TierRes> create(final TierCreateReq req) {
         if (repo.existsByTierCd(req.tierCd())) {
-            throw new IllegalStateException("tierCd already exists: " + req.tierCd());
+            throw new CatalogConflictException(CatalogErrorCode.TIER_CODE_EXISTS,
+                    "tierCd already exists: " + req.tierCd());
         }
         Tier entity = mapper.toEntity(req);
         return BaseResponse.success("Tier created", mapper.toRes(repo.save(entity)));
@@ -64,6 +67,7 @@ public class TierServiceImpl implements TierService {
     public BaseResponse<Void> softDelete(final Integer id) {
         Tier e = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Tier " + id));
         e.setIsDeleted(true);
+        e.setIsActive(false);
         return BaseResponse.success("Tier deleted", null);
     }
 }

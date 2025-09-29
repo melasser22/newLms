@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -44,14 +45,14 @@ public class TenantController {
     @TenantAuthorized
     @Operation(summary = "Create a new tenant", description = "Creates a new tenant with the provided details")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Tenant created successfully",
+            @ApiResponse(responseCode = "201", description = "Tenant created successfully",
                     content = @Content(schema = @Schema(implementation = BaseResponse.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "403", description = "Access denied"),
             @ApiResponse(responseCode = "409", description = "Tenant already exists")
     })
     public ResponseEntity<BaseResponse<TenantRes>> create(@Valid @RequestBody final TenantCreateReq req) {
-        return ResponseEntity.ok(service.create(req));
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(req));
     }
 
     @PutMapping("/{id}")

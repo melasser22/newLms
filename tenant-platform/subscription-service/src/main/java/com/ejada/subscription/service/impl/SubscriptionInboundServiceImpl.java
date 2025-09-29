@@ -24,6 +24,7 @@ import com.ejada.subscription.model.SubscriptionAdditionalService;
 import com.ejada.subscription.model.SubscriptionEnvironmentIdentifier;
 import com.ejada.subscription.model.SubscriptionFeature;
 import com.ejada.subscription.model.SubscriptionProductProperty;
+import com.ejada.subscription.model.SubscriptionUpdateEvent;
 import com.ejada.subscription.repository.InboundNotificationAuditRepository;
 import com.ejada.subscription.repository.IdempotentRequestRepository;
 import com.ejada.subscription.repository.OutboxEventRepository;
@@ -107,70 +108,29 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             final String token,
             final ReceiveSubscriptionNotificationRq rq) {
 
-        // 1) Idempotency shortcut (replay same response)
-        var existingAudit = auditRepo.findByRqUidAndEndpoint(rqUid, EP_NOTIFICATION).orElse(null);
-        if (existingAudit != null && Boolean.TRUE.equals(existingAudit.getProcessed())) {
-            var maybeSub = subscriptionRepo.findByExtSubscriptionIdAndExtCustomerId(
-                    rq.subscriptionInfo().subscriptionId(), rq.subscriptionInfo().customerId());
-            List<SubscriptionEnvironmentIdentifier> ids = maybeSub
-                    .map(s -> envIdRepo.findBySubscriptionSubscriptionId(s.getSubscriptionId()))
-                    .orElseGet(List::of);
-            var rs = new ReceiveSubscriptionNotificationRs(Boolean.TRUE, envIdMapper.toDtoList(ids));
-            return okNotification(rs);
+        var replay = replayNotificationIfProcessed(rqUid, rq);
+        if (replay != null) {
+            return replay;
         }
 
-        // 2) Persist inbound audit row
-        InboundNotificationAudit audit = new InboundNotificationAudit();
-        audit.setRqUid(rqUid);
-        audit.setEndpoint(EP_NOTIFICATION);
-        audit.setTokenHash(sha256(token));
-        audit.setPayload(writeJson(rq));
-        audit = executeInNewTransaction(() -> auditRepo.save(audit), "persist inbound notification audit");
+        InboundNotificationAudit audit = recordInboundAudit(rqUid, token, rq, EP_NOTIFICATION);
 
         try {
-            // 3) Upsert subscription
-            SubscriptionInfoDto si = rq.subscriptionInfo();
-            Subscription sub = subscriptionRepo
-                    .findByExtSubscriptionIdAndExtCustomerId(si.subscriptionId(), si.customerId())
-                    .orElse(null);
+            Subscription sub = upsertSubscription(rq.subscriptionInfo());
+            synchronizeSubscriptionChildren(sub, rq);
+            List<SubscriptionEnvironmentIdentifier> envIds = fetchEnvironmentIdentifiers(sub);
 
-            if (sub == null) {
-                sub = subscriptionMapper.toEntity(si);
-            } else {
-                subscriptionMapper.update(sub, si);
-            }
+            ReceiveSubscriptionNotificationRs rs = new ReceiveSubscriptionNotificationRs(
+                    Boolean.TRUE,
+                    envIdMapper.toDtoList(envIds)
+            );
 
-            if (sub.getEndDt() == null) {
-                sub.setEndDt(Optional.ofNullable(si.endDt()).orElse(LocalDate.now()));
-            }
-            sub = subscriptionRepo.save(sub);
+            finalizeNotificationSuccess(audit, rqUid, rq, sub);
 
-            // 4) Replace children from payload
-            replaceFeatures(sub, si.subscriptionFeatureLst());
-            replaceAdditionalServices(sub, si.subscriptionAdditionalServicesLst());
-            replaceProductProperties(sub, rq.productProperties());
-
-            // 5) (Optional) environment identifiers (if provisioning already occurred)
-            List<SubscriptionEnvironmentIdentifier> envIds =
-                    envIdRepo.findBySubscriptionSubscriptionId(sub.getSubscriptionId());
-
-            // 6) Mark success and emit outbox
-            emitOutbox("SUBSCRIPTION", sub.getSubscriptionId().toString(), "CREATED_OR_UPDATED",
-                    Map.of("extSubscriptionId", sub.getExtSubscriptionId(), "extCustomerId", sub.getExtCustomerId()));
-
-            recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
-            markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
-
-            var rs = new ReceiveSubscriptionNotificationRs(Boolean.TRUE, envIdMapper.toDtoList(envIds));
             return okNotification(rs);
 
         } catch (Exception ex) {
-            log.error("receiveSubscriptionNotification failed", ex);
-            var failure = err("EINT000", "Unexpected Error", jsonMsg("processing failed"));
-            markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
-                    jsonMsg(ex.getMessage()));
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            throw new ServiceResultException(failure, ex);
+            return handleNotificationFailure(audit, ex);
         }
     }
 
@@ -181,64 +141,160 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             final String token,
             final ReceiveSubscriptionUpdateRq rq) {
 
-        // 1) Idempotency by rqUID
-        if (updateEventRepo.findByRqUid(rqUid).isPresent()) {
+        if (isDuplicateUpdate(rqUid)) {
             return okVoid();
         }
 
-        // 2) Audit row
-        InboundNotificationAudit audit = new InboundNotificationAudit();
-        audit.setRqUid(rqUid);
-        audit.setEndpoint(EP_UPDATE);
-        audit.setTokenHash(sha256(token));
-        audit.setPayload(writeJson(rq));
-        audit = executeInNewTransaction(() -> auditRepo.save(audit), "persist inbound notification audit");
+        InboundNotificationAudit audit = recordInboundAudit(rqUid, token, rq, EP_UPDATE);
 
         try {
-            // 3) Persist raw update event (for trace)
-            var event = updateEventMapper.toEvent(rq, rqUid);
-            event = updateEventRepo.save(event);
+            var event = persistUpdateEvent(rq, rqUid);
+            Subscription sub = findSubscriptionOrThrow(rq.subscriptionId());
 
-            // 4) Lookup subscription and transition status
-            Subscription sub = subscriptionRepo.findByExtSubscriptionId(rq.subscriptionId())
-                    .orElseThrow(() -> new EntityNotFoundException("Unknown subscriptionId: " + rq.subscriptionId()));
-
-            // Support both enum and string in DTO
             transitionStatus(sub, rq.subscriptionUpdateType());
             subscriptionRepo.save(sub);
 
-            // 5) Mark event processed, audit + outbox
-            event.setProcessed(true);
-            event.setProcessedAt(OffsetDateTime.now());
-
-            emitOutbox("SUBSCRIPTION", sub.getSubscriptionId().toString(), "STATUS_CHANGED",
-                    Map.of("newStatus", sub.getSubscriptionSttsCd()));
-
-            recordIdempotentRequest(rqUid, EP_UPDATE, rq);
-            markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
+            finalizeUpdateSuccess(audit, rqUid, rq, event, sub);
 
             return okVoid();
 
         } catch (EntityNotFoundException nf) {
-            var failure = err("EINT000", "Unexpected Error", jsonMsg("subscription not found for update"));
-            markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
-                    jsonMsg(nf.getMessage()));
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            throw new ServiceResultException(failure, nf);
+            return handleUpdateFailure(audit, nf, "subscription not found for update");
 
         } catch (Exception ex) {
-            log.error("receiveSubscriptionUpdate failed", ex);
-            var failure = err("EINT000", "Unexpected Error", jsonMsg("processing failed"));
-            markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
-                    jsonMsg(ex.getMessage()));
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            throw new ServiceResultException(failure, ex);
+            return handleUpdateFailure(audit, ex, "processing failed");
         }
     }
 
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
+
+    private ServiceResult<ReceiveSubscriptionNotificationRs> replayNotificationIfProcessed(
+            final UUID rqUid,
+            final ReceiveSubscriptionNotificationRq rq) {
+        if (rqUid == null || rq == null || rq.subscriptionInfo() == null) {
+            return null;
+        }
+        return auditRepo.findByRqUidAndEndpoint(rqUid, EP_NOTIFICATION)
+                .filter(audit -> Boolean.TRUE.equals(audit.getProcessed()))
+                .map(audit -> {
+                    var info = rq.subscriptionInfo();
+                    var maybeSub = subscriptionRepo.findByExtSubscriptionIdAndExtCustomerId(
+                            info.subscriptionId(), info.customerId());
+                    List<SubscriptionEnvironmentIdentifier> ids = maybeSub
+                            .map(s -> envIdRepo.findBySubscriptionSubscriptionId(s.getSubscriptionId()))
+                            .orElseGet(List::of);
+                    var rs = new ReceiveSubscriptionNotificationRs(Boolean.TRUE, envIdMapper.toDtoList(ids));
+                    return okNotification(rs);
+                })
+                .orElse(null);
+    }
+
+    private InboundNotificationAudit recordInboundAudit(final UUID rqUid,
+                                                         final String token,
+                                                         final Object payload,
+                                                         final String endpoint) {
+        InboundNotificationAudit audit = new InboundNotificationAudit();
+        audit.setRqUid(rqUid);
+        audit.setEndpoint(endpoint);
+        audit.setTokenHash(sha256(token));
+        audit.setPayload(writeJson(payload));
+        return executeInNewTransaction(() -> auditRepo.save(audit), "persist inbound notification audit");
+    }
+
+    private Subscription upsertSubscription(final SubscriptionInfoDto info) {
+        if (info == null) {
+            throw new IllegalArgumentException("subscriptionInfo is required");
+        }
+        Subscription sub = subscriptionRepo
+                .findByExtSubscriptionIdAndExtCustomerId(info.subscriptionId(), info.customerId())
+                .map(existing -> {
+                    subscriptionMapper.update(existing, info);
+                    return existing;
+                })
+                .orElseGet(() -> subscriptionMapper.toEntity(info));
+
+        if (sub.getEndDt() == null) {
+            sub.setEndDt(Optional.ofNullable(info.endDt()).orElse(LocalDate.now()));
+        }
+        return subscriptionRepo.save(sub);
+    }
+
+    private void synchronizeSubscriptionChildren(final Subscription sub, final ReceiveSubscriptionNotificationRq rq) {
+        SubscriptionInfoDto info = rq.subscriptionInfo();
+        replaceFeatures(sub, info.subscriptionFeatureLst());
+        replaceAdditionalServices(sub, info.subscriptionAdditionalServicesLst());
+        replaceProductProperties(sub, rq.productProperties());
+    }
+
+    private List<SubscriptionEnvironmentIdentifier> fetchEnvironmentIdentifiers(final Subscription sub) {
+        return envIdRepo.findBySubscriptionSubscriptionId(sub.getSubscriptionId());
+    }
+
+    private void finalizeNotificationSuccess(final InboundNotificationAudit audit,
+                                             final UUID rqUid,
+                                             final ReceiveSubscriptionNotificationRq rq,
+                                             final Subscription sub) {
+        emitOutbox("SUBSCRIPTION", sub.getSubscriptionId().toString(), "CREATED_OR_UPDATED",
+                Map.of(
+                        "extSubscriptionId", sub.getExtSubscriptionId(),
+                        "extCustomerId", sub.getExtCustomerId()
+                ));
+        recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
+        markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
+    }
+
+    private ServiceResult<ReceiveSubscriptionNotificationRs> handleNotificationFailure(
+            final InboundNotificationAudit audit,
+            final Exception ex) {
+        log.error("receiveSubscriptionNotification failed", ex);
+        var failure = err("EINT000", "Unexpected Error", jsonMsg("processing failed"));
+        markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
+                jsonMsg(ex.getMessage()));
+        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        throw new ServiceResultException(failure, ex);
+    }
+
+    private boolean isDuplicateUpdate(final UUID rqUid) {
+        return rqUid != null && updateEventRepo.findByRqUid(rqUid).isPresent();
+    }
+
+    private SubscriptionUpdateEvent persistUpdateEvent(final ReceiveSubscriptionUpdateRq rq, final UUID rqUid) {
+        var event = updateEventMapper.toEvent(rq, rqUid);
+        return updateEventRepo.save(event);
+    }
+
+    private Subscription findSubscriptionOrThrow(final Long subscriptionId) {
+        return subscriptionRepo.findByExtSubscriptionId(subscriptionId)
+                .orElseThrow(() -> new EntityNotFoundException("Unknown subscriptionId: " + subscriptionId));
+    }
+
+    private void finalizeUpdateSuccess(final InboundNotificationAudit audit,
+                                       final UUID rqUid,
+                                       final ReceiveSubscriptionUpdateRq rq,
+                                       final SubscriptionUpdateEvent event,
+                                       final Subscription sub) {
+        event.setProcessed(true);
+        event.setProcessedAt(OffsetDateTime.now());
+        emitOutbox("SUBSCRIPTION", sub.getSubscriptionId().toString(), "STATUS_CHANGED",
+                Map.of("newStatus", sub.getSubscriptionSttsCd()));
+        recordIdempotentRequest(rqUid, EP_UPDATE, rq);
+        markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
+    }
+
+    private ServiceResult<Void> handleUpdateFailure(final InboundNotificationAudit audit,
+                                                    final Exception ex,
+                                                    final String message) {
+        if (!(ex instanceof EntityNotFoundException)) {
+            log.error("receiveSubscriptionUpdate failed", ex);
+        }
+        var failure = err("EINT000", "Unexpected Error", jsonMsg(message));
+        markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error",
+                jsonMsg(ex.getMessage()));
+        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        throw new ServiceResultException(failure, ex);
+    }
 
     private void replaceFeatures(final Subscription sub, final List<SubscriptionFeatureDto> dtos) {
         var existing = featureRepo.findBySubscriptionSubscriptionId(sub.getSubscriptionId());
