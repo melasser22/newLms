@@ -14,7 +14,7 @@ import com.ejada.sec.service.SuperadminService;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -568,7 +568,7 @@ public class SuperadminServiceImpl implements SuperadminService {
         }
 
         Instant issuedAt = jwt.getIssuedAt();
-        Instant passwordChangedInstant = passwordChangedAt.atOffset(ZoneOffset.UTC).toInstant();
+        Instant passwordChangedInstant = passwordChangedAt.atZone(ZoneId.systemDefault()).toInstant();
 
         if (issuedAt == null || issuedAt.isBefore(passwordChangedInstant)) {
             log.info("Rejecting stale JWT for superadmin {} issued at {} (password changed at {})",
