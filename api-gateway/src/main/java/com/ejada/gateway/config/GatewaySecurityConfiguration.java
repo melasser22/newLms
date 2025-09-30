@@ -17,6 +17,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * Reactive security configuration that adapts the shared servlet-based starter
@@ -28,7 +29,8 @@ public class GatewaySecurityConfiguration {
 
   @Bean
   public ReactiveJwtDecoder reactiveJwtDecoder(JwtDecoder jwtDecoder) {
-    return token -> Mono.fromCallable(() -> jwtDecoder.decode(token));
+    return token -> Mono.fromCallable(() -> jwtDecoder.decode(token))
+        .subscribeOn(Schedulers.boundedElastic());
   }
 
   @Bean
