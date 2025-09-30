@@ -8,14 +8,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.ejada.subscription.dto.AdminUserInfoDto;
-import com.ejada.subscription.dto.CustomerInfoDto;
-import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRq;
-import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRs;
-import com.ejada.subscription.dto.ReceiveSubscriptionUpdateRq;
 import com.ejada.common.dto.ServiceResult;
-import com.ejada.subscription.dto.SubscriptionInfoDto;
-import com.ejada.subscription.dto.SubscriptionUpdateType;
+import com.ejada.common.marketplace.dto.AdminUserInfoDto;
+import com.ejada.common.marketplace.dto.CustomerInfoDto;
+import com.ejada.common.marketplace.dto.ReceiveSubscriptionNotificationRq;
+import com.ejada.common.marketplace.dto.ReceiveSubscriptionNotificationRs;
+import com.ejada.common.marketplace.dto.ReceiveSubscriptionUpdateRq;
+import com.ejada.common.marketplace.dto.SubscriptionInfoDto;
+import com.ejada.common.marketplace.dto.SubscriptionUpdateType;
+import com.ejada.subscription.acl.marketplace.MarketplaceCallbackFacade;
 import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
 import com.ejada.subscription.mapper.SubscriptionAdditionalServiceMapper;
 import com.ejada.subscription.mapper.SubscriptionEnvironmentIdentifierMapper;
@@ -72,13 +73,14 @@ class SubscriptionInboundServiceImplTest {
   @Mock private SubscriptionUpdateEventMapper updateEventMapper;
   @Mock private SubscriptionApprovalPublisher approvalPublisher;
 
+  private MarketplaceCallbackFacade marketplaceFacade;
   private SubscriptionInboundServiceImpl service;
   private PlatformTransactionManager transactionManager;
 
   @BeforeEach
   void setUp() {
     transactionManager = new NoOpTransactionManager();
-    service = new SubscriptionInboundServiceImpl(
+    marketplaceFacade = new MarketplaceCallbackFacade(
         subscriptionRepo,
         featureRepo,
         additionalServiceRepo,
@@ -97,6 +99,7 @@ class SubscriptionInboundServiceImplTest {
         new ObjectMapper(),
         transactionManager,
         approvalPublisher);
+    service = new SubscriptionInboundServiceImpl(marketplaceFacade);
   }
 
   @Test

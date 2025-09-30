@@ -4,8 +4,8 @@ package com.ejada.subscription.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 
-import com.ejada.subscription.dto.EnvironmentIdentifierDto;
-import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRs;
+import com.ejada.common.marketplace.dto.EnvironmentIdentifierDto;
+import com.ejada.common.marketplace.dto.ReceiveSubscriptionNotificationRs;
 import com.ejada.subscription.model.SubscriptionEnvironmentIdentifier;
 
 import java.util.List;

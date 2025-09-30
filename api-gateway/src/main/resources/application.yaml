@@ -42,31 +42,31 @@ gateway:
   routes:
     setup:
       id: setup-service
-      uri: http://setup-service:8080
+      uri: lb://setup-service
       paths:
         - /api/setup/**
       strip-prefix: 1
     tenant:
       id: tenant-service
-      uri: http://tenant-service:8080
+      uri: lb://tenant-service
       paths:
         - /api/tenant/**
       strip-prefix: 1
     catalog:
       id: catalog-service
-      uri: http://catalog-service:8080
+      uri: lb://catalog-service
       paths:
         - /api/catalog/**
       strip-prefix: 1
     subscription:
       id: subscription-service
-      uri: http://subscription-service:8080
+      uri: lb://subscription-service
       paths:
         - /api/subscription/**
       strip-prefix: 1
     billing:
       id: billing-service
-      uri: http://billing-service:8080
+      uri: lb://billing-service
       paths:
         - /api/billing/**
       strip-prefix: 1

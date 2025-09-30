@@ -3,7 +3,7 @@ package com.ejada.subscription.kafka;
 import com.ejada.common.events.subscription.SubscriptionApprovalAction;
 import com.ejada.common.events.subscription.SubscriptionApprovalMessage;
 import com.ejada.common.events.subscription.SubscriptionApprovalProperties;
-import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRq;
+import com.ejada.common.marketplace.dto.ReceiveSubscriptionNotificationRq;
 import com.ejada.subscription.model.Subscription;
 import java.time.OffsetDateTime;
 import java.util.Locale;

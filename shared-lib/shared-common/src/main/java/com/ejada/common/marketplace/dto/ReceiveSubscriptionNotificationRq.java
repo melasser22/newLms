@@ -1,12 +1,11 @@
-package com.ejada.subscription.dto;
+package com.ejada.common.marketplace.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 /**
- * DTO representing a subscription notification request. The list of product
- * properties is defensively copied to prevent external mutation.
+ * DTO representing a subscription notification request coming from the marketplace.
  */
 public record ReceiveSubscriptionNotificationRq(
         @NotNull @Valid CustomerInfoDto customerInfo,
@@ -15,12 +14,11 @@ public record ReceiveSubscriptionNotificationRq(
         @Valid List<ProductPropertyDto> productProperties) {
 
     public ReceiveSubscriptionNotificationRq {
-        productProperties =
-                productProperties == null ? List.of() : List.copyOf(productProperties);
+        productProperties = productProperties == null ? List.of() : List.copyOf(productProperties);
     }
 
+    @Override
     public List<ProductPropertyDto> productProperties() {
         return productProperties;
     }
 }
-

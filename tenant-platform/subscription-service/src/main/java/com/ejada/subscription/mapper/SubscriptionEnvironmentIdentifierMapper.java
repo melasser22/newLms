@@ -1,6 +1,6 @@
 package com.ejada.subscription.mapper;
 
-import com.ejada.subscription.dto.EnvironmentIdentifierDto;
+import com.ejada.common.marketplace.dto.EnvironmentIdentifierDto;
 import com.ejada.subscription.model.Subscription;
 import com.ejada.subscription.model.SubscriptionEnvironmentIdentifier;
 import org.mapstruct.Context;

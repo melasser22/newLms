@@ -21,9 +21,8 @@ import com.ejada.billing.model.UsageEvent;
 import com.ejada.billing.repository.UsageCounterRepository;
 import com.ejada.billing.repository.UsageEventRepository;
 import com.ejada.common.dto.ServiceResult;
+import com.ejada.common.security.TokenHashUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -126,22 +125,8 @@ class ConsumptionServiceImplTest {
 
     ArgumentCaptor<String> tokenHashCaptor = ArgumentCaptor.forClass(String.class);
     verify(eventMapper).build(eq(rqUid), tokenHashCaptor.capture(), any(), eq(10L), eq("I000000"), eq("Successful Operation"), eq(null));
-    assertThat(tokenHashCaptor.getValue()).isEqualTo(sha256("token"));
+    assertThat(tokenHashCaptor.getValue()).isEqualTo(TokenHashUtils.sha256("token"));
     verify(eventRepository, times(1)).save(usageEvent);
-  }
-
-  private String sha256(String input) {
-    try {
-      MessageDigest md = MessageDigest.getInstance("SHA-256");
-      byte[] digest = md.digest(input.getBytes(StandardCharsets.UTF_8));
-      StringBuilder sb = new StringBuilder(digest.length * 2);
-      for (byte b : digest) {
-        sb.append(String.format("%02x", b));
-      }
-      return sb.toString();
-    } catch (Exception e) {
-      throw new AssertionError("Hash failure", e);
-    }
   }
 
   private static final class NoOpTransactionManager implements PlatformTransactionManager {
