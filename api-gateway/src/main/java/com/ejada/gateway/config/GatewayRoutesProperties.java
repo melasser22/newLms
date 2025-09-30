@@ -2,6 +2,7 @@ package com.ejada.gateway.config;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -130,12 +131,12 @@ public class GatewayRoutesProperties {
         if (!StringUtils.hasText(method)) {
           continue;
         }
-        try {
-          HttpMethod.valueOf(method.trim().toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException ex) {
+        String normalized = method.trim().toUpperCase(Locale.ROOT);
+        boolean supported = Arrays.stream(HttpMethod.values())
+            .anyMatch(candidate -> candidate.name().equals(normalized));
+        if (!supported) {
           throw new IllegalStateException(
-              "gateway.routes." + key + ".methods contains unsupported HTTP method '" + method + "'",
-              ex);
+              "gateway.routes." + key + ".methods contains unsupported HTTP method '" + method + "'");
         }
       }
       resilience.validate(key, id);
