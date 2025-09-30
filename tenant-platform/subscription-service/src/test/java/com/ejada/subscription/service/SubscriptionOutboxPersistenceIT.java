@@ -2,9 +2,9 @@ package com.ejada.subscription.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.ejada.subscription.acl.MarketplaceCallbackOrchestrator;
 import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
 import com.ejada.subscription.repository.OutboxEventRepository;
-import com.ejada.subscription.service.impl.SubscriptionInboundServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
@@ -48,12 +48,12 @@ class SubscriptionOutboxPersistenceIT {
         registry.add("spring.flyway.default-schema", () -> "subscription");
     }
 
-    private SubscriptionInboundServiceImpl service;
+    private MarketplaceCallbackOrchestrator orchestrator;
     private OutboxEventRepository outboxRepo;
 
     @BeforeEach
     void setUp(OutboxEventRepository outboxRepo, PlatformTransactionManager txManager) {
-        service = new SubscriptionInboundServiceImpl(
+        orchestrator = new MarketplaceCallbackOrchestrator(
                 Mockito.mock(com.ejada.subscription.repository.SubscriptionRepository.class),
                 Mockito.mock(com.ejada.subscription.repository.SubscriptionFeatureRepository.class),
                 Mockito.mock(com.ejada.subscription.repository.SubscriptionAdditionalServiceRepository.class),
@@ -81,7 +81,7 @@ class SubscriptionOutboxPersistenceIT {
         Map<String, Object> payload = Map.of("status", "CREATED", "rqUid", UUID.randomUUID().toString());
 
         ReflectionTestUtils.invokeMethod(
-                service, "emitOutbox", "SUBSCRIPTION", "ext-123", "CREATED_OR_UPDATED", payload);
+                orchestrator, "emitOutbox", "SUBSCRIPTION", "ext-123", "CREATED_OR_UPDATED", payload);
 
         List<com.ejada.subscription.model.OutboxEvent> events = outboxRepo.findAll();
 
