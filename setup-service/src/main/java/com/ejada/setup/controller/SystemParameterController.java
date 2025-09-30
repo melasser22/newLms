@@ -3,7 +3,6 @@ package com.ejada.setup.controller;
 import static com.ejada.common.http.BaseResponseEntityFactory.build;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.http.ApiStatusMapper;
 import com.ejada.setup.dto.SystemParameterRequest;
 import com.ejada.setup.dto.SystemParameterResponse;
 
@@ -24,6 +23,7 @@ import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -65,7 +65,7 @@ public class SystemParameterController {
 
     public ResponseEntity<BaseResponse<SystemParameterResponse>> add(@Valid @RequestBody final SystemParameterRequest body) {
         BaseResponse<SystemParameterResponse> response = systemParameterService.add(body);
-        return build(response);
+        return build(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/{paramId}")

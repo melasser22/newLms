@@ -1,7 +1,8 @@
 package com.ejada.sec.controller;
 
+import static com.ejada.common.http.BaseResponseEntityFactory.build;
+
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.http.ApiStatusMapper;
 import com.ejada.sec.domain.EffectivePrivilegeProjection;
 import com.ejada.sec.repository.EffectivePrivilegeViewRepository;
 import com.ejada.starter_core.tenant.RequireTenant;
@@ -27,6 +28,6 @@ public class EffectivePrivilegesController {
         BaseResponse.success(
             "Effective privileges listed",
             viewRepo.findEffectiveByUserAndTenant(userId, TenantContextResolver.requireTenantId()));
-    return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+    return build(response);
   }
 }
