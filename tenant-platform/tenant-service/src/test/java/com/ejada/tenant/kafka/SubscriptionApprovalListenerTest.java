@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -12,6 +13,7 @@ import com.ejada.common.events.subscription.SubscriptionApprovalAction;
 import com.ejada.common.events.subscription.SubscriptionApprovalMessage;
 import com.ejada.tenant.dto.TenantCreateReq;
 import com.ejada.tenant.exception.TenantConflictException;
+import com.ejada.tenant.exception.TenantErrorCode;
 import com.ejada.tenant.service.TenantService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.OffsetDateTime;
@@ -23,11 +25,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.support.Acknowledgment;
 
 @ExtendWith(MockitoExtension.class)
 class SubscriptionApprovalListenerTest {
 
     @Mock private TenantService tenantService;
+    @Mock private Acknowledgment acknowledgment;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private SubscriptionApprovalListener listener;
@@ -56,9 +60,10 @@ class SubscriptionApprovalListenerTest {
                 OffsetDateTime.now(),
                 null);
 
-        listener.onMessage(toPayload(message));
+        listener.onMessage(toPayload(message), acknowledgment);
 
         verifyNoInteractions(tenantService);
+        verify(acknowledgment).acknowledge();
     }
 
     @Test
@@ -80,11 +85,12 @@ class SubscriptionApprovalListenerTest {
                 OffsetDateTime.now(),
                 null);
 
-        assertThatThrownBy(() -> listener.onMessage(toPayload(message)))
+        assertThatThrownBy(() -> listener.onMessage(toPayload(message), acknowledgment))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Missing tenant details");
 
         verifyNoInteractions(tenantService);
+        verify(acknowledgment, never()).acknowledge();
     }
 
     @Test
@@ -106,10 +112,11 @@ class SubscriptionApprovalListenerTest {
                 OffsetDateTime.now(),
                 null);
 
-        listener.onMessage(toPayload(message));
+        listener.onMessage(toPayload(message), acknowledgment);
 
         ArgumentCaptor<TenantCreateReq> captor = ArgumentCaptor.forClass(TenantCreateReq.class);
         verify(tenantService).create(captor.capture());
+        verify(acknowledgment).acknowledge();
 
         assertThat(captor.getValue())
                 .isEqualTo(new TenantCreateReq(
@@ -140,11 +147,14 @@ class SubscriptionApprovalListenerTest {
                 OffsetDateTime.now(),
                 null);
 
-        when(tenantService.create(any())).thenThrow(new TenantConflictException("duplicate"));
+        when(tenantService.create(any()))
+                .thenThrow(new TenantConflictException(TenantErrorCode.CODE_EXISTS, "duplicate"));
 
-        assertThatCode(() -> listener.onMessage(toPayload(message))).doesNotThrowAnyException();
+        assertThatCode(() -> listener.onMessage(toPayload(message), acknowledgment))
+                .doesNotThrowAnyException();
 
         verify(tenantService).create(any());
+        verify(acknowledgment).acknowledge();
     }
 
     private Map<String, Object> toPayload(final SubscriptionApprovalMessage message) {
