@@ -67,9 +67,16 @@ public class SubscriptionInboundController {
         if (result == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
-        HttpStatus status = Boolean.TRUE.equals(result.success())
+        HttpStatus status = result.success()
                 ? HttpStatus.OK
-                : HttpStatus.INTERNAL_SERVER_ERROR;
+                : resolveErrorStatus(result.statusCode());
         return ResponseEntity.status(status).body(result);
+    }
+
+    private HttpStatus resolveErrorStatus(final String statusCode) {
+        if (statusCode == null || statusCode.startsWith("EINT")) {
+            return HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        return HttpStatus.BAD_REQUEST;
     }
 }
