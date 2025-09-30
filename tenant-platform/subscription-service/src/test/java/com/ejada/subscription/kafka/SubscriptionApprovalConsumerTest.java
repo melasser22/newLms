@@ -1,5 +1,6 @@
 package com.ejada.subscription.kafka;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
@@ -17,6 +18,7 @@ import com.ejada.subscription.model.SubscriptionFeature;
 import com.ejada.subscription.repository.SubscriptionAdditionalServiceRepository;
 import com.ejada.subscription.repository.SubscriptionFeatureRepository;
 import com.ejada.subscription.repository.SubscriptionRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.math.BigDecimal;
@@ -28,6 +30,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -71,7 +74,8 @@ class SubscriptionApprovalConsumerTest {
                 "role",
                 OffsetDateTime.now(),
                 null);
-        Map<String, Object> payload = objectMapper.convertValue(message, Map.class);
+        Map<String, Object> payload =
+                objectMapper.convertValue(message, new TypeReference<Map<String, Object>>() {});
 
         Subscription subscription = new Subscription();
         subscription.setSubscriptionId(10L);
@@ -111,7 +115,18 @@ class SubscriptionApprovalConsumerTest {
                 3L,
                 "ONE_TIME"));
 
-        verify(provisioningPublisher).publish(eq(message), eq(expectedFeatures), eq(expectedAddons));
+        ArgumentCaptor<SubscriptionApprovalMessage> messageCaptor =
+                ArgumentCaptor.forClass(SubscriptionApprovalMessage.class);
+
+        verify(provisioningPublisher)
+                .publish(messageCaptor.capture(), eq(expectedFeatures), eq(expectedAddons));
+
+        SubscriptionApprovalMessage published = messageCaptor.getValue();
+        assertThat(published)
+                .usingRecursiveComparison()
+                .ignoringFields("timestamp")
+                .isEqualTo(message);
+        assertThat(published.timestamp().toInstant()).isEqualTo(message.timestamp().toInstant());
     }
 
     @Test
@@ -132,7 +147,8 @@ class SubscriptionApprovalConsumerTest {
                 null,
                 OffsetDateTime.now(),
                 null);
-        Map<String, Object> payload = objectMapper.convertValue(message, Map.class);
+        Map<String, Object> payload =
+                objectMapper.convertValue(message, new TypeReference<Map<String, Object>>() {});
 
         consumer.onApproval(payload);
 
@@ -159,7 +175,8 @@ class SubscriptionApprovalConsumerTest {
                 OffsetDateTime.now(),
                 null);
 
-        Map<String, Object> payload = objectMapper.convertValue(message, Map.class);
+        Map<String, Object> payload =
+                objectMapper.convertValue(message, new TypeReference<Map<String, Object>>() {});
 
         consumer.onApproval(payload);
 
