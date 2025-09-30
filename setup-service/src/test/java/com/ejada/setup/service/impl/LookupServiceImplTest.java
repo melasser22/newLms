@@ -45,12 +45,17 @@ class LookupServiceImplTest {
   }
 
   @Test
-  void getAllRawCachesRepositoryResults() {
+  void getAllCachesRepositoryResults() {
     Lookup lookup = new Lookup();
+    lookup.setLookupItemId(1);
+    lookup.setLookupItemCd("CODE");
+    lookup.setLookupGroupCode("GROUP");
     when(lookupRepository.findAll()).thenReturn(List.of(lookup));
 
-    assertThat(service.getAllRaw()).containsExactly(lookup);
-    assertThat(service.getAllRaw()).containsExactly(lookup);
+    LookupResponse expected = new LookupResponse(1, "CODE", null, null, "GROUP", null, null, null, null);
+
+    assertThat(service.getAll().getData()).containsExactly(expected);
+    assertThat(service.getAll().getData()).containsExactly(expected);
 
     verify(lookupRepository, times(1)).findAll();
   }
@@ -68,11 +73,18 @@ class LookupServiceImplTest {
   @Test
   void getByGroupUsesCacheAndHandlesRepositoryExceptions() {
     Lookup lookup = new Lookup();
+    lookup.setLookupItemId(1);
+    lookup.setLookupItemCd("CODE");
+    lookup.setLookupGroupCode("GROUP");
     when(lookupRepository.findByLookupGroupCodeAndIsActiveTrueOrderByLookupItemEnNmAsc("GROUP"))
         .thenReturn(List.of(lookup));
 
-    assertThat(service.getByGroupRaw("GROUP")).containsExactly(lookup);
-    assertThat(service.getByGroupRaw("GROUP")).containsExactly(lookup);
+    LookupResponse expected = new LookupResponse(1, "CODE", null, null, "GROUP", null, null, null, null);
+
+    BaseResponse<List<LookupResponse>> first = service.getByGroup("GROUP");
+    BaseResponse<List<LookupResponse>> second = service.getByGroup("GROUP");
+    assertThat(first.getData()).containsExactly(expected);
+    assertThat(second.getData()).containsExactly(expected);
     verify(lookupRepository, times(1))
         .findByLookupGroupCodeAndIsActiveTrueOrderByLookupItemEnNmAsc("GROUP");
 
