@@ -1,6 +1,7 @@
 package com.ejada.setup.controller;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.ApiStatusMapper;
 import com.ejada.setup.dto.ResourceDto;
 import com.ejada.setup.security.SetupAuthorized;
 import com.ejada.setup.service.ResourceService;
@@ -55,7 +56,8 @@ public class ResourceController {
         @ApiResponse(responseCode = "409", description = "Resource already exists")
     })
     public ResponseEntity<BaseResponse<ResourceDto>> add(final @Valid @RequestBody ResourceDto body) {
-        return ResponseEntity.ok(resourceService.add(body));
+        BaseResponse<ResourceDto> response = resourceService.add(body);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @PutMapping("/{resourceId}")
@@ -71,7 +73,8 @@ public class ResourceController {
             @Parameter(description = "ID of the resource to update", required = true)
             @PathVariable @Min(1) final Integer resourceId,
             final @Valid @RequestBody ResourceDto body) {
-        return ResponseEntity.ok(resourceService.update(resourceId, body));
+        BaseResponse<ResourceDto> response = resourceService.update(resourceId, body);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @GetMapping("/{resourceId}")
@@ -85,7 +88,8 @@ public class ResourceController {
     public ResponseEntity<BaseResponse<ResourceDto>> get(
             @Parameter(description = "ID of the resource to retrieve", required = true)
             @PathVariable @Min(1) final Integer resourceId) {
-        return ResponseEntity.ok(resourceService.get(resourceId));
+        BaseResponse<ResourceDto> response = resourceService.get(resourceId);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @GetMapping
@@ -102,7 +106,8 @@ public class ResourceController {
             @Parameter(description = "Whether to retrieve all resources (ignores pagination)")
             @RequestParam(name = "unpaged", defaultValue = "false") final boolean unpaged) {
         final Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
-        return ResponseEntity.ok(resourceService.list(effectivePageable, q, unpaged));
+        BaseResponse<Page<ResourceDto>> response = resourceService.list(effectivePageable, q, unpaged);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @GetMapping("/active")
@@ -113,6 +118,7 @@ public class ResourceController {
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
     public ResponseEntity<BaseResponse<List<ResourceDto>>> listActive() {
-        return ResponseEntity.ok(resourceService.listActive());
+        BaseResponse<List<ResourceDto>> response = resourceService.listActive();
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 }

@@ -1,6 +1,7 @@
 package com.ejada.sec.controller;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.ApiStatusMapper;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.service.PrivilegeService;
 import com.ejada.starter_core.tenant.RequireTenant;
@@ -22,27 +23,32 @@ public class PrivilegeController {
 
   @GetMapping
   public ResponseEntity<BaseResponse<List<PrivilegeDto>>> list() {
-    return ResponseEntity.ok(privilegeService.listByTenant());
+    BaseResponse<List<PrivilegeDto>> response = privilegeService.listByTenant();
+    return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
   }
 
   @GetMapping("/{id}")
   public ResponseEntity<BaseResponse<PrivilegeDto>> get(@PathVariable("id") Long id) {
-    return ResponseEntity.ok(privilegeService.get(id));
+    BaseResponse<PrivilegeDto> response = privilegeService.get(id);
+    return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
   }
 
   @PostMapping
   public ResponseEntity<BaseResponse<PrivilegeDto>> create(@Valid @RequestBody CreatePrivilegeRequest req) {
-    return ResponseEntity.ok(privilegeService.create(req));
+    BaseResponse<PrivilegeDto> response = privilegeService.create(req);
+    return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
   }
 
   @PatchMapping("/{id}")
   public ResponseEntity<BaseResponse<PrivilegeDto>> update(@PathVariable("id") Long id,
                                              @Valid @RequestBody UpdatePrivilegeRequest req) {
-    return ResponseEntity.ok(privilegeService.update(id, req));
+    BaseResponse<PrivilegeDto> response = privilegeService.update(id, req);
+    return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
   }
 
   @DeleteMapping("/{id}")
   public ResponseEntity<BaseResponse<Void>> delete(@PathVariable("id") Long id) {
-    return ResponseEntity.ok(privilegeService.delete(id));
+    BaseResponse<Void> response = privilegeService.delete(id);
+    return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
   }
 }

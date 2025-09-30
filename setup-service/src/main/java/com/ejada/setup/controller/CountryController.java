@@ -1,6 +1,7 @@
 package com.ejada.setup.controller;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.ApiStatusMapper;
 import com.ejada.setup.dto.CountryDto;
 import com.ejada.setup.model.Country;
 import com.ejada.setup.constants.ValidationConstants;
@@ -57,7 +58,8 @@ public class CountryController {
         @ApiResponse(responseCode = "409", description = "Country code already exists")
     })
     public ResponseEntity<BaseResponse<Country>> add(@Valid @RequestBody final CountryDto body) {
-        return ResponseEntity.ok(countryService.add(body));
+        BaseResponse<Country> response = countryService.add(body);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @PutMapping("/{countryId}")
@@ -74,7 +76,8 @@ public class CountryController {
             @Parameter(description = "ID of the country to update", required = true)
             @PathVariable @Min(1) final Integer countryId,
             @Valid @RequestBody final CountryDto body) {
-        return ResponseEntity.ok(countryService.update(countryId, body));
+        BaseResponse<Country> response = countryService.update(countryId, body);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @GetMapping("/{countryId}")
@@ -88,7 +91,8 @@ public class CountryController {
     public ResponseEntity<BaseResponse<Country>> get(
             @Parameter(description = "ID of the country to retrieve", required = true)
             @PathVariable @Min(1) final Integer countryId) {
-        return ResponseEntity.ok(countryService.get(countryId));
+        BaseResponse<Country> response = countryService.get(countryId);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @GetMapping
@@ -99,14 +103,15 @@ public class CountryController {
         @ApiResponse(responseCode = "200", description = "Countries retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<?> list(
+    public ResponseEntity<BaseResponse<?>> list(
             @PageableDefault(size = ValidationConstants.PAGE_SIZE_DEFAULT) final Pageable pageable,
             @Parameter(description = "Search query for country names")
             @RequestParam(required = false) final String q,
             @Parameter(description = "Whether to retrieve all countries (ignores pagination)")
             @RequestParam(name = "unpaged", defaultValue = "false") final boolean unpaged) {
         Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
-        return ResponseEntity.ok(countryService.list(effectivePageable, q, unpaged));
+        BaseResponse<?> response = countryService.list(effectivePageable, q, unpaged);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @GetMapping("/active")
@@ -117,6 +122,7 @@ public class CountryController {
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
     public ResponseEntity<BaseResponse<List<Country>>> listActive() {
-        return ResponseEntity.ok(countryService.listActive());
+        BaseResponse<List<Country>> response = countryService.listActive();
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 }

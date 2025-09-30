@@ -48,4 +48,17 @@ class SystemParameterControllerTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.message").value("ok"));
     }
+
+    @Test
+    void get_notFound_translatesHttpStatus() throws Exception {
+        BaseResponse<SystemParameter> resp = BaseResponse.error("ERR_PARAM_NOT_FOUND", "System parameter not found");
+
+        doReturn(resp)
+                .when(systemParameterService)
+                .get(999);
+
+        mockMvc.perform(get("/setup/systemParameters/{paramId}", 999).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("ERR_PARAM_NOT_FOUND"));
+    }
 }
