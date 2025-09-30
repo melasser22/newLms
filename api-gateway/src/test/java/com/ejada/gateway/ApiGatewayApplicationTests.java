@@ -21,7 +21,7 @@ import org.springframework.test.context.TestPropertySource;
 })
 class ApiGatewayApplicationTests {
 
-  private static final String SECRET = "0123456789ABCDEF0123456789ABCDEF";
+  static final String SECRET = "0123456789ABCDEF0123456789ABCDEF";
 
   @Autowired
   private RouteLocator routeLocator;
