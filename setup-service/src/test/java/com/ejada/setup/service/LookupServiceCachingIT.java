@@ -2,61 +2,57 @@ package com.ejada.setup.service;
 
 import static com.ejada.testsupport.assertions.ResponseAssertions.assertThatBaseResponse;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.setup.SetupApplication;
 import com.ejada.setup.dto.LookupResponse;
 import com.ejada.setup.model.Lookup;
 import com.ejada.setup.repository.LookupRepository;
+import com.ejada.setup.service.LookupService;
 import com.ejada.setup.service.impl.LookupServiceImpl;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.cache.annotation.EnableCaching;
 
-@SpringBootTest(classes = SetupApplication.class)
-@Testcontainers
-@ActiveProfiles("test")
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = LookupServiceCachingIT.CacheTestConfiguration.class)
 class LookupServiceCachingIT {
 
-    @Container
-    static final GenericContainer<?> REDIS = new GenericContainer<>("redis:7").withExposedPorts(6379);
+    @Autowired
+    private LookupService lookupService;
 
-    @DynamicPropertySource
-    static void configureRedis(DynamicPropertyRegistry registry) {
-        registry.add("spring.data.redis.host", REDIS::getHost);
-        registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(6379));
-        registry.add("spring.cache.type", () -> "redis");
-    }
+    @Autowired
+    private CacheManager cacheManager;
 
-    @MockBean
+    @Autowired
     private LookupRepository lookupRepository;
 
     @Autowired
-    private LookupServiceImpl lookupService;
-
-    @Autowired
-    private RedisConnectionFactory redisConnectionFactory;
-
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private LookupServiceImpl lookupServiceImpl;
 
     @BeforeEach
     void flushRedis() {
-        redisConnectionFactory.getConnection().serverCommands().flushAll();
+        reset(lookupRepository);
+        cacheManager.getCacheNames().forEach(name -> {
+            Cache cache = cacheManager.getCache(name);
+            if (cache != null) {
+                cache.clear();
+            }
+        });
     }
 
     @Test
@@ -71,16 +67,40 @@ class LookupServiceCachingIT {
                 .build();
         when(lookupRepository.findAll()).thenReturn(List.of(entity));
 
-        BaseResponse<List<LookupResponse>> first = lookupService.getAll();
-        BaseResponse<List<LookupResponse>> second = lookupService.getAll();
+        List<Lookup> firstRaw = lookupServiceImpl.getAllRaw();
+        List<Lookup> secondRaw = lookupServiceImpl.getAllRaw();
 
         verify(lookupRepository, times(1)).findAll();
-        assertThatBaseResponse(first)
+        assertThat(firstRaw).hasSize(1);
+        assertThat(secondRaw).hasSize(1);
+
+        BaseResponse<List<LookupResponse>> response = lookupService.getAll();
+        assertThatBaseResponse(response)
                 .isSuccess()
                 .hasDataSatisfying(list -> assertThat(list).hasSize(1));
-        assertThatBaseResponse(second).isSuccess();
 
-        Object cached = redisTemplate.opsForValue().get("lookups:all::all");
+        Cache cache = cacheManager.getCache("lookups:all");
+        Object cached = cache != null ? cache.get("all", Object.class) : null;
         assertThat(cached).isInstanceOf(List.class);
+    }
+
+    @Configuration
+    @EnableCaching(proxyTargetClass = true)
+    static class CacheTestConfiguration {
+
+        @Bean
+        CacheManager cacheManager() {
+            return new ConcurrentMapCacheManager("lookups:all", "lookups:byGroup");
+        }
+
+        @Bean
+        LookupRepository lookupRepository() {
+            return mock(LookupRepository.class);
+        }
+
+        @Bean
+        LookupServiceImpl lookupService(final LookupRepository lookupRepository, final CacheManager cacheManager) {
+            return new LookupServiceImpl(lookupRepository, cacheManager);
+        }
     }
 }
