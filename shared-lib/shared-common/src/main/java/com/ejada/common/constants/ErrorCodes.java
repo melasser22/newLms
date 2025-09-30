@@ -20,6 +20,9 @@ public final class ErrorCodes {
     public static final String AUTH_UNAUTHORIZED = "ERR-AUTH-UNAUTHORIZED";
     public static final String AUTH_FORBIDDEN = "ERR-AUTH-FORBIDDEN";
     public static final String AUTH_MISSING_CREDENTIALS = "ERR-AUTH-MISSING_CREDENTIALS";
+    public static final String AUTH_INVALID_CREDENTIALS = "ERR-AUTH-INVALID_CREDENTIALS";
+    public static final String AUTH_HISTORY_UNAVAILABLE = "ERR-AUTH-HISTORY_UNAVAILABLE";
+    public static final String AUTH_DATA_ACCESS = "ERR-AUTH-DATA_ACCESS";
 
     // 🏢 Multi-tenancy
     public static final String TENANT_NOT_FOUND = "ERR-TENANT-NOT_FOUND";

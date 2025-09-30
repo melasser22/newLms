@@ -33,6 +33,9 @@ public final class ApiStatusMapper {
         exact.put(ErrorCodes.AUTH_UNAUTHORIZED, HttpStatus.UNAUTHORIZED);
         exact.put(ErrorCodes.AUTH_FORBIDDEN, HttpStatus.FORBIDDEN);
         exact.put(ErrorCodes.AUTH_MISSING_CREDENTIALS, HttpStatus.BAD_REQUEST);
+        exact.put(ErrorCodes.AUTH_INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED);
+        exact.put(ErrorCodes.AUTH_HISTORY_UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE);
+        exact.put(ErrorCodes.AUTH_DATA_ACCESS, HttpStatus.SERVICE_UNAVAILABLE);
         exact.put(ErrorCodes.TENANT_NOT_FOUND, HttpStatus.NOT_FOUND);
         exact.put(ErrorCodes.TENANT_DISABLED, HttpStatus.FORBIDDEN);
         exact.put(ErrorCodes.TENANT_ACCESS_DENIED, HttpStatus.FORBIDDEN);
@@ -101,6 +104,21 @@ public final class ApiStatusMapper {
             return DEFAULT_STATUS.getOrDefault(apiStatus, HttpStatus.OK);
         }
         return HttpStatus.OK;
+    }
+
+    /**
+     * Resolve an HTTP status based solely on an error code.
+     *
+     * @param code          the business error code
+     * @param defaultStatus status to use when the code cannot be mapped
+     * @return resolved HTTP status
+     */
+    public static HttpStatus fromErrorCode(String code, HttpStatus defaultStatus) {
+        HttpStatus resolved = resolveFromCode(code);
+        if (resolved != null) {
+            return resolved;
+        }
+        return defaultStatus != null ? defaultStatus : HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
     private static HttpStatus resolveFromCode(String code) {
