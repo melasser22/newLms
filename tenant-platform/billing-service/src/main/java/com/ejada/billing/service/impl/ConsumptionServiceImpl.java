@@ -11,7 +11,13 @@ import com.ejada.billing.model.UsageCounter;
 import com.ejada.billing.repository.UsageCounterRepository;
 import com.ejada.billing.repository.UsageEventRepository;
 import com.ejada.billing.service.ConsumptionService;
+import com.ejada.common.dto.ServiceResult;
+import com.ejada.common.marketplace.token.TokenHashing;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -20,16 +26,6 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import com.ejada.common.dto.ServiceResult;
-
-import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -133,7 +129,7 @@ public class ConsumptionServiceImpl implements ConsumptionService {
                                      final TrackProductConsumptionRq rq) {
         eventRepo.save(eventMapper.build(
                 rqUid,
-                sha256(token),
+                TokenHashing.sha256(token),
                 toJson(rq),
                 rq != null ? rq.productId() : null,
                 "I000000",
@@ -162,7 +158,7 @@ public class ConsumptionServiceImpl implements ConsumptionService {
             requiresNewTx.executeWithoutResult(status ->
                     eventRepo.save(eventMapper.build(
                             rqUid,
-                            sha256(token),
+                            TokenHashing.sha256(token),
                             safeJson(rq),
                             rq != null ? rq.productId() : null,
                             "EINT000",
@@ -190,20 +186,4 @@ public class ConsumptionServiceImpl implements ConsumptionService {
         }
     }
 
-    private String sha256(final String s) {
-        if (s == null) {
-            return null;
-        }
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] b = md.digest(s.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder(b.length * 2);
-            for (byte x : b) {
-                sb.append(String.format("%02x", x));
-            }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            return null;
-        }
-    }
 }

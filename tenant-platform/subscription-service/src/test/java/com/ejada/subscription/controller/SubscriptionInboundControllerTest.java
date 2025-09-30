@@ -8,15 +8,15 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import com.ejada.common.dto.ServiceResult;
-import com.ejada.subscription.dto.AdminUserInfoDto;
-import com.ejada.subscription.dto.CustomerInfoDto;
-import com.ejada.subscription.dto.EnvironmentIdentifierDto;
-import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRq;
-import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRs;
-import com.ejada.subscription.dto.ReceiveSubscriptionUpdateRq;
-import com.ejada.subscription.dto.SubscriptionInfoDto;
-import com.ejada.subscription.dto.SubscriptionUpdateType;
-import com.ejada.subscription.exception.ServiceResultException;
+import com.ejada.common.exception.ServiceResultException;
+import com.ejada.common.marketplace.subscription.dto.AdminUserInfoDto;
+import com.ejada.common.marketplace.subscription.dto.CustomerInfoDto;
+import com.ejada.common.marketplace.subscription.dto.EnvironmentIdentifierDto;
+import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotificationRq;
+import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotificationRs;
+import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionUpdateRq;
+import com.ejada.common.marketplace.subscription.dto.SubscriptionInfoDto;
+import com.ejada.common.marketplace.subscription.dto.SubscriptionUpdateType;
 import com.ejada.subscription.service.SubscriptionInboundService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -144,6 +144,6 @@ class SubscriptionInboundControllerTest {
     }
 
     private ReceiveSubscriptionUpdateRq updateRequest() {
-        return new ReceiveSubscriptionUpdateRq(UUID.randomUUID().toString(), SubscriptionUpdateType.SUSPEND, "tenant-1", "reason");
+        return new ReceiveSubscriptionUpdateRq(11L, 22L, SubscriptionUpdateType.SUSPENDED);
     }
 }

@@ -1,4 +1,4 @@
-package com.ejada.subscription.dto;
+package com.ejada.common.marketplace.subscription.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -16,58 +16,46 @@ public record SubscriptionInfoDto(
         @NotNull Long customerId,
         @NotNull Long productId,
         @NotNull Long tierId,
-
         String tierNameEn,
         String tierNameAr,
-
         @NotNull LocalDate startDt,
         @NotNull LocalDate endDt,
-
         BigDecimal subscriptionAmount,
         BigDecimal totalBilledAmount,
         BigDecimal totalPaidAmount,
-
-        @NotBlank String subscriptionSttsCd, // marketplace status code (string)
-        String createChannel, // optional (PORTAL | GCP_MARKETPLACE)
-
-        // Limits (we use Boolean here; entities handle Y/N conversion)
+        @NotBlank String subscriptionSttsCd,
+        String createChannel,
         Boolean unlimitedUsersFlag,
         Long usersLimit,
-        String usersLimitResetType, // FULL_SUBSCRIPTION_PERIOD | PAYMENT_FREQUENCY_PERIOD
-
+        String usersLimitResetType,
         Boolean unlimitedTransFlag,
         Long transactionsLimit,
         String transLimitResetType,
-
         BigDecimal balanceLimit,
         String balanceLimitResetType,
-
-        String environmentSizeCd, // L | XL
-
+        String environmentSizeCd,
         Boolean isAutoProvEnabled,
         Long prevSubscriptionId,
-        String prevSubscriptionUpdateAction, // UPGRADE | DOWNGRADE | RENEWAL
-
+        String prevSubscriptionUpdateAction,
         @Valid List<SubscriptionFeatureDto> subscriptionFeatureLst,
         @Valid List<SubscriptionAdditionalServiceDto> subscriptionAdditionalServicesLst) {
 
     public SubscriptionInfoDto {
         subscriptionFeatureLst =
-                subscriptionFeatureLst == null
-                        ? List.of()
-                        : List.copyOf(subscriptionFeatureLst);
+                subscriptionFeatureLst == null ? List.of() : List.copyOf(subscriptionFeatureLst);
         subscriptionAdditionalServicesLst =
                 subscriptionAdditionalServicesLst == null
                         ? List.of()
                         : List.copyOf(subscriptionAdditionalServicesLst);
     }
 
+    @Override
     public List<SubscriptionFeatureDto> subscriptionFeatureLst() {
         return subscriptionFeatureLst;
     }
 
+    @Override
     public List<SubscriptionAdditionalServiceDto> subscriptionAdditionalServicesLst() {
         return subscriptionAdditionalServicesLst;
     }
 }
-

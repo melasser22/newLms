@@ -7,7 +7,7 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
-import com.ejada.subscription.dto.SubscriptionInfoDto;
+import com.ejada.common.marketplace.subscription.dto.SubscriptionInfoDto;
 import com.ejada.subscription.model.Subscription;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)

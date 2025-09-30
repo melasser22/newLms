@@ -1,4 +1,4 @@
-package com.ejada.subscription.dto;
+package com.ejada.common.marketplace.subscription.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -19,8 +19,8 @@ public record ReceiveSubscriptionNotificationRq(
                 productProperties == null ? List.of() : List.copyOf(productProperties);
     }
 
+    @Override
     public List<ProductPropertyDto> productProperties() {
         return productProperties;
     }
 }
-
