@@ -88,6 +88,10 @@ public class ReactiveRateLimiterFilter implements WebFilter {
   }
 
   private Duration resolveWindow() {
+    Duration configured = props.getWindow();
+    if (configured != null && !configured.isZero() && !configured.isNegative()) {
+      return configured;
+    }
     int capacity = Math.max(1, props.getCapacity());
     int refillPerMinute = Math.max(1, props.getRefillPerMinute());
     long seconds = (long) Math.ceil(capacity * 60.0 / refillPerMinute);
