@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -49,10 +50,15 @@ class SubscriptionOutboxPersistenceIT {
     }
 
     private MarketplaceCallbackOrchestrator orchestrator;
+
+    @Autowired
     private OutboxEventRepository outboxRepo;
 
+    @Autowired
+    private PlatformTransactionManager txManager;
+
     @BeforeEach
-    void setUp(OutboxEventRepository outboxRepo, PlatformTransactionManager txManager) {
+    void setUp() {
         orchestrator = new MarketplaceCallbackOrchestrator(
                 Mockito.mock(com.ejada.subscription.repository.SubscriptionRepository.class),
                 Mockito.mock(com.ejada.subscription.repository.SubscriptionFeatureRepository.class),
@@ -72,7 +78,6 @@ class SubscriptionOutboxPersistenceIT {
                 new ObjectMapper(),
                 txManager,
                 Mockito.mock(SubscriptionApprovalPublisher.class));
-        this.outboxRepo = outboxRepo;
         outboxRepo.deleteAll();
     }
 
