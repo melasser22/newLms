@@ -195,13 +195,12 @@ shared:
       secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
     resource-server:
       enabled: true
-      permit-all:
-        - "/actuator/health"
+      permit-all: []
       disable-csrf: false
     stateless: true
     roles-claim: roles
     tenant-claim: tenant
-    enable-role-check: false
+    enable-role-check: true
 
 logging:
   level:
@@ -216,4 +215,4 @@ logging:
     org.springframework.cache: ERROR
     org.springframework.cache.interceptor.CacheAspectSupport: ERROR
 
-debug: true
+debug: false
