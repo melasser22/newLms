@@ -1,7 +1,6 @@
 package com.ejada.tenant.security;
 
-import org.springframework.security.access.prepost.PreAuthorize;
-
+import com.ejada.starter_security.authorization.TenantAccessAuthorized;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -11,6 +10,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@PreAuthorize("@tenantAccessPolicy.isAllowed(authentication)")
+@TenantAccessAuthorized
 public @interface TenantAuthorized {
 }

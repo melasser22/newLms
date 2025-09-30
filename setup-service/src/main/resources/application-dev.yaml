@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: optional:classpath:application-shared-platform-dev.yaml
   datasource:
     url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=setup}"
     username: ${DB_USERNAME:postgres}
@@ -33,22 +35,7 @@ spring:
     default-schema: setup
 
   kafka:
-    bootstrap-servers: kafka:9092
     client-id: ejada-setup-dev
-    consumer:
-      group-id: ejada-backend-dev
-      auto-offset-reset: earliest
-      enable-auto-commit: false
-      properties:
-        max.poll.interval.ms: 300000
-        max.poll.records: 500
-    producer:
-      acks: all
-      retries: 3
-      batch-size: 16384
-      compression-type: gzip
-      properties:
-        linger.ms: 5
 
   data:
     redis:
@@ -190,22 +177,6 @@ shared:
       activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
       keys:
         local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
-  security:
-    mode: hs256
-    jwt:
-      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
-      token-period: 15m
-    hs256:
-      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
-    resource-server:
-      enabled: true
-      permit-all:
-        - "/actuator/health"
-      disable-csrf: false
-    stateless: true
-    roles-claim: roles
-    tenant-claim: tenant
-    enable-role-check: false
 
 logging:
   level:
