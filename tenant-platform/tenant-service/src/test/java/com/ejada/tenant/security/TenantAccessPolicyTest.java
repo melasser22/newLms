@@ -32,4 +32,24 @@ class TenantAccessPolicyTest {
 
         assertThat(policy.isAllowed(null)).isFalse();
     }
+
+    @Test
+    void trimsAndIgnoresBlankConfiguration() {
+        TenantAccessPolicy policy = new TenantAccessPolicy("   ");
+        TestingAuthenticationToken auth = new TestingAuthenticationToken("user", "pwd", "EJADA_OFFICER");
+        auth.setAuthenticated(true);
+
+        assertThat(policy.getAllowedRoles()).isEmpty();
+        assertThat(policy.isAllowed(auth)).isFalse();
+    }
+
+    @Test
+    void nullConfigurationDisablesAccess() {
+        TenantAccessPolicy policy = new TenantAccessPolicy(null);
+        TestingAuthenticationToken auth = new TestingAuthenticationToken("user", "pwd", "EJADA_OFFICER");
+        auth.setAuthenticated(true);
+
+        assertThat(policy.getAllowedRoles()).isEmpty();
+        assertThat(policy.isAllowed(auth)).isFalse();
+    }
 }

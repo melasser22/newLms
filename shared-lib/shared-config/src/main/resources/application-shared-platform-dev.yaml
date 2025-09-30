@@ -15,6 +15,34 @@ spring:
       compression-type: gzip
       properties:
         linger.ms: 5
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus,beans,conditions,configprops,loggers,threaddump
+  endpoint:
+    health:
+      show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    display-request-duration: true
+    filter: true
+    operationsSorter: method
+    tagsSorter: alpha
 
 shared:
   security:
@@ -32,4 +60,143 @@ shared:
     stateless: true
     roles-claim: roles
     tenant-claim: tenant
-    enable-role-check: false
+
+  core:
+    correlation:
+      header-name: X-Correlation-Id
+      generate-if-missing: true
+      echo-response-header: true
+    tenant:
+      enabled: true
+      header-name: X-Tenant-Id
+      query-param: tenantId
+      default-policy: OPTIONAL
+      echo-response-header: true
+    subscription:
+      enabled: true
+      header-name: x_subscription_id
+      query-param: subscriptionId
+      default-policy: OPTIONAL
+      echo-response-header: true
+    billing:
+      enabled: true
+      header-name: x_billing_id
+      query-param: billingId
+      default-policy: OPTIONAL
+      echo-response-header: true
+    cors:
+      enabled: true
+      allowed-origins: http://localhost:3000
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: "*"
+
+  headers:
+    enabled: true
+    correlation:
+      header: X-Correlation-Id
+      auto-generate: true
+      mandatory: true
+    request:
+      header: X-Request-ID
+      auto-generate: true
+      mandatory: true
+    tenant:
+      header: X-Tenant-Id
+      auto-generate: false
+      mandatory: false
+    subscription:
+      header: x_subscription_id
+      auto-generate: false
+      mandatory: false
+    billing:
+      header: x_billing_id
+      auto-generate: false
+      mandatory: false
+    user:
+      header: X-User-Id
+      auto-generate: false
+      mandatory: false
+    mdc:
+      enabled: true
+    security:
+      enabled: true
+      hsts:
+        enabled: true
+        max-age: 31536000
+        include-subdomains: true
+      frame-options: SAMEORIGIN
+      content-type-options: nosniff
+      referrer-policy: no-referrer
+      xss-protection: "0"
+    propagation:
+      enabled: true
+      include:
+        - X-Correlation-Id
+        - X-Request-ID
+        - X-Tenant-Id
+        - x_subscription_id
+        - x_billing_id
+        - X-User-Id
+
+  audit:
+    enabled: true
+    web:
+      enabled: true
+      include-headers: true
+      track-bodies: true
+    aop:
+      enabled: true
+    dispatcher:
+      async: true
+    retention:
+      enabled: true
+      days: 90
+    masking:
+      enabled: true
+      fields-by-key:
+        - password
+        - secret
+        - token
+        - ssn
+    sinks:
+      db:
+        enabled: true
+        schema: ${app.schema:${APP_SCHEMA:public}}
+        table: audit_logs
+      kafka:
+        enabled: true
+        topic: audit_logs
+      otlp:
+        enabled: false
+      outbox:
+        enabled: true
+
+  redis:
+    host: ${REDIS_HOST:redis}
+    port: ${REDIS_PORT:6379}
+    timeout: ${REDIS_TIMEOUT:2s}
+    key-prefix: ${app.cache-prefix:${APP_CACHE_PREFIX:${spring.application.name}}}
+    default-ttl: ${REDIS_DEFAULT_TTL:600s}
+    reactive: false
+
+  crypto:
+    algorithm: AES_GCM
+    in-memory:
+      activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
+      keys:
+        local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
+
+logging:
+  level:
+    root: ERROR
+    com.ejada: ERROR
+    com.ejada.audit.starter: ERROR
+    com.ejada.audit.starter.core.dispatch: ERROR
+    com.ejada.audit.starter.core.dispatch.sinks: ERROR
+    org.hibernate.tool.schema: ERROR
+    org.hibernate.SQL: ERROR
+    org.hibernate.orm.jdbc.bind: ERROR
+    org.springframework.cache: ERROR
+    org.springframework.cache.interceptor.CacheAspectSupport: ERROR
+
+debug: true

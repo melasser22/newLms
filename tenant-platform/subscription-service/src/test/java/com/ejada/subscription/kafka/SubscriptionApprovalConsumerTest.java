@@ -1,8 +1,10 @@
 package com.ejada.subscription.kafka;
 
+import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.ejada.common.events.provisioning.ProvisionedAddon;
@@ -135,5 +137,32 @@ class SubscriptionApprovalConsumerTest {
 
         verify(provisioningPublisher, never())
                 .publish(org.mockito.Mockito.any(), org.mockito.Mockito.anyList(), org.mockito.Mockito.anyList());
+    }
+
+    @Test
+    void missingSubscriptionIdSkipsRepositoryLookups() {
+        SubscriptionApprovalMessage message = new SubscriptionApprovalMessage(
+                SubscriptionApprovalAction.APPROVED,
+                UUID.randomUUID(),
+                null,
+                456L,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                OffsetDateTime.now(),
+                null);
+
+        Map<String, Object> payload = objectMapper.convertValue(message, Map.class);
+
+        consumer.onApproval(payload);
+
+        verify(subscriptionRepository, never()).findByExtSubscriptionId(anyLong());
+        verifyNoInteractions(featureRepository, additionalServiceRepository, provisioningPublisher);
     }
 }
