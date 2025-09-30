@@ -36,121 +36,18 @@ spring:
   kafka:
     client-id: ejada-subscription-dev
 
-  data:
-    redis:
-      repositories:
-        enabled: false
-
-management:
-  endpoints:
-    web:
-      base-path: /actuator
-      exposure:
-        include: health,info,metrics,prometheus,beans,conditions,configprops,loggers,threaddump
-  endpoint:
-    health:
-      show-details: always
-  tracing:
-    sampling:
-      probability: 1.0
-
-springdoc:
-  api-docs:
-    enabled: true
-    path: /v3/api-docs
-  swagger-ui:
-    enabled: true
-    display-request-duration: true
-    filter: true
-    operationsSorter: method
-    tagsSorter: alpha
+app:
+  schema: subscription
+  cache-prefix: subscription
+  subscription-approval:
+    topic: tenant.subscription-approvals
+    approval-role: ejada-officer
+    consumer-group: tenant-approval-provisioner
+  tenant-provisioning:
+    topic: tenant.provisioning
+    consumer-group: tenant-provisioning-publisher
 
 shared:
-  core:
-    correlation:
-      header-name: X-Correlation-Id
-      generate-if-missing: true
-      echo-response-header: true
-    subscription:
-      enabled: true
-      header-name: x_subscription_id
-      query-param: subscriptionId
-      default-policy: OPTIONAL
-      echo-response-header: true
-    cors:
-      enabled: true
-      allowed-origins: http://localhost:3000
-      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
-      allowed-headers: "*"
-  headers:
-    enabled: true
-    correlation:
-      header: X-Correlation-Id
-      auto-generate: true
-      mandatory: true
-    request:
-      header: X-Request-ID
-      auto-generate: true
-      mandatory: true
-    subscription:
-      header: x_subscription_id
-      auto-generate: false
-      mandatory: false
-    user:
-      header: X-User-Id
-      auto-generate: false
-      mandatory: false
-    mdc:
-      enabled: true
-    security:
-      enabled: true
-      hsts:
-        enabled: true
-        max-age: 31536000
-        include-subdomains: true
-      frame-options: SAMEORIGIN
-      content-type-options: nosniff
-      referrer-policy: no-referrer
-      xss-protection: "0"
-    propagation:
-      enabled: true
-      include:
-        - X-Correlation-Id
-        - X-Request-ID
-        - x_subscription_id
-        - X-User-Id
-  audit:
-    enabled: true
-    web:
-      enabled: true
-      include-headers: true
-      track-bodies: true
-    aop:
-      enabled: true
-    dispatcher:
-      async: true
-    retention:
-      enabled: true
-      days: 90
-    masking:
-      enabled: true
-      fields-by-key:
-        - password
-        - secret
-        - token
-        - ssn
-    sinks:
-      db:
-        enabled: true
-        schema: subscription
-        table: audit_logs
-      kafka:
-        enabled: true
-        topic: audit_logs
-      otlp:
-        enabled: false
-      outbox:
-        enabled: true
   openapi:
     enabled: true
     title: " subscription Service API"
@@ -163,56 +60,6 @@ shared:
       packages-to-scan:
         - com.ejada.subscription
     jwt-security: false
-  redis:
-    host: redis
-    port: 6379
-    timeout: 2s
-    key-prefix: subscription
-    default-ttl: 600s
-    reactive: false
-  crypto:
-    algorithm: AES_GCM
-    in-memory:
-      activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
-      keys:
-        local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
   security:
-    mode: hs256
-    jwt:
-      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
-      token-period: 15m
-    hs256:
-      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
-    resource-server:
-      enabled: true
-      permit-all:
-        - "/actuator/health"
-      disable-csrf: false
-    stateless: true
-    roles-claim: roles
     subscription-claim: subscription
     enable-role-check: false
-
-app:
-  subscription-approval:
-    topic: tenant.subscription-approvals
-    approval-role: ejada-officer
-    consumer-group: tenant-approval-provisioner
-  tenant-provisioning:
-    topic: tenant.provisioning
-    consumer-group: tenant-provisioning-publisher
-
-logging:
-  level:
-    root: ERROR
-    com.ejada: ERROR
-    com.ejada.audit.starter: ERROR
-    com.ejada.audit.starter.core.dispatch: ERROR
-    com.ejada.audit.starter.core.dispatch.sinks: ERROR
-    org.hibernate.tool.schema: ERROR
-    org.hibernate.SQL: ERROR
-    org.hibernate.orm.jdbc.bind: ERROR
-    org.springframework.cache: ERROR
-    org.springframework.cache.interceptor.CacheAspectSupport: ERROR
-
-debug: true
