@@ -56,7 +56,7 @@ class CountryControllerSecurityTest {
 
     @Test
     void protectedEndpointsReturnUnauthorizedWithoutToken() throws Exception {
-        mockMvc.perform(get("/setup/countries").contextPath("/core"))
+        mockMvc.perform(get("/core/setup/countries").contextPath("/core"))
             .andExpect(status().isUnauthorized());
     }
 
@@ -68,7 +68,7 @@ class CountryControllerSecurityTest {
                 .tenant("tenant-1")
                 .build();
 
-        mockMvc.perform(get("/setup/countries").contextPath("/core")
+        mockMvc.perform(get("/core/setup/countries").contextPath("/core")
                         .header(AUTHORIZATION, "Bearer " + token)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -83,7 +83,7 @@ class CountryControllerSecurityTest {
                 .tenant("tenant-1")
                 .build();
 
-        mockMvc.perform(get("/setup/countries").contextPath("/core")
+        mockMvc.perform(get("/core/setup/countries").contextPath("/core")
                         .header(AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(ErrorCodes.AUTH_FORBIDDEN));
@@ -99,7 +99,7 @@ class CountryControllerSecurityTest {
                 .expiresAt(Instant.now().minusSeconds(3600))
                 .build();
 
-        mockMvc.perform(get("/setup/countries").contextPath("/core")
+        mockMvc.perform(get("/core/setup/countries").contextPath("/core")
                         .header(AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(ErrorCodes.AUTH_UNAUTHORIZED));
