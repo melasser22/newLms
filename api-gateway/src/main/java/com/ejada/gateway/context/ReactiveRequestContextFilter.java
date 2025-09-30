@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -78,9 +79,11 @@ public class ReactiveRequestContextFilter implements WebFilter {
             return rejectTenant(exchange, resolution.rawValue());
           }
           state.setTenant(resolution.hasTenant() ? resolution.tenantId() : null);
-          return authentication.defaultIfEmpty(null)
-              .flatMap(auth -> {
-                state.setAuthentication(auth);
+          return authentication
+              .map(Optional::of)
+              .defaultIfEmpty(Optional.empty())
+              .flatMap(optionalAuth -> {
+                state.setAuthentication(optionalAuth.orElse(null));
                 state.apply(exchange);
                 return chain.filter(exchange)
                     .contextWrite(ctx -> enrichContext(ctx, state))
@@ -134,17 +137,21 @@ public class ReactiveRequestContextFilter implements WebFilter {
     String fromHeader = trimToNull(exchange.getRequest().getHeaders().getFirst(cfg.getHeaderName()));
     String fromQuery = trimToNull(exchange.getRequest().getQueryParams().getFirst(cfg.getQueryParam()));
 
-    Mono<String> fromJwt = Mono.empty();
+    Mono<Optional<String>> fromJwt = Mono.just(Optional.<String>empty());
     if (cfg.isResolveFromJwt()) {
-      fromJwt = authentication.flatMap(auth -> Mono.justOrEmpty(extractTenantFromJwt(auth, cfg.getJwtClaimNames())));
+      fromJwt = authentication
+          .flatMap(auth -> Mono.justOrEmpty(extractTenantFromJwt(auth, cfg.getJwtClaimNames())))
+          .map(Optional::of)
+          .switchIfEmpty(Mono.just(Optional.empty()));
     }
 
     boolean preferHeader = cfg.isPreferHeaderOverJwt();
-    Mono<String> ordered = preferHeader
-        ? fromJwt.defaultIfEmpty(null).map(jwt -> selectTenant(fromHeader, fromQuery, jwt))
-        : fromJwt.defaultIfEmpty(null).map(jwt -> selectTenant(jwt, fromHeader, fromQuery));
 
-    return ordered.map(candidate -> {
+    return fromJwt.map(optionalJwt -> {
+      String jwt = optionalJwt.orElse(null);
+      String candidate = preferHeader
+          ? selectTenant(fromHeader, fromQuery, jwt)
+          : selectTenant(jwt, fromHeader, fromQuery);
       if (candidate == null) {
         return TenantResolution.absent();
       }
