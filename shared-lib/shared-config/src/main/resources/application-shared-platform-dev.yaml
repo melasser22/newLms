@@ -1,0 +1,35 @@
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP:ejada-backend-dev}
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        max.poll.interval.ms: 300000
+        max.poll.records: 500
+    producer:
+      acks: all
+      retries: 3
+      batch-size: 16384
+      compression-type: gzip
+      properties:
+        linger.ms: 5
+
+shared:
+  security:
+    mode: hs256
+    jwt:
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+      token-period: 15m
+    hs256:
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+    resource-server:
+      enabled: true
+      permit-all:
+        - "/actuator/health"
+      disable-csrf: false
+    stateless: true
+    roles-claim: roles
+    tenant-claim: tenant
+    enable-role-check: false
