@@ -12,7 +12,6 @@ import com.ejada.billing.dto.ProductConsumption;
 import com.ejada.billing.dto.ProductConsumptionStts;
 import com.ejada.billing.dto.ProductSubscription;
 import com.ejada.billing.dto.ProductSubscriptionStts;
-import com.ejada.billing.dto.ServiceResult;
 import com.ejada.billing.dto.TrackProductConsumptionRq;
 import com.ejada.billing.dto.TrackProductConsumptionRs;
 import com.ejada.billing.mapper.ConsumptionResponseMapper;
@@ -21,6 +20,7 @@ import com.ejada.billing.mapper.UsageEventMapper;
 import com.ejada.billing.model.UsageEvent;
 import com.ejada.billing.repository.UsageCounterRepository;
 import com.ejada.billing.repository.UsageEventRepository;
+import com.ejada.common.dto.ServiceResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -85,7 +85,7 @@ class ConsumptionServiceImplTest {
 
     assertThat(result.success()).isFalse();
     assertThat(result.statusCode()).isEqualTo("EINT000");
-    assertThat(result.statusDtls()).contains("Unexpected Error");
+    assertThat(result.statusDetails()).contains("Unexpected Error");
     assertThat(result.debugId()).isNotBlank();
 
     verify(eventMapper).build(eq(rqUid), any(), any(), eq(11L), eq("EINT000"), eq("Unexpected Error"), any());
@@ -122,7 +122,7 @@ class ConsumptionServiceImplTest {
     ServiceResult<TrackProductConsumptionRs> result = service.trackProductConsumption(rqUid, "token", request);
 
     assertThat(result.success()).isTrue();
-    assertThat(result.returnedObject()).isEqualTo(response);
+    assertThat(result.payload()).isEqualTo(response);
 
     ArgumentCaptor<String> tokenHashCaptor = ArgumentCaptor.forClass(String.class);
     verify(eventMapper).build(eq(rqUid), tokenHashCaptor.capture(), any(), eq(10L), eq("I000000"), eq("Successful Operation"), eq(null));

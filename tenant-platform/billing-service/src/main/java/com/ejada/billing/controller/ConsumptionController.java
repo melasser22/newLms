@@ -1,10 +1,10 @@
 package com.ejada.billing.controller;
 
-import com.ejada.billing.dto.ServiceResult;
 import com.ejada.billing.dto.TrackProductConsumptionRq;
 import com.ejada.billing.dto.TrackProductConsumptionRs;
 import com.ejada.billing.exception.ServiceResultException;
 import com.ejada.billing.service.ConsumptionService;
+import com.ejada.common.dto.ServiceResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

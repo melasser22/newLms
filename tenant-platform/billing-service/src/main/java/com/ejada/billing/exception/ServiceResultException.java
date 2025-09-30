@@ -1,6 +1,6 @@
 package com.ejada.billing.exception;
 
-import com.ejada.billing.dto.ServiceResult;
+import com.ejada.common.dto.ServiceResult;
 
 /**
  * Runtime exception carrying a {@link ServiceResult}. Throwing this from transactional service

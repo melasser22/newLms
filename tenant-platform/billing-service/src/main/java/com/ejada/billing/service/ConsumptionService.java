@@ -1,8 +1,8 @@
 package com.ejada.billing.service;
 
-import com.ejada.billing.dto.ServiceResult;
 import com.ejada.billing.dto.TrackProductConsumptionRq;
 import com.ejada.billing.dto.TrackProductConsumptionRs;
+import com.ejada.common.dto.ServiceResult;
 
 import java.util.UUID;
 

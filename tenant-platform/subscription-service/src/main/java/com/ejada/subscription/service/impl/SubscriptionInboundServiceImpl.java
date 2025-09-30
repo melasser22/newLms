@@ -4,7 +4,7 @@ import com.ejada.subscription.dto.ProductPropertyDto;
 import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRq;
 import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRs;
 import com.ejada.subscription.dto.ReceiveSubscriptionUpdateRq;
-import com.ejada.subscription.dto.ServiceResult;
+import com.ejada.common.dto.ServiceResult;
 import com.ejada.subscription.dto.SubscriptionAdditionalServiceDto;
 import com.ejada.subscription.dto.SubscriptionFeatureDto;
 import com.ejada.subscription.dto.SubscriptionInfoDto;
@@ -581,13 +581,19 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     }
 
     // Success helpers with distinct names to avoid overload ambiguity
-    private static ServiceResult<ReceiveSubscriptionNotificationRs> okNotification(final ReceiveSubscriptionNotificationRs rs) {
-        return new ServiceResult<>("I000000", "Successful Operation", null, rs);
+    private static ServiceResult<ReceiveSubscriptionNotificationRs> okNotification(
+            final ReceiveSubscriptionNotificationRs rs) {
+        return ServiceResult.ok(rs);
     }
+
     private static ServiceResult<Void> okVoid() {
-        return new ServiceResult<>("I000000", "Successful Operation", null, null);
+        return ServiceResult.ok(null);
     }
-    private static <T> ServiceResult<T> err(final String code, final String desc, final String details) {
-        return new ServiceResult<>(code, desc, details, null);
+
+    private static <T> ServiceResult<T> err(
+            final String code, final String desc, final String details) {
+        List<String> detailList =
+                (details == null || details.isBlank()) ? List.of() : List.of(details);
+        return ServiceResult.error(null, code, desc, detailList);
     }
 }

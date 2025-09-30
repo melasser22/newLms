@@ -2,7 +2,6 @@ package com.ejada.billing.service.impl;
 
 import com.ejada.billing.dto.ProductConsumptionStts;
 import com.ejada.billing.dto.ProductSubscriptionStts;
-import com.ejada.billing.dto.ServiceResult;
 import com.ejada.billing.dto.TrackProductConsumptionRq;
 import com.ejada.billing.dto.TrackProductConsumptionRs;
 import com.ejada.billing.mapper.ConsumptionResponseMapper;
@@ -21,6 +20,8 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.TransactionTemplate;
+
+import com.ejada.common.dto.ServiceResult;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;

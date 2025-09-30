@@ -1,6 +1,6 @@
 package com.ejada.subscription.exception;
 
-import com.ejada.subscription.dto.ServiceResult;
+import com.ejada.common.dto.ServiceResult;
 
 /**
  * Runtime exception that carries a {@link ServiceResult} payload. Throwing this from a
