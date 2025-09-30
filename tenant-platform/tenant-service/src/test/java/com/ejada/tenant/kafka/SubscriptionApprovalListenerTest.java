@@ -16,6 +16,8 @@ import com.ejada.tenant.exception.TenantConflictException;
 import com.ejada.tenant.exception.TenantErrorCode;
 import com.ejada.tenant.service.TenantService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -33,7 +35,10 @@ class SubscriptionApprovalListenerTest {
     @Mock private TenantService tenantService;
     @Mock private Acknowledgment acknowledgment;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper =
+            new ObjectMapper()
+                    .registerModule(new JavaTimeModule())
+                    .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     private SubscriptionApprovalListener listener;
 
     @BeforeEach
