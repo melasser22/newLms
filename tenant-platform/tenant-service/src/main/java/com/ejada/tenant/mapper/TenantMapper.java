@@ -45,6 +45,7 @@ public interface TenantMapper {
     void update(@MappingTarget @NonNull Tenant entity, @NonNull TenantUpdateReq req);
 
     // ---------- Response ----------
+    @BeanMapping(ignoreUnmappedSourceProperties = "deleted")
     @Mapping(target = "isDeleted", source = "isDeleted")
     TenantRes toRes(@NonNull Tenant entity);
 
