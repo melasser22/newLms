@@ -1,5 +1,7 @@
 package com.ejada.catalog.controller;
 
+import static com.ejada.common.http.BaseResponseEntityFactory.build;
+
 import com.ejada.catalog.dto.*;
 import com.ejada.catalog.security.CatalogAuthorized;
 import com.ejada.catalog.service.AddonFeatureService;
@@ -56,7 +58,8 @@ public class AddonFeatureController {
             req.overageCurrency(),
             req.meta()
         );
-        return ResponseEntity.ok(service.attach(normalized));
+        BaseResponse<AddonFeatureRes> response = service.attach(normalized);
+        return build(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -71,7 +74,7 @@ public class AddonFeatureController {
     public ResponseEntity<BaseResponse<AddonFeatureRes>> update(@PathVariable @Min(1) Integer addonId,
                                                                 @PathVariable @Min(1) Integer id,
                                                                 @Valid @RequestBody AddonFeatureUpdateReq req) {
-        return ResponseEntity.ok(service.update(id, req));
+        return build(service.update(id, req));
     }
 
     @GetMapping
@@ -84,7 +87,7 @@ public class AddonFeatureController {
     })
     public ResponseEntity<BaseResponse<Page<AddonFeatureRes>>> listByAddon(@PathVariable @Min(1) Integer addonId,
                                                                            @ParameterObject Pageable pageable) {
-        return ResponseEntity.ok(service.listByAddon(addonId, pageable));
+        return build(service.listByAddon(addonId, pageable));
     }
 
     @DeleteMapping("/{id}")

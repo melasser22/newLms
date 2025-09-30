@@ -1,5 +1,7 @@
 package com.ejada.tenant.controller;
 
+import static com.ejada.common.http.BaseResponseEntityFactory.build;
+
 import com.ejada.tenant.dto.TenantIntegrationKeyCreateReq;
 import com.ejada.tenant.dto.TenantIntegrationKeyRes;
 import com.ejada.tenant.dto.TenantIntegrationKeyUpdateReq;
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -51,7 +54,8 @@ public class TenantIntegrationKeyController {
     })
     public ResponseEntity<BaseResponse<TenantIntegrationKeyRes>> create(
             @Valid @RequestBody final TenantIntegrationKeyCreateReq req) {
-        return ResponseEntity.ok(service.create(req));
+        BaseResponse<TenantIntegrationKeyRes> response = service.create(req);
+        return build(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -66,7 +70,7 @@ public class TenantIntegrationKeyController {
     public ResponseEntity<BaseResponse<TenantIntegrationKeyRes>> update(
             @PathVariable("id") @Min(1) final Long tikId,
             @Valid @RequestBody final TenantIntegrationKeyUpdateReq req) {
-        return ResponseEntity.ok(service.update(tikId, req));
+        return build(service.update(tikId, req));
     }
 
     @TenantAuthorized
@@ -79,7 +83,7 @@ public class TenantIntegrationKeyController {
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<TenantIntegrationKeyRes>> get(
             @PathVariable("id") @Min(1) final Long tikId) {
-        return ResponseEntity.ok(service.get(tikId));
+        return build(service.get(tikId));
     }
 
     @TenantAuthorized
@@ -94,7 +98,7 @@ public class TenantIntegrationKeyController {
     public ResponseEntity<BaseResponse<Page<TenantIntegrationKeyRes>>> listByTenant(
             @PathVariable @Min(1) final Integer tenantId,
             @ParameterObject final Pageable pageable) {
-        return ResponseEntity.ok(service.listByTenant(tenantId, pageable));
+        return build(service.listByTenant(tenantId, pageable));
     }
 
     @TenantAuthorized

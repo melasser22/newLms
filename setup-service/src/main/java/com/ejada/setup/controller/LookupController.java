@@ -1,7 +1,8 @@
 package com.ejada.setup.controller;
 
+import static com.ejada.common.http.BaseResponseEntityFactory.build;
+
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.http.ApiStatusMapper;
 import com.ejada.setup.dto.LookupCreateRequest;
 import com.ejada.setup.dto.LookupResponse;
 import com.ejada.setup.dto.LookupUpdateRequest;
@@ -57,7 +58,7 @@ public class LookupController {
     public ResponseEntity<BaseResponse<LookupResponse>> add(
             @Valid @RequestBody final LookupCreateRequest body) {
         BaseResponse<LookupResponse> response = lookupService.add(body);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @PutMapping("/{lookupItemId}")
@@ -74,7 +75,7 @@ public class LookupController {
             @PathVariable @Min(1) final Integer lookupItemId,
             @Valid @RequestBody final LookupUpdateRequest body) {
         BaseResponse<LookupResponse> response = lookupService.update(lookupItemId, body);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @GetMapping
@@ -86,7 +87,7 @@ public class LookupController {
     })
     public ResponseEntity<BaseResponse<List<LookupResponse>>> getAllLookups() {
         BaseResponse<List<LookupResponse>> response = lookupService.getAllLookups();
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @GetMapping("/group/{groupCode}")
@@ -100,7 +101,7 @@ public class LookupController {
             @Parameter(description = "Group code of lookups to retrieve", required = true)
             @PathVariable @NotBlank final String groupCode) {
         BaseResponse<List<LookupResponse>> response = lookupService.getByGroup(groupCode);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @GetMapping("/all")
@@ -115,6 +116,6 @@ public class LookupController {
     })
     public ResponseEntity<BaseResponse<List<LookupResponse>>> getAll() {
         BaseResponse<List<LookupResponse>> response = lookupService.getAll();
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 }
