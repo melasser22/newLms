@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
@@ -99,6 +100,8 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
 
     private static final String EP_NOTIFICATION = "RECEIVE_NOTIFICATION";
     private static final String EP_UPDATE       = "RECEIVE_UPDATE";
+
+    private final Map<UUID, ServiceResult<ReceiveSubscriptionNotificationRs>> processedNotificationCache = new ConcurrentHashMap<>();
 
     // -------------------------------------------------------------------------
     // Public API
@@ -200,14 +203,14 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
-
     private ServiceResult<ReceiveSubscriptionNotificationRs> replayNotificationIfProcessed(
             final UUID rqUid,
             final ReceiveSubscriptionNotificationRq rq) {
         if (rqUid == null || rq == null || rq.subscriptionInfo() == null) {
             return null;
         }
-        return auditRepo.findByRqUidAndEndpoint(rqUid, EP_NOTIFICATION)
+
+        return processedNotificationCache.computeIfAbsent(rqUid, key -> auditRepo.findByRqUidAndEndpoint(key, EP_NOTIFICATION)
                 .filter(audit -> Boolean.TRUE.equals(audit.getProcessed()))
                 .map(audit -> {
                     var info = rq.subscriptionInfo();
@@ -219,7 +222,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
                     var rs = new ReceiveSubscriptionNotificationRs(Boolean.TRUE, envIdMapper.toDtoList(ids));
                     return okNotification(rs);
                 })
-                .orElse(null);
+                .orElse(null));
     }
 
     private InboundNotificationAudit recordInboundAudit(final UUID rqUid,
