@@ -61,8 +61,9 @@ public class ReactiveRateLimiterFilter implements WebFilter {
   public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
     String key = keyFor(exchange);
     String bucket = "rl:" + key;
+    Duration window = resolveWindow();
     return redisTemplate.opsForValue().increment(bucket)
-        .flatMap(count -> setExpiry(bucket, count)
+        .flatMap(count -> setExpiry(bucket, count, window)
             .then(Mono.defer(() -> {
               int capacity = Math.max(1, props.getCapacity());
               exchange.getResponse().getHeaders().set("X-RateLimit-Limit", String.valueOf(capacity));
@@ -79,11 +80,21 @@ public class ReactiveRateLimiterFilter implements WebFilter {
         });
   }
 
-  private Mono<Boolean> setExpiry(String bucket, Long count) {
+  private Mono<Boolean> setExpiry(String bucket, Long count, Duration window) {
     if (count != null && count == 1L) {
-      return redisTemplate.expire(bucket, Duration.ofMinutes(1));
+      return redisTemplate.expire(bucket, window);
     }
     return Mono.just(Boolean.TRUE);
+  }
+
+  private Duration resolveWindow() {
+    int capacity = Math.max(1, props.getCapacity());
+    int refillPerMinute = Math.max(1, props.getRefillPerMinute());
+    long seconds = (long) Math.ceil(capacity * 60.0 / refillPerMinute);
+    if (seconds <= 0L) {
+      seconds = 1L;
+    }
+    return Duration.ofSeconds(seconds);
   }
 
   private String keyFor(ServerWebExchange exchange) {
