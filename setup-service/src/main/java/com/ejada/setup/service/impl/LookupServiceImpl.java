@@ -16,14 +16,15 @@ import jakarta.transaction.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +32,10 @@ import java.util.stream.Collectors;
 public class LookupServiceImpl implements LookupService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LookupServiceImpl.class);
+
+    private static final String CACHE_ALL_LOOKUPS = "lookups:all";
+    private static final String CACHE_ALL_KEY = "all";
+    private static final String CACHE_LOOKUPS_BY_GROUP = "lookups:byGroup";
 
     private final LookupRepository lookupRepository;
     private final CacheManager cacheManager;
@@ -40,15 +45,9 @@ public class LookupServiceImpl implements LookupService {
         this.cacheManager = cacheManager;
     }
 
-    /**
-     * IMPORTANT:
-     * Cache ONLY raw lists to avoid BaseResponse being deserialized as LinkedHashMap
-     * when using JSON Redis serializers (root cause of ClassCastException you saw).
-     */
-    @Cacheable(cacheNames = "lookups:all", key = "'all'")
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
-    public List<Lookup> getAllRaw() {
-        return lookupRepository.findAll();
+    List<Lookup> getAllRaw() {
+        return fetchCached(CACHE_ALL_LOOKUPS, CACHE_ALL_KEY, lookupRepository::findAll);
     }
 
     @Override
@@ -63,10 +62,12 @@ public class LookupServiceImpl implements LookupService {
         }
     }
 
-    @Cacheable(cacheNames = "lookups:byGroup", key = "#groupCode")
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
-    public List<Lookup> getByGroupRaw(final String groupCode) {
-        return lookupRepository.findByLookupGroupCodeAndIsActiveTrueOrderByLookupItemEnNmAsc(groupCode);
+    List<Lookup> getByGroupRaw(final String groupCode) {
+        return fetchCached(
+                CACHE_LOOKUPS_BY_GROUP,
+                groupCode,
+                () -> lookupRepository.findByLookupGroupCodeAndIsActiveTrueOrderByLookupItemEnNmAsc(groupCode));
     }
 
     @Override
@@ -198,9 +199,33 @@ public class LookupServiceImpl implements LookupService {
     }
 
     private void evictCaches(@Nullable final String... groupCodes) {
-        CacheEvictionUtils.evict(cacheManager, "lookups:all", "all");
+        CacheEvictionUtils.evict(cacheManager, CACHE_ALL_LOOKUPS, CACHE_ALL_KEY);
         if (groupCodes != null) {
-            CacheEvictionUtils.evict(cacheManager, "lookups:byGroup", (Object[]) groupCodes);
+            CacheEvictionUtils.evict(cacheManager, CACHE_LOOKUPS_BY_GROUP, (Object[]) groupCodes);
         }
+    }
+
+    /**
+     * Cache ONLY raw entity lists. Caching {@link BaseResponse} objects causes serialization issues
+     * when Redis (JSON) is used because responses are restored as {@code LinkedHashMap} instances.
+     */
+    private List<Lookup> fetchCached(final String cacheName, final Object key, final Supplier<List<Lookup>> loader) {
+        Cache cache = cacheManager != null ? cacheManager.getCache(cacheName) : null;
+        if (cache == null || key == null) {
+            return toImmutableList(loader.get());
+        }
+        try {
+            return cache.get(key, () -> toImmutableList(loader.get()));
+        } catch (Cache.ValueRetrievalException ex) {
+            LOGGER.warn("Cache retrieval failed for '{}' and key '{}'. Falling back to repository.", cacheName, key, ex);
+            return toImmutableList(loader.get());
+        }
+    }
+
+    private List<Lookup> toImmutableList(final List<Lookup> lookups) {
+        if (lookups == null || lookups.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(lookups);
     }
 }
