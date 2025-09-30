@@ -256,3 +256,27 @@ services:
       - "8085:8080"
     networks:
       backend:
+
+  api-gateway:
+    build: ./api-gateway
+    <<: [*restart_policy]
+    depends_on:
+      setup-service: { condition: service_started }
+      tenant-service: { condition: service_started }
+      catalog-service: { condition: service_started }
+      subscription-service: { condition: service_started }
+      billing-service: { condition: service_started }
+      security-service: { condition: service_started }
+      redis: { condition: service_healthy }
+      otel-collector: { condition: service_started }
+    environment:
+      TZ: Asia/Riyadh
+      <<: [*redis_env, *otel_env]
+      OTEL_SERVICE_NAME: api-gateway
+      SHARED_SECURITY_MODE: hs256
+      SHARED_SECURITY_HS256_SECRET: ${JWT_SECRET:-local-dev-secret}
+      SHARED_SECURITY_RESOURCE_SERVER_ENABLED: "false"
+    ports:
+      - "8088:8080"
+    networks:
+      backend:
