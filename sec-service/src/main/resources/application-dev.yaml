@@ -214,15 +214,8 @@ shared:
     resource-server:
       enabled: true
       permit-all:
-        - "/api/auth/**"
-        - "/v3/api-docs/**"
-        - "/swagger-ui/**"
-        - "/actuator/health/**"
+        - "/actuator/health"
       disable-csrf: false
-      csrf-ignore:
-        - "/api/auth/**"
-        - "/v3/api-docs/**"
-        - "/swagger-ui/**"
     stateless: true
     roles-claim: roles
     tenant-claim: tenant

@@ -199,7 +199,7 @@ shared:
     resource-server:
       enabled: true
       permit-all:
-        - "/**"
+        - "/actuator/health"
       disable-csrf: false
     stateless: true
     roles-claim: roles
