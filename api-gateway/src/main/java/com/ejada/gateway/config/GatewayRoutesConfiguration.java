@@ -28,21 +28,47 @@ public class GatewayRoutesConfiguration {
       GatewayRoutesProperties.ServiceRoute route = entry.getValue();
       route.validate(entry.getKey());
 
-      routes.route(route.getId(), predicate -> predicate
-          .path(route.getPaths().stream()
-              .filter(StringUtils::hasText)
-              .map(String::trim)
-              .toArray(String[]::new))
-          .filters(filters -> {
-            if (route.getStripPrefix() > 0) {
-              filters.stripPrefix(route.getStripPrefix());
-            }
-            return filters;
-          })
-          .uri(route.getUri()));
+      routes.route(route.getId(), predicate -> {
+        String[] paths = route.getPaths().stream()
+            .filter(StringUtils::hasText)
+            .map(String::trim)
+            .toArray(String[]::new);
+
+        String[] methods = route.getMethods().stream()
+            .filter(StringUtils::hasText)
+            .map(String::trim)
+            .toArray(String[]::new);
+
+        RouteLocatorBuilder.PredicateSpec methodPredicate = predicate.path(paths);
+        if (methods.length > 0) {
+          methodPredicate = methodPredicate.and().method(methods);
+        }
+
+        return methodPredicate
+            .filters(filters -> {
+              if (route.getStripPrefix() > 0) {
+                filters.stripPrefix(route.getStripPrefix());
+              }
+              return filters;
+            })
+            .uri(route.getUri());
+      });
 
       if (LOGGER.isInfoEnabled()) {
-        LOGGER.info("Registered route {} -> {} ({})", route.getId(), route.getUri(), route.getPaths());
+        if (route.getMethods().isEmpty()) {
+          LOGGER.info(
+              "Registered route {} -> {} ({})",
+              route.getId(),
+              route.getUri(),
+              route.getPaths());
+        } else {
+          LOGGER.info(
+              "Registered route {} -> {} ({}, methods={})",
+              route.getId(),
+              route.getUri(),
+              route.getPaths(),
+              route.getMethods());
+        }
       }
     }
 
