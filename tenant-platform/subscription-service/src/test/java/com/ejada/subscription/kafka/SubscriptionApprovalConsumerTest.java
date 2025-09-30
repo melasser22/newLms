@@ -18,6 +18,7 @@ import com.ejada.subscription.repository.SubscriptionAdditionalServiceRepository
 import com.ejada.subscription.repository.SubscriptionFeatureRepository;
 import com.ejada.subscription.repository.SubscriptionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -39,7 +40,7 @@ class SubscriptionApprovalConsumerTest {
     @Mock private TenantProvisioningPublisher provisioningPublisher;
 
     private SubscriptionApprovalConsumer consumer;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @BeforeEach
     void setUp() {
