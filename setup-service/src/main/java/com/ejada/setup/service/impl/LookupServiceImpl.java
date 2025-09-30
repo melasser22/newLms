@@ -1,5 +1,6 @@
 package com.ejada.setup.service.impl;
 
+import com.ejada.common.cache.CacheEvictionUtils;
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.setup.dto.LookupCreateRequest;
 import com.ejada.setup.dto.LookupResponse;
@@ -15,7 +16,6 @@ import jakarta.transaction.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -198,19 +198,9 @@ public class LookupServiceImpl implements LookupService {
     }
 
     private void evictCaches(@Nullable final String... groupCodes) {
-        Cache allCache = cacheManager.getCache("lookups:all");
-        if (allCache != null) {
-            allCache.evict("all");
-        }
+        CacheEvictionUtils.evict(cacheManager, "lookups:all", "all");
         if (groupCodes != null) {
-            Cache groupCache = cacheManager.getCache("lookups:byGroup");
-            if (groupCache != null) {
-                for (String groupCode : groupCodes) {
-                    if (StringUtils.isNotBlank(groupCode)) {
-                        groupCache.evict(groupCode);
-                    }
-                }
-            }
+            CacheEvictionUtils.evict(cacheManager, "lookups:byGroup", (Object[]) groupCodes);
         }
     }
 }

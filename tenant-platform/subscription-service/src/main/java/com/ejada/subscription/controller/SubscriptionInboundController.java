@@ -3,12 +3,12 @@ package com.ejada.subscription.controller;
 import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRq;
 import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRs;
 import com.ejada.subscription.dto.ReceiveSubscriptionUpdateRq;
-import com.ejada.subscription.exception.ServiceResultException;
 import com.ejada.subscription.service.SubscriptionInboundService;
 import com.ejada.common.dto.ServiceResult;
+import com.ejada.common.exception.ServiceResultException;
+import com.ejada.common.web.ServiceResultResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -40,9 +40,9 @@ public class SubscriptionInboundController {
         try {
             ServiceResult<ReceiveSubscriptionNotificationRs> result =
                     service.receiveSubscriptionNotification(rqUid, token, body);
-            return respond(result);
+            return ServiceResultResponses.respond(result);
         } catch (ServiceResultException ex) {
-            return respond(ex.getResult());
+            return ServiceResultResponses.respond(ex.getResult());
         }
     }
 
@@ -57,26 +57,9 @@ public class SubscriptionInboundController {
 
         try {
             ServiceResult<Void> result = service.receiveSubscriptionUpdate(rqUid, token, body);
-            return respond(result);
+            return ServiceResultResponses.respond(result);
         } catch (ServiceResultException ex) {
-            return respond(ex.getResult());
+            return ServiceResultResponses.respond(ex.getResult());
         }
-    }
-
-    private <T> ResponseEntity<ServiceResult<T>> respond(final ServiceResult<T> result) {
-        if (result == null) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-        HttpStatus status = result.success()
-                ? HttpStatus.OK
-                : resolveErrorStatus(result.statusCode());
-        return ResponseEntity.status(status).body(result);
-    }
-
-    private HttpStatus resolveErrorStatus(final String statusCode) {
-        if (statusCode == null || statusCode.startsWith("EINT")) {
-            return HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-        return HttpStatus.BAD_REQUEST;
     }
 }

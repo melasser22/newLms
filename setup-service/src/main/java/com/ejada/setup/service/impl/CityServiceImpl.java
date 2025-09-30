@@ -1,5 +1,6 @@
 package com.ejada.setup.service.impl;
 
+import com.ejada.common.cache.CacheEvictionUtils;
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.setup.domain.CitySpecifications;
 import com.ejada.setup.dto.CityDto;
@@ -36,13 +37,6 @@ public class CityServiceImpl implements CityService {
         private final CityMapper mapper;
         private final CacheManager cacheManager;
 
-        private void evictCache(final String cacheName, final Object key) {
-                var cache = cacheManager.getCache(cacheName);
-                if (cache != null) {
-                        cache.evict(key);
-                }
-        }
-
     @Override
         @Transactional
         public BaseResponse<CityDto> add(final CityDto request) {
@@ -53,7 +47,7 @@ public class CityServiceImpl implements CityService {
                 City entity = mapper.toEntity(request);
                 entity.setCountry(country);
                 City saved = cityRepo.save(entity);
-                evictCache("cities:byCountry", request.getCountryId());
+                CacheEvictionUtils.evict(cacheManager, "cities:byCountry", request.getCountryId());
                 return BaseResponse.success("City created", mapper.toDto(saved));
         }
 
@@ -77,9 +71,9 @@ public class CityServiceImpl implements CityService {
                 }
 
                 City saved = cityRepo.save(city);
-                evictCache("cities", id);
-                evictCache("cities:byCountry", oldCountryId);
-                evictCache("cities:byCountry", request.getCountryId());
+                CacheEvictionUtils.evict(cacheManager, "cities", id);
+                CacheEvictionUtils.evict(cacheManager, "cities:byCountry", oldCountryId);
+                CacheEvictionUtils.evict(cacheManager, "cities:byCountry", request.getCountryId());
                 return BaseResponse.success("City updated", mapper.toDto(saved));
         }
 
@@ -93,8 +87,8 @@ public class CityServiceImpl implements CityService {
                 }
                 Integer countryId = city.getCountry().getCountryId();
                 cityRepo.delete(city);
-                evictCache("cities", id);
-                evictCache("cities:byCountry", countryId);
+                CacheEvictionUtils.evict(cacheManager, "cities", id);
+                CacheEvictionUtils.evict(cacheManager, "cities:byCountry", countryId);
                 return BaseResponse.success("City deleted", null);
         }
 
