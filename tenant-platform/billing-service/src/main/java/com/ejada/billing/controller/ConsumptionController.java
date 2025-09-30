@@ -2,12 +2,12 @@ package com.ejada.billing.controller;
 
 import com.ejada.billing.dto.TrackProductConsumptionRq;
 import com.ejada.billing.dto.TrackProductConsumptionRs;
-import com.ejada.billing.exception.ServiceResultException;
 import com.ejada.billing.service.ConsumptionService;
 import com.ejada.common.dto.ServiceResult;
+import com.ejada.common.exception.ServiceResultException;
+import com.ejada.common.web.ServiceResultResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,28 +42,9 @@ public class ConsumptionController {
         try {
             ServiceResult<TrackProductConsumptionRs> result =
                     service.trackProductConsumption(rqUid, token, body);
-            return respond(result);
+            return ServiceResultResponses.respond(result);
         } catch (ServiceResultException ex) {
-            return respond(ex.getResult());
+            return ServiceResultResponses.respond(ex.getResult());
         }
-    }
-
-    private ResponseEntity<ServiceResult<TrackProductConsumptionRs>> respond(
-            final ServiceResult<TrackProductConsumptionRs> result) {
-
-        if (result == null) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-        HttpStatus status = Boolean.TRUE.equals(result.success())
-                ? HttpStatus.OK
-                : resolveErrorStatus(result.statusCode());
-        return ResponseEntity.status(status).body(result);
-    }
-
-    private HttpStatus resolveErrorStatus(final String statusCode) {
-        if (statusCode == null || statusCode.startsWith("EINT")) {
-            return HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-        return HttpStatus.BAD_REQUEST;
     }
 }

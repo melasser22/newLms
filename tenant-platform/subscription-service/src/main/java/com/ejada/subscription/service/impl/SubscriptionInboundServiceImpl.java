@@ -9,7 +9,7 @@ import com.ejada.subscription.dto.SubscriptionAdditionalServiceDto;
 import com.ejada.subscription.dto.SubscriptionFeatureDto;
 import com.ejada.subscription.dto.SubscriptionInfoDto;
 import com.ejada.subscription.dto.SubscriptionUpdateType;
-import com.ejada.subscription.exception.ServiceResultException;
+import com.ejada.common.exception.ServiceResultException;
 import com.ejada.subscription.mapper.SubscriptionAdditionalServiceMapper;
 import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
 import com.ejada.subscription.mapper.SubscriptionEnvironmentIdentifierMapper;
