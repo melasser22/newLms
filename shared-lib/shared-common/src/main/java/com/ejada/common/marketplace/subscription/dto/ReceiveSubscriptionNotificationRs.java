@@ -1,4 +1,4 @@
-package com.ejada.subscription.dto;
+package com.ejada.common.marketplace.subscription.dto;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
@@ -13,13 +13,11 @@ public record ReceiveSubscriptionNotificationRs(
 
     public ReceiveSubscriptionNotificationRs {
         environmentIdentiferLst =
-                environmentIdentiferLst == null
-                        ? List.of()
-                        : List.copyOf(environmentIdentiferLst);
+                environmentIdentiferLst == null ? List.of() : List.copyOf(environmentIdentiferLst);
     }
 
+    @Override
     public List<EnvironmentIdentifierDto> environmentIdentiferLst() {
         return environmentIdentiferLst;
     }
 }
-

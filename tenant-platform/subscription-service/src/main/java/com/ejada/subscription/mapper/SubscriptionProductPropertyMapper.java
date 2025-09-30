@@ -1,6 +1,6 @@
 package com.ejada.subscription.mapper;
 
-import com.ejada.subscription.dto.ProductPropertyDto;
+import com.ejada.common.marketplace.subscription.dto.ProductPropertyDto;
 import com.ejada.subscription.model.Subscription;
 import com.ejada.subscription.model.SubscriptionProductProperty;
 import org.mapstruct.Context;

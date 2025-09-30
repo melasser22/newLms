@@ -1,12 +1,12 @@
 package com.ejada.subscription.controller;
 
-import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRq;
-import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRs;
-import com.ejada.subscription.dto.ReceiveSubscriptionUpdateRq;
-import com.ejada.subscription.service.SubscriptionInboundService;
 import com.ejada.common.dto.ServiceResult;
 import com.ejada.common.exception.ServiceResultException;
 import com.ejada.common.web.ServiceResultResponses;
+import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotificationRq;
+import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotificationRs;
+import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionUpdateRq;
+import com.ejada.subscription.service.SubscriptionInboundService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;

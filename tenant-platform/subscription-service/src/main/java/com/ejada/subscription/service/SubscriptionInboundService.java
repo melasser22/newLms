@@ -1,9 +1,9 @@
 package com.ejada.subscription.service;
 
-import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRq;
-import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRs;
-import com.ejada.subscription.dto.ReceiveSubscriptionUpdateRq;
 import com.ejada.common.dto.ServiceResult;
+import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotificationRq;
+import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotificationRs;
+import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionUpdateRq;
 
 import java.util.UUID;
 

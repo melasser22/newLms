@@ -1,6 +1,6 @@
 package com.ejada.subscription.mapper;
 
-import com.ejada.subscription.dto.ReceiveSubscriptionUpdateRq;
+import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionUpdateRq;
 import com.ejada.subscription.model.SubscriptionUpdateEvent;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
