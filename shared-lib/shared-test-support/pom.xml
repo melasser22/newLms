@@ -58,17 +58,23 @@
     </dependency>
 
     <!-- JJWT: versions come from jjwt-bom imported in shared-bom -->
-     <dependency>
-    <groupId>io.jsonwebtoken</groupId>
-    <artifactId>jjwt-api</artifactId>
-  </dependency>
-  <dependency>
-    <groupId>io.jsonwebtoken</groupId>
-    <artifactId>jjwt-impl</artifactId>
-  </dependency>
-  <dependency>
-    <groupId>io.jsonwebtoken</groupId>
-    <artifactId>jjwt-jackson</artifactId>
-  </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-impl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-jackson</artifactId>
+    </dependency>
+
+    <!-- Nimbus JOSE + JWT used by JwtTestTokens helper -->
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-oauth2-jose</artifactId>
+    </dependency>
   </dependencies>
 </project>
