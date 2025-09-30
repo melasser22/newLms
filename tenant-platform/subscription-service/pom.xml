@@ -16,6 +16,13 @@
 
   <properties>
     <java.version>21</java.version>
+    <qa.flyway.vendor>postgresql</qa.flyway.vendor>
+    <qa.flyway.schemas>public,subscription</qa.flyway.schemas>
+    <qa.flyway.defaultSchema>subscription</qa.flyway.defaultSchema>
+    <qa.flyway.locations>classpath:db/migration/common,classpath:db/migration/${qa.flyway.vendor}</qa.flyway.locations>
+    <qa.flyway.url>jdbc:postgresql://localhost:5432/ejada</qa.flyway.url>
+    <qa.flyway.user>postgres</qa.flyway.user>
+    <qa.flyway.password>postgres</qa.flyway.password>
   </properties>
 
   <dependencies>
@@ -164,4 +171,29 @@
 
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>qa</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-maven-plugin</artifactId>
+            <version>${flyway.version}</version>
+            <configuration>
+              <url>${qa.flyway.url}</url>
+              <user>${qa.flyway.user}</user>
+              <password>${qa.flyway.password}</password>
+              <schemas>${qa.flyway.schemas}</schemas>
+              <defaultSchema>${qa.flyway.defaultSchema}</defaultSchema>
+              <locations>${qa.flyway.locations}</locations>
+              <baselineOnMigrate>true</baselineOnMigrate>
+              <connectRetries>10</connectRetries>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

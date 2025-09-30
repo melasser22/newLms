@@ -8,6 +8,24 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ejada
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ejada"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      QA_FLYWAY_URL: jdbc:postgresql://localhost:5432/ejada
+      QA_FLYWAY_USER: postgres
+      QA_FLYWAY_PASSWORD: postgres
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK
@@ -17,6 +35,14 @@ jobs:
           java-version: '21'
       - name: Build shared libraries
         run: mvn -B -DskipTests=true install -f shared-lib/pom.xml
+      - name: Verify QA Flyway migrations
+        run: |
+          mvn -B -Pqa -Dqa.flyway.url=${QA_FLYWAY_URL} -Dqa.flyway.user=${QA_FLYWAY_USER} -Dqa.flyway.password=${QA_FLYWAY_PASSWORD} flyway:migrate -f setup-service/pom.xml
+          mvn -B -Pqa -Dqa.flyway.url=${QA_FLYWAY_URL} -Dqa.flyway.user=${QA_FLYWAY_USER} -Dqa.flyway.password=${QA_FLYWAY_PASSWORD} flyway:migrate -f sec-service/pom.xml
+          mvn -B -Pqa -Dqa.flyway.url=${QA_FLYWAY_URL} -Dqa.flyway.user=${QA_FLYWAY_USER} -Dqa.flyway.password=${QA_FLYWAY_PASSWORD} flyway:migrate -f tenant-platform/catalog-service/pom.xml
+          mvn -B -Pqa -Dqa.flyway.url=${QA_FLYWAY_URL} -Dqa.flyway.user=${QA_FLYWAY_USER} -Dqa.flyway.password=${QA_FLYWAY_PASSWORD} flyway:migrate -f tenant-platform/billing-service/pom.xml
+          mvn -B -Pqa -Dqa.flyway.url=${QA_FLYWAY_URL} -Dqa.flyway.user=${QA_FLYWAY_USER} -Dqa.flyway.password=${QA_FLYWAY_PASSWORD} flyway:migrate -f tenant-platform/tenant-service/pom.xml
+          mvn -B -Pqa -Dqa.flyway.url=${QA_FLYWAY_URL} -Dqa.flyway.user=${QA_FLYWAY_USER} -Dqa.flyway.password=${QA_FLYWAY_PASSWORD} flyway:migrate -f tenant-platform/subscription-service/pom.xml
       - name: Build tenant platform
         run: mvn -B -DskipTests=true verify -f tenant-platform/pom.xml
       - name: Build setup service
