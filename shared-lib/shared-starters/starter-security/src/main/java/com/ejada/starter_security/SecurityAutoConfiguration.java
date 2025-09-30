@@ -216,7 +216,6 @@ public class SecurityAutoConfiguration {
         .oauth2ResourceServer(oauth -> oauth
             .authenticationEntryPoint(jsonEntryPoint)
             .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
-            .authenticationEntryPoint(authEntryPoint)
         )
         .exceptionHandling(eh -> eh
             .authenticationEntryPoint(jsonEntryPoint)
