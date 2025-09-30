@@ -29,8 +29,8 @@ import org.springframework.test.web.servlet.MockMvc;
 @TestPropertySource(properties = {
     "spring.main.allow-bean-definition-overriding=true",
     "shared.security.mode=hs256",
-    "shared.security.hs256.secret=test-secret",
-    "shared.security.jwt.secret=test-secret",
+    "shared.security.hs256.secret=" + RoleControllerSecurityTest.SECRET,
+    "shared.security.jwt.secret=" + RoleControllerSecurityTest.SECRET,
     "shared.security.issuer=" + RoleControllerSecurityTest.ISSUER,
     "shared.security.resource-server.enabled=true",
     "shared.security.resource-server.disable-csrf=true",
