@@ -1,7 +1,8 @@
 package com.ejada.setup.controller;
 
+import static com.ejada.common.http.BaseResponseEntityFactory.build;
+
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.http.ApiStatusMapper;
 import com.ejada.setup.dto.ResourceDto;
 import com.ejada.setup.security.SetupAuthorized;
 import com.ejada.setup.service.ResourceService;
@@ -57,7 +58,7 @@ public class ResourceController {
     })
     public ResponseEntity<BaseResponse<ResourceDto>> add(final @Valid @RequestBody ResourceDto body) {
         BaseResponse<ResourceDto> response = resourceService.add(body);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @PutMapping("/{resourceId}")
@@ -74,7 +75,7 @@ public class ResourceController {
             @PathVariable @Min(1) final Integer resourceId,
             final @Valid @RequestBody ResourceDto body) {
         BaseResponse<ResourceDto> response = resourceService.update(resourceId, body);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @GetMapping("/{resourceId}")
@@ -89,7 +90,7 @@ public class ResourceController {
             @Parameter(description = "ID of the resource to retrieve", required = true)
             @PathVariable @Min(1) final Integer resourceId) {
         BaseResponse<ResourceDto> response = resourceService.get(resourceId);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @GetMapping
@@ -107,7 +108,7 @@ public class ResourceController {
             @RequestParam(name = "unpaged", defaultValue = "false") final boolean unpaged) {
         final Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
         BaseResponse<Page<ResourceDto>> response = resourceService.list(effectivePageable, q, unpaged);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @GetMapping("/active")
@@ -119,6 +120,6 @@ public class ResourceController {
     })
     public ResponseEntity<BaseResponse<List<ResourceDto>>> listActive() {
         BaseResponse<List<ResourceDto>> response = resourceService.listActive();
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 }

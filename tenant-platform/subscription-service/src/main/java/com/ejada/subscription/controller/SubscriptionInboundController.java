@@ -8,6 +8,7 @@ import com.ejada.subscription.exception.ServiceResultException;
 import com.ejada.subscription.service.SubscriptionInboundService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -39,9 +40,9 @@ public class SubscriptionInboundController {
         try {
             ServiceResult<ReceiveSubscriptionNotificationRs> result =
                     service.receiveSubscriptionNotification(rqUid, token, body);
-            return ResponseEntity.ok(result);
+            return respond(result);
         } catch (ServiceResultException ex) {
-            return ResponseEntity.ok(ex.getResult());
+            return respond(ex.getResult());
         }
     }
 
@@ -56,9 +57,19 @@ public class SubscriptionInboundController {
 
         try {
             ServiceResult<Void> result = service.receiveSubscriptionUpdate(rqUid, token, body);
-            return ResponseEntity.ok(result);
+            return respond(result);
         } catch (ServiceResultException ex) {
-            return ResponseEntity.ok(ex.getResult());
+            return respond(ex.getResult());
         }
+    }
+
+    private <T> ResponseEntity<ServiceResult<T>> respond(final ServiceResult<T> result) {
+        if (result == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+        HttpStatus status = Boolean.TRUE.equals(result.success())
+                ? HttpStatus.OK
+                : HttpStatus.INTERNAL_SERVER_ERROR;
+        return ResponseEntity.status(status).body(result);
     }
 }

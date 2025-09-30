@@ -1,5 +1,7 @@
 package com.ejada.catalog.controller;
 
+import static com.ejada.common.http.BaseResponseEntityFactory.build;
+
 import com.ejada.catalog.dto.*;
 import com.ejada.catalog.security.CatalogAuthorized;
 import com.ejada.catalog.service.FeatureService;
@@ -40,7 +42,8 @@ public class FeatureController {
         @ApiResponse(responseCode = "409", description = "featureKey already exists")
     })
     public ResponseEntity<BaseResponse<FeatureRes>> create(@Valid @RequestBody FeatureCreateReq req) {
-        return ResponseEntity.ok(service.create(req));
+        BaseResponse<FeatureRes> response = service.create(req);
+        return build(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -54,7 +57,7 @@ public class FeatureController {
     })
     public ResponseEntity<BaseResponse<FeatureRes>> update(@PathVariable @Min(1) Integer id,
                                                            @Valid @RequestBody FeatureUpdateReq req) {
-        return ResponseEntity.ok(service.update(id, req));
+        return build(service.update(id, req));
     }
 
     @GetMapping("/{id}")
@@ -66,7 +69,7 @@ public class FeatureController {
         @ApiResponse(responseCode = "404", description = "Feature not found")
     })
     public ResponseEntity<BaseResponse<FeatureRes>> get(@PathVariable @Min(1) Integer id) {
-        return ResponseEntity.ok(service.get(id));
+        return build(service.get(id));
     }
 
     @GetMapping
@@ -78,7 +81,7 @@ public class FeatureController {
     })
     public ResponseEntity<BaseResponse<Page<FeatureRes>>> list(@RequestParam(required = false) String category,
                                                                @ParameterObject Pageable pageable) {
-        return ResponseEntity.ok(service.list(category, pageable));
+        return build(service.list(category, pageable));
     }
 
     @DeleteMapping("/{id}")

@@ -1,7 +1,8 @@
 package com.ejada.setup.controller;
 
+import static com.ejada.common.http.BaseResponseEntityFactory.build;
+
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.http.ApiStatusMapper;
 import com.ejada.setup.dto.CityDto;
 import com.ejada.setup.constants.ValidationConstants;
 import com.ejada.setup.security.SetupAuthorized;
@@ -56,7 +57,7 @@ public class CityController {
     })
     public ResponseEntity<BaseResponse<CityDto>> add(@Valid @RequestBody final CityDto body) {
         BaseResponse<CityDto> response = cityService.add(body);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @PutMapping("/{cityId}")
@@ -73,7 +74,7 @@ public class CityController {
             @PathVariable @Min(1) final Integer cityId,
             @Valid @RequestBody final CityDto body) {
         BaseResponse<CityDto> response = cityService.update(cityId, body);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @GetMapping("/{cityId}")
@@ -88,7 +89,7 @@ public class CityController {
             @Parameter(description = "ID of the city to retrieve", required = true)
             @PathVariable @Min(1) final Integer cityId) {
         BaseResponse<CityDto> response = cityService.get(cityId);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @GetMapping
@@ -106,7 +107,7 @@ public class CityController {
             @RequestParam(name = "unpaged", defaultValue = "false") final boolean unpaged) {
         Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
         BaseResponse<Page<CityDto>> response = cityService.list(effectivePageable, q, unpaged);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @GetMapping("/active")
@@ -120,6 +121,6 @@ public class CityController {
             @Parameter(description = "Country ID to filter cities", required = true)
             @RequestParam @Min(1) final Integer countryId) {
         BaseResponse<List<CityDto>> response = cityService.listActiveByCountry(countryId);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 }

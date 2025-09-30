@@ -1,7 +1,8 @@
 package com.ejada.setup.controller;
 
+import static com.ejada.common.http.BaseResponseEntityFactory.build;
+
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.http.ApiStatusMapper;
 import com.ejada.setup.dto.CountryDto;
 import com.ejada.setup.model.Country;
 import com.ejada.setup.constants.ValidationConstants;
@@ -59,7 +60,7 @@ public class CountryController {
     })
     public ResponseEntity<BaseResponse<Country>> add(@Valid @RequestBody final CountryDto body) {
         BaseResponse<Country> response = countryService.add(body);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @PutMapping("/{countryId}")
@@ -77,7 +78,7 @@ public class CountryController {
             @PathVariable @Min(1) final Integer countryId,
             @Valid @RequestBody final CountryDto body) {
         BaseResponse<Country> response = countryService.update(countryId, body);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @GetMapping("/{countryId}")
@@ -92,7 +93,7 @@ public class CountryController {
             @Parameter(description = "ID of the country to retrieve", required = true)
             @PathVariable @Min(1) final Integer countryId) {
         BaseResponse<Country> response = countryService.get(countryId);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @GetMapping
@@ -111,7 +112,7 @@ public class CountryController {
             @RequestParam(name = "unpaged", defaultValue = "false") final boolean unpaged) {
         Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
         BaseResponse<?> response = countryService.list(effectivePageable, q, unpaged);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @GetMapping("/active")
@@ -123,6 +124,6 @@ public class CountryController {
     })
     public ResponseEntity<BaseResponse<List<Country>>> listActive() {
         BaseResponse<List<Country>> response = countryService.listActive();
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 }
