@@ -9,6 +9,7 @@ import com.ejada.setup.dto.CountryDto;
 import com.ejada.setup.model.Country;
 import com.ejada.setup.repository.CountryRepository;
 import com.ejada.setup.service.CountryService;
+import com.ejada.setup.mapper.CountryMapper;
 import com.ejada.audit.starter.api.AuditAction;
 import com.ejada.audit.starter.api.DataClass;
 import com.ejada.audit.starter.api.annotations.Audited;
@@ -27,13 +28,15 @@ import java.util.List;
 @Service
 @Transactional
 public class CountryServiceImpl
-        extends BaseCrudService<Country, Integer, CountryDto, CountryDto, Country>
+        extends BaseCrudService<Country, Integer, CountryDto, CountryDto, CountryDto>
         implements CountryService {
 
     private final CountryRepository countryRepository;
+    private final CountryMapper mapper;
 
-    public CountryServiceImpl(final CountryRepository countryRepository) {
+    public CountryServiceImpl(final CountryRepository countryRepository, final CountryMapper mapper) {
         this.countryRepository = countryRepository;
+        this.mapper = mapper;
     }
 
     @Override
@@ -50,9 +53,7 @@ public class CountryServiceImpl
 
     @Override
     protected Country mapToEntity(final CountryDto dto) {
-        Country entity = new Country();
-        apply(dto, entity);
-        return entity;
+        return mapper.toEntity(dto);
     }
 
     @Override
@@ -62,12 +63,12 @@ public class CountryServiceImpl
                 && countryRepository.existsByCountryCdIgnoreCase(dto.getCountryCd())) {
             throw new DuplicateResourceException("Country code already exists");
         }
-        apply(dto, entity);
+        mapper.updateEntity(dto, entity);
     }
 
     @Override
-    protected Country mapToDto(final Country entity) {
-        return entity;
+    protected CountryDto mapToDto(final Country entity) {
+        return mapper.toDto(entity);
     }
 
     @Override
@@ -80,43 +81,13 @@ public class CountryServiceImpl
         return "Country code already exists";
     }
 
-    private void apply(final CountryDto source, final Country target) {
-        if (source.getCountryCd() != null) {
-            target.setCountryCd(source.getCountryCd());
-        }
-        if (source.getCountryEnNm() != null) {
-            target.setCountryEnNm(source.getCountryEnNm());
-        }
-        if (source.getCountryArNm() != null) {
-            target.setCountryArNm(source.getCountryArNm());
-        }
-        if (source.getDialingCode() != null) {
-            target.setDialingCode(source.getDialingCode());
-        }
-        if (source.getNationalityEn() != null) {
-            target.setNationalityEn(source.getNationalityEn());
-        }
-        if (source.getNationalityAr() != null) {
-            target.setNationalityAr(source.getNationalityAr());
-        }
-        if (source.getIsActive() != null) {
-            target.setIsActive(source.getIsActive());
-        }
-        if (source.getEnDescription() != null) {
-            target.setEnDescription(source.getEnDescription());
-        }
-        if (source.getArDescription() != null) {
-            target.setArDescription(source.getArDescription());
-        }
-    }
-
     @Override
     @Audited(action = AuditAction.CREATE, entity = "Country", dataClass = DataClass.HEALTH, message = "Create country")
     @Caching(evict = {
             @CacheEvict(cacheNames = "countries", key = "#result.data.countryId", condition = "#result.isSuccess()"),
             @CacheEvict(cacheNames = "countries:active", key = "'active'")
     })
-    public BaseResponse<Country> add(final CountryDto request) {
+    public BaseResponse<CountryDto> add(final CountryDto request) {
         try {
             return super.create(request);
         } catch (DuplicateResourceException ex) {
@@ -130,7 +101,7 @@ public class CountryServiceImpl
             @CacheEvict(cacheNames = "countries", key = "#countryId"),
             @CacheEvict(cacheNames = "countries:active", key = "'active'")
     })
-    public BaseResponse<Country> update(final Integer countryId, final CountryDto request) {
+    public BaseResponse<CountryDto> update(final Integer countryId, final CountryDto request) {
         try {
             return super.update(countryId, request);
         } catch (DuplicateResourceException ex) {
@@ -144,7 +115,7 @@ public class CountryServiceImpl
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Country", dataClass = DataClass.HEALTH, message = "Get country")
     @Cacheable(cacheNames = "countries", key = "#countryId")
-    public BaseResponse<Country> get(final Integer countryId) {
+    public BaseResponse<CountryDto> get(final Integer countryId) {
         try {
             return super.get(countryId);
         } catch (NotFoundException ex) {
@@ -170,7 +141,7 @@ public class CountryServiceImpl
                 list = countryRepository
                         .findByCountryEnNmContainingIgnoreCaseOrCountryArNmContainingIgnoreCase(q, q, sort);
             }
-            return BaseResponse.success("Countries list", list);
+            return BaseResponse.success("Countries list", mapper.toDtoList(list));
         }
 
         Page<Country> page;
@@ -180,7 +151,7 @@ public class CountryServiceImpl
             page = countryRepository
                     .findByCountryEnNmContainingIgnoreCaseOrCountryArNmContainingIgnoreCase(q, q, pg);
         }
-        return BaseResponse.success("Countries page", page);
+        return BaseResponse.success("Countries page", mapper.toDtoPage(page));
     }
 
     // cache only the RAW list to avoid BaseResponse <-> LinkedHashMap casts in Redis
@@ -193,7 +164,7 @@ public class CountryServiceImpl
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Country", dataClass = DataClass.HEALTH, message = "List active countries")
-    public BaseResponse<List<Country>> listActive() {
-        return BaseResponse.success("Active countries", listActiveRaw());
+    public BaseResponse<List<CountryDto>> listActive() {
+        return BaseResponse.success("Active countries", mapper.toDtoList(listActiveRaw()));
     }
 }

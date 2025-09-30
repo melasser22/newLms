@@ -4,7 +4,6 @@ import static com.ejada.common.http.BaseResponseEntityFactory.build;
 
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.setup.dto.CountryDto;
-import com.ejada.setup.model.Country;
 import com.ejada.setup.constants.ValidationConstants;
 import com.ejada.setup.security.SetupAuthorized;
 import com.ejada.setup.service.CountryService;
@@ -58,9 +57,11 @@ public class CountryController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "409", description = "Country code already exists")
     })
-    public ResponseEntity<BaseResponse<Country>> add(@Valid @RequestBody final CountryDto body) {
-        BaseResponse<Country> response = countryService.add(body);
+
+    public ResponseEntity<BaseResponse<CountryDto>> add(@Valid @RequestBody final CountryDto body) {
+        BaseResponse<CountryDto> response = countryService.add(body);
         return build(response);
+
     }
 
     @PutMapping("/{countryId}")
@@ -73,11 +74,12 @@ public class CountryController {
         @ApiResponse(responseCode = "404", description = "Country not found"),
         @ApiResponse(responseCode = "409", description = "Country code already exists")
     })
-    public ResponseEntity<BaseResponse<Country>> update(
+    public ResponseEntity<BaseResponse<CountryDto>> update(
             @Parameter(description = "ID of the country to update", required = true)
             @PathVariable @Min(1) final Integer countryId,
             @Valid @RequestBody final CountryDto body) {
-        BaseResponse<Country> response = countryService.update(countryId, body);
+
+        BaseResponse<CountryDto> response = countryService.update(countryId, body);
         return build(response);
     }
 
@@ -89,10 +91,11 @@ public class CountryController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "404", description = "Country not found")
     })
-    public ResponseEntity<BaseResponse<Country>> get(
+    public ResponseEntity<BaseResponse<CountryDto>> get(
             @Parameter(description = "ID of the country to retrieve", required = true)
             @PathVariable @Min(1) final Integer countryId) {
-        BaseResponse<Country> response = countryService.get(countryId);
+
+        BaseResponse<CountryDto> response = countryService.get(countryId);
         return build(response);
     }
 
@@ -122,8 +125,10 @@ public class CountryController {
         @ApiResponse(responseCode = "200", description = "Active countries retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<BaseResponse<List<Country>>> listActive() {
-        BaseResponse<List<Country>> response = countryService.listActive();
+
+    public ResponseEntity<BaseResponse<List<CountryDto>>> listActive() {
+        BaseResponse<List<CountryDto>> response = countryService.listActive();
         return build(response);
+
     }
 }
