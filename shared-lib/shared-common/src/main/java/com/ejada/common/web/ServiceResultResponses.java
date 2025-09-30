@@ -1,8 +1,10 @@
 package com.ejada.common.web;
 
 import com.ejada.common.dto.ServiceResult;
+import com.ejada.common.http.ApiStatusMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 
 /** Utility methods for converting {@link ServiceResult} objects to {@link ResponseEntity} instances. */
 public final class ServiceResultResponses {
@@ -24,9 +26,12 @@ public final class ServiceResultResponses {
             return HttpStatus.OK;
         }
         String statusCode = result.statusCode();
-        if (statusCode == null || statusCode.startsWith("EINT")) {
+        if (!StringUtils.hasText(statusCode)) {
+            return HttpStatus.BAD_REQUEST;
+        }
+        if (statusCode.startsWith("EINT")) {
             return HttpStatus.INTERNAL_SERVER_ERROR;
         }
-        return HttpStatus.BAD_REQUEST;
+        return ApiStatusMapper.fromErrorCode(statusCode, HttpStatus.BAD_REQUEST);
     }
 }

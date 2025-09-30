@@ -8,6 +8,7 @@ import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.util.StringUtils;
 
 /**
@@ -35,10 +36,12 @@ public class GatewayRoutesConfiguration {
             .map(String::trim)
             .toArray(String[]::new);
 
-        String[] methods = route.getMethods().stream()
+        HttpMethod[] methods = route.getMethods().stream()
             .filter(StringUtils::hasText)
             .map(String::trim)
-            .toArray(String[]::new);
+            .map(String::toUpperCase)
+            .map(HttpMethod::valueOf)
+            .toArray(HttpMethod[]::new);
 
         var methodPredicate = predicate.path(paths);
         if (methods.length > 0) {

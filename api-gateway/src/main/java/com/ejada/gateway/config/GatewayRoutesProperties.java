@@ -4,9 +4,12 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 
@@ -85,7 +88,16 @@ public class GatewayRoutesProperties {
     }
 
     public void setMethods(List<String> methods) {
-      this.methods = (methods == null) ? new ArrayList<>() : new ArrayList<>(methods);
+      if (methods == null) {
+        this.methods = new ArrayList<>();
+        return;
+      }
+      Set<String> normalized = methods.stream()
+          .filter(StringUtils::hasText)
+          .map(String::trim)
+          .map(value -> value.toUpperCase(Locale.ROOT))
+          .collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
+      this.methods = new ArrayList<>(normalized);
     }
 
     public int getStripPrefix() {
@@ -113,6 +125,18 @@ public class GatewayRoutesProperties {
       }
       if (paths == null || paths.isEmpty()) {
         throw new IllegalStateException("gateway.routes." + key + ".paths must not be empty");
+      }
+      for (String method : methods) {
+        if (!StringUtils.hasText(method)) {
+          continue;
+        }
+        try {
+          HttpMethod.valueOf(method.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+          throw new IllegalStateException(
+              "gateway.routes." + key + ".methods contains unsupported HTTP method '" + method + "'",
+              ex);
+        }
       }
       resilience.validate(key, id);
     }
