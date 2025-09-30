@@ -1,0 +1,127 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.ejada</groupId>
+    <artifactId>shared-lib</artifactId>
+    <version>1.0.0</version>
+    <relativePath>../shared-lib/pom.xml</relativePath>
+  </parent>
+
+  <artifactId>api-gateway</artifactId>
+  <name>api-gateway</name>
+  <description>Spring Cloud Gateway for LMS platform reusing shared starters</description>
+
+  <properties>
+    <java.version>21</java.version>
+  </properties>
+
+  <dependencies>
+    <!-- Spring Cloud Gateway (reactive stack) -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-gateway</artifactId>
+    </dependency>
+
+    <!-- Spring Security resource server (reactive) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-aop</artifactId>
+    </dependency>
+
+    <!-- Shared starters & libraries -->
+    <dependency>
+      <groupId>com.ejada</groupId>
+      <artifactId>starter-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ejada</groupId>
+      <artifactId>starter-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ejada</groupId>
+      <artifactId>starter-ratelimit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ejada</groupId>
+      <artifactId>shared-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ejada</groupId>
+      <artifactId>shared-config</artifactId>
+    </dependency>
+
+    <!-- Reactive Redis for rate limiting -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+    </dependency>
+
+    <!-- Actuator for health endpoints -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+
+    <!-- Observability starter (metrics/tracing alignment) -->
+    <dependency>
+      <groupId>com.ejada</groupId>
+      <artifactId>starter-observability</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Testing -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.junit.vintage</groupId>
+          <artifactId>junit-vintage-engine</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <release>${java.version}</release>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <layers>
+            <enabled>true</enabled>
+          </layers>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

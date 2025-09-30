@@ -1,0 +1,77 @@
+spring:
+  application:
+    name: api-gateway
+  main:
+    web-application-type: reactive
+  autoconfigure:
+    exclude:
+      - com.ejada.shared_starter_ratelimit.RateLimitAutoConfiguration
+  cloud:
+    compatibility-verifier:
+      enabled: false
+    gateway:
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 10s
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# Disable servlet security auto configuration (we provide reactive equivalent)
+shared:
+  security:
+    resource-server:
+      enabled: false
+
+  core:
+    tenant:
+      enabled: true
+    correlation:
+      enabled: true
+
+  ratelimit:
+    enabled: false
+
+# Declarative downstream routes consumed by GatewayRoutesConfiguration
+gateway:
+  routes:
+    setup:
+      id: setup-service
+      uri: http://setup-service:8080
+      paths:
+        - /api/setup/**
+      strip-prefix: 1
+    tenant:
+      id: tenant-service
+      uri: http://tenant-service:8080
+      paths:
+        - /api/tenant/**
+      strip-prefix: 1
+    catalog:
+      id: catalog-service
+      uri: http://catalog-service:8080
+      paths:
+        - /api/catalog/**
+      strip-prefix: 1
+    subscription:
+      id: subscription-service
+      uri: http://subscription-service:8080
+      paths:
+        - /api/subscription/**
+      strip-prefix: 1
+    billing:
+      id: billing-service
+      uri: http://billing-service:8080
+      paths:
+        - /api/billing/**
+      strip-prefix: 1
+
+logging:
+  level:
+    root: INFO
+    com.ejada.gateway: DEBUG
