@@ -21,6 +21,12 @@ management:
   endpoint:
     health:
       show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://otel-collector:4317
 
 # Disable servlet security auto configuration (we provide reactive equivalent)
 shared:
@@ -34,6 +40,9 @@ shared:
     correlation:
       enabled: true
 
+  observability:
+    application-name: ${spring.application.name}
+
   ratelimit:
     enabled: false
 
@@ -46,30 +55,45 @@ gateway:
       paths:
         - /api/setup/**
       strip-prefix: 1
+      resilience:
+        enabled: true
+        fallback-uri: forward:/fallback/setup-service
     tenant:
       id: tenant-service
       uri: http://tenant-service:8080
       paths:
         - /api/tenant/**
       strip-prefix: 1
+      resilience:
+        enabled: true
+        fallback-uri: forward:/fallback/tenant-service
     catalog:
       id: catalog-service
       uri: http://catalog-service:8080
       paths:
         - /api/catalog/**
       strip-prefix: 1
+      resilience:
+        enabled: true
+        fallback-uri: forward:/fallback/catalog-service
     subscription:
       id: subscription-service
       uri: http://subscription-service:8080
       paths:
         - /api/subscription/**
       strip-prefix: 1
+      resilience:
+        enabled: true
+        fallback-uri: forward:/fallback/subscription-service
     billing:
       id: billing-service
       uri: http://billing-service:8080
       paths:
         - /api/billing/**
       strip-prefix: 1
+      resilience:
+        enabled: true
+        fallback-uri: forward:/fallback/billing-service
 
 logging:
   level:

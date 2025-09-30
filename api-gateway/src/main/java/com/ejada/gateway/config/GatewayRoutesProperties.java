@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 
 /**
@@ -43,6 +44,9 @@ public class GatewayRoutesProperties {
 
     /** Number of path segments to strip before forwarding. */
     private int stripPrefix = 1;
+
+    /** Optional resilience configuration for the route. */
+    private Resilience resilience = new Resilience();
 
     public String getId() {
       return id;
@@ -92,6 +96,14 @@ public class GatewayRoutesProperties {
       this.stripPrefix = stripPrefix;
     }
 
+    public Resilience getResilience() {
+      return resilience;
+    }
+
+    public void setResilience(Resilience resilience) {
+      this.resilience = (resilience == null) ? new Resilience() : resilience;
+    }
+
     public void validate(String key) {
       if (!StringUtils.hasText(id)) {
         throw new IllegalStateException("gateway.routes." + key + ".id must not be blank");
@@ -102,6 +114,7 @@ public class GatewayRoutesProperties {
       if (paths == null || paths.isEmpty()) {
         throw new IllegalStateException("gateway.routes." + key + ".paths must not be empty");
       }
+      resilience.validate(key, id);
     }
 
     @Override
@@ -127,12 +140,103 @@ public class GatewayRoutesProperties {
           && Objects.equals(id, that.id)
           && Objects.equals(uri, that.uri)
           && Objects.equals(paths, that.paths)
-          && Objects.equals(methods, that.methods);
+          && Objects.equals(methods, that.methods)
+          && Objects.equals(resilience, that.resilience);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(id, uri, paths, methods, stripPrefix);
+      return Objects.hash(id, uri, paths, methods, stripPrefix, resilience);
+    }
+
+    /**
+     * Resilience configuration for a route. When enabled, the gateway will apply a
+     * circuit breaker filter with an optional fallback URI.
+     */
+    public static class Resilience {
+
+      private boolean enabled;
+
+      /** Optional override for the circuit breaker name. */
+      private String circuitBreakerName;
+
+      /** Optional custom fallback URI; defaults to forwarding to the gateway fallback handler. */
+      private String fallbackUri;
+
+      /** HTTP status the filter should apply when falling back. */
+      private HttpStatus fallbackStatus = HttpStatus.SERVICE_UNAVAILABLE;
+
+      public boolean isEnabled() {
+        return enabled;
+      }
+
+      public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+      }
+
+      public String getCircuitBreakerName() {
+        return circuitBreakerName;
+      }
+
+      public void setCircuitBreakerName(String circuitBreakerName) {
+        this.circuitBreakerName = circuitBreakerName;
+      }
+
+      public String getFallbackUri() {
+        return fallbackUri;
+      }
+
+      public void setFallbackUri(String fallbackUri) {
+        this.fallbackUri = fallbackUri;
+      }
+
+      public HttpStatus getFallbackStatus() {
+        return fallbackStatus;
+      }
+
+      public void setFallbackStatus(HttpStatus fallbackStatus) {
+        this.fallbackStatus = fallbackStatus;
+      }
+
+      void validate(String key, String routeId) {
+        if (!enabled) {
+          return;
+        }
+
+        if (fallbackStatus == null) {
+          throw new IllegalStateException("gateway.routes." + key + ".resilience.fallback-status must not be null");
+        }
+      }
+
+      public String resolvedCircuitBreakerName(String routeId) {
+        return StringUtils.hasText(circuitBreakerName) ? circuitBreakerName : routeId;
+      }
+
+      public String resolvedFallbackUri(String routeId) {
+        if (StringUtils.hasText(fallbackUri)) {
+          return fallbackUri;
+        }
+        return "forward:/fallback/" + routeId;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) {
+          return true;
+        }
+        if (!(o instanceof Resilience that)) {
+          return false;
+        }
+        return enabled == that.enabled
+            && Objects.equals(circuitBreakerName, that.circuitBreakerName)
+            && Objects.equals(fallbackUri, that.fallbackUri)
+            && fallbackStatus == that.fallbackStatus;
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hash(enabled, circuitBreakerName, fallbackUri, fallbackStatus);
+      }
     }
   }
 }

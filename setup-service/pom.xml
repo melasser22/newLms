@@ -53,6 +53,10 @@
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
+      <artifactId>starter-resilience</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ejada</groupId>
       <artifactId>shared-config</artifactId>
     </dependency>
     <dependency>
@@ -99,6 +103,11 @@
     <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>starter-mapstruct</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-testcontainers</artifactId>
+      <scope>test</scope>
     </dependency>
     <!-- covered by starter-openapi -->
     <dependency>

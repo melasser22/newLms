@@ -27,6 +27,7 @@ public class GatewayRoutesConfiguration {
     for (Map.Entry<String, GatewayRoutesProperties.ServiceRoute> entry : properties.getRoutes().entrySet()) {
       GatewayRoutesProperties.ServiceRoute route = entry.getValue();
       route.validate(entry.getKey());
+      GatewayRoutesProperties.ServiceRoute.Resilience resilience = route.getResilience();
 
       routes.route(route.getId(), predicate -> {
         String[] paths = route.getPaths().stream()
@@ -39,7 +40,7 @@ public class GatewayRoutesConfiguration {
             .map(String::trim)
             .toArray(String[]::new);
 
-        RouteLocatorBuilder.PredicateSpec methodPredicate = predicate.path(paths);
+        var methodPredicate = predicate.path(paths);
         if (methods.length > 0) {
           methodPredicate = methodPredicate.and().method(methods);
         }
@@ -48,6 +49,12 @@ public class GatewayRoutesConfiguration {
             .filters(filters -> {
               if (route.getStripPrefix() > 0) {
                 filters.stripPrefix(route.getStripPrefix());
+              }
+              if (resilience.isEnabled()) {
+                filters.circuitBreaker(config -> {
+                  config.setName(resilience.resolvedCircuitBreakerName(route.getId()));
+                  config.setFallbackUri(resilience.resolvedFallbackUri(route.getId()));
+                });
               }
               return filters;
             })
