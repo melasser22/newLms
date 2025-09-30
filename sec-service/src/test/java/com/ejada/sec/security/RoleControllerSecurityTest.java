@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -29,17 +30,17 @@ import org.springframework.test.web.servlet.MockMvc;
 @TestPropertySource(properties = {
     "spring.main.allow-bean-definition-overriding=true",
     "shared.security.mode=hs256",
-    "shared.security.hs256.secret=test-secret",
-    "shared.security.jwt.secret=test-secret",
+    "shared.security.hs256.secret=0123456789ABCDEF0123456789ABCDEF-SECURE-0123456789ABCDEF",
+    "shared.security.jwt.secret=0123456789ABCDEF0123456789ABCDEF-SECURE-0123456789ABCDEF",
     "shared.security.issuer=" + RoleControllerSecurityTest.ISSUER,
     "shared.security.resource-server.enabled=true",
     "shared.security.resource-server.disable-csrf=true",
-    "shared.security.resource-server.permit-all[0]=/actuator/health",
-    "server.servlet.context-path=/sec"
+    "shared.security.resource-server.permit-all[0]=/actuator/health"
 })
 class RoleControllerSecurityTest {
 
-    private static final String SECRET = "0123456789ABCDEF0123456789ABCDEF";
+    private static final String SECRET =
+            "0123456789ABCDEF0123456789ABCDEF-SECURE-0123456789ABCDEF";
     static final String ISSUER = "test-issuer";
 
     @Autowired
@@ -48,6 +49,9 @@ class RoleControllerSecurityTest {
     @MockBean
     private RoleService roleService;
 
+    @MockBean
+    private JpaMetamodelMappingContext jpaMappingContext;
+
     @BeforeEach
     void setup() {
         when(roleService.listByTenant()).thenReturn(BaseResponse.success("Roles", List.of()));
@@ -55,7 +59,7 @@ class RoleControllerSecurityTest {
 
     @Test
     void protectedEndpointsRequireAuthentication() throws Exception {
-        mockMvc.perform(get("/sec/api/roles"))
+        mockMvc.perform(get("/api/roles"))
             .andExpect(status().isUnauthorized());
     }
 
@@ -67,7 +71,7 @@ class RoleControllerSecurityTest {
                 .tenant("tenant-1")
                 .build();
 
-        mockMvc.perform(get("/sec/api/roles")
+        mockMvc.perform(get("/api/roles")
                         .header(AUTHORIZATION, "Bearer " + token)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -82,8 +86,9 @@ class RoleControllerSecurityTest {
                 .tenant("tenant-1")
                 .build();
 
-        mockMvc.perform(get("/sec/api/roles")
-                        .header(AUTHORIZATION, "Bearer " + token))
+        mockMvc.perform(get("/api/roles")
+                        .header(AUTHORIZATION, "Bearer " + token)
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(ErrorCodes.AUTH_FORBIDDEN));
     }
@@ -98,8 +103,9 @@ class RoleControllerSecurityTest {
                 .expiresAt(Instant.now().minusSeconds(3600))
                 .build();
 
-        mockMvc.perform(get("/sec/api/roles")
-                        .header(AUTHORIZATION, "Bearer " + token))
+        mockMvc.perform(get("/api/roles")
+                        .header(AUTHORIZATION, "Bearer " + token)
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(ErrorCodes.AUTH_UNAUTHORIZED));
     }

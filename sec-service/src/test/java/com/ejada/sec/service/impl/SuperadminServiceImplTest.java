@@ -21,6 +21,7 @@ import com.ejada.sec.repository.SuperadminRepository;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.TimeZone;
@@ -311,17 +312,20 @@ class SuperadminServiceImplTest {
 
     @Test
     void ensureTokenFreshnessAllowsTokenIssuedInSameMillisecond() {
+        Instant issuedAt = Instant.parse("2025-09-29T13:06:56.216Z");
+        LocalDateTime passwordChangedAt = LocalDateTime.ofInstant(issuedAt, ZoneId.systemDefault());
+
         Superadmin superadmin = Superadmin.builder()
             .id(17L)
             .username("admin")
-            .passwordChangedAt(LocalDateTime.of(2025, 9, 29, 16, 6, 56, 216_129_505))
+            .passwordChangedAt(passwordChangedAt)
             .build();
 
         Jwt jwt = Jwt.withTokenValue("token")
             .header("alg", "HS256")
             .claim("uid", 17)
-            .issuedAt(Instant.parse("2025-09-29T13:06:56.216Z"))
-            .expiresAt(Instant.parse("2025-09-29T14:06:56.216Z"))
+            .issuedAt(issuedAt)
+            .expiresAt(issuedAt.plusSeconds(3600))
             .build();
 
         assertDoesNotThrow(() ->

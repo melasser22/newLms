@@ -19,6 +19,6 @@ class AuthExceptionHandlerTest {
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
     assertThat(response.getBody()).isNotNull();
-    assertThat(response.getBody().getCode()).isEqualTo("ERR_AUTH_DATA_ACCESS");
+    assertThat(response.getBody().getCode()).isEqualTo("ERR-AUTH-DATA_ACCESS");
   }
 }

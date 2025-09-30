@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -19,12 +20,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
     "spring.main.allow-bean-definition-overriding=true",
     "shared.security.mode=hs256",
-    "shared.security.hs256.secret=test-secret",
-    "shared.security.jwt.secret=test-secret",
+    "shared.security.hs256.secret=0123456789ABCDEF0123456789ABCDEF-SECURE-0123456789ABCDEF",
+    "shared.security.jwt.secret=0123456789ABCDEF0123456789ABCDEF-SECURE-0123456789ABCDEF",
     "shared.security.resource-server.enabled=true",
     "shared.security.resource-server.disable-csrf=true",
-    "shared.security.resource-server.permit-all[0]=/actuator/health",
-    "server.servlet.context-path=/sec"
+    "shared.security.resource-server.permit-all[0]=/actuator/health"
 })
 class UserControllerSecurityTest {
 
@@ -34,9 +34,12 @@ class UserControllerSecurityTest {
     @MockBean
     private UserService userService;
 
+    @MockBean
+    private JpaMetamodelMappingContext jpaMappingContext;
+
     @Test
     void userEndpointsRequireAuthentication() throws Exception {
-        mockMvc.perform(get("/sec/api/users"))
+        mockMvc.perform(get("/api/users"))
             .andExpect(status().isUnauthorized());
     }
 }

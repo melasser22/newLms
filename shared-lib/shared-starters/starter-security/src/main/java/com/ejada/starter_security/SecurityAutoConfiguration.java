@@ -204,6 +204,8 @@ public class SecurityAutoConfiguration {
     // Build a final, de-duplicated list of permitAll patterns
     final List<String> permitAllFinal = buildPermitAll(rs);
 
+    JsonAuthEntryPoint jsonEntryPoint = new JsonAuthEntryPoint(objectMapper);
+
     http.cors(cors -> cors.configurationSource(corsConfigurationSource))
         .authorizeHttpRequests(auth -> {
           auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
@@ -213,10 +215,11 @@ public class SecurityAutoConfiguration {
           auth.anyRequest().authenticated();
         })
         .oauth2ResourceServer(oauth -> oauth
+            .authenticationEntryPoint(jsonEntryPoint)
             .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
         )
         .exceptionHandling(eh -> eh
-            .authenticationEntryPoint(new JsonAuthEntryPoint(objectMapper))
+            .authenticationEntryPoint(jsonEntryPoint)
             .accessDeniedHandler(new JsonAccessDeniedHandler(objectMapper))
         )
         .formLogin(AbstractHttpConfigurer::disable)

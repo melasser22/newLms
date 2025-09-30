@@ -5,8 +5,8 @@ package com.ejada.starter_security;
  */
 public enum Role {
     EJADA_OFFICER("ROLE_EJADA_OFFICER"),
-    TENANT_ADMIN("ROLE_TenantAdmin"),
-    TENANT_OFFICER("ROLE_TenantOfficer");
+    TENANT_ADMIN("ROLE_TENANT_ADMIN"),
+    TENANT_OFFICER("ROLE_TENANT_OFFICER");
 
     private final String authority;
 
