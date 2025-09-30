@@ -77,7 +77,7 @@ class ReactiveRequestContextFilterTest {
 
         StepVerifier.create(filter.filter(exchange, chain)).verifyComplete();
 
-        assertThat(invoked).isFalse();
+        assertThat(invoked.get()).isFalse();
         assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         String body = exchange.getResponse().getBodyAsString().block(Duration.ofSeconds(3));
         assertThat(body).contains("ERR_INVALID_TENANT");
