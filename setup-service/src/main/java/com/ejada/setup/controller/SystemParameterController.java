@@ -1,7 +1,8 @@
 package com.ejada.setup.controller;
 
+import static com.ejada.common.http.BaseResponseEntityFactory.build;
+
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.http.ApiStatusMapper;
 import com.ejada.setup.model.SystemParameter;
 import com.ejada.setup.security.SetupAuthorized;
 import com.ejada.setup.service.SystemParameterService;
@@ -59,7 +60,7 @@ public class SystemParameterController {
     })
     public ResponseEntity<BaseResponse<SystemParameter>> add(@Valid @RequestBody final SystemParameter body) {
         BaseResponse<SystemParameter> response = systemParameterService.add(body);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @PutMapping("/{paramId}")
@@ -76,7 +77,7 @@ public class SystemParameterController {
             @PathVariable @Min(1) final Integer paramId,
             @Valid @RequestBody final SystemParameter body) {
         BaseResponse<SystemParameter> response = systemParameterService.update(paramId, body);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @GetMapping("/{paramId}")
@@ -91,7 +92,7 @@ public class SystemParameterController {
             @Parameter(description = "ID of the system parameter to retrieve", required = true)
             @PathVariable @Min(1) final Integer paramId) {
         BaseResponse<SystemParameter> response = systemParameterService.get(paramId);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @GetMapping
@@ -112,7 +113,7 @@ public class SystemParameterController {
         final Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
         BaseResponse<Page<SystemParameter>> response =
                 systemParameterService.list(effectivePageable, group, onlyActive);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @GetMapping("/by-key/{paramKey}")
@@ -127,7 +128,7 @@ public class SystemParameterController {
             @Parameter(description = "Key of the parameter to retrieve", required = true)
             @PathVariable @NotBlank final String paramKey) {
         BaseResponse<SystemParameter> response = systemParameterService.getByKey(paramKey);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 
     @PostMapping("/by-keys")
@@ -141,6 +142,6 @@ public class SystemParameterController {
             @Parameter(description = "List of parameter keys to retrieve", required = true)
             @RequestBody final List<String> keys) {
         BaseResponse<List<SystemParameter>> response = systemParameterService.getByKeys(keys);
-        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
+        return build(response);
     }
 }

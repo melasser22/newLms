@@ -1,5 +1,7 @@
 package com.ejada.catalog.controller;
 
+import static com.ejada.common.http.BaseResponseEntityFactory.build;
+
 import com.ejada.catalog.dto.*;
 import com.ejada.catalog.security.CatalogAuthorized;
 import com.ejada.catalog.service.TierService;
@@ -40,7 +42,8 @@ public class TierController {
         @ApiResponse(responseCode = "409", description = "Tier already exists")
     })
     public ResponseEntity<BaseResponse<TierRes>> create(@Valid @RequestBody TierCreateReq req) {
-        return ResponseEntity.ok(service.create(req));
+        BaseResponse<TierRes> response = service.create(req);
+        return build(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -54,7 +57,7 @@ public class TierController {
     })
     public ResponseEntity<BaseResponse<TierRes>> update(@PathVariable @Min(1) Integer id,
                                                         @Valid @RequestBody TierUpdateReq req) {
-        return ResponseEntity.ok(service.update(id, req));
+        return build(service.update(id, req));
     }
 
     @CatalogAuthorized
@@ -66,7 +69,7 @@ public class TierController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<TierRes>> get(@PathVariable @Min(1) Integer id) {
-        return ResponseEntity.ok(service.get(id));
+        return build(service.get(id));
     }
 
     @CatalogAuthorized
@@ -78,7 +81,7 @@ public class TierController {
     @GetMapping
     public ResponseEntity<BaseResponse<Page<TierRes>>> list(@RequestParam(required = false) Boolean active,
                                                             @ParameterObject Pageable pageable) {
-        return ResponseEntity.ok(service.list(active, pageable));
+        return build(service.list(active, pageable));
     }
 
     @DeleteMapping("/{id}")

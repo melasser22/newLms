@@ -1,5 +1,7 @@
 package com.ejada.tenant.controller;
 
+import static com.ejada.common.http.BaseResponseEntityFactory.build;
+
 import com.ejada.tenant.dto.TenantCreateReq;
 import com.ejada.tenant.dto.TenantRes;
 import com.ejada.tenant.dto.TenantUpdateReq;
@@ -52,7 +54,8 @@ public class TenantController {
             @ApiResponse(responseCode = "409", description = "Tenant already exists")
     })
     public ResponseEntity<BaseResponse<TenantRes>> create(@Valid @RequestBody final TenantCreateReq req) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(req));
+        BaseResponse<TenantRes> response = service.create(req);
+        return build(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -66,7 +69,7 @@ public class TenantController {
     })
     public ResponseEntity<BaseResponse<TenantRes>> update(@PathVariable @Min(1) final Integer id,
                                                           @Valid @RequestBody final TenantUpdateReq req) {
-        return ResponseEntity.ok(service.update(id, req));
+        return build(service.update(id, req));
     }
 
     @TenantAuthorized
@@ -78,7 +81,7 @@ public class TenantController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<TenantRes>> get(@PathVariable @Min(1) final Integer id) {
-        return ResponseEntity.ok(service.get(id));
+        return build(service.get(id));
     }
 
     @TenantAuthorized
@@ -92,7 +95,7 @@ public class TenantController {
             @RequestParam(required = false) final String name,
             @RequestParam(required = false) final Boolean active,
             @ParameterObject final Pageable pageable) {
-        return ResponseEntity.ok(service.list(name, active, pageable));
+        return build(service.list(name, active, pageable));
     }
 
     @TenantAuthorized

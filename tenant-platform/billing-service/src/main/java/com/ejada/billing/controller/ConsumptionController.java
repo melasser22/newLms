@@ -7,6 +7,7 @@ import com.ejada.billing.exception.ServiceResultException;
 import com.ejada.billing.service.ConsumptionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,9 +40,23 @@ public class ConsumptionController {
             @Valid @RequestBody final TrackProductConsumptionRq body) {
 
         try {
-            return ResponseEntity.ok(service.trackProductConsumption(rqUid, token, body));
+            ServiceResult<TrackProductConsumptionRs> result =
+                    service.trackProductConsumption(rqUid, token, body);
+            return respond(result);
         } catch (ServiceResultException ex) {
-            return ResponseEntity.ok(ex.getResult());
+            return respond(ex.getResult());
         }
+    }
+
+    private ResponseEntity<ServiceResult<TrackProductConsumptionRs>> respond(
+            final ServiceResult<TrackProductConsumptionRs> result) {
+
+        if (result == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+        HttpStatus status = Boolean.TRUE.equals(result.success())
+                ? HttpStatus.OK
+                : HttpStatus.INTERNAL_SERVER_ERROR;
+        return ResponseEntity.status(status).body(result);
     }
 }

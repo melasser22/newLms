@@ -1,5 +1,7 @@
 package com.ejada.catalog.controller;
 
+import static com.ejada.common.http.BaseResponseEntityFactory.build;
+
 import com.ejada.catalog.dto.*;
 import com.ejada.catalog.security.CatalogAuthorized;
 import com.ejada.catalog.service.TierAddonService;
@@ -50,7 +52,8 @@ public class TierAddonController {
             req.basePrice(),
             req.currency()
         );
-        return ResponseEntity.ok(service.allow(normalized));
+        BaseResponse<TierAddonRes> response = service.allow(normalized);
+        return build(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -65,7 +68,7 @@ public class TierAddonController {
     public ResponseEntity<BaseResponse<TierAddonRes>> update(@PathVariable @Min(1) Integer tierId,
                                                               @PathVariable @Min(1) Integer id,
                                                               @Valid @RequestBody TierAddonUpdateReq req) {
-        return ResponseEntity.ok(service.update(id, req));
+        return build(service.update(id, req));
     }
 
     @GetMapping
@@ -78,7 +81,7 @@ public class TierAddonController {
     })
     public ResponseEntity<BaseResponse<Page<TierAddonRes>>> listByTier(@PathVariable @Min(1) Integer tierId,
                                                                        @ParameterObject Pageable pageable) {
-        return ResponseEntity.ok(service.listByTier(tierId, pageable));
+        return build(service.listByTier(tierId, pageable));
     }
 
     @DeleteMapping("/{id}")

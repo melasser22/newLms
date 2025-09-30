@@ -1,5 +1,7 @@
 package com.ejada.catalog.controller;
 
+import static com.ejada.common.http.BaseResponseEntityFactory.build;
+
 import com.ejada.catalog.dto.TierFeatureCreateReq;
 import com.ejada.catalog.dto.TierFeatureRes;
 import com.ejada.catalog.dto.TierFeatureUpdateReq;
@@ -18,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -66,7 +69,8 @@ public class TierFeatureController {
             req.overageCurrency(),
             req.meta()
         );
-        return ResponseEntity.ok(service.attach(normalized));
+        BaseResponse<TierFeatureRes> response = service.attach(normalized);
+        return build(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -82,7 +86,7 @@ public class TierFeatureController {
                                                                @PathVariable @Min(1) final Integer id,
                                                                @Valid @RequestBody final TierFeatureUpdateReq req) {
         // tierId is only for routing; service validates existence internally
-        return ResponseEntity.ok(service.update(id, req));
+        return build(service.update(id, req));
     }
 
     @CatalogAuthorized
@@ -95,7 +99,7 @@ public class TierFeatureController {
     @GetMapping
     public ResponseEntity<BaseResponse<Page<TierFeatureRes>>> listByTier(@PathVariable @Min(1) final Integer tierId,
                                                                          @ParameterObject final Pageable pageable) {
-        return ResponseEntity.ok(service.listByTier(tierId, pageable));
+        return build(service.listByTier(tierId, pageable));
     }
 
     @DeleteMapping("/{id}")
