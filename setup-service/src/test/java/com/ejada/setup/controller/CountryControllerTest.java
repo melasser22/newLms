@@ -177,7 +177,7 @@ class CountryControllerTest {
 
         mockMvc.perform(get(BASE_URL + "/999")
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value("ERROR"))
                 .andExpect(jsonPath("$.code").value("ERR_COUNTRY_NOT_FOUND"));
 
