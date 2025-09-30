@@ -6,6 +6,7 @@ import com.ejada.setup.model.Country;
 import com.ejada.setup.model.City;
 import com.ejada.setup.model.Lookup;
 import com.ejada.setup.model.Resource;
+import com.ejada.setup.dto.SystemParameterRequest;
 import com.ejada.setup.model.SystemParameter;
 import com.ejada.setup.dto.CountryDto;
 import org.junit.jupiter.api.BeforeEach;
@@ -117,6 +118,16 @@ public abstract class TestBase {
         param.setIsActive(true);
         param.setDescription("Application version");
         return param;
+    }
+
+    protected SystemParameterRequest createTestSystemParameterRequest() {
+        SystemParameterRequest request = new SystemParameterRequest();
+        request.setParamKey("APP_VERSION");
+        request.setParamValue("1.0.0");
+        request.setParamGroup("SYSTEM");
+        request.setIsActive(true);
+        request.setDescription("Application version");
+        return request;
     }
 
     // Helper methods for building requests

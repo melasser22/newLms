@@ -47,5 +47,9 @@ jobs:
         run: mvn -B -DskipTests=true verify -f tenant-platform/pom.xml
       - name: Build setup service
         run: mvn -B -DskipTests=true verify -f setup-service/pom.xml
+      - name: Run static analysis gates
+        run: |
+          mvn -B -Pquality -DskipTests=true verify -f setup-service/pom.xml
+          mvn -B -Pquality -DskipTests=true verify -f tenant-platform/pom.xml
       - name: Report dependency updates for shared BOM
         run: mvn -B -f shared-lib/shared-bom/pom.xml versions:display-dependency-updates

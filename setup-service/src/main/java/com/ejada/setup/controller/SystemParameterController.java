@@ -2,7 +2,8 @@ package com.ejada.setup.controller;
 
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.common.http.ApiStatusMapper;
-import com.ejada.setup.model.SystemParameter;
+import com.ejada.setup.dto.SystemParameterRequest;
+import com.ejada.setup.dto.SystemParameterResponse;
 import com.ejada.setup.security.SetupAuthorized;
 import com.ejada.setup.service.SystemParameterService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -57,8 +58,8 @@ public class SystemParameterController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "409", description = "System parameter already exists")
     })
-    public ResponseEntity<BaseResponse<SystemParameter>> add(@Valid @RequestBody final SystemParameter body) {
-        BaseResponse<SystemParameter> response = systemParameterService.add(body);
+    public ResponseEntity<BaseResponse<SystemParameterResponse>> add(@Valid @RequestBody final SystemParameterRequest body) {
+        BaseResponse<SystemParameterResponse> response = systemParameterService.add(body);
         return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
@@ -71,11 +72,11 @@ public class SystemParameterController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "404", description = "System parameter not found")
     })
-    public ResponseEntity<BaseResponse<SystemParameter>> update(
+    public ResponseEntity<BaseResponse<SystemParameterResponse>> update(
             @Parameter(description = "ID of the system parameter to update", required = true)
             @PathVariable @Min(1) final Integer paramId,
-            @Valid @RequestBody final SystemParameter body) {
-        BaseResponse<SystemParameter> response = systemParameterService.update(paramId, body);
+            @Valid @RequestBody final SystemParameterRequest body) {
+        BaseResponse<SystemParameterResponse> response = systemParameterService.update(paramId, body);
         return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
@@ -87,10 +88,10 @@ public class SystemParameterController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "404", description = "System parameter not found")
     })
-    public ResponseEntity<BaseResponse<SystemParameter>> get(
+    public ResponseEntity<BaseResponse<SystemParameterResponse>> get(
             @Parameter(description = "ID of the system parameter to retrieve", required = true)
             @PathVariable @Min(1) final Integer paramId) {
-        BaseResponse<SystemParameter> response = systemParameterService.get(paramId);
+        BaseResponse<SystemParameterResponse> response = systemParameterService.get(paramId);
         return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
@@ -101,7 +102,7 @@ public class SystemParameterController {
         @ApiResponse(responseCode = "200", description = "System parameters retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<BaseResponse<Page<SystemParameter>>> list(
+    public ResponseEntity<BaseResponse<Page<SystemParameterResponse>>> list(
             @PageableDefault(size = DEFAULT_PAGE_SIZE) final Pageable pageable,
             @Parameter(description = "Group filter for parameters")
             @RequestParam(required = false) final String group,
@@ -110,7 +111,7 @@ public class SystemParameterController {
             @Parameter(description = "Whether to retrieve all parameters (ignores pagination)")
             @RequestParam(name = "unpaged", defaultValue = "false") final boolean unpaged) {
         final Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
-        BaseResponse<Page<SystemParameter>> response =
+        BaseResponse<Page<SystemParameterResponse>> response =
                 systemParameterService.list(effectivePageable, group, onlyActive);
         return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
@@ -123,10 +124,10 @@ public class SystemParameterController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "404", description = "System parameter not found")
     })
-    public ResponseEntity<BaseResponse<SystemParameter>> getByKey(
+    public ResponseEntity<BaseResponse<SystemParameterResponse>> getByKey(
             @Parameter(description = "Key of the parameter to retrieve", required = true)
             @PathVariable @NotBlank final String paramKey) {
-        BaseResponse<SystemParameter> response = systemParameterService.getByKey(paramKey);
+        BaseResponse<SystemParameterResponse> response = systemParameterService.getByKey(paramKey);
         return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
@@ -137,10 +138,10 @@ public class SystemParameterController {
         @ApiResponse(responseCode = "200", description = "System parameters retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<BaseResponse<List<SystemParameter>>> getByKeys(
+    public ResponseEntity<BaseResponse<List<SystemParameterResponse>>> getByKeys(
             @Parameter(description = "List of parameter keys to retrieve", required = true)
             @RequestBody final List<String> keys) {
-        BaseResponse<List<SystemParameter>> response = systemParameterService.getByKeys(keys);
+        BaseResponse<List<SystemParameterResponse>> response = systemParameterService.getByKeys(keys);
         return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 }

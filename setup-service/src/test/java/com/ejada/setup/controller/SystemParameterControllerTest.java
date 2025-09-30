@@ -1,7 +1,7 @@
 package com.ejada.setup.controller;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.setup.model.SystemParameter;
+import com.ejada.setup.dto.SystemParameterResponse;
 import com.ejada.setup.service.SystemParameterService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +37,7 @@ class SystemParameterControllerTest {
 
     @Test
     void list_ok() throws Exception {
-        BaseResponse<Page<SystemParameter>> resp = BaseResponse.success("ok", Page.<SystemParameter>empty());
+        BaseResponse<Page<SystemParameterResponse>> resp = BaseResponse.success("ok", Page.<SystemParameterResponse>empty());
 
         doReturn(resp)
                 .when(systemParameterService)
@@ -51,7 +51,7 @@ class SystemParameterControllerTest {
 
     @Test
     void get_notFound_translatesHttpStatus() throws Exception {
-        BaseResponse<SystemParameter> resp = BaseResponse.error("ERR_PARAM_NOT_FOUND", "System parameter not found");
+        BaseResponse<SystemParameterResponse> resp = BaseResponse.error("ERR_PARAM_NOT_FOUND", "System parameter not found");
 
         doReturn(resp)
                 .when(systemParameterService)

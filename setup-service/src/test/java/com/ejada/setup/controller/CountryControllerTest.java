@@ -1,7 +1,6 @@
 package com.ejada.setup.controller;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.setup.model.Country;
 import com.ejada.setup.dto.CountryDto;
 import com.ejada.setup.service.CountryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,20 +58,6 @@ class CountryControllerTest {
         @Bean CountryService countryService() { return mock(CountryService.class); }
     }
 
-    private Country createTestCountry() {
-        Country country = new Country();
-        country.setCountryCd("US");
-        country.setCountryEnNm("United States");
-        country.setCountryArNm("الولايات المتحدة");
-        country.setDialingCode("+1");
-        country.setNationalityEn("American");
-        country.setNationalityAr("أمريكي");
-        country.setIsActive(true);
-        country.setEnDescription("United States of America");
-        country.setArDescription("الولايات المتحدة الأمريكية");
-        return country;
-    }
-
     private CountryDto createTestCountryDto() {
         CountryDto dto = new CountryDto();
         dto.setCountryCd("US");
@@ -91,8 +76,9 @@ class CountryControllerTest {
     @WithMockUser(roles = "ADMIN")
     void add_shouldCreateCountry_whenValidRequest() throws Exception {
         CountryDto request = createTestCountryDto();
-        Country country = createTestCountry();
-        BaseResponse<Country> response = BaseResponse.success("Country created", country);
+        CountryDto responseBody = createTestCountryDto();
+        responseBody.setCountryId(1);
+        BaseResponse<CountryDto> response = BaseResponse.success("Country created", responseBody);
         when(countryService.add(any(CountryDto.class))).thenReturn(response);
 
         mockMvc.perform(post(BASE_URL)
@@ -112,9 +98,9 @@ class CountryControllerTest {
     @WithMockUser(roles = "ADMIN")
     void update_shouldUpdateCountry_whenValidRequest() throws Exception {
         CountryDto request = createTestCountryDto();
-        Country country = createTestCountry();
-        country.setCountryId(1);
-        BaseResponse<Country> response = BaseResponse.success("Country updated", country);
+        CountryDto responseBody = createTestCountryDto();
+        responseBody.setCountryId(1);
+        BaseResponse<CountryDto> response = BaseResponse.success("Country updated", responseBody);
         when(countryService.update(eq(1), any(CountryDto.class))).thenReturn(response);
 
         mockMvc.perform(put(BASE_URL + "/1")
@@ -132,9 +118,9 @@ class CountryControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     void get_shouldReturnCountry_whenValidId() throws Exception {
-        Country country = createTestCountry();
+        CountryDto country = createTestCountryDto();
         country.setCountryId(1);
-        BaseResponse<Country> response = BaseResponse.success("Country", country);
+        BaseResponse<CountryDto> response = BaseResponse.success("Country", country);
         when(countryService.get(1)).thenReturn(response);
 
         mockMvc.perform(get(BASE_URL + "/1")
@@ -150,8 +136,8 @@ class CountryControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     void list_shouldReturnPaginatedCountries_whenValidRequest() throws Exception {
-        List<Country> countries = Arrays.asList(createTestCountry());
-        Page<Country> page = new PageImpl<>(countries, PageRequest.of(0, 20), 1);
+        List<CountryDto> countries = Arrays.asList(createTestCountryDto());
+        Page<CountryDto> page = new PageImpl<>(countries, PageRequest.of(0, 20), 1);
         BaseResponse<?> response = BaseResponse.success("Countries page", page);
         doReturn(response).when(countryService).list(any(Pageable.class), nullable(String.class), anyBoolean());
 
@@ -169,8 +155,8 @@ class CountryControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     void listActive_shouldReturnActiveCountries() throws Exception {
-        List<Country> countries = Arrays.asList(createTestCountry());
-        BaseResponse<List<Country>> response = BaseResponse.success("Active countries", countries);
+        List<CountryDto> countries = Arrays.asList(createTestCountryDto());
+        BaseResponse<List<CountryDto>> response = BaseResponse.success("Active countries", countries);
         when(countryService.listActive()).thenReturn(response);
 
         mockMvc.perform(get(BASE_URL + "/active")
@@ -186,7 +172,7 @@ class CountryControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     void get_shouldReturn404_whenCountryNotFound() throws Exception {
-        BaseResponse<Country> response = BaseResponse.error("ERR_COUNTRY_NOT_FOUND", "Country not found");
+        BaseResponse<CountryDto> response = BaseResponse.error("ERR_COUNTRY_NOT_FOUND", "Country not found");
         when(countryService.get(999)).thenReturn(response);
 
         mockMvc.perform(get(BASE_URL + "/999")
