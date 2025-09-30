@@ -1,11 +1,12 @@
 package com.ejada.gateway.config;
 
+import com.ejada.gateway.security.BlockingReactiveJwtDecoder;
 import com.ejada.starter_security.SharedSecurityProps;
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
-import java.util.List;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
@@ -16,8 +17,6 @@ import org.springframework.security.web.server.context.NoOpServerSecurityContext
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 /**
  * Reactive security configuration that adapts the shared servlet-based starter
@@ -29,8 +28,7 @@ public class GatewaySecurityConfiguration {
 
   @Bean
   public ReactiveJwtDecoder reactiveJwtDecoder(JwtDecoder jwtDecoder) {
-    return token -> Mono.fromCallable(() -> jwtDecoder.decode(token))
-        .subscribeOn(Schedulers.boundedElastic());
+    return new BlockingReactiveJwtDecoder(jwtDecoder);
   }
 
   @Bean

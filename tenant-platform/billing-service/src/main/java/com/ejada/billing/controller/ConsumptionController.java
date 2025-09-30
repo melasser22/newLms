@@ -5,6 +5,7 @@ import com.ejada.billing.dto.TrackProductConsumptionRs;
 import com.ejada.billing.exception.ServiceResultException;
 import com.ejada.billing.service.ConsumptionService;
 import com.ejada.common.dto.ServiceResult;
+import com.ejada.common.dto.ServiceResultHttpStatusMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -56,14 +57,7 @@ public class ConsumptionController {
         }
         HttpStatus status = Boolean.TRUE.equals(result.success())
                 ? HttpStatus.OK
-                : resolveErrorStatus(result.statusCode());
+                : ServiceResultHttpStatusMapper.resolve(result.statusCode());
         return ResponseEntity.status(status).body(result);
-    }
-
-    private HttpStatus resolveErrorStatus(final String statusCode) {
-        if (statusCode == null || statusCode.startsWith("EINT")) {
-            return HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-        return HttpStatus.BAD_REQUEST;
     }
 }

@@ -3,10 +3,13 @@ package com.ejada.gateway.config;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.http.HttpMethod;
 import org.springframework.util.StringUtils;
 
 /**
@@ -81,7 +84,23 @@ public class GatewayRoutesProperties {
     }
 
     public void setMethods(List<String> methods) {
-      this.methods = (methods == null) ? new ArrayList<>() : new ArrayList<>(methods);
+      if (methods == null || methods.isEmpty()) {
+        this.methods = new ArrayList<>();
+        return;
+      }
+
+      Set<String> normalized = new LinkedHashSet<>();
+      for (String method : methods) {
+        if (!StringUtils.hasText(method)) {
+          continue;
+        }
+        String upper = method.trim().toUpperCase();
+        if (HttpMethod.resolve(upper) == null) {
+          throw new IllegalArgumentException("Unsupported HTTP method: " + method);
+        }
+        normalized.add(upper);
+      }
+      this.methods = new ArrayList<>(normalized);
     }
 
     public int getStripPrefix() {
@@ -101,6 +120,15 @@ public class GatewayRoutesProperties {
       }
       if (paths == null || paths.isEmpty()) {
         throw new IllegalStateException("gateway.routes." + key + ".paths must not be empty");
+      }
+      for (String method : methods) {
+        if (!StringUtils.hasText(method)) {
+          continue;
+        }
+        if (HttpMethod.resolve(method.trim().toUpperCase()) == null) {
+          throw new IllegalStateException(
+              "gateway.routes." + key + ".methods contains invalid HTTP method: " + method);
+        }
       }
     }
 

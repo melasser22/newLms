@@ -41,6 +41,7 @@ public class ReactiveContextConfiguration {
   }
 
   @Bean
+  @Order(Ordered.HIGHEST_PRECEDENCE + 20)
   @ConditionalOnClass(ReactiveStringRedisTemplate.class)
   @ConditionalOnBean(ReactiveStringRedisTemplate.class)
   @ConditionalOnProperty(prefix = "shared.ratelimit", name = "enabled", havingValue = "true")

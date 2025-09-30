@@ -1,9 +1,13 @@
 package com.ejada.gateway.config;
 
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.http.HttpMethod;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
@@ -34,14 +38,15 @@ public class GatewayRoutesConfiguration {
             .map(String::trim)
             .toArray(String[]::new);
 
-        String[] methods = route.getMethods().stream()
-            .filter(StringUtils::hasText)
-            .map(String::trim)
-            .toArray(String[]::new);
-
+        Set<String> methods = new LinkedHashSet<>(route.getMethods());
         RouteLocatorBuilder.PredicateSpec methodPredicate = predicate.path(paths);
-        if (methods.length > 0) {
-          methodPredicate = methodPredicate.and().method(methods);
+        if (!methods.isEmpty()) {
+          String[] allowed = methods.stream()
+              .map(HttpMethod::resolve)
+              .filter(Objects::nonNull)
+              .map(HttpMethod::name)
+              .toArray(String[]::new);
+          methodPredicate = methodPredicate.and().method(allowed);
         }
 
         return methodPredicate

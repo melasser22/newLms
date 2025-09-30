@@ -11,16 +11,12 @@ import java.time.Duration;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -31,8 +27,6 @@ import reactor.core.publisher.Mono;
  * Reactive adaptation of the servlet {@code RateLimitFilter}. It uses Redis
  * atomic increments to enforce a simple fixed window rate limit per strategy.
  */
-@Component
-@Order(Ordered.HIGHEST_PRECEDENCE + 20)
 public class ReactiveRateLimiterFilter implements WebFilter {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ReactiveRateLimiterFilter.class);
@@ -41,7 +35,6 @@ public class ReactiveRateLimiterFilter implements WebFilter {
   private final RateLimitProps props;
   private final ObjectMapper objectMapper;
 
-  @Autowired
   public ReactiveRateLimiterFilter(ReactiveStringRedisTemplate redisTemplate,
       RateLimitProps props,
       @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> jacksonObjectMapper,

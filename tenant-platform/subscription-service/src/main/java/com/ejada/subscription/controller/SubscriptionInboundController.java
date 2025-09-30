@@ -1,11 +1,12 @@
 package com.ejada.subscription.controller;
 
+import com.ejada.common.dto.ServiceResult;
+import com.ejada.common.dto.ServiceResultHttpStatusMapper;
 import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRq;
 import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRs;
 import com.ejada.subscription.dto.ReceiveSubscriptionUpdateRq;
 import com.ejada.subscription.exception.ServiceResultException;
 import com.ejada.subscription.service.SubscriptionInboundService;
-import com.ejada.common.dto.ServiceResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -69,14 +70,7 @@ public class SubscriptionInboundController {
         }
         HttpStatus status = result.success()
                 ? HttpStatus.OK
-                : resolveErrorStatus(result.statusCode());
+                : ServiceResultHttpStatusMapper.resolve(result.statusCode());
         return ResponseEntity.status(status).body(result);
-    }
-
-    private HttpStatus resolveErrorStatus(final String statusCode) {
-        if (statusCode == null || statusCode.startsWith("EINT")) {
-            return HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-        return HttpStatus.BAD_REQUEST;
     }
 }
