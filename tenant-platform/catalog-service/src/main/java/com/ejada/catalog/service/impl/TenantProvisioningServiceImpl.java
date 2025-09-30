@@ -59,7 +59,7 @@ public class TenantProvisioningServiceImpl implements TenantProvisioningService 
         }
 
         if (!existing.isEmpty()) {
-            featureRepository.deleteAll(existing.values());
+            featureRepository.deleteAll(List.copyOf(existing.values()));
         }
     }
 
@@ -94,7 +94,7 @@ public class TenantProvisioningServiceImpl implements TenantProvisioningService 
         }
 
         if (!existing.isEmpty()) {
-            addonRepository.deleteAll(existing.values());
+            addonRepository.deleteAll(List.copyOf(existing.values()));
         }
     }
 }
