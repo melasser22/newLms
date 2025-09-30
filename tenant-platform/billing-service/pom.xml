@@ -69,6 +69,10 @@
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
+      <artifactId>shared-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-data</artifactId>
     </dependency>
     <dependency>

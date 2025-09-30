@@ -3,7 +3,7 @@ package com.ejada.subscription.service;
 import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRq;
 import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRs;
 import com.ejada.subscription.dto.ReceiveSubscriptionUpdateRq;
-import com.ejada.subscription.dto.ServiceResult;
+import com.ejada.common.dto.ServiceResult;
 
 import java.util.UUID;
 

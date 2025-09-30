@@ -13,7 +13,7 @@ import com.ejada.subscription.dto.CustomerInfoDto;
 import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRq;
 import com.ejada.subscription.dto.ReceiveSubscriptionNotificationRs;
 import com.ejada.subscription.dto.ReceiveSubscriptionUpdateRq;
-import com.ejada.subscription.dto.ServiceResult;
+import com.ejada.common.dto.ServiceResult;
 import com.ejada.subscription.dto.SubscriptionInfoDto;
 import com.ejada.subscription.dto.SubscriptionUpdateType;
 import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
