@@ -126,7 +126,7 @@ public class CountryServiceImpl
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     @Audited(action = AuditAction.READ, entity = "Country", dataClass = DataClass.HEALTH, message = "List countries")
-    public BaseResponse<?> list(final Pageable pageable, final String q, final boolean unpaged) {
+    public BaseResponse<Object> list(final Pageable pageable, final String q, final boolean unpaged) {
         Sort sort = SortUtils.sanitize(pageable != null ? pageable.getSort() : Sort.unsorted(),
                 "countryEnNm", "countryArNm", "countryCd");
         Pageable pg = (pageable == null || !pageable.isPaged()
@@ -141,7 +141,7 @@ public class CountryServiceImpl
                 list = countryRepository
                         .findByCountryEnNmContainingIgnoreCaseOrCountryArNmContainingIgnoreCase(q, q, sort);
             }
-            return BaseResponse.success("Countries list", mapper.toDtoList(list));
+            return BaseResponse.<Object>success("Countries list", mapper.toDtoList(list));
         }
 
         Page<Country> page;
@@ -151,7 +151,7 @@ public class CountryServiceImpl
             page = countryRepository
                     .findByCountryEnNmContainingIgnoreCaseOrCountryArNmContainingIgnoreCase(q, q, pg);
         }
-        return BaseResponse.success("Countries page", mapper.toDtoPage(page));
+        return BaseResponse.<Object>success("Countries page", mapper.toDtoPage(page));
     }
 
     // cache only the RAW list to avoid BaseResponse <-> LinkedHashMap casts in Redis
