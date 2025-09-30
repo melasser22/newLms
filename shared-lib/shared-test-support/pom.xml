@@ -17,6 +17,12 @@
   <description>Shared test utilities and base classes for Shared modules</description>
 
   <dependencies>
+    <!-- Shared common DTOs and utilities -->
+    <dependency>
+      <groupId>com.ejada</groupId>
+      <artifactId>shared-common</artifactId>
+    </dependency>
+
     <!-- Spring Boot test stack -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
