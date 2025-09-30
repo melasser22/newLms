@@ -10,6 +10,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -26,9 +27,10 @@ public class SubscriptionApprovalListener {
     private final TenantService tenantService;
     @KafkaListener(
             topics = "#{@subscriptionApprovalProperties.topic}",
-            groupId = "#{@subscriptionApprovalProperties.consumerGroup}"
+            groupId = "#{@subscriptionApprovalProperties.consumerGroup}",
+            containerFactory = "subscriptionApprovalListenerContainerFactory"
     )
-    public void onMessage(@Payload final Map<String, Object> payload) {
+    public void onMessage(@Payload final Map<String, Object> payload, Acknowledgment acknowledgment) {
         SubscriptionApprovalMessage message = objectMapper.convertValue(payload, SubscriptionApprovalMessage.class);
 
         if (message.action() != SubscriptionApprovalAction.APPROVED) {
@@ -36,6 +38,7 @@ public class SubscriptionApprovalListener {
                     "Ignoring subscription approval message {} with action {}",
                     message.requestId(),
                     message.action());
+            acknowledgment.acknowledge();
             return;
         }
 
@@ -59,11 +62,13 @@ public class SubscriptionApprovalListener {
                     req.code(),
                     message.subscriptionId(),
                     message.requestId());
+            acknowledgment.acknowledge();
         } catch (TenantConflictException conflict) {
             log.info(
                     "Tenant {} already exists while processing approval request {}",
                     req.code(),
                     message.requestId());
+            acknowledgment.acknowledge();
         }
     }
 }
