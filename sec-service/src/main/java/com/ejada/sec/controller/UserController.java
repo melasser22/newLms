@@ -1,6 +1,7 @@
 package com.ejada.sec.controller;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.ApiStatusMapper;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.service.UserService;
 import com.ejada.starter_core.tenant.RequireTenant;
@@ -22,47 +23,56 @@ public class UserController {
 
   @GetMapping
   public ResponseEntity<BaseResponse<List<UserDto>>> list() {
-    return ResponseEntity.ok(userService.listByTenant());
+    BaseResponse<List<UserDto>> response = userService.listByTenant();
+    return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
   }
 
   @GetMapping("/{id}")
   public ResponseEntity<BaseResponse<UserDto>> get(@PathVariable("id") Long id) {
-    return ResponseEntity.ok(userService.get(id));
+    BaseResponse<UserDto> response = userService.get(id);
+    return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
   }
 
   @PostMapping
   public ResponseEntity<BaseResponse<UserDto>> create(@Valid @RequestBody CreateUserRequest req) {
-    return ResponseEntity.ok(userService.create(req));
+    BaseResponse<UserDto> response = userService.create(req);
+    return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
   }
 
   @PatchMapping("/{id}")
   public ResponseEntity<BaseResponse<UserDto>> update(@PathVariable("id") Long id,
                                         @Valid @RequestBody UpdateUserRequest req) {
-    return ResponseEntity.ok(userService.update(id, req));
+    BaseResponse<UserDto> response = userService.update(id, req);
+    return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
   }
 
   @DeleteMapping("/{id}")
   public ResponseEntity<BaseResponse<Void>> delete(@PathVariable("id") Long id) {
-    return ResponseEntity.ok(userService.delete(id));
+    BaseResponse<Void> response = userService.delete(id);
+    return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
   }
 
   @PostMapping("/{id}/enable")
   public ResponseEntity<BaseResponse<Void>> enable(@PathVariable("id") Long id) {
-    return ResponseEntity.ok(userService.enable(id));
+    BaseResponse<Void> response = userService.enable(id);
+    return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
   }
 
   @PostMapping("/{id}/disable")
   public ResponseEntity<BaseResponse<Void>> disable(@PathVariable("id") Long id) {
-    return ResponseEntity.ok(userService.disable(id));
+    BaseResponse<Void> response = userService.disable(id);
+    return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
   }
 
   @PostMapping("/{id}/lock")
   public ResponseEntity<BaseResponse<Void>> lock(@PathVariable("id") Long id) {
-    return ResponseEntity.ok(userService.lock(id));
+    BaseResponse<Void> response = userService.lock(id);
+    return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
   }
 
   @PostMapping("/{id}/unlock")
   public ResponseEntity<BaseResponse<Void>> unlock(@PathVariable("id") Long id) {
-    return ResponseEntity.ok(userService.unlock(id));
+    BaseResponse<Void> response = userService.unlock(id);
+    return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
   }
 }

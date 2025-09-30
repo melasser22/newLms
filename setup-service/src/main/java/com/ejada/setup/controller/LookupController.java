@@ -1,6 +1,7 @@
 package com.ejada.setup.controller;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.ApiStatusMapper;
 import com.ejada.setup.dto.LookupCreateRequest;
 import com.ejada.setup.dto.LookupResponse;
 import com.ejada.setup.dto.LookupUpdateRequest;
@@ -55,7 +56,8 @@ public class LookupController {
     })
     public ResponseEntity<BaseResponse<LookupResponse>> add(
             @Valid @RequestBody final LookupCreateRequest body) {
-        return ResponseEntity.ok(lookupService.add(body));
+        BaseResponse<LookupResponse> response = lookupService.add(body);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @PutMapping("/{lookupItemId}")
@@ -71,7 +73,8 @@ public class LookupController {
             @Parameter(description = "ID of the lookup to update", required = true)
             @PathVariable @Min(1) final Integer lookupItemId,
             @Valid @RequestBody final LookupUpdateRequest body) {
-        return ResponseEntity.ok(lookupService.update(lookupItemId, body));
+        BaseResponse<LookupResponse> response = lookupService.update(lookupItemId, body);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @GetMapping
@@ -82,7 +85,8 @@ public class LookupController {
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
     public ResponseEntity<BaseResponse<List<LookupResponse>>> getAllLookups() {
-        return ResponseEntity.ok(lookupService.getAllLookups());
+        BaseResponse<List<LookupResponse>> response = lookupService.getAllLookups();
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @GetMapping("/group/{groupCode}")
@@ -95,7 +99,8 @@ public class LookupController {
     public ResponseEntity<BaseResponse<List<LookupResponse>>> getByGroup(
             @Parameter(description = "Group code of lookups to retrieve", required = true)
             @PathVariable @NotBlank final String groupCode) {
-        return ResponseEntity.ok(lookupService.getByGroup(groupCode));
+        BaseResponse<List<LookupResponse>> response = lookupService.getByGroup(groupCode);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @GetMapping("/all")
@@ -109,6 +114,7 @@ public class LookupController {
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
     public ResponseEntity<BaseResponse<List<LookupResponse>>> getAll() {
-        return ResponseEntity.ok(lookupService.getAll());
+        BaseResponse<List<LookupResponse>> response = lookupService.getAll();
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 }

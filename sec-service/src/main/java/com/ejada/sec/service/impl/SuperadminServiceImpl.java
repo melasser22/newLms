@@ -126,7 +126,9 @@ public class SuperadminServiceImpl implements SuperadminService {
         
         // Map to DTO and return
         SuperadminDto dto = superadminMapper.toDto(superadmin);
-        return BaseResponse.success("Superadmin created successfully", dto);
+        BaseResponse<SuperadminDto> response = BaseResponse.success("Superadmin created successfully", dto);
+        response.setCode("SUCCESS-201");
+        return response;
     }
     
     @Override

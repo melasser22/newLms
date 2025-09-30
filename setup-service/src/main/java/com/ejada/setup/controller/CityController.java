@@ -1,6 +1,7 @@
 package com.ejada.setup.controller;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.ApiStatusMapper;
 import com.ejada.setup.dto.CityDto;
 import com.ejada.setup.constants.ValidationConstants;
 import com.ejada.setup.security.SetupAuthorized;
@@ -54,7 +55,8 @@ public class CityController {
         @ApiResponse(responseCode = "409", description = "City already exists")
     })
     public ResponseEntity<BaseResponse<CityDto>> add(@Valid @RequestBody final CityDto body) {
-        return ResponseEntity.ok(cityService.add(body));
+        BaseResponse<CityDto> response = cityService.add(body);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @PutMapping("/{cityId}")
@@ -70,7 +72,8 @@ public class CityController {
             @Parameter(description = "ID of the city to update", required = true)
             @PathVariable @Min(1) final Integer cityId,
             @Valid @RequestBody final CityDto body) {
-        return ResponseEntity.ok(cityService.update(cityId, body));
+        BaseResponse<CityDto> response = cityService.update(cityId, body);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @GetMapping("/{cityId}")
@@ -84,7 +87,8 @@ public class CityController {
     public ResponseEntity<BaseResponse<CityDto>> get(
             @Parameter(description = "ID of the city to retrieve", required = true)
             @PathVariable @Min(1) final Integer cityId) {
-        return ResponseEntity.ok(cityService.get(cityId));
+        BaseResponse<CityDto> response = cityService.get(cityId);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @GetMapping
@@ -101,7 +105,8 @@ public class CityController {
             @Parameter(description = "Whether to retrieve all cities (ignores pagination)")
             @RequestParam(name = "unpaged", defaultValue = "false") final boolean unpaged) {
         Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
-        return ResponseEntity.ok(cityService.list(effectivePageable, q, unpaged));
+        BaseResponse<Page<CityDto>> response = cityService.list(effectivePageable, q, unpaged);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 
     @GetMapping("/active")
@@ -114,6 +119,7 @@ public class CityController {
     public ResponseEntity<BaseResponse<List<CityDto>>> listActive(
             @Parameter(description = "Country ID to filter cities", required = true)
             @RequestParam @Min(1) final Integer countryId) {
-        return ResponseEntity.ok(cityService.listActiveByCountry(countryId));
+        BaseResponse<List<CityDto>> response = cityService.listActiveByCountry(countryId);
+        return ResponseEntity.status(ApiStatusMapper.toHttpStatus(response)).body(response);
     }
 }
