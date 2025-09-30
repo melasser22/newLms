@@ -13,7 +13,6 @@ import com.ejada.setup.dto.LookupResponse;
 import com.ejada.setup.model.Lookup;
 import com.ejada.setup.repository.LookupRepository;
 import com.ejada.setup.service.LookupService;
-import com.ejada.setup.service.impl.LookupServiceImpl;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,9 +40,6 @@ class LookupServiceCachingIT {
     @Autowired
     private LookupRepository lookupRepository;
 
-    @Autowired
-    private LookupServiceImpl lookupServiceImpl;
-
     @BeforeEach
     void flushRedis() {
         reset(lookupRepository);
@@ -67,15 +63,16 @@ class LookupServiceCachingIT {
                 .build();
         when(lookupRepository.findAll()).thenReturn(List.of(entity));
 
-        List<Lookup> firstRaw = lookupServiceImpl.getAllRaw();
-        List<Lookup> secondRaw = lookupServiceImpl.getAllRaw();
+        BaseResponse<List<LookupResponse>> firstResponse = lookupService.getAll();
+        BaseResponse<List<LookupResponse>> secondResponse = lookupService.getAll();
 
         verify(lookupRepository, times(1)).findAll();
-        assertThat(firstRaw).hasSize(1);
-        assertThat(secondRaw).hasSize(1);
 
-        BaseResponse<List<LookupResponse>> response = lookupService.getAll();
-        assertThatBaseResponse(response)
+        assertThatBaseResponse(firstResponse)
+                .isSuccess()
+                .hasDataSatisfying(list -> assertThat(list).hasSize(1));
+
+        assertThatBaseResponse(secondResponse)
                 .isSuccess()
                 .hasDataSatisfying(list -> assertThat(list).hasSize(1));
 
