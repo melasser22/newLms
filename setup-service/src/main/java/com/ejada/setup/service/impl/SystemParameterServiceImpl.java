@@ -83,7 +83,7 @@ public class SystemParameterServiceImpl
     }
 
     @Override
-    protected String duplicateResourceMessage(final SystemParameter dto) {
+    protected String duplicateResourceMessage(final SystemParameterRequest dto) {
         return "Parameter key already exists";
     }
 

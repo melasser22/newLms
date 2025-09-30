@@ -107,14 +107,14 @@ public class CountryController {
         @ApiResponse(responseCode = "200", description = "Countries retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<BaseResponse<?>> list(
+    public ResponseEntity<BaseResponse<Object>> list(
             @PageableDefault(size = ValidationConstants.PAGE_SIZE_DEFAULT) final Pageable pageable,
             @Parameter(description = "Search query for country names")
             @RequestParam(required = false) final String q,
             @Parameter(description = "Whether to retrieve all countries (ignores pagination)")
             @RequestParam(name = "unpaged", defaultValue = "false") final boolean unpaged) {
         Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
-        BaseResponse<?> response = countryService.list(effectivePageable, q, unpaged);
+        BaseResponse<Object> response = countryService.list(effectivePageable, q, unpaged);
         return build(response);
     }
 

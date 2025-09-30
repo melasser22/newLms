@@ -14,7 +14,7 @@ public interface CountryService {
 
     BaseResponse<CountryDto> get(Integer countryId);
 
-    BaseResponse<?> list(Pageable pageable, String q, boolean unpaged);
+    BaseResponse<Object> list(Pageable pageable, String q, boolean unpaged);
 
     BaseResponse<List<CountryDto>> listActive();
 }
