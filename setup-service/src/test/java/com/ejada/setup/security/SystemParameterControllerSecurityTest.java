@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 class SystemParameterControllerSecurityTest {
 
-    private static final String SECRET = "0123456789ABCDEF0123456789ABCDEF";
+    static final String SECRET = "0123456789ABCDEF0123456789ABCDEF";
 
     @Autowired
     private MockMvc mockMvc;

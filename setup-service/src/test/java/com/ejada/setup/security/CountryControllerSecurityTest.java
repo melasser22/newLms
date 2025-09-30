@@ -39,7 +39,7 @@ import org.springframework.test.web.servlet.MockMvc;
 })
 class CountryControllerSecurityTest {
 
-    private static final String SECRET = "0123456789ABCDEF0123456789ABCDEF";
+    static final String SECRET = "0123456789ABCDEF0123456789ABCDEF";
     static final String ISSUER = "test-issuer";
 
     @Autowired
