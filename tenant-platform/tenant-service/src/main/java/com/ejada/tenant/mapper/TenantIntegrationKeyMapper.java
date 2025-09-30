@@ -26,7 +26,7 @@ import java.time.OffsetDateTime;
 public interface TenantIntegrationKeyMapper {
 
     // ---------- Create ----------
-    @BeanMapping(ignoreUnmappedSourceProperties = "tenantId")
+    @BeanMapping(ignoreUnmappedSourceProperties = {"tenantId", "plainSecret"})
     @Mapping(target = "tikId", ignore = true)
     @Mapping(target = "tenant", expression = "java(Tenant.ref(req.tenantId()))")
     @Mapping(target = "keyId", source = "keyId")
@@ -67,7 +67,9 @@ public interface TenantIntegrationKeyMapper {
     }
 
     // ---------- Update (PATCH/PUT with IGNORE nulls) ----------
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @BeanMapping(
+            nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+            ignoreUnmappedSourceProperties = {"newPlainSecret", "rotatedBy"})
     @Mapping(target = "tikId", ignore = true)
     @Mapping(target = "tenant", ignore = true)
     @Mapping(target = "keyId", ignore = true)
@@ -85,7 +87,7 @@ public interface TenantIntegrationKeyMapper {
     void update(@MappingTarget @NonNull TenantIntegrationKey entity, @NonNull TenantIntegrationKeyUpdateReq req);
 
     // ---------- Response ----------
-    @BeanMapping(ignoreUnmappedSourceProperties = {"keySecret", "active", "expired"})
+    @BeanMapping(ignoreUnmappedSourceProperties = {"keySecret", "active", "expired", "deleted"})
     @Mapping(target = "tenantId", source = "tenant.id")
     @Mapping(target = "scopes", source = "scopes", qualifiedByName = "toList")
     @Mapping(target = "status", source = "status", qualifiedByName = "toDtoStatus")
