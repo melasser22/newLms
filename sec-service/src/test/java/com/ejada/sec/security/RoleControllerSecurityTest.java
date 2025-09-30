@@ -32,6 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
     "shared.security.mode=hs256",
     "shared.security.hs256.secret=0123456789ABCDEF0123456789ABCDEF-SECURE-0123456789ABCDEF",
     "shared.security.jwt.secret=0123456789ABCDEF0123456789ABCDEF-SECURE-0123456789ABCDEF",
+
     "shared.security.issuer=" + RoleControllerSecurityTest.ISSUER,
     "shared.security.resource-server.enabled=true",
     "shared.security.resource-server.disable-csrf=true",

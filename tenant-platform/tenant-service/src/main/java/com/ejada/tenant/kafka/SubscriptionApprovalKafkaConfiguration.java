@@ -56,7 +56,6 @@ public class SubscriptionApprovalKafkaConfiguration {
         factory.setConsumerFactory(consumerFactory);
         factory.setConcurrency(kafkaProperties.getConcurrency());
         factory.setCommonErrorHandler(subscriptionApprovalErrorHandler);
-        factory.getContainerProperties().setAckOnError(false);
         factory.getContainerProperties().setAckMode(
                 org.springframework.kafka.listener.ContainerProperties.AckMode.MANUAL);
         return factory;

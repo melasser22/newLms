@@ -57,8 +57,8 @@ class ReactiveRequestContextFilterTest {
 
         assertThat(exchange.getResponse().getHeaders().getFirst(HeaderNames.CORRELATION_ID)).isEqualTo("corr-123");
         assertThat(contextRef.get()).isNotNull();
-        assertThat(contextRef.get().get(HeaderNames.CORRELATION_ID)).isEqualTo("corr-123");
-        assertThat(contextRef.get().get(HeaderNames.X_TENANT_ID)).isEqualTo("tenant-1");
+        assertThat((String) contextRef.get().get(HeaderNames.CORRELATION_ID)).isEqualTo("corr-123");
+        assertThat((String) contextRef.get().get(HeaderNames.X_TENANT_ID)).isEqualTo("tenant-1");
     }
 
     @Test
@@ -77,7 +77,7 @@ class ReactiveRequestContextFilterTest {
 
         StepVerifier.create(filter.filter(exchange, chain)).verifyComplete();
 
-        assertThat(invoked).isFalse();
+        assertThat(invoked.get()).isFalse();
         assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         String body = exchange.getResponse().getBodyAsString().block(Duration.ofSeconds(3));
         assertThat(body).contains("ERR_INVALID_TENANT");

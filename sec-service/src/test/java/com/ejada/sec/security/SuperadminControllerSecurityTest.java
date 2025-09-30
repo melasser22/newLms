@@ -28,6 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 class SuperadminControllerSecurityTest {
 
+    private static final String SECRET = "0123456789ABCDEF0123456789ABCDEF";
+
     @Autowired
     private MockMvc mockMvc;
 

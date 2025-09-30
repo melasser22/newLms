@@ -205,7 +205,6 @@ public class SecurityAutoConfiguration {
     final List<String> permitAllFinal = buildPermitAll(rs);
 
     JsonAuthEntryPoint jsonEntryPoint = new JsonAuthEntryPoint(objectMapper);
-
     http.cors(cors -> cors.configurationSource(corsConfigurationSource))
         .authorizeHttpRequests(auth -> {
           auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
@@ -217,6 +216,7 @@ public class SecurityAutoConfiguration {
         .oauth2ResourceServer(oauth -> oauth
             .authenticationEntryPoint(jsonEntryPoint)
             .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
+            .authenticationEntryPoint(authEntryPoint)
         )
         .exceptionHandling(eh -> eh
             .authenticationEntryPoint(jsonEntryPoint)

@@ -29,8 +29,8 @@ import org.springframework.test.web.servlet.MockMvc;
 @TestPropertySource(properties = {
     "spring.main.allow-bean-definition-overriding=true",
     "shared.security.mode=hs256",
-    "shared.security.hs256.secret=test-secret",
-    "shared.security.jwt.secret=test-secret",
+    "shared.security.hs256.secret=" + CountryControllerSecurityTest.SECRET,
+    "shared.security.jwt.secret=" + CountryControllerSecurityTest.SECRET,
     "shared.security.issuer=" + CountryControllerSecurityTest.ISSUER,
     "shared.security.resource-server.enabled=true",
     "shared.security.resource-server.disable-csrf=true",
@@ -39,7 +39,7 @@ import org.springframework.test.web.servlet.MockMvc;
 })
 class CountryControllerSecurityTest {
 
-    private static final String SECRET = "0123456789ABCDEF0123456789ABCDEF";
+    static final String SECRET = "0123456789ABCDEF0123456789ABCDEF";
     static final String ISSUER = "test-issuer";
 
     @Autowired
@@ -56,7 +56,7 @@ class CountryControllerSecurityTest {
 
     @Test
     void protectedEndpointsReturnUnauthorizedWithoutToken() throws Exception {
-        mockMvc.perform(get("/core/setup/countries"))
+        mockMvc.perform(get("/core/setup/countries").contextPath("/core"))
             .andExpect(status().isUnauthorized());
     }
 
@@ -68,7 +68,7 @@ class CountryControllerSecurityTest {
                 .tenant("tenant-1")
                 .build();
 
-        mockMvc.perform(get("/core/setup/countries")
+        mockMvc.perform(get("/core/setup/countries").contextPath("/core")
                         .header(AUTHORIZATION, "Bearer " + token)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -83,7 +83,7 @@ class CountryControllerSecurityTest {
                 .tenant("tenant-1")
                 .build();
 
-        mockMvc.perform(get("/core/setup/countries")
+        mockMvc.perform(get("/core/setup/countries").contextPath("/core")
                         .header(AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(ErrorCodes.AUTH_FORBIDDEN));
@@ -99,7 +99,7 @@ class CountryControllerSecurityTest {
                 .expiresAt(Instant.now().minusSeconds(3600))
                 .build();
 
-        mockMvc.perform(get("/core/setup/countries")
+        mockMvc.perform(get("/core/setup/countries").contextPath("/core")
                         .header(AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(ErrorCodes.AUTH_UNAUTHORIZED));
