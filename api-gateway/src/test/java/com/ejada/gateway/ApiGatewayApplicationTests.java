@@ -11,7 +11,7 @@ import org.springframework.test.context.TestPropertySource;
 @SpringBootTest
 @TestPropertySource(properties = {
     "shared.security.mode=hs256",
-    "shared.security.hs256.secret=unit-test-secret",
+    "shared.security.hs256.secret=" + ApiGatewayApplicationTests.SECRET,
     "shared.security.resource-server.enabled=false",
     "gateway.routes.test.id=test-route",
     "gateway.routes.test.uri=http://example.org",
@@ -20,6 +20,8 @@ import org.springframework.test.context.TestPropertySource;
     "spring.autoconfigure.exclude=com.ejada.shared_starter_ratelimit.RateLimitAutoConfiguration"
 })
 class ApiGatewayApplicationTests {
+
+  private static final String SECRET = "0123456789ABCDEF0123456789ABCDEF";
 
   @Autowired
   private RouteLocator routeLocator;

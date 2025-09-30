@@ -19,14 +19,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
     "spring.main.allow-bean-definition-overriding=true",
     "shared.security.mode=hs256",
-    "shared.security.hs256.secret=test-secret",
-    "shared.security.jwt.secret=test-secret",
+    "shared.security.hs256.secret=" + UserControllerSecurityTest.SECRET,
+    "shared.security.jwt.secret=" + UserControllerSecurityTest.SECRET,
     "shared.security.resource-server.enabled=true",
     "shared.security.resource-server.disable-csrf=true",
     "shared.security.resource-server.permit-all[0]=/actuator/health",
     "server.servlet.context-path=/sec"
 })
 class UserControllerSecurityTest {
+
+    private static final String SECRET = "0123456789ABCDEF0123456789ABCDEF";
 
     @Autowired
     private MockMvc mockMvc;

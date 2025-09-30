@@ -12,7 +12,7 @@ class RoleCheckerAutoConfigurationTest {
   private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
       .withConfiguration(AutoConfigurations.of(SecurityAutoConfiguration.class))
       .withPropertyValues(
-          "shared.security.hs256.secret=secret",
+          "shared.security.hs256.secret=0123456789ABCDEF0123456789ABCDEF",
           "shared.security.resource-server.enabled=false");
 
   @Test
