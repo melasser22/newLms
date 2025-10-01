@@ -58,10 +58,6 @@ public class GatewayRoutesConfiguration {
                 filters.circuitBreaker(config -> {
                   config.setName(resilience.resolvedCircuitBreakerName(route.getId()));
                   config.setFallbackUri(resilience.resolvedFallbackUri(route.getId()));
-                  HttpStatus fallbackStatus = resilience.getFallbackStatus();
-                  if (fallbackStatus != null) {
-                    config.setStatusCode(fallbackStatus);
-                  }
                 });
 
                 GatewayRoutesProperties.ServiceRoute.Resilience.Retry retry = resilience.getRetry();
