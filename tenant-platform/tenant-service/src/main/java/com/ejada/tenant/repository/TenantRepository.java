@@ -2,12 +2,11 @@ package com.ejada.tenant.repository;
 
 
 import com.ejada.tenant.model.Tenant;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.Optional;
 
 @Repository
 public interface TenantRepository extends JpaRepository<Tenant, Integer> {
@@ -21,14 +20,6 @@ public interface TenantRepository extends JpaRepository<Tenant, Integer> {
     Page<Tenant> findByNameContainingIgnoreCaseAndIsDeletedFalse(String name, Pageable pageable);
 
     Page<Tenant> findByNameContainingIgnoreCaseAndActiveAndIsDeletedFalse(String name, boolean active, Pageable pageable);
-
-    boolean existsByCode(String code);
-
-    boolean existsByCodeAndIdNot(String code, Integer id);
-
-    boolean existsByNameIgnoreCase(String name);
-
-    boolean existsByNameIgnoreCaseAndIdNot(String name, Integer id);
 
     boolean existsByCodeAndIsDeletedFalse(String code);
 

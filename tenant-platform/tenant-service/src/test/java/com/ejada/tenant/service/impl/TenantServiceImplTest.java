@@ -57,6 +57,25 @@ class TenantServiceImplTest {
   }
 
   @Test
+  void createSucceedsWhenNoActiveDuplicates() {
+    TenantCreateReq req = new TenantCreateReq("CODE", "Tenant", null, null, null, true);
+    when(repository.existsByCodeAndIsDeletedFalse("CODE")).thenReturn(false);
+    when(repository.existsByNameIgnoreCaseAndIsDeletedFalse("Tenant")).thenReturn(false);
+
+    Tenant entity = new Tenant();
+    when(mapper.toEntity(req)).thenReturn(entity);
+    when(repository.save(entity)).thenReturn(entity);
+    TenantRes mapped =
+        new TenantRes(1, "CODE", "Tenant", null, null, null, true, false, null, null);
+    when(mapper.toRes(entity)).thenReturn(mapped);
+
+    BaseResponse<TenantRes> response = service.create(req);
+
+    assertThat(response.isSuccess()).isTrue();
+    assertThat(response.getData()).isEqualTo(mapped);
+  }
+
+  @Test
   void updateRejectsDuplicateCodeForDifferentTenant() {
     Tenant existing = new Tenant();
     existing.setId(5);

@@ -163,6 +163,35 @@ class SubscriptionApprovalListenerTest {
         verify(acknowledgment).acknowledge();
     }
 
+    @Test
+    void rethrowsUnexpectedFailuresForRetryHandling() {
+        SubscriptionApprovalMessage message = new SubscriptionApprovalMessage(
+                SubscriptionApprovalAction.APPROVED,
+                UUID.randomUUID(),
+                123L,
+                456L,
+                "Customer EN",
+                "Customer AR",
+                "admin@example.com",
+                "+966500000000",
+                "TEN-42",
+                "Tenant Corp",
+                "ops@example.com",
+                "+966500000001",
+                "role",
+                OffsetDateTime.now(),
+                null);
+
+        when(tenantService.create(any())).thenThrow(new IllegalStateException("boom"));
+
+        assertThatThrownBy(() -> listener.onMessage(toPayload(message), acknowledgment))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("boom");
+
+        verify(tenantService).create(any());
+        verify(acknowledgment, never()).acknowledge();
+    }
+
     private Map<String, Object> toPayload(final SubscriptionApprovalMessage message) {
         return objectMapper.convertValue(message, new TypeReference<Map<String, Object>>() {});
     }
