@@ -156,10 +156,15 @@
               <id>integration-tests</id>
               <goals><goal>integration-test</goal><goal>verify</goal></goals>
               <configuration>
+                <useModulePath>false</useModulePath>
                 <includes>
                   <include>**/*IT.java</include>
                   <include>**/*ITCase.java</include>
                 </includes>
+                <additionalClasspathElements>
+                  <additionalClasspathElement>${project.build.outputDirectory}</additionalClasspathElement>
+                  <additionalClasspathElement>${project.build.testOutputDirectory}</additionalClasspathElement>
+                </additionalClasspathElements>
                 <argLine>${argLine} -javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${bytebuddy.agent.version}/byte-buddy-agent-${bytebuddy.agent.version}.jar</argLine>
               </configuration>
             </execution>
