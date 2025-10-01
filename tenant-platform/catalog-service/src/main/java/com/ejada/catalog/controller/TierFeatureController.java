@@ -1,13 +1,12 @@
 package com.ejada.catalog.controller;
 
-import static com.ejada.common.http.BaseResponseEntityFactory.build;
-
 import com.ejada.catalog.dto.TierFeatureCreateReq;
 import com.ejada.catalog.dto.TierFeatureRes;
 import com.ejada.catalog.dto.TierFeatureUpdateReq;
 import com.ejada.catalog.security.CatalogAuthorized;
 import com.ejada.catalog.service.TierFeatureService;
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.BaseResponseController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -37,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Tier Feature Management", description = "APIs for managing features attached to tiers")
-public class TierFeatureController {
+public class TierFeatureController extends BaseResponseController {
 
     private final TierFeatureService service;
 
@@ -69,8 +68,7 @@ public class TierFeatureController {
             req.overageCurrency(),
             req.meta()
         );
-        BaseResponse<TierFeatureRes> response = service.attach(normalized);
-        return build(response, HttpStatus.CREATED);
+        return respond(() -> service.attach(normalized), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -86,7 +84,7 @@ public class TierFeatureController {
                                                                @PathVariable @Min(1) final Integer id,
                                                                @Valid @RequestBody final TierFeatureUpdateReq req) {
         // tierId is only for routing; service validates existence internally
-        return build(service.update(id, req));
+        return respond(() -> service.update(id, req));
     }
 
     @CatalogAuthorized
@@ -99,7 +97,7 @@ public class TierFeatureController {
     @GetMapping
     public ResponseEntity<BaseResponse<Page<TierFeatureRes>>> listByTier(@PathVariable @Min(1) final Integer tierId,
                                                                          @ParameterObject final Pageable pageable) {
-        return build(service.listByTier(tierId, pageable));
+        return respond(() -> service.listByTier(tierId, pageable));
     }
 
     @DeleteMapping("/{id}")

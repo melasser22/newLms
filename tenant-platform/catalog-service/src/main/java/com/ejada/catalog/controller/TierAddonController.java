@@ -1,11 +1,10 @@
 package com.ejada.catalog.controller;
 
-import static com.ejada.common.http.BaseResponseEntityFactory.build;
-
 import com.ejada.catalog.dto.*;
 import com.ejada.catalog.security.CatalogAuthorized;
 import com.ejada.catalog.service.TierAddonService;
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.BaseResponseController;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Tier Addon Management", description = "APIs for managing addons allowed for tiers")
-public class TierAddonController {
+public class TierAddonController extends BaseResponseController {
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final TierAddonService service;
 
@@ -52,8 +51,7 @@ public class TierAddonController {
             req.basePrice(),
             req.currency()
         );
-        BaseResponse<TierAddonRes> response = service.allow(normalized);
-        return build(response, HttpStatus.CREATED);
+        return respond(() -> service.allow(normalized), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -68,7 +66,7 @@ public class TierAddonController {
     public ResponseEntity<BaseResponse<TierAddonRes>> update(@PathVariable @Min(1) Integer tierId,
                                                               @PathVariable @Min(1) Integer id,
                                                               @Valid @RequestBody TierAddonUpdateReq req) {
-        return build(service.update(id, req));
+        return respond(() -> service.update(id, req));
     }
 
     @GetMapping
@@ -81,7 +79,7 @@ public class TierAddonController {
     })
     public ResponseEntity<BaseResponse<Page<TierAddonRes>>> listByTier(@PathVariable @Min(1) Integer tierId,
                                                                        @ParameterObject Pageable pageable) {
-        return build(service.listByTier(tierId, pageable));
+        return respond(() -> service.listByTier(tierId, pageable));
     }
 
     @DeleteMapping("/{id}")

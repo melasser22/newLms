@@ -1,11 +1,10 @@
 package com.ejada.catalog.controller;
 
-import static com.ejada.common.http.BaseResponseEntityFactory.build;
-
 import com.ejada.catalog.dto.*;
 import com.ejada.catalog.security.CatalogAuthorized;
 import com.ejada.catalog.service.AddonService;
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.BaseResponseController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -30,7 +29,7 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 @Tag(name = "Addon Management", description = "APIs for managing addons")
 @Slf4j
-public class AddonController {
+public class AddonController extends BaseResponseController {
 
     private final AddonService service;
 
@@ -45,8 +44,7 @@ public class AddonController {
     })
     public ResponseEntity<BaseResponse<AddonRes>> create(@Valid @RequestBody AddonCreateReq req) {
         log.info("Request to create addon: {}", req);
-        BaseResponse<AddonRes> res = service.create(req);
-        return build(res, HttpStatus.CREATED);
+        return respond(() -> service.create(req), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -61,7 +59,7 @@ public class AddonController {
     public ResponseEntity<BaseResponse<AddonRes>> update(@PathVariable @Min(1) Integer id,
                                                          @Valid @RequestBody AddonUpdateReq req) {
         log.info("Updating addon {} with {}", id, req);
-        return build(service.update(id, req));
+        return respond(() -> service.update(id, req));
     }
 
     @GetMapping("/{id}")
@@ -69,7 +67,7 @@ public class AddonController {
     @Operation(summary = "Get addon by ID", description = "Retrieves the addon with the specified ID")
     public ResponseEntity<BaseResponse<AddonRes>> get(@PathVariable @Min(1) Integer id) {
         log.debug("Fetching addon {}", id);
-        return build(service.get(id));
+        return respond(() -> service.get(id));
     }
 
     @GetMapping
@@ -78,7 +76,7 @@ public class AddonController {
     public ResponseEntity<BaseResponse<Page<AddonRes>>> list(@RequestParam(required = false) String category,
                                                              @ParameterObject Pageable pageable) {
         log.debug("Listing addons for category={} page={}", category, pageable);
-        return build(service.list(category, pageable));
+        return respond(() -> service.list(category, pageable));
     }
 
     @DeleteMapping("/{id}")

@@ -1,11 +1,10 @@
 package com.ejada.setup.controller;
 
-import static com.ejada.common.http.BaseResponseEntityFactory.build;
-
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.BaseResponseController;
 import com.ejada.setup.dto.ResourceDto;
-import com.ejada.setup.security.SetupAuthorized;
 import com.ejada.setup.service.ResourceService;
+import com.ejada.starter_security.authorization.PlatformServiceAuthorized;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -37,7 +36,7 @@ import java.util.List;
 @RequestMapping("/setup/resources")
 @Validated
 @Tag(name = "Resource Management", description = "APIs for managing resources")
-public class ResourceController {
+public class ResourceController extends BaseResponseController {
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final ResourceService resourceService;
@@ -47,7 +46,7 @@ public class ResourceController {
     }
 
     @PostMapping
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Create a new resource", description = "Creates a new resource with the provided details")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Resource created successfully",
@@ -57,12 +56,11 @@ public class ResourceController {
         @ApiResponse(responseCode = "409", description = "Resource already exists")
     })
     public ResponseEntity<BaseResponse<ResourceDto>> add(final @Valid @RequestBody ResourceDto body) {
-        BaseResponse<ResourceDto> response = resourceService.add(body);
-        return build(response);
+        return respond(() -> resourceService.add(body));
     }
 
     @PutMapping("/{resourceId}")
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Update an existing resource", description = "Updates the resource with the specified ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Resource updated successfully"),
@@ -74,12 +72,11 @@ public class ResourceController {
             @Parameter(description = "ID of the resource to update", required = true)
             @PathVariable @Min(1) final Integer resourceId,
             final @Valid @RequestBody ResourceDto body) {
-        BaseResponse<ResourceDto> response = resourceService.update(resourceId, body);
-        return build(response);
+        return respond(() -> resourceService.update(resourceId, body));
     }
 
     @GetMapping("/{resourceId}")
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Get resource by ID", description = "Retrieves a resource by its ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Resource found successfully"),
@@ -89,12 +86,11 @@ public class ResourceController {
     public ResponseEntity<BaseResponse<ResourceDto>> get(
             @Parameter(description = "ID of the resource to retrieve", required = true)
             @PathVariable @Min(1) final Integer resourceId) {
-        BaseResponse<ResourceDto> response = resourceService.get(resourceId);
-        return build(response);
+        return respond(() -> resourceService.get(resourceId));
     }
 
     @GetMapping
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "List resources", description = "Retrieves a paginated list of resources with optional search")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Resources retrieved successfully"),
@@ -107,19 +103,17 @@ public class ResourceController {
             @Parameter(description = "Whether to retrieve all resources (ignores pagination)")
             @RequestParam(name = "unpaged", defaultValue = "false") final boolean unpaged) {
         final Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
-        BaseResponse<Page<ResourceDto>> response = resourceService.list(effectivePageable, q, unpaged);
-        return build(response);
+        return respond(() -> resourceService.list(effectivePageable, q, unpaged));
     }
 
     @GetMapping("/active")
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "List active resources", description = "Retrieves all active resources")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Active resources retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
     public ResponseEntity<BaseResponse<List<ResourceDto>>> listActive() {
-        BaseResponse<List<ResourceDto>> response = resourceService.listActive();
-        return build(response);
+        return respond(resourceService::listActive);
     }
 }

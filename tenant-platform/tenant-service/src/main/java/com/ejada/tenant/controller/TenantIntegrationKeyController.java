@@ -1,13 +1,12 @@
 package com.ejada.tenant.controller;
 
-import static com.ejada.common.http.BaseResponseEntityFactory.build;
-
+import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.BaseResponseController;
 import com.ejada.tenant.dto.TenantIntegrationKeyCreateReq;
 import com.ejada.tenant.dto.TenantIntegrationKeyRes;
 import com.ejada.tenant.dto.TenantIntegrationKeyUpdateReq;
 import com.ejada.tenant.security.TenantAuthorized;
 import com.ejada.tenant.service.TenantIntegrationKeyService;
-import com.ejada.common.dto.BaseResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -38,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Tenant Integration Keys", description = "APIs for managing tenant integration keys")
-public class TenantIntegrationKeyController {
+public class TenantIntegrationKeyController extends BaseResponseController {
 
     private final TenantIntegrationKeyService service;
 
@@ -54,8 +53,7 @@ public class TenantIntegrationKeyController {
     })
     public ResponseEntity<BaseResponse<TenantIntegrationKeyRes>> create(
             @Valid @RequestBody final TenantIntegrationKeyCreateReq req) {
-        BaseResponse<TenantIntegrationKeyRes> response = service.create(req);
-        return build(response, HttpStatus.CREATED);
+        return respond(() -> service.create(req), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -70,7 +68,7 @@ public class TenantIntegrationKeyController {
     public ResponseEntity<BaseResponse<TenantIntegrationKeyRes>> update(
             @PathVariable("id") @Min(1) final Long tikId,
             @Valid @RequestBody final TenantIntegrationKeyUpdateReq req) {
-        return build(service.update(tikId, req));
+        return respond(() -> service.update(tikId, req));
     }
 
     @TenantAuthorized
@@ -83,7 +81,7 @@ public class TenantIntegrationKeyController {
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<TenantIntegrationKeyRes>> get(
             @PathVariable("id") @Min(1) final Long tikId) {
-        return build(service.get(tikId));
+        return respond(() -> service.get(tikId));
     }
 
     @TenantAuthorized
@@ -98,7 +96,7 @@ public class TenantIntegrationKeyController {
     public ResponseEntity<BaseResponse<Page<TenantIntegrationKeyRes>>> listByTenant(
             @PathVariable @Min(1) final Integer tenantId,
             @ParameterObject final Pageable pageable) {
-        return build(service.listByTenant(tenantId, pageable));
+        return respond(() -> service.listByTenant(tenantId, pageable));
     }
 
     @TenantAuthorized

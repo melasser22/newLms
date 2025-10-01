@@ -1,13 +1,12 @@
 package com.ejada.setup.controller;
 
-import static com.ejada.common.http.BaseResponseEntityFactory.build;
-
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.BaseResponseController;
 import com.ejada.setup.dto.LookupCreateRequest;
 import com.ejada.setup.dto.LookupResponse;
 import com.ejada.setup.dto.LookupUpdateRequest;
-import com.ejada.setup.security.SetupAuthorized;
 import com.ejada.setup.service.LookupService;
+import com.ejada.starter_security.authorization.PlatformServiceAuthorized;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -36,7 +35,7 @@ import java.util.List;
 @RequestMapping("/setup/lookups")
 @Validated
 @Tag(name = "Lookup Management", description = "APIs for managing lookup values")
-public class LookupController {
+public class LookupController extends BaseResponseController {
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final LookupService lookupService;
@@ -46,7 +45,7 @@ public class LookupController {
     }
 
     @PostMapping
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Create a new lookup", description = "Creates a new lookup value with the provided details")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lookup created successfully",
@@ -57,12 +56,11 @@ public class LookupController {
     })
     public ResponseEntity<BaseResponse<LookupResponse>> add(
             @Valid @RequestBody final LookupCreateRequest body) {
-        BaseResponse<LookupResponse> response = lookupService.add(body);
-        return build(response);
+        return respond(() -> lookupService.add(body));
     }
 
     @PutMapping("/{lookupItemId}")
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Update an existing lookup", description = "Updates the lookup with the specified ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lookup updated successfully"),
@@ -74,24 +72,22 @@ public class LookupController {
             @Parameter(description = "ID of the lookup to update", required = true)
             @PathVariable @Min(1) final Integer lookupItemId,
             @Valid @RequestBody final LookupUpdateRequest body) {
-        BaseResponse<LookupResponse> response = lookupService.update(lookupItemId, body);
-        return build(response);
+        return respond(() -> lookupService.update(lookupItemId, body));
     }
 
     @GetMapping
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Get all lookups", description = "Retrieves all lookup values")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lookups retrieved successfully"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
     public ResponseEntity<BaseResponse<List<LookupResponse>>> getAllLookups() {
-        BaseResponse<List<LookupResponse>> response = lookupService.getAllLookups();
-        return build(response);
+        return respond(lookupService::getAllLookups);
     }
 
     @GetMapping("/group/{groupCode}")
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Get lookups by group", description = "Retrieves all lookups of a specific group")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lookups retrieved successfully"),
@@ -100,8 +96,7 @@ public class LookupController {
     public ResponseEntity<BaseResponse<List<LookupResponse>>> getByGroup(
             @Parameter(description = "Group code of lookups to retrieve", required = true)
             @PathVariable @NotBlank final String groupCode) {
-        BaseResponse<List<LookupResponse>> response = lookupService.getByGroup(groupCode);
-        return build(response);
+        return respond(() -> lookupService.getByGroup(groupCode));
     }
 
     @GetMapping("/all")
@@ -115,7 +110,6 @@ public class LookupController {
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
     public ResponseEntity<BaseResponse<List<LookupResponse>>> getAll() {
-        BaseResponse<List<LookupResponse>> response = lookupService.getAll();
-        return build(response);
+        return respond(lookupService::getAll);
     }
 }

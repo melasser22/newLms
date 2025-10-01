@@ -1,12 +1,11 @@
 package com.ejada.sec.controller;
 
-import static com.ejada.common.http.BaseResponseEntityFactory.build;
-
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.BaseResponseController;
 import com.ejada.sec.domain.EffectivePrivilegeProjection;
 import com.ejada.sec.repository.EffectivePrivilegeViewRepository;
 import com.ejada.starter_core.tenant.RequireTenant;
-import com.ejada.sec.security.SecAuthorized;
+import com.ejada.starter_security.authorization.PlatformServiceAuthorized;
 import com.ejada.sec.util.TenantContextResolver;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -17,17 +16,15 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/effective-privileges")
 @RequiredArgsConstructor
 @RequireTenant
-@SecAuthorized
-public class EffectivePrivilegesController {
+@PlatformServiceAuthorized
+public class EffectivePrivilegesController extends BaseResponseController {
 
   private final EffectivePrivilegeViewRepository viewRepo;
 
   @GetMapping("/{userId}")
   public ResponseEntity<BaseResponse<List<EffectivePrivilegeProjection>>> list(@PathVariable Long userId) {
-    BaseResponse<List<EffectivePrivilegeProjection>> response =
-        BaseResponse.success(
+    return respond(() -> BaseResponse.success(
             "Effective privileges listed",
-            viewRepo.findEffectiveByUserAndTenant(userId, TenantContextResolver.requireTenantId()));
-    return build(response);
+            viewRepo.findEffectiveByUserAndTenant(userId, TenantContextResolver.requireTenantId())));
   }
 }
