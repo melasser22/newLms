@@ -62,6 +62,21 @@ class SubscriptionApprovalConsumerIT {
         registry.add("spring.flyway.default-schema", () -> "subscription");
         registry.add("spring.kafka.bootstrap-servers", KAFKA::getBootstrapServers);
         registry.add("spring.kafka.consumer.auto-offset-reset", () -> "earliest");
+        registry.add(
+                "spring.kafka.producer.value-serializer",
+                () -> "org.springframework.kafka.support.serializer.JsonSerializer");
+        registry.add(
+                "spring.kafka.producer.properties.spring.json.add.type.headers",
+                () -> "false");
+        registry.add(
+                "spring.kafka.consumer.value-deserializer",
+                () -> "org.springframework.kafka.support.serializer.JsonDeserializer");
+        registry.add(
+                "spring.kafka.consumer.properties.spring.json.trusted.packages",
+                () -> "*");
+        registry.add(
+                "spring.kafka.consumer.properties.spring.json.value.default.type",
+                () -> "java.util.LinkedHashMap");
         registry.add("app.subscription-approval.topic", () -> APPROVAL_TOPIC);
         registry.add("app.subscription-approval.consumer-group", () -> CONSUMER_GROUP);
     }
