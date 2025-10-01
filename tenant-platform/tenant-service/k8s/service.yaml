@@ -1,13 +1,18 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ejada-catalog
+  name: ejada-tenant
   labels:
-    app: ejada-catalog
-    version: 1.0.0
+    app: ejada-tenant
+    app.kubernetes.io/name: tenant-service
+    app.kubernetes.io/instance: ejada-tenant
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: ejada-lms
 spec:
   selector:
-    app: ejada-catalog
+    app: ejada-tenant
+    app.kubernetes.io/name: tenant-service
   ports:
     - protocol: TCP
       port: 80

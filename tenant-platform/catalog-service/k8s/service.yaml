@@ -4,10 +4,15 @@ metadata:
   name: ejada-catalog
   labels:
     app: ejada-catalog
-    version: 1.0.0
+    app.kubernetes.io/name: catalog-service
+    app.kubernetes.io/instance: ejada-catalog
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: ejada-lms
 spec:
   selector:
     app: ejada-catalog
+    app.kubernetes.io/name: catalog-service
   ports:
     - protocol: TCP
       port: 80

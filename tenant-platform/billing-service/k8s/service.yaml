@@ -1,13 +1,18 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ejada-catalog
+  name: ejada-billing
   labels:
-    app: ejada-catalog
-    version: 1.0.0
+    app: ejada-billing
+    app.kubernetes.io/name: billing-service
+    app.kubernetes.io/instance: ejada-billing
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: ejada-lms
 spec:
   selector:
-    app: ejada-catalog
+    app: ejada-billing
+    app.kubernetes.io/name: billing-service
   ports:
     - protocol: TCP
       port: 80
