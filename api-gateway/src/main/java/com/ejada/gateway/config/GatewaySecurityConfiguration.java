@@ -54,6 +54,7 @@ public class GatewaySecurityConfiguration {
       if (permitAll != null && permitAll.length > 0) {
         spec.pathMatchers(permitAll).permitAll();
       }
+      spec.pathMatchers("/fallback/**").permitAll();
       spec.pathMatchers(HttpMethod.OPTIONS).permitAll();
       spec.anyExchange().authenticated();
     });
