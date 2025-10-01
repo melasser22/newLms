@@ -92,7 +92,7 @@ public class SharedSecurityProps implements BaseStarterProperties {
         "/v3/api-docs/**",
         "/swagger-ui/**",
         // common public endpoints (with and without /api version prefix):
-        "/auth/**", "/api/**/auth/**",
+        "/auth/**", "/api/*/auth/**",
         "/login", "/register",
         "/config/**"
     };
@@ -102,7 +102,7 @@ public class SharedSecurityProps implements BaseStarterProperties {
 
     /** Patterns that should bypass CSRF checks when CSRF is enabled. */
     private String[] csrfIgnore = new String[]{
-        "/auth/**", "/api/**/auth/**",
+        "/auth/**", "/api/*/auth/**",
         "/login", "/register"
     };
 
