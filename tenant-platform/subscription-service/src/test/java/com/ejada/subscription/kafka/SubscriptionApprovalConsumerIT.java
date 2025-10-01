@@ -42,9 +42,12 @@ class SubscriptionApprovalConsumerIT {
     static final PostgreSQLContainer<?> POSTGRES =
             new PostgreSQLContainer<>(DockerImageName.parse("postgres:15-alpine"));
 
+    private static final DockerImageName KAFKA_IMAGE =
+            DockerImageName.parse("confluentinc/cp-kafka:7.5.3")
+                    .asCompatibleSubstituteFor("apache/kafka");
+
     @Container
-    static final KafkaContainer KAFKA =
-            new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.5.3"));
+    static final KafkaContainer KAFKA = new KafkaContainer(KAFKA_IMAGE);
 
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
