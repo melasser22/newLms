@@ -22,7 +22,6 @@ public class TenantAccessPolicy {
             final SharedSecurityProps securityProps) {
         String prefix = Optional.ofNullable(securityProps)
                 .map(SharedSecurityProps::getRolePrefix)
-                .filter(StringUtils::hasText)
                 .orElse("ROLE_");
 
         String[] tokens = StringUtils.tokenizeToStringArray(allowedRoles, ",");
@@ -32,9 +31,24 @@ public class TenantAccessPolicy {
             this.allowedRoles = Arrays.stream(tokens)
                     .map(String::trim)
                     .filter(StringUtils::hasText)
-                    .map(role -> role.startsWith(prefix) ? role : prefix + role)
+                    .map(role -> normalizeRole(role, prefix))
                     .collect(Collectors.toUnmodifiableSet());
         }
+    }
+
+    private static String normalizeRole(final String configuredRole, final String prefix) {
+        String trimmed = configuredRole.trim();
+        if (!StringUtils.hasText(prefix)) {
+            if (trimmed.startsWith("ROLE_")) {
+                String withoutDefault = trimmed.substring("ROLE_".length());
+                return withoutDefault.isBlank() ? trimmed : withoutDefault;
+            }
+            return trimmed;
+        }
+        if (trimmed.startsWith(prefix)) {
+            return trimmed;
+        }
+        return prefix + trimmed;
     }
 
     public boolean isAllowed(final Authentication authentication) {

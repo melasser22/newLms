@@ -2,18 +2,13 @@ package com.ejada.tenant.kafka;
 
 import com.ejada.common.events.subscription.SubscriptionApprovalAction;
 import com.ejada.common.events.subscription.SubscriptionApprovalMessage;
-import com.ejada.common.events.subscription.SubscriptionApprovalProperties;
 import com.ejada.tenant.dto.TenantCreateReq;
 import com.ejada.tenant.exception.TenantConflictException;
 import com.ejada.tenant.service.TenantService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -30,8 +25,6 @@ public class SubscriptionApprovalListener {
 
     private final ObjectMapper objectMapper;
     private final TenantService tenantService;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final SubscriptionApprovalProperties approvalProperties;
     @KafkaListener(
             topics = "${app.subscription-approval.topic}",
             groupId = "${app.subscription-approval.consumer-group}",
@@ -78,38 +71,11 @@ public class SubscriptionApprovalListener {
             acknowledgment.acknowledge();
         } catch (RuntimeException ex) {
             log.error(
-                    "Failed to provision tenant {} for approval request {}. Routing to dead-letter topic.",
+                    "Failed to provision tenant {} for approval request {}. Will be retried or dead-lettered by the container.",
                     req.code(),
                     message.requestId(),
                     ex);
-            publishToDeadLetterTopic(payload, message);
-            acknowledgment.acknowledge();
-        }
-    }
-
-    private void publishToDeadLetterTopic(
-            Map<String, Object> payload, SubscriptionApprovalMessage message) {
-        String deadLetterTopic = approvalProperties.getTopic() + ".dlt";
-        try {
-            kafkaTemplate
-                    .send(deadLetterTopic, message.requestId(), payload)
-                    .get(10, TimeUnit.SECONDS);
-            log.warn(
-                    "Routed subscription approval {} for tenant {} to dead-letter topic {}",
-                    message.requestId(),
-                    message.tenantCode(),
-                    deadLetterTopic);
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(
-                    "Interrupted while publishing subscription approval %s to dead-letter topic %s"
-                            .formatted(message.requestId(), deadLetterTopic),
-                    ie);
-        } catch (ExecutionException | TimeoutException publishFailure) {
-            throw new IllegalStateException(
-                    "Failed to publish subscription approval %s to dead-letter topic %s"
-                            .formatted(message.requestId(), deadLetterTopic),
-                    publishFailure);
+            throw ex;
         }
     }
 }
