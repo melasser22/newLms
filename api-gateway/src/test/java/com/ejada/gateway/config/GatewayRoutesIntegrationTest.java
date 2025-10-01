@@ -18,7 +18,9 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = {
-        "shared.ratelimit.enabled=false"
+        "shared.ratelimit.enabled=false",
+        "shared.security.mode=hs256",
+        "shared.security.hs256.secret=" + GatewayRoutesIntegrationTest.SECRET
     }
 )
 @TestPropertySource(properties = {
@@ -30,6 +32,9 @@ import org.springframework.test.web.reactive.server.WebTestClient;
     "gateway.routes.test.resilience.fallback-message=Custom outage message"
 })
 class GatewayRoutesIntegrationTest {
+
+  static final String SECRET =
+      "0123456789ABCDEF0123456789ABCDEF-SECURE-0123456789ABCDEF";
 
   @Autowired
   private WebTestClient webTestClient;
