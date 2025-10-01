@@ -85,12 +85,19 @@ class SystemParameterControllerIntegrationTest {
     }
 
     @EnableCaching(proxyTargetClass = true)
+    // Exclude security auto-configuration to avoid loading the full resource server stack
+    // when only verifying controller/caching behaviour.
     @EnableAutoConfiguration(exclude = {
         DataSourceAutoConfiguration.class,
         HibernateJpaAutoConfiguration.class,
         JpaRepositoriesAutoConfiguration.class,
         LiquibaseAutoConfiguration.class,
-        FlywayAutoConfiguration.class
+        FlywayAutoConfiguration.class,
+        com.ejada.starter_security.SecurityAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
     })
     @Import(SystemParameterController.class)
     static class TestApp {
