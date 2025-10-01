@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/effective-privileges")
+@RequestMapping("/api/v1/effective-privileges")
 @RequiredArgsConstructor
 @RequireTenant
 @PlatformServiceAuthorized

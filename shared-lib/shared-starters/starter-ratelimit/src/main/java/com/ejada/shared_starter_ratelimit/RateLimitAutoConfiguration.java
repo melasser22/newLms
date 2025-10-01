@@ -10,7 +10,8 @@ public class RateLimitAutoConfiguration {
   public FilterRegistrationBean<RateLimitFilter> rateLimitFilter(StringRedisTemplate redis, RateLimitProps props){
     FilterRegistrationBean<RateLimitFilter> reg = new FilterRegistrationBean<>();
     reg.setFilter(new RateLimitFilter(redis, props));
-    reg.addUrlPatterns("/api/*"); reg.setOrder(1);
+    reg.addUrlPatterns("/api/v1/*");
+    reg.setOrder(1);
     return reg;
   }
 }

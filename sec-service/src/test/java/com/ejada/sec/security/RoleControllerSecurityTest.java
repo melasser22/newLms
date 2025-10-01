@@ -60,7 +60,7 @@ class RoleControllerSecurityTest {
 
     @Test
     void protectedEndpointsRequireAuthentication() throws Exception {
-        mockMvc.perform(get("/api/roles"))
+        mockMvc.perform(get("/api/v1/roles"))
             .andExpect(status().isUnauthorized());
     }
 
@@ -72,7 +72,7 @@ class RoleControllerSecurityTest {
                 .tenant("tenant-1")
                 .build();
 
-        mockMvc.perform(get("/api/roles")
+        mockMvc.perform(get("/api/v1/roles")
                         .header(AUTHORIZATION, "Bearer " + token)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -87,7 +87,7 @@ class RoleControllerSecurityTest {
                 .tenant("tenant-1")
                 .build();
 
-        mockMvc.perform(get("/api/roles")
+        mockMvc.perform(get("/api/v1/roles")
                         .header(AUTHORIZATION, "Bearer " + token)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())
@@ -104,7 +104,7 @@ class RoleControllerSecurityTest {
                 .expiresAt(Instant.now().minusSeconds(3600))
                 .build();
 
-        mockMvc.perform(get("/api/roles")
+        mockMvc.perform(get("/api/v1/roles")
                         .header(AUTHORIZATION, "Bearer " + token)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized())
