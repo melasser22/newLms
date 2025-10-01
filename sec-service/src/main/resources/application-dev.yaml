@@ -215,7 +215,10 @@ shared:
       enabled: true
       permit-all:
         - "/actuator/health"
+        - "/api/v1/auth/**"
       disable-csrf: false
+      csrf-ignore:
+        - "/api/v1/auth/**"
     stateless: true
     roles-claim: roles
     tenant-claim: tenant
