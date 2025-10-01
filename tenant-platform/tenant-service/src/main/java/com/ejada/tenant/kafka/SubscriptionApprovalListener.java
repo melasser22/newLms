@@ -26,8 +26,8 @@ public class SubscriptionApprovalListener {
     private final ObjectMapper objectMapper;
     private final TenantService tenantService;
     @KafkaListener(
-            topics = "#{@subscriptionApprovalProperties.topic}",
-            groupId = "#{@subscriptionApprovalProperties.consumerGroup}",
+            topics = "${app.subscription-approval.topic}",
+            groupId = "${app.subscription-approval.consumer-group}",
             containerFactory = "subscriptionApprovalListenerContainerFactory"
     )
     public void onMessage(@Payload final Map<String, Object> payload, Acknowledgment acknowledgment) {

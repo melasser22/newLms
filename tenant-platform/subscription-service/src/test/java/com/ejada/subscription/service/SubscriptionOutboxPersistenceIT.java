@@ -6,6 +6,7 @@ import com.ejada.subscription.acl.MarketplaceCallbackOrchestrator;
 import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
 import com.ejada.subscription.repository.OutboxEventRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.flywaydb.core.Flyway;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -47,6 +48,7 @@ class SubscriptionOutboxPersistenceIT {
         registry.add("spring.flyway.locations", () -> "classpath:db/migration/postgresql");
         registry.add("spring.flyway.schemas", () -> "subscription");
         registry.add("spring.flyway.default-schema", () -> "subscription");
+        registry.add("spring.flyway.clean-disabled", () -> "false");
     }
 
     private MarketplaceCallbackOrchestrator orchestrator;
@@ -57,8 +59,13 @@ class SubscriptionOutboxPersistenceIT {
     @Autowired
     private PlatformTransactionManager txManager;
 
+    @Autowired
+    private Flyway flyway;
+
     @BeforeEach
     void setUp() {
+        flyway.clean();
+        flyway.migrate();
         orchestrator = new MarketplaceCallbackOrchestrator(
                 Mockito.mock(com.ejada.subscription.repository.SubscriptionRepository.class),
                 Mockito.mock(com.ejada.subscription.repository.SubscriptionFeatureRepository.class),

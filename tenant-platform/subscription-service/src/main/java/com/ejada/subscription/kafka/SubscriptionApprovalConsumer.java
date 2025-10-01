@@ -36,8 +36,8 @@ public class SubscriptionApprovalConsumer {
     private final TenantProvisioningPublisher provisioningPublisher;
 
     @KafkaListener(
-            topics = "#{@subscriptionApprovalProperties.topic}",
-            groupId = "#{@subscriptionApprovalProperties.consumerGroup}"
+            topics = "${app.subscription-approval.topic}",
+            groupId = "${app.subscription-approval.consumer-group}"
     )
     @Transactional(readOnly = true)
     public void onApproval(@Payload final Map<String, Object> payload) {
