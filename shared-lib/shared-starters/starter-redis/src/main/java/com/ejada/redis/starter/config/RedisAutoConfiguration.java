@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.CacheManager;
+import com.ejada.redis.starter.support.RedisCacheHelper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
@@ -83,6 +84,13 @@ public class RedisAutoConfiguration {
     if (props.getClientName() != null && !props.getClientName().isBlank()) client.clientName(props.getClientName());
 
     return new LettuceConnectionFactory(standalone, client.build());
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public RedisCacheHelper redisCacheHelper(
+      RedisTemplate<String, Object> redisTemplate, KeyPrefixStrategy keyPrefixStrategy) {
+    return new RedisCacheHelper(redisTemplate, keyPrefixStrategy);
   }
 
   // Serializers
