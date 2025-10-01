@@ -1,26 +1,38 @@
 package com.ejada.tenant.security;
 
+import com.ejada.starter_security.SharedSecurityProps;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 public class TenantAccessPolicy {
 
     private final Set<String> allowedRoles;
 
-    public TenantAccessPolicy(@Value("${tenant.security.allowed-roles:EJADA_OFFICER}") final String allowedRoles) {
-        if (allowedRoles == null || allowedRoles.isBlank()) {
+    public TenantAccessPolicy(
+            @Value("${tenant.security.allowed-roles:ROLE_EJADA_OFFICER}") final String allowedRoles,
+            final SharedSecurityProps securityProps) {
+        String prefix = Optional.ofNullable(securityProps)
+                .map(SharedSecurityProps::getRolePrefix)
+                .filter(StringUtils::hasText)
+                .orElse("ROLE_");
+
+        String[] tokens = StringUtils.tokenizeToStringArray(allowedRoles, ",");
+        if (tokens == null || tokens.length == 0) {
             this.allowedRoles = Collections.emptySet();
         } else {
-            this.allowedRoles = Arrays.stream(allowedRoles.split(","))
+            this.allowedRoles = Arrays.stream(tokens)
                     .map(String::trim)
-                    .filter(s -> !s.isEmpty())
+                    .filter(StringUtils::hasText)
+                    .map(role -> role.startsWith(prefix) ? role : prefix + role)
                     .collect(Collectors.toUnmodifiableSet());
         }
     }
