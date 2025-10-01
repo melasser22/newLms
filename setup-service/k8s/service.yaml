@@ -4,10 +4,15 @@ metadata:
   name: ejada-setup
   labels:
     app: ejada-setup
-    version: 1.0.0
+    app.kubernetes.io/name: setup-service
+    app.kubernetes.io/instance: ejada-setup
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: ejada-lms
 spec:
   selector:
     app: ejada-setup
+    app.kubernetes.io/name: setup-service
   ports:
     - protocol: TCP
       port: 80
