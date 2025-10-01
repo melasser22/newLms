@@ -49,11 +49,11 @@ public class TenantServiceImpl implements TenantService {
                 .orElseThrow(() -> new EntityNotFoundException("Tenant " + id));
 
         if (req.code() != null && !req.code().equals(e.getCode())
-                && repo.existsByCodeAndIdNot(req.code(), id)) {
+                && repo.existsByCodeAndIsDeletedFalseAndIdNot(req.code(), id)) {
             throw new TenantConflictException(TenantErrorCode.CODE_EXISTS, "tenant code exists: " + req.code());
         }
         if (req.name() != null && !req.name().equalsIgnoreCase(e.getName())
-                && repo.existsByNameIgnoreCaseAndIdNot(req.name(), id)) {
+                && repo.existsByNameIgnoreCaseAndIsDeletedFalseAndIdNot(req.name(), id)) {
             throw new TenantConflictException(TenantErrorCode.NAME_EXISTS, "tenant name exists: " + req.name());
         }
 

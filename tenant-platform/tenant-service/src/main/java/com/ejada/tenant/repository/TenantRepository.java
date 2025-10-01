@@ -29,8 +29,12 @@ public interface TenantRepository extends JpaRepository<Tenant, Integer> {
     boolean existsByNameIgnoreCase(String name);
 
     boolean existsByNameIgnoreCaseAndIdNot(String name, Integer id);
-    
+
     boolean existsByCodeAndIsDeletedFalse(String code);
 
     boolean existsByNameIgnoreCaseAndIsDeletedFalse(String name);
+
+    boolean existsByCodeAndIsDeletedFalseAndIdNot(String code, Integer id);
+
+    boolean existsByNameIgnoreCaseAndIsDeletedFalseAndIdNot(String name, Integer id);
 }
