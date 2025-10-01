@@ -170,6 +170,9 @@ services:
       OTEL_SERVICE_NAME: tenant-service
     ports:
       - "8080:8080"
+    healthcheck:
+      <<: *health_defaults
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
     networks:
       backend:
 
@@ -185,6 +188,9 @@ services:
       OTEL_SERVICE_NAME: setup-service
     ports:
       - "8081:8080"
+    healthcheck:
+      <<: *health_defaults
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
     networks:
       backend:
 
@@ -200,6 +206,9 @@ services:
       OTEL_SERVICE_NAME: billing-service
     ports:
       - "8082:8080"
+    healthcheck:
+      <<: *health_defaults
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
     networks:
       backend:
 
@@ -215,6 +224,9 @@ services:
       OTEL_SERVICE_NAME: catalog-service
     ports:
       - "8083:8080"
+    healthcheck:
+      <<: *health_defaults
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
     networks:
       backend:
 
@@ -230,6 +242,9 @@ services:
       OTEL_SERVICE_NAME: subscription-service
     ports:
       - "8084:8080"
+    healthcheck:
+      <<: *health_defaults
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
     networks:
       backend:
 
@@ -254,6 +269,9 @@ services:
       OTEL_SERVICE_NAME: security-service
     ports:
       - "8085:8080"
+    healthcheck:
+      <<: *health_defaults
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
     networks:
       backend:
 
