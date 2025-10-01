@@ -2,8 +2,8 @@ package com.ejada.starter_security;
 
 import com.ejada.common.constants.HeaderNames;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ejada.starter_security.authorization.AuthorizationExpressions;
 import com.ejada.starter_security.web.JsonAccessDeniedHandler;
-import com.ejada.starter_security.web.JsonAuthEntryPoint;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
@@ -76,6 +76,15 @@ public class SecurityAutoConfiguration {
   @ConditionalOnMissingBean(RoleChecker.class)
   public RoleChecker roleChecker(SharedSecurityProps props) {
     return new RoleChecker(props);
+  }
+
+  /* ---------------------------------------------------
+   * AuthorizationExpressions : reusable SpEL helpers
+   * --------------------------------------------------- */
+  @Bean
+  @ConditionalOnMissingBean(AuthorizationExpressions.class)
+  public AuthorizationExpressions authorizationExpressions(RoleChecker roleChecker) {
+    return new AuthorizationExpressions(roleChecker);
   }
 
   /* ---------------------------------------------------

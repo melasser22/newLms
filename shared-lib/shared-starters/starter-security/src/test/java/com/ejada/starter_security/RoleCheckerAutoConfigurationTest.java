@@ -22,4 +22,12 @@ class RoleCheckerAutoConfigurationTest {
       assertNotNull(context.getBean(RoleChecker.class));
     });
   }
+
+  @Test
+  void providesAuthorizationExpressionsBean() {
+    contextRunner.run(context -> {
+      assertTrue(context.containsBean("authorizationExpressions"));
+      assertNotNull(context.getBean(com.ejada.starter_security.authorization.AuthorizationExpressions.class));
+    });
+  }
 }

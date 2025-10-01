@@ -1,6 +1,21 @@
 spring:
   config:
-    import: optional:classpath:application-shared-platform-dev.yaml
+    import:
+      - optional:classpath:application-shared-platform-dev.yaml
+      - optional:vault://secret/data/setup-service
+      - optional:aws-secretsmanager:setup-service/config
+  cloud:
+    vault:
+      enabled: ${VAULT_ENABLED:false}
+      uri: ${VAULT_URI:}
+      authentication: ${VAULT_AUTH_METHOD:token}
+      token: ${VAULT_TOKEN:}
+      kv:
+        enabled: true
+        application-name: setup-service
+    aws:
+      secretsmanager:
+        enabled: ${AWS_SECRETS_MANAGER_ENABLED:false}
   datasource:
     url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=setup}"
     username: ${DB_USERNAME:postgres}
@@ -173,10 +188,18 @@ shared:
     reactive: false
   crypto:
     algorithm: AES_GCM
+    key-provider: ${CRYPTO_KEY_PROVIDER:in-memory}
     in-memory:
       activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
       keys:
-        local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
+        ${CRYPTO_ACTIVE_KID:local-dev-key}: ${CRYPTO_LOCAL_DEV_KEY:?set CRYPTO_LOCAL_DEV_KEY via Vault or Secrets Manager}
+    vault:
+      endpoint: ${VAULT_URI:}
+      transitPath: ${VAULT_TRANSIT_PATH:transit}
+      keyName: ${VAULT_CRYPTO_KEY_NAME:}
+    aws-kms:
+      region: ${AWS_KMS_REGION:}
+      key-id: ${AWS_KMS_KEY_ID:}
 
 logging:
   level:
