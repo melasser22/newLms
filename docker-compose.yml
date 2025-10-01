@@ -278,5 +278,8 @@ services:
       SHARED_SECURITY_RESOURCE_SERVER_ENABLED: "false"
     ports:
       - "8088:8080"
+    healthcheck:
+      <<: *health_defaults
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/actuator/health || exit 1"]
     networks:
       backend:
