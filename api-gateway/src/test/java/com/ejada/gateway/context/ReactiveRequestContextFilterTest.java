@@ -39,7 +39,7 @@ class ReactiveRequestContextFilterTest {
 
     @Test
     void populatesContextAndReactorContext() {
-        MockServerHttpRequest request = MockServerHttpRequest.get("/api/data")
+        MockServerHttpRequest request = MockServerHttpRequest.get("/api/v1/data")
                 .header(HeaderNames.CORRELATION_ID, "corr-123")
                 .header(HeaderNames.X_TENANT_ID, "tenant-1")
                 .build();
@@ -63,7 +63,7 @@ class ReactiveRequestContextFilterTest {
 
     @Test
     void rejectsInvalidTenantIdentifier() {
-        MockServerHttpRequest request = MockServerHttpRequest.get("/api/data")
+        MockServerHttpRequest request = MockServerHttpRequest.get("/api/v1/data")
                 .header(HeaderNames.CORRELATION_ID, "corr-789")
                 .header(HeaderNames.X_TENANT_ID, "tenant@!invalid")
                 .build();

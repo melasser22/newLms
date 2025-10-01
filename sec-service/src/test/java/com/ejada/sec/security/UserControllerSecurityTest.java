@@ -38,7 +38,7 @@ class UserControllerSecurityTest {
 
     @Test
     void userEndpointsRequireAuthentication() throws Exception {
-        mockMvc.perform(get("/api/users"))
+        mockMvc.perform(get("/api/v1/users"))
             .andExpect(status().isUnauthorized());
     }
 }

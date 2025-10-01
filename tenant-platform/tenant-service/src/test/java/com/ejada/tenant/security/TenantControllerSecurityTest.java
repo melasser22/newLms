@@ -38,7 +38,7 @@ class TenantControllerSecurityTest {
 
     @Test
     void tenantEndpointsRequireAuthentication() throws Exception {
-        mockMvc.perform(get("/tenant/api/tenants"))
+        mockMvc.perform(get("/tenant/api/v1/tenants"))
             .andExpect(status().isUnauthorized());
     }
 }

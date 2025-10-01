@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/grants")
+@RequestMapping("/api/v1/grants")
 @RequiredArgsConstructor
 @RequireTenant
 @PlatformServiceAuthorized

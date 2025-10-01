@@ -14,6 +14,7 @@ import com.ejada.audit.starter.api.AuditAction;
 import com.ejada.audit.starter.api.DataClass;
 import com.ejada.audit.starter.api.annotations.Audited;
 import jakarta.transaction.Transactional;
+import jakarta.validation.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
@@ -140,7 +141,7 @@ public class ResourceServiceImpl
         } catch (IllegalStateException ex) {
             return BaseResponse.error("ERR_RESOURCE_DUP_ENDPOINT", ex.getMessage());
         } catch (Exception ex) {
-            LOGGER.error("Add resource failed", ex);
+            logServiceFailure("Add resource failed", ex);
             return BaseResponse.error("ERR_RESOURCE_ADD", "Failed to create resource");
         }
     }
@@ -158,7 +159,7 @@ public class ResourceServiceImpl
         } catch (NotFoundException ex) {
             return BaseResponse.error("ERR_RESOURCE_NOT_FOUND", ex.getMessage());
         } catch (Exception ex) {
-            LOGGER.error("Update resource failed", ex);
+            logServiceFailure("Update resource failed", ex);
             return BaseResponse.error("ERR_RESOURCE_UPDATE", "Failed to update resource");
         }
     }
@@ -172,7 +173,7 @@ public class ResourceServiceImpl
         } catch (NotFoundException ex) {
             return BaseResponse.error("ERR_RESOURCE_NOT_FOUND", ex.getMessage());
         } catch (Exception ex) {
-            LOGGER.error("Get resource failed", ex);
+            logServiceFailure("Get resource failed", ex);
             return BaseResponse.error("ERR_RESOURCE_GET", "Failed to get resource");
         }
     }
@@ -208,7 +209,7 @@ public class ResourceServiceImpl
             }
             return BaseResponse.success("Resources page", mapper.toDtoPage(page));
         } catch (Exception ex) {
-            LOGGER.error("List resources failed", ex);
+            logServiceFailure("List resources failed", ex);
             return BaseResponse.error("ERR_RESOURCE_LIST", "Failed to list resources");
         }
     }
@@ -223,7 +224,7 @@ public class ResourceServiceImpl
                     .getContent();
             return BaseResponse.success("Active resources", mapper.toDtoList(list));
         } catch (Exception ex) {
-            LOGGER.error("List active resources failed", ex);
+            logServiceFailure("List active resources failed", ex);
             return BaseResponse.error("ERR_RESOURCE_LIST_ACTIVE", "Failed to list active resources");
         }
     }
@@ -241,8 +242,17 @@ public class ResourceServiceImpl
         try {
             return BaseResponse.success("Children", mapper.toDtoList(childrenRaw(parentResourceId)));
         } catch (Exception ex) {
-            LOGGER.error("List children resources failed", ex);
+            logServiceFailure("List children resources failed", ex);
             return BaseResponse.error("ERR_RESOURCE_CHILDREN", "Failed to list children resources");
+        }
+    }
+
+    private void logServiceFailure(final String message, final Exception ex) {
+        if (ex instanceof IllegalArgumentException || ex instanceof ValidationException) {
+            LOGGER.warn("{} due to validation issue: {}", message, ex.getMessage());
+            LOGGER.debug("Validation failure", ex);
+        } else {
+            LOGGER.error(message, ex);
         }
     }
 }

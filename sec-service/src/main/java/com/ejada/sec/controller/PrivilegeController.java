@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/privileges")
+@RequestMapping("/api/v1/privileges")
 @RequiredArgsConstructor
 @RequireTenant
 @PlatformServiceAuthorized

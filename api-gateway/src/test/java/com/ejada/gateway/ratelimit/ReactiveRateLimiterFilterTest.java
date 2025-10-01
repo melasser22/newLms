@@ -45,7 +45,7 @@ class ReactiveRateLimiterFilterTest {
 
     @Test
     void allowsRequestsWithinCapacity() {
-        MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/items").build());
+        MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/items").build());
         WebFilterChain chain = serverWebExchange -> Mono.empty();
 
         StepVerifier.create(filter.filter(exchange, chain)).verifyComplete();
@@ -57,9 +57,9 @@ class ReactiveRateLimiterFilterTest {
 
     @Test
     void rejectsWhenCapacityExceeded() {
-        MockServerWebExchange exchange1 = MockServerWebExchange.from(MockServerHttpRequest.get("/api/data").build());
-        MockServerWebExchange exchange2 = MockServerWebExchange.from(MockServerHttpRequest.get("/api/data").build());
-        MockServerWebExchange exchange3 = MockServerWebExchange.from(MockServerHttpRequest.get("/api/data").build());
+        MockServerWebExchange exchange1 = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/data").build());
+        MockServerWebExchange exchange2 = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/data").build());
+        MockServerWebExchange exchange3 = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/data").build());
         WebFilterChain chain = serverWebExchange -> Mono.empty();
 
         StepVerifier.create(filter.filter(exchange1, chain)).verifyComplete();
