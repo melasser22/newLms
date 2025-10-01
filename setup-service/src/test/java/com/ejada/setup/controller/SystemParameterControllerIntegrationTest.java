@@ -10,6 +10,9 @@ import com.ejada.common.dto.BaseResponse;
 import com.ejada.setup.dto.SystemParameterRequest;
 import com.ejada.setup.dto.SystemParameterResponse;
 import com.ejada.setup.service.SystemParameterService;
+import com.ejada.starter_security.RoleChecker;
+import com.ejada.starter_security.SharedSecurityProps;
+import com.ejada.starter_security.authorization.AuthorizationExpressions;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +33,7 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -85,6 +89,7 @@ class SystemParameterControllerIntegrationTest {
     }
 
     @EnableCaching(proxyTargetClass = true)
+    @EnableMethodSecurity(proxyTargetClass = true)
     // Exclude security auto-configuration to avoid loading the full resource server stack
     // when only verifying controller/caching behaviour.
     @EnableAutoConfiguration(exclude = {
@@ -110,6 +115,24 @@ class SystemParameterControllerIntegrationTest {
         @Bean
         TestSystemParameterService systemParameterService() {
             return new TestSystemParameterService();
+        }
+
+        @Bean
+        SharedSecurityProps sharedSecurityProps() {
+            SharedSecurityProps props = new SharedSecurityProps();
+            props.setEnableRoleCheck(false);
+            props.getHs256().setSecret("test-secret");
+            return props;
+        }
+
+        @Bean
+        RoleChecker roleChecker(SharedSecurityProps sharedSecurityProps) {
+            return new RoleChecker(sharedSecurityProps);
+        }
+
+        @Bean
+        AuthorizationExpressions authorizationExpressions(RoleChecker roleChecker) {
+            return new AuthorizationExpressions(roleChecker);
         }
     }
 
