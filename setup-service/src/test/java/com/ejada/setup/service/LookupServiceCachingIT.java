@@ -12,7 +12,6 @@ import com.ejada.common.dto.BaseResponse;
 import com.ejada.setup.dto.LookupResponse;
 import com.ejada.setup.model.Lookup;
 import com.ejada.setup.repository.LookupRepository;
-import com.ejada.setup.service.LookupService;
 import com.ejada.setup.service.impl.LookupServiceImpl;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;

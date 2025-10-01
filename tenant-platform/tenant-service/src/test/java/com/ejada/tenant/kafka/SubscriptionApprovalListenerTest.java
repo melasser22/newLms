@@ -15,6 +15,7 @@ import com.ejada.tenant.dto.TenantCreateReq;
 import com.ejada.tenant.exception.TenantConflictException;
 import com.ejada.tenant.exception.TenantErrorCode;
 import com.ejada.tenant.service.TenantService;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -163,6 +164,6 @@ class SubscriptionApprovalListenerTest {
     }
 
     private Map<String, Object> toPayload(final SubscriptionApprovalMessage message) {
-        return objectMapper.convertValue(message, Map.class);
+        return objectMapper.convertValue(message, new TypeReference<Map<String, Object>>() {});
     }
 }
