@@ -6,7 +6,6 @@ import com.ejada.common.dto.BaseResponse;
 import com.ejada.setup.dto.SystemParameterRequest;
 import com.ejada.setup.dto.SystemParameterResponse;
 
-import com.ejada.setup.model.SystemParameter;
 import com.ejada.setup.security.SetupAuthorized;
 import com.ejada.setup.service.SystemParameterService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;

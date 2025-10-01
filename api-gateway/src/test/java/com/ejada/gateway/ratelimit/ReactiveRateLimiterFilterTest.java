@@ -73,6 +73,8 @@ class ReactiveRateLimiterFilterTest {
     }
 
     private void flushRedis() {
-        connectionFactory.getReactiveConnection().serverCommands().flushAll().block();
+        try (var connection = connectionFactory.getReactiveConnection()) {
+            connection.serverCommands().flushAll().block();
+        }
     }
 }
