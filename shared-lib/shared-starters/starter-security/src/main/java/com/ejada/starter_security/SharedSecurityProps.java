@@ -91,15 +91,20 @@ public class SharedSecurityProps implements BaseStarterProperties {
         "/actuator/health",
         "/v3/api-docs/**",
         "/swagger-ui/**",
-        // common public endpoints:
-        "/auth/**", "/login", "/register","/config/**"
+        // common public endpoints (with and without /api version prefix):
+        "/auth/**", "/api/**/auth/**",
+        "/login", "/register",
+        "/config/**"
     };
 
     /** Disable CSRF for stateless REST APIs. */
     private boolean disableCsrf = true;
 
     /** Patterns that should bypass CSRF checks when CSRF is enabled. */
-    private String[] csrfIgnore = new String[0];
+    private String[] csrfIgnore = new String[]{
+        "/auth/**", "/api/**/auth/**",
+        "/login", "/register"
+    };
 
     /** Force stateless sessions for APIs. */
     private boolean stateless = true;
