@@ -5,7 +5,6 @@ import com.ejada.common.http.BaseResponseController;
 import com.ejada.setup.dto.CountryDto;
 import com.ejada.setup.constants.ValidationConstants;
 import com.ejada.setup.service.CountryService;
-import com.ejada.starter_security.authorization.PlatformServiceAuthorized;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
@@ -80,7 +79,7 @@ public class CountryController extends BaseResponseController {
     }
 
     @GetMapping("/{countryId}")
-    @PlatformServiceAuthorized
+    @PreAuthorize("hasAnyRole('ADMIN','USER','EJADA_OFFICER','TENANT_ADMIN','TENANT_OFFICER')")
     @Operation(summary = "Get country by ID", description = "Retrieves a country by its ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Country found successfully"),
@@ -96,7 +95,7 @@ public class CountryController extends BaseResponseController {
 
     @GetMapping
     //@RequireTenant
-    @PlatformServiceAuthorized
+    @PreAuthorize("hasAnyRole('ADMIN','USER','EJADA_OFFICER','TENANT_ADMIN','TENANT_OFFICER')")
     @Operation(summary = "List countries", description = "Retrieves a paginated list of countries with optional search")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Countries retrieved successfully"),
@@ -113,7 +112,7 @@ public class CountryController extends BaseResponseController {
     }
 
     @GetMapping("/active")
-    @PlatformServiceAuthorized
+    @PreAuthorize("hasAnyRole('ADMIN','USER','EJADA_OFFICER','TENANT_ADMIN','TENANT_OFFICER')")
     @Operation(summary = "List active countries", description = "Retrieves all active countries")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Active countries retrieved successfully"),
