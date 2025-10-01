@@ -1,12 +1,11 @@
 package com.ejada.setup.controller;
 
-import static com.ejada.common.http.BaseResponseEntityFactory.build;
-
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.BaseResponseController;
 import com.ejada.setup.dto.CityDto;
 import com.ejada.setup.constants.ValidationConstants;
-import com.ejada.setup.security.SetupAuthorized;
 import com.ejada.setup.service.CityService;
+import com.ejada.starter_security.authorization.PlatformServiceAuthorized;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -36,7 +35,7 @@ import java.util.List;
 @RequestMapping("/setup/cities")
 @Validated
 @Tag(name = "City Management", description = "APIs for managing cities")
-public class CityController {
+public class CityController extends BaseResponseController {
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final CityService cityService;
@@ -46,7 +45,7 @@ public class CityController {
     }
 
     @PostMapping
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Create a new city", description = "Creates a new city with the provided details")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "City created successfully",
@@ -56,12 +55,11 @@ public class CityController {
         @ApiResponse(responseCode = "409", description = "City already exists")
     })
     public ResponseEntity<BaseResponse<CityDto>> add(@Valid @RequestBody final CityDto body) {
-        BaseResponse<CityDto> response = cityService.add(body);
-        return build(response);
+        return respond(() -> cityService.add(body));
     }
 
     @PutMapping("/{cityId}")
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Update an existing city", description = "Updates the city with the specified ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "City updated successfully"),
@@ -73,12 +71,11 @@ public class CityController {
             @Parameter(description = "ID of the city to update", required = true)
             @PathVariable @Min(1) final Integer cityId,
             @Valid @RequestBody final CityDto body) {
-        BaseResponse<CityDto> response = cityService.update(cityId, body);
-        return build(response);
+        return respond(() -> cityService.update(cityId, body));
     }
 
     @GetMapping("/{cityId}")
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Get city by ID", description = "Retrieves a city by its ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "City found successfully"),
@@ -88,12 +85,11 @@ public class CityController {
     public ResponseEntity<BaseResponse<CityDto>> get(
             @Parameter(description = "ID of the city to retrieve", required = true)
             @PathVariable @Min(1) final Integer cityId) {
-        BaseResponse<CityDto> response = cityService.get(cityId);
-        return build(response);
+        return respond(() -> cityService.get(cityId));
     }
 
     @GetMapping
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "List cities", description = "Retrieves a paginated list of cities with optional search")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Cities retrieved successfully"),
@@ -106,12 +102,11 @@ public class CityController {
             @Parameter(description = "Whether to retrieve all cities (ignores pagination)")
             @RequestParam(name = "unpaged", defaultValue = "false") final boolean unpaged) {
         Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
-        BaseResponse<Page<CityDto>> response = cityService.list(effectivePageable, q, unpaged);
-        return build(response);
+        return respond(() -> cityService.list(effectivePageable, q, unpaged));
     }
 
     @GetMapping("/active")
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "List active cities by country", description = "Retrieves all active cities for the given country")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Active cities retrieved successfully"),
@@ -120,7 +115,6 @@ public class CityController {
     public ResponseEntity<BaseResponse<List<CityDto>>> listActive(
             @Parameter(description = "Country ID to filter cities", required = true)
             @RequestParam @Min(1) final Integer countryId) {
-        BaseResponse<List<CityDto>> response = cityService.listActiveByCountry(countryId);
-        return build(response);
+        return respond(() -> cityService.listActiveByCountry(countryId));
     }
 }

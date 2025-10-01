@@ -1,11 +1,10 @@
 package com.ejada.catalog.controller;
 
-import static com.ejada.common.http.BaseResponseEntityFactory.build;
-
 import com.ejada.catalog.dto.*;
 import com.ejada.catalog.security.CatalogAuthorized;
 import com.ejada.catalog.service.TierService;
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.BaseResponseController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -27,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Tier Management", description = "APIs for managing tiers")
-public class TierController {
+public class TierController extends BaseResponseController {
 
     private final TierService service;
 
@@ -42,8 +41,7 @@ public class TierController {
         @ApiResponse(responseCode = "409", description = "Tier already exists")
     })
     public ResponseEntity<BaseResponse<TierRes>> create(@Valid @RequestBody TierCreateReq req) {
-        BaseResponse<TierRes> response = service.create(req);
-        return build(response, HttpStatus.CREATED);
+        return respond(() -> service.create(req), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -57,7 +55,7 @@ public class TierController {
     })
     public ResponseEntity<BaseResponse<TierRes>> update(@PathVariable @Min(1) Integer id,
                                                         @Valid @RequestBody TierUpdateReq req) {
-        return build(service.update(id, req));
+        return respond(() -> service.update(id, req));
     }
 
     @CatalogAuthorized
@@ -69,7 +67,7 @@ public class TierController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<TierRes>> get(@PathVariable @Min(1) Integer id) {
-        return build(service.get(id));
+        return respond(() -> service.get(id));
     }
 
     @CatalogAuthorized
@@ -81,7 +79,7 @@ public class TierController {
     @GetMapping
     public ResponseEntity<BaseResponse<Page<TierRes>>> list(@RequestParam(required = false) Boolean active,
                                                             @ParameterObject Pageable pageable) {
-        return build(service.list(active, pageable));
+        return respond(() -> service.list(active, pageable));
     }
 
     @DeleteMapping("/{id}")

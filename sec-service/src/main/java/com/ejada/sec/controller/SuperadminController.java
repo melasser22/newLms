@@ -1,8 +1,7 @@
 package com.ejada.sec.controller;
 
-import static com.ejada.common.http.BaseResponseEntityFactory.build;
-
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.BaseResponseController;
 import com.ejada.sec.dto.admin.*;
 import com.ejada.sec.service.SuperadminService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,8 +20,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Tag(name = "Superadmin Management", description = "APIs for managing superadmin accounts")
 @PreAuthorize("hasRole('EJADA_OFFICER')")
-public class SuperadminController {
-    
+public class SuperadminController extends BaseResponseController {
+
     private final SuperadminService superadminService;
     
     @PostMapping
@@ -30,8 +29,7 @@ public class SuperadminController {
                description = "Creates a new superadmin account. Only existing superadmins can perform this action.")
     public ResponseEntity<BaseResponse<SuperadminDto>> createSuperadmin(
             @Valid @RequestBody CreateSuperadminRequest request) {
-        BaseResponse<SuperadminDto> response = superadminService.createSuperadmin(request);
-        return build(response, HttpStatus.CREATED);
+        return respond(() -> superadminService.createSuperadmin(request), HttpStatus.CREATED);
     }
     
     @PutMapping("/{id}")
@@ -40,46 +38,40 @@ public class SuperadminController {
     public ResponseEntity<BaseResponse<SuperadminDto>> updateSuperadmin(
             @PathVariable Long id,
             @Valid @RequestBody UpdateSuperadminRequest request) {
-        BaseResponse<SuperadminDto> response = superadminService.updateSuperadmin(id, request);
-        return build(response);
+        return respond(() -> superadminService.updateSuperadmin(id, request));
     }
     
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete superadmin", 
                description = "Disables a superadmin account. Cannot delete your own account or the last active superadmin.")
     public ResponseEntity<BaseResponse<Void>> deleteSuperadmin(@PathVariable Long id) {
-        BaseResponse<Void> response = superadminService.deleteSuperadmin(id);
-        return build(response);
+        return respond(() -> superadminService.deleteSuperadmin(id));
     }
     
     @GetMapping("/{id}")
     @Operation(summary = "Get superadmin details", 
                description = "Retrieves details of a specific superadmin")
     public ResponseEntity<BaseResponse<SuperadminDto>> getSuperadmin(@PathVariable Long id) {
-        BaseResponse<SuperadminDto> response = superadminService.getSuperadmin(id);
-        return build(response);
+        return respond(() -> superadminService.getSuperadmin(id));
     }
     
     @GetMapping
     @Operation(summary = "List all superadmins", 
                description = "Retrieves a paginated list of all superadmin accounts")
     public ResponseEntity<BaseResponse<Page<SuperadminDto>>> listSuperadmins(Pageable pageable) {
-        BaseResponse<Page<SuperadminDto>> response = superadminService.listSuperadmins(pageable);
-        return build(response);
+        return respond(() -> superadminService.listSuperadmins(pageable));
     }
     
 
     @PostMapping("/first-login")
     @PreAuthorize("hasRole('EJADA_OFFICER')")
     public ResponseEntity<BaseResponse<Void>> completeFirstLogin(@Valid @RequestBody FirstLoginRequest request) {
-      BaseResponse<Void> response = superadminService.completeFirstLogin(request);
-      return build(response);
+      return respond(() -> superadminService.completeFirstLogin(request));
     }
 
     @PostMapping("/change-password")
     @PreAuthorize("hasRole('EJADA_OFFICER')")
     public ResponseEntity<BaseResponse<Void>> changeSuperadminPassword(@Valid @RequestBody ChangePasswordRequest request) {
-      BaseResponse<Void> response = superadminService.changePassword(request);
-      return build(response);
+      return respond(() -> superadminService.changePassword(request));
     }
 }

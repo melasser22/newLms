@@ -1,13 +1,12 @@
 package com.ejada.tenant.controller;
 
-import static com.ejada.common.http.BaseResponseEntityFactory.build;
-
+import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.BaseResponseController;
 import com.ejada.tenant.dto.TenantCreateReq;
 import com.ejada.tenant.dto.TenantRes;
 import com.ejada.tenant.dto.TenantUpdateReq;
 import com.ejada.tenant.security.TenantAuthorized;
 import com.ejada.tenant.service.TenantService;
-import com.ejada.common.dto.BaseResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -39,7 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Tenant Management", description = "APIs for managing tenants")
-public class TenantController {
+public class TenantController extends BaseResponseController {
 
     private final TenantService service;
 
@@ -54,8 +53,7 @@ public class TenantController {
             @ApiResponse(responseCode = "409", description = "Tenant already exists")
     })
     public ResponseEntity<BaseResponse<TenantRes>> create(@Valid @RequestBody final TenantCreateReq req) {
-        BaseResponse<TenantRes> response = service.create(req);
-        return build(response, HttpStatus.CREATED);
+        return respond(() -> service.create(req), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -69,7 +67,7 @@ public class TenantController {
     })
     public ResponseEntity<BaseResponse<TenantRes>> update(@PathVariable @Min(1) final Integer id,
                                                           @Valid @RequestBody final TenantUpdateReq req) {
-        return build(service.update(id, req));
+        return respond(() -> service.update(id, req));
     }
 
     @TenantAuthorized
@@ -81,7 +79,7 @@ public class TenantController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<TenantRes>> get(@PathVariable @Min(1) final Integer id) {
-        return build(service.get(id));
+        return respond(() -> service.get(id));
     }
 
     @TenantAuthorized
@@ -95,7 +93,7 @@ public class TenantController {
             @RequestParam(required = false) final String name,
             @RequestParam(required = false) final Boolean active,
             @ParameterObject final Pageable pageable) {
-        return build(service.list(name, active, pageable));
+        return respond(() -> service.list(name, active, pageable));
     }
 
     @TenantAuthorized

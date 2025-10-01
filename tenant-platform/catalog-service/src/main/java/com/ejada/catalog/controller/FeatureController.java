@@ -1,11 +1,10 @@
 package com.ejada.catalog.controller;
 
-import static com.ejada.common.http.BaseResponseEntityFactory.build;
-
 import com.ejada.catalog.dto.*;
 import com.ejada.catalog.security.CatalogAuthorized;
 import com.ejada.catalog.service.FeatureService;
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.BaseResponseController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -27,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Feature Management", description = "APIs for managing features")
-public class FeatureController {
+public class FeatureController extends BaseResponseController {
 
     private final FeatureService service;
 
@@ -42,8 +41,7 @@ public class FeatureController {
         @ApiResponse(responseCode = "409", description = "featureKey already exists")
     })
     public ResponseEntity<BaseResponse<FeatureRes>> create(@Valid @RequestBody FeatureCreateReq req) {
-        BaseResponse<FeatureRes> response = service.create(req);
-        return build(response, HttpStatus.CREATED);
+        return respond(() -> service.create(req), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -57,7 +55,7 @@ public class FeatureController {
     })
     public ResponseEntity<BaseResponse<FeatureRes>> update(@PathVariable @Min(1) Integer id,
                                                            @Valid @RequestBody FeatureUpdateReq req) {
-        return build(service.update(id, req));
+        return respond(() -> service.update(id, req));
     }
 
     @GetMapping("/{id}")
@@ -69,7 +67,7 @@ public class FeatureController {
         @ApiResponse(responseCode = "404", description = "Feature not found")
     })
     public ResponseEntity<BaseResponse<FeatureRes>> get(@PathVariable @Min(1) Integer id) {
-        return build(service.get(id));
+        return respond(() -> service.get(id));
     }
 
     @GetMapping
@@ -81,7 +79,7 @@ public class FeatureController {
     })
     public ResponseEntity<BaseResponse<Page<FeatureRes>>> list(@RequestParam(required = false) String category,
                                                                @ParameterObject Pageable pageable) {
-        return build(service.list(category, pageable));
+        return respond(() -> service.list(category, pageable));
     }
 
     @DeleteMapping("/{id}")

@@ -1,12 +1,11 @@
 package com.ejada.setup.controller;
 
-import static com.ejada.common.http.BaseResponseEntityFactory.build;
-
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.BaseResponseController;
 import com.ejada.setup.dto.CountryDto;
 import com.ejada.setup.constants.ValidationConstants;
-import com.ejada.setup.security.SetupAuthorized;
 import com.ejada.setup.service.CountryService;
+import com.ejada.starter_security.authorization.PlatformServiceAuthorized;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,7 +37,7 @@ import java.util.List;
 @RequestMapping("/setup/countries")
 @Validated
 @Tag(name = "Country Management", description = "APIs for managing countries")
-public class CountryController {
+public class CountryController extends BaseResponseController {
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Injected service is managed by Spring")
     private final CountryService countryService;
@@ -59,9 +58,7 @@ public class CountryController {
     })
 
     public ResponseEntity<BaseResponse<CountryDto>> add(@Valid @RequestBody final CountryDto body) {
-        BaseResponse<CountryDto> response = countryService.add(body);
-        return build(response);
-
+        return respond(() -> countryService.add(body));
     }
 
     @PutMapping("/{countryId}")
@@ -79,12 +76,11 @@ public class CountryController {
             @PathVariable @Min(1) final Integer countryId,
             @Valid @RequestBody final CountryDto body) {
 
-        BaseResponse<CountryDto> response = countryService.update(countryId, body);
-        return build(response);
+        return respond(() -> countryService.update(countryId, body));
     }
 
     @GetMapping("/{countryId}")
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Get country by ID", description = "Retrieves a country by its ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Country found successfully"),
@@ -95,13 +91,12 @@ public class CountryController {
             @Parameter(description = "ID of the country to retrieve", required = true)
             @PathVariable @Min(1) final Integer countryId) {
 
-        BaseResponse<CountryDto> response = countryService.get(countryId);
-        return build(response);
+        return respond(() -> countryService.get(countryId));
     }
 
     @GetMapping
     //@RequireTenant
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "List countries", description = "Retrieves a paginated list of countries with optional search")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Countries retrieved successfully"),
@@ -114,12 +109,11 @@ public class CountryController {
             @Parameter(description = "Whether to retrieve all countries (ignores pagination)")
             @RequestParam(name = "unpaged", defaultValue = "false") final boolean unpaged) {
         Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
-        BaseResponse<Object> response = countryService.list(effectivePageable, q, unpaged);
-        return build(response);
+        return respond(() -> countryService.list(effectivePageable, q, unpaged));
     }
 
     @GetMapping("/active")
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "List active countries", description = "Retrieves all active countries")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Active countries retrieved successfully"),
@@ -127,8 +121,6 @@ public class CountryController {
     })
 
     public ResponseEntity<BaseResponse<List<CountryDto>>> listActive() {
-        BaseResponse<List<CountryDto>> response = countryService.listActive();
-        return build(response);
-
+        return respond(countryService::listActive);
     }
 }

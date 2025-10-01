@@ -1,9 +1,9 @@
 package com.ejada.sec.controller;
 
 import com.ejada.sec.dto.*;
-import com.ejada.sec.security.SecAuthorized;
 import com.ejada.sec.service.GrantService;
 import com.ejada.starter_core.tenant.RequireTenant;
+import com.ejada.starter_security.authorization.PlatformServiceAuthorized;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/grants")
 @RequiredArgsConstructor
 @RequireTenant
-@SecAuthorized
+@PlatformServiceAuthorized
 public class GrantController {
 
   private final GrantService grantService;

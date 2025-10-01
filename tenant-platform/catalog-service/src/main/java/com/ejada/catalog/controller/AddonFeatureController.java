@@ -1,11 +1,10 @@
 package com.ejada.catalog.controller;
 
-import static com.ejada.common.http.BaseResponseEntityFactory.build;
-
 import com.ejada.catalog.dto.*;
 import com.ejada.catalog.security.CatalogAuthorized;
 import com.ejada.catalog.service.AddonFeatureService;
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.BaseResponseController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -27,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Addon Feature Management", description = "APIs for managing addon features")
-public class AddonFeatureController {
+public class AddonFeatureController extends BaseResponseController {
 
     private final AddonFeatureService service;
 
@@ -58,8 +57,7 @@ public class AddonFeatureController {
             req.overageCurrency(),
             req.meta()
         );
-        BaseResponse<AddonFeatureRes> response = service.attach(normalized);
-        return build(response, HttpStatus.CREATED);
+        return respond(() -> service.attach(normalized), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -74,7 +72,7 @@ public class AddonFeatureController {
     public ResponseEntity<BaseResponse<AddonFeatureRes>> update(@PathVariable @Min(1) Integer addonId,
                                                                 @PathVariable @Min(1) Integer id,
                                                                 @Valid @RequestBody AddonFeatureUpdateReq req) {
-        return build(service.update(id, req));
+        return respond(() -> service.update(id, req));
     }
 
     @GetMapping
@@ -87,7 +85,7 @@ public class AddonFeatureController {
     })
     public ResponseEntity<BaseResponse<Page<AddonFeatureRes>>> listByAddon(@PathVariable @Min(1) Integer addonId,
                                                                            @ParameterObject Pageable pageable) {
-        return build(service.listByAddon(addonId, pageable));
+        return respond(() -> service.listByAddon(addonId, pageable));
     }
 
     @DeleteMapping("/{id}")

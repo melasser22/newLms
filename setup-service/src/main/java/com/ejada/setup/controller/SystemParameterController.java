@@ -1,13 +1,11 @@
 package com.ejada.setup.controller;
 
-import static com.ejada.common.http.BaseResponseEntityFactory.build;
-
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.http.BaseResponseController;
 import com.ejada.setup.dto.SystemParameterRequest;
 import com.ejada.setup.dto.SystemParameterResponse;
-
-import com.ejada.setup.security.SetupAuthorized;
 import com.ejada.setup.service.SystemParameterService;
+import com.ejada.starter_security.authorization.PlatformServiceAuthorized;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,7 +20,6 @@ import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,7 +37,7 @@ import java.util.List;
 @RequestMapping("/setup/systemParameters")
 @Validated
 @Tag(name = "System Parameter Management", description = "APIs for managing system parameters")
-public class SystemParameterController {
+public class SystemParameterController extends BaseResponseController {
 
     private static final int DEFAULT_PAGE_SIZE = 20;
 
@@ -52,7 +49,7 @@ public class SystemParameterController {
     }
 
     @PostMapping
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Create a new system parameter", description = "Creates a new system parameter with the provided details")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameter created successfully",
@@ -63,12 +60,11 @@ public class SystemParameterController {
     })
 
     public ResponseEntity<BaseResponse<SystemParameterResponse>> add(@Valid @RequestBody final SystemParameterRequest body) {
-        BaseResponse<SystemParameterResponse> response = systemParameterService.add(body);
-        return build(response, HttpStatus.CREATED);
+        return respond(() -> systemParameterService.add(body), org.springframework.http.HttpStatus.CREATED);
     }
 
     @PutMapping("/{paramId}")
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Update an existing system parameter", description = "Updates the system parameter with the specified ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameter updated successfully"),
@@ -80,13 +76,12 @@ public class SystemParameterController {
             @Parameter(description = "ID of the system parameter to update", required = true)
             @PathVariable @Min(1) final Integer paramId,
             @Valid @RequestBody final SystemParameterRequest body) {
-        BaseResponse<SystemParameterResponse> response = systemParameterService.update(paramId, body);
-        return build(response);
+        return respond(() -> systemParameterService.update(paramId, body));
 
     }
 
     @GetMapping("/{paramId}")
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Get system parameter by ID", description = "Retrieves a system parameter by its ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameter found successfully"),
@@ -96,12 +91,11 @@ public class SystemParameterController {
     public ResponseEntity<BaseResponse<SystemParameterResponse>> get(
             @Parameter(description = "ID of the system parameter to retrieve", required = true)
             @PathVariable @Min(1) final Integer paramId) {
-        BaseResponse<SystemParameterResponse> response = systemParameterService.get(paramId);
-        return build(response);
+        return respond(() -> systemParameterService.get(paramId));
     }
 
     @GetMapping
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "List system parameters", description = "Retrieves a paginated list of system parameters with optional filtering")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameters retrieved successfully"),
@@ -116,13 +110,11 @@ public class SystemParameterController {
             @Parameter(description = "Whether to retrieve all parameters (ignores pagination)")
             @RequestParam(name = "unpaged", defaultValue = "false") final boolean unpaged) {
         final Pageable effectivePageable = unpaged ? Pageable.unpaged() : pageable;
-        BaseResponse<Page<SystemParameterResponse>> response =
-                systemParameterService.list(effectivePageable, group, onlyActive);
-        return build(response);
+        return respond(() -> systemParameterService.list(effectivePageable, group, onlyActive));
     }
 
     @GetMapping("/by-key/{paramKey}")
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Get system parameter by key", description = "Retrieves a system parameter by its key")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameter found successfully"),
@@ -132,13 +124,12 @@ public class SystemParameterController {
     public ResponseEntity<BaseResponse<SystemParameterResponse>> getByKey(
             @Parameter(description = "Key of the parameter to retrieve", required = true)
             @PathVariable @NotBlank final String paramKey) {
-        BaseResponse<SystemParameterResponse> response = systemParameterService.getByKey(paramKey);
-        return build(response);
+        return respond(() -> systemParameterService.getByKey(paramKey));
 
     }
 
     @PostMapping("/by-keys")
-    @SetupAuthorized
+    @PlatformServiceAuthorized
     @Operation(summary = "Get system parameters by keys", description = "Retrieves multiple system parameters by their keys")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "System parameters retrieved successfully"),
@@ -147,8 +138,6 @@ public class SystemParameterController {
     public ResponseEntity<BaseResponse<List<SystemParameterResponse>>> getByKeys(
             @Parameter(description = "List of parameter keys to retrieve", required = true)
             @RequestBody final List<String> keys) {
-        BaseResponse<List<SystemParameterResponse>> response = systemParameterService.getByKeys(keys);
-        return build(response);
-
+        return respond(() -> systemParameterService.getByKeys(keys));
     }
 }
