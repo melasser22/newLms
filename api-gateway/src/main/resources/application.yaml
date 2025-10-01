@@ -13,6 +13,20 @@ spring:
       httpclient:
         connect-timeout: 5000
         response-timeout: 10s
+    discovery:
+      client:
+        simple:
+          instances:
+            setup-service:
+              - uri: http://setup-service:8080
+            tenant-service:
+              - uri: http://tenant-service:8080
+            catalog-service:
+              - uri: http://catalog-service:8080
+            subscription-service:
+              - uri: http://subscription-service:8080
+            billing-service:
+              - uri: http://billing-service:8080
 management:
   endpoints:
     web:
@@ -55,6 +69,7 @@ gateway:
       paths:
         - /api/setup/**
       strip-prefix: 1
+      prefix-path: /core
       resilience:
         enabled: true
         fallback-uri: forward:/fallback/setup-service
@@ -99,6 +114,7 @@ gateway:
       paths:
         - /api/subscription/**
       strip-prefix: 1
+      prefix-path: /subscription
       resilience:
         enabled: true
         fallback-uri: forward:/fallback/subscription-service

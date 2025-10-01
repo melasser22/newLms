@@ -62,6 +62,9 @@ public class GatewayRoutesProperties {
     /** Number of path segments to strip before forwarding. */
     private int stripPrefix = 1;
 
+    /** Optional static path prefix to prepend before forwarding. */
+    private String prefixPath;
+
     /** Optional resilience configuration for the route. */
     private Resilience resilience = new Resilience();
 
@@ -122,6 +125,27 @@ public class GatewayRoutesProperties {
       this.stripPrefix = stripPrefix;
     }
 
+    public String getPrefixPath() {
+      return prefixPath;
+    }
+
+    public void setPrefixPath(String prefixPath) {
+      if (!StringUtils.hasText(prefixPath)) {
+        this.prefixPath = null;
+        return;
+      }
+
+      String value = prefixPath.trim();
+      if (!value.startsWith("/")) {
+        value = '/' + value;
+      }
+      if (value.length() > 1 && value.endsWith("/")) {
+        value = value.substring(0, value.length() - 1);
+      }
+
+      this.prefixPath = value;
+    }
+
     public Resilience getResilience() {
       return resilience;
     }
@@ -152,6 +176,10 @@ public class GatewayRoutesProperties {
               "gateway.routes." + key + ".methods contains unsupported HTTP method '" + method + "'");
         }
       }
+      if (StringUtils.hasText(prefixPath) && !prefixPath.startsWith("/")) {
+        throw new IllegalStateException(
+            "gateway.routes." + key + ".prefixPath must start with '/' if provided");
+      }
       resilience.validate(key);
     }
 
@@ -163,6 +191,7 @@ public class GatewayRoutesProperties {
           + ", paths=" + paths
           + ", methods=" + methods
           + ", stripPrefix=" + stripPrefix
+          + ", prefixPath='" + prefixPath + '\''
           + '}';
     }
 
@@ -179,12 +208,13 @@ public class GatewayRoutesProperties {
           && Objects.equals(uri, that.uri)
           && Objects.equals(paths, that.paths)
           && Objects.equals(methods, that.methods)
+          && Objects.equals(prefixPath, that.prefixPath)
           && Objects.equals(resilience, that.resilience);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(id, uri, paths, methods, stripPrefix, resilience);
+      return Objects.hash(id, uri, paths, methods, stripPrefix, prefixPath, resilience);
     }
 
     /**
