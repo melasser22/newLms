@@ -16,7 +16,6 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,7 +32,6 @@ import org.testcontainers.kafka.KafkaContainer;
 
 @SpringBootTest(classes = SubscriptionApplication.class)
 @Testcontainers
-@EnabledIfEnvironmentVariable(named = "RUN_KAFKA_IT", matches = "true")
 @ActiveProfiles("test")
 class SubscriptionApprovalConsumerIT {
 
