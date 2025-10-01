@@ -29,7 +29,8 @@ class TenantAccessPolicyTest {
                 new TestingAuthenticationToken(
                         "user",
                         "pwd",
-                        new SimpleGrantedAuthority("ROLE_EJADA_OFFICER"));
+                        Collections.singletonList(
+                                new SimpleGrantedAuthority("ROLE_EJADA_OFFICER")));
         auth.setAuthenticated(true);
 
         assertThat(policy.getAllowedRoles()).contains("ROLE_EJADA_OFFICER");
@@ -60,7 +61,8 @@ class TenantAccessPolicyTest {
                 new TestingAuthenticationToken(
                         "user",
                         "pwd",
-                        new SimpleGrantedAuthority("ROLE_EJADA_OFFICER"));
+                        Collections.singletonList(
+                                new SimpleGrantedAuthority("ROLE_EJADA_OFFICER")));
         auth.setAuthenticated(true);
 
         assertThat(policy.getAllowedRoles()).isEmpty();
@@ -74,7 +76,8 @@ class TenantAccessPolicyTest {
                 new TestingAuthenticationToken(
                         "user",
                         "pwd",
-                        new SimpleGrantedAuthority("ROLE_EJADA_OFFICER"));
+                        Collections.singletonList(
+                                new SimpleGrantedAuthority("ROLE_EJADA_OFFICER")));
         auth.setAuthenticated(true);
 
         assertThat(policy.getAllowedRoles()).isEmpty();
@@ -90,7 +93,8 @@ class TenantAccessPolicyTest {
                 new TestingAuthenticationToken(
                         "user",
                         "pwd",
-                        new SimpleGrantedAuthority("EJADA_OFFICER"));
+                        Collections.singletonList(
+                                new SimpleGrantedAuthority("EJADA_OFFICER")));
         auth.setAuthenticated(true);
 
         assertThat(policy.getAllowedRoles()).containsExactly("EJADA_OFFICER");
@@ -106,7 +110,8 @@ class TenantAccessPolicyTest {
                 new TestingAuthenticationToken(
                         "user",
                         "pwd",
-                        new SimpleGrantedAuthority("AUTH_EJADA_OFFICER"));
+                        Collections.singletonList(
+                                new SimpleGrantedAuthority("AUTH_EJADA_OFFICER")));
         auth.setAuthenticated(true);
 
         assertThat(policy.getAllowedRoles()).containsExactly("AUTH_EJADA_OFFICER");
@@ -122,7 +127,8 @@ class TenantAccessPolicyTest {
                 new TestingAuthenticationToken(
                         "user",
                         "pwd",
-                        new SimpleGrantedAuthority("EJADA_OFFICER"));
+                        Collections.singletonList(
+                                new SimpleGrantedAuthority("EJADA_OFFICER")));
         auth.setAuthenticated(true);
 
         assertThat(policy.getAllowedRoles()).containsExactly("EJADA_OFFICER");
