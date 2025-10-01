@@ -12,7 +12,7 @@ import com.ejada.billing.dto.ProductConsumption;
 import com.ejada.billing.dto.ProductSubscription;
 import com.ejada.billing.dto.TrackProductConsumptionRq;
 import com.ejada.billing.dto.TrackProductConsumptionRs;
-import com.ejada.billing.exception.ServiceResultException;
+import com.ejada.common.exception.ServiceResultException;
 import com.ejada.billing.service.ConsumptionService;
 import com.ejada.common.dto.ServiceResult;
 import java.util.List;
