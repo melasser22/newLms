@@ -10,11 +10,13 @@ import com.ejada.common.dto.BaseResponse;
 import com.ejada.setup.dto.SystemParameterRequest;
 import com.ejada.setup.dto.SystemParameterResponse;
 import com.ejada.setup.service.SystemParameterService;
+import com.ejada.starter_security.Role;
 import com.ejada.starter_security.RoleChecker;
 import com.ejada.starter_security.SharedSecurityProps;
 import com.ejada.starter_security.authorization.AuthorizationExpressions;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +35,10 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -59,6 +64,19 @@ class SystemParameterControllerIntegrationTest {
             }
         });
         testSystemParameterService.reset();
+
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(
+                "test-user",
+                "N/A",
+                List.of(new SimpleGrantedAuthority(Role.EJADA_OFFICER.getAuthority()))
+            )
+        );
+    }
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -98,11 +116,14 @@ class SystemParameterControllerIntegrationTest {
         JpaRepositoriesAutoConfiguration.class,
         LiquibaseAutoConfiguration.class,
         FlywayAutoConfiguration.class,
+        com.ejada.audit.starter.config.AuditAutoConfiguration.class,
+        com.ejada.starter_security.JwtDecoderAutoConfiguration.class,
         com.ejada.starter_security.SecurityAutoConfiguration.class,
         org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
         org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration.class,
         org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
+        org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class,
+        org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration.class
     })
     @Import(SystemParameterController.class)
     static class TestApp {
@@ -123,6 +144,15 @@ class SystemParameterControllerIntegrationTest {
             props.setEnableRoleCheck(false);
             props.getHs256().setSecret("test-secret");
             return props;
+        }
+
+        @Bean
+        org.springframework.security.access.expression.method.MethodSecurityExpressionHandler methodSecurityExpressionHandler(
+                org.springframework.context.ApplicationContext applicationContext) {
+            org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler handler =
+                new org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler();
+            handler.setApplicationContext(applicationContext);
+            return handler;
         }
 
         @Bean
