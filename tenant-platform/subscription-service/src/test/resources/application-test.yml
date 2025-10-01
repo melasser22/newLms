@@ -52,5 +52,5 @@ shared:
   security:
     enable-role-check: false
     jwt:
-      secret: 0123456789ABCDEF0123456789ABCDEF
+      secret: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMQ==
       token-period: 5m
