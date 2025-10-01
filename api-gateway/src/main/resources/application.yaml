@@ -76,6 +76,23 @@ gateway:
       resilience:
         enabled: true
         fallback-uri: forward:/fallback/catalog-service
+        fallback-message: Catalog service is currently unavailable. Please retry shortly.
+        retry:
+          enabled: true
+          retries: 3
+          methods:
+            - GET
+          statuses:
+            - 500
+            - BAD_GATEWAY
+          series:
+            - SERVER_ERROR
+          backoff:
+            enabled: true
+            first-backoff: 100ms
+            max-backoff: 2s
+            factor: 2
+            based-on-previous-value: true
     subscription:
       id: subscription-service
       uri: lb://subscription-service

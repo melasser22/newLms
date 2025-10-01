@@ -79,6 +79,7 @@
 - [ ] Spring Cloud Gateway `RouteLocator` definitions for microservice routing, including path-based predicates and load-balanced URIs
 - [ ] Gateway-level aggregation/forwarding handlers for endpoints that combine multiple downstream calls (if required)
 - [ ] Resilience policies (timeouts, retries, circuit breakers) using Resilience4j Reactor operators tailored to critical routes
+- [x] Expose declarative retry/backoff controls and customizable fallback messaging through gateway route configuration
 - [ ] Reactive tenant & correlation context propagators integrated with Reactor context to keep MDC/logging consistent
 - [ ] API documentation (OpenAPI) describing gateway endpoints referencing shared DTOs
 

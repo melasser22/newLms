@@ -9,6 +9,7 @@ import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 
 /**
@@ -57,7 +58,42 @@ public class GatewayRoutesConfiguration {
                 filters.circuitBreaker(config -> {
                   config.setName(resilience.resolvedCircuitBreakerName(route.getId()));
                   config.setFallbackUri(resilience.resolvedFallbackUri(route.getId()));
+                  HttpStatus fallbackStatus = resilience.getFallbackStatus();
+                  if (fallbackStatus != null) {
+                    config.setStatusCode(fallbackStatus);
+                  }
                 });
+
+                GatewayRoutesProperties.ServiceRoute.Resilience.Retry retry = resilience.getRetry();
+                if (retry.isEnabled()) {
+                  filters.retry(config -> {
+                    config.setRetries(Math.max(1, retry.getRetries()));
+                    HttpStatus[] statuses = retry.resolvedStatuses();
+                    if (statuses.length > 0) {
+                      config.setStatuses(statuses);
+                    }
+                    HttpStatus.Series[] series = retry.resolvedSeries();
+                    if (series.length > 0) {
+                      config.setSeries(series);
+                    }
+                    HttpMethod[] retryMethods = retry.resolvedMethods();
+                    if (retryMethods.length > 0) {
+                      config.setMethods(retryMethods);
+                    }
+                    Class<? extends Throwable>[] exceptions = retry.resolvedExceptions();
+                    if (exceptions.length > 0) {
+                      config.setExceptions(exceptions);
+                    }
+                    GatewayRoutesProperties.ServiceRoute.Resilience.Retry.Backoff backoff = retry.getBackoff();
+                    if (backoff.isEnabled()) {
+                      config.setBackoff(
+                          backoff.getFirstBackoff(),
+                          backoff.getMaxBackoff(),
+                          backoff.getFactor(),
+                          backoff.isBasedOnPreviousValue());
+                    }
+                  });
+                }
               }
               return filters;
             })
@@ -65,19 +101,22 @@ public class GatewayRoutesConfiguration {
       });
 
       if (LOGGER.isInfoEnabled()) {
+        String resilienceSummary = resilience.isEnabled() ? resilience.toString() : "Resilience{enabled=false}";
         if (route.getMethods().isEmpty()) {
           LOGGER.info(
-              "Registered route {} -> {} ({})",
-              route.getId(),
-              route.getUri(),
-              route.getPaths());
-        } else {
-          LOGGER.info(
-              "Registered route {} -> {} ({}, methods={})",
+              "Registered route {} -> {} ({}) resilience={}",
               route.getId(),
               route.getUri(),
               route.getPaths(),
-              route.getMethods());
+              resilienceSummary);
+        } else {
+          LOGGER.info(
+              "Registered route {} -> {} ({}, methods={}) resilience={}",
+              route.getId(),
+              route.getUri(),
+              route.getPaths(),
+              route.getMethods(),
+              resilienceSummary);
         }
       }
     }
