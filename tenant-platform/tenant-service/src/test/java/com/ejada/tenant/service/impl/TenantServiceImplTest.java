@@ -62,7 +62,7 @@ class TenantServiceImplTest {
     existing.setId(5);
     existing.setCode("OLD");
     when(repository.findByIdAndIsDeletedFalse(5)).thenReturn(Optional.of(existing));
-    when(repository.existsByCodeAndIdNot("NEW", 5)).thenReturn(true);
+    when(repository.existsByCodeAndIsDeletedFalseAndIdNot("NEW", 5)).thenReturn(true);
 
     TenantUpdateReq req = new TenantUpdateReq("NEW", null, null, null, null, null);
 
@@ -77,7 +77,7 @@ class TenantServiceImplTest {
     existing.setId(7);
     existing.setName("Current");
     when(repository.findByIdAndIsDeletedFalse(7)).thenReturn(Optional.of(existing));
-    when(repository.existsByNameIgnoreCaseAndIdNot("NewName", 7)).thenReturn(true);
+    when(repository.existsByNameIgnoreCaseAndIsDeletedFalseAndIdNot("NewName", 7)).thenReturn(true);
 
     TenantUpdateReq req = new TenantUpdateReq(null, "NewName", null, null, null, null);
 
