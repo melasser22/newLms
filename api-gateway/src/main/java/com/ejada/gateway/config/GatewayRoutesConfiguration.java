@@ -54,6 +54,9 @@ public class GatewayRoutesConfiguration {
               if (route.getStripPrefix() > 0) {
                 filters.stripPrefix(route.getStripPrefix());
               }
+              if (StringUtils.hasText(route.getPrefixPath())) {
+                filters.prefixPath(route.getPrefixPath());
+              }
               if (resilience.isEnabled()) {
                 filters.circuitBreaker(config -> {
                   config.setName(resilience.resolvedCircuitBreakerName(route.getId()));
@@ -98,20 +101,23 @@ public class GatewayRoutesConfiguration {
 
       if (LOGGER.isInfoEnabled()) {
         String resilienceSummary = resilience.isEnabled() ? resilience.toString() : "Resilience{enabled=false}";
+        String prefixSummary = StringUtils.hasText(route.getPrefixPath()) ? route.getPrefixPath() : "/";
         if (route.getMethods().isEmpty()) {
           LOGGER.info(
-              "Registered route {} -> {} ({}) resilience={}",
+              "Registered route {} -> {} ({} prefix={}) resilience={}",
               route.getId(),
               route.getUri(),
               route.getPaths(),
+              prefixSummary,
               resilienceSummary);
         } else {
           LOGGER.info(
-              "Registered route {} -> {} ({}, methods={}) resilience={}",
+              "Registered route {} -> {} ({}, methods={}, prefix={}) resilience={}",
               route.getId(),
               route.getUri(),
               route.getPaths(),
               route.getMethods(),
+              prefixSummary,
               resilienceSummary);
         }
       }
