@@ -504,12 +504,13 @@ public class GatewayRoutesProperties {
           if (classLoader == null) {
             classLoader = Retry.class.getClassLoader();
           }
+          final ClassLoader classLoaderToUse = classLoader;
           java.util.List<Class<? extends Throwable>> resolved = exceptions.stream()
               .filter(StringUtils::hasText)
               .map(String::trim)
               .map(name -> {
                 try {
-                  return (Class<? extends Throwable>) ClassUtils.resolveClassName(name, classLoader);
+                  return (Class<? extends Throwable>) ClassUtils.resolveClassName(name, classLoaderToUse);
                 } catch (IllegalArgumentException ex) {
                   throw new IllegalStateException("Unable to resolve exception class '" + name + "'", ex);
                 }
