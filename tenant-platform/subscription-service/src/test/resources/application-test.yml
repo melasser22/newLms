@@ -51,6 +51,6 @@ logging:
 shared:
   security:
     enable-role-check: false
-    mode: hs256
-    hs256:
+    jwt:
       secret: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMQ==
+      token-period: 5m
