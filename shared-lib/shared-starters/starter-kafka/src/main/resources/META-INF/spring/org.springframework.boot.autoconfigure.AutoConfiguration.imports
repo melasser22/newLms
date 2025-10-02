@@ -1,2 +1,4 @@
 com.ejada.kafka_starter.config.KafkaAutoConfiguration
+com.ejada.kafka_starter.config.KafkaConsumerConfig
+com.ejada.kafka_starter.config.KafkaProducerConfig
 com.ejada.kafka_starter.config.TenantProvisioningAutoConfiguration
