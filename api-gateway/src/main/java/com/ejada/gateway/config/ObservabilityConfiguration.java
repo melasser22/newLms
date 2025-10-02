@@ -4,7 +4,6 @@ import com.ejada.common.context.ContextManager;
 import io.micrometer.common.KeyValue;
 import io.micrometer.observation.ObservationFilter;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
 import org.springframework.boot.actuate.autoconfigure.observation.ObservationRegistryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,7 +36,6 @@ public class ObservabilityConfiguration {
   ObservationRegistryCustomizer<ObservationRegistry> observationRegistryCustomizer(
       ObservationFilter tenantObservationFilter) {
     return registry -> registry.observationConfig()
-        .observationFilter(tenantObservationFilter)
-        .registerThreadLocalAccessor(new ObservationThreadLocalAccessor());
+        .observationFilter(tenantObservationFilter);
   }
 }
