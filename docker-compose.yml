@@ -159,7 +159,9 @@ services:
   # ----------------------------- #
 
   tenant-service:
-    build: ./tenant-platform/tenant-service
+    build:
+      context: .
+      dockerfile: tenant-platform/tenant-service/Dockerfile
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
@@ -177,7 +179,9 @@ services:
       backend:
 
   setup-service:
-    build: ./setup-service
+    build:
+      context: .
+      dockerfile: setup-service/Dockerfile
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
@@ -195,7 +199,9 @@ services:
       backend:
 
   billing-service:
-    build: ./tenant-platform/billing-service
+    build:
+      context: .
+      dockerfile: tenant-platform/billing-service/Dockerfile
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
@@ -213,7 +219,9 @@ services:
       backend:
 
   catalog-service:
-    build: ./tenant-platform/catalog-service
+    build:
+      context: .
+      dockerfile: tenant-platform/catalog-service/Dockerfile
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
@@ -231,7 +239,9 @@ services:
       backend:
 
   subscription-service:
-    build: ./tenant-platform/subscription-service
+    build:
+      context: .
+      dockerfile: tenant-platform/subscription-service/Dockerfile
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
@@ -249,7 +259,9 @@ services:
       backend:
 
   security-service:
-    build: ./sec-service
+    build:
+      context: .
+      dockerfile: sec-service/Dockerfile
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
