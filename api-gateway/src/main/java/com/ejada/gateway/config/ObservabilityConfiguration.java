@@ -4,9 +4,9 @@ import com.ejada.common.context.ContextManager;
 import io.micrometer.common.KeyValue;
 import io.micrometer.observation.ObservationFilter;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.ObservationTextMapPropagator;
 import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
-import io.micrometer.observation.ObservationRegistryCustomizer;
+import io.micrometer.tracing.propagation.Propagator;
+import org.springframework.boot.actuate.autoconfigure.observation.ObservationRegistryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
@@ -43,7 +43,7 @@ public class ObservabilityConfiguration {
   }
 
   @Bean
-  ObservationTextMapPropagator observationTextMapPropagator() {
-    return ObservationTextMapPropagator.noop();
+  Propagator observationTextMapPropagator() {
+    return Propagator.NOOP;
   }
 }
