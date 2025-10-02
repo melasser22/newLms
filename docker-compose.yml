@@ -354,6 +354,8 @@ services:
 networks:
   backend:
     driver: bridge
+    labels:
+      com.docker.compose.network: backend
 
 volumes:
   pgdata:
