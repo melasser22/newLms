@@ -354,8 +354,6 @@ services:
 networks:
   backend:
     driver: bridge
-    labels:
-      com.docker.compose.network: newlms_backend
 
 volumes:
   pgdata:
