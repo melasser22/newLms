@@ -14,6 +14,7 @@ import com.ejada.common.marketplace.subscription.dto.CustomerInfoDto;
 import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotificationRq;
 import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotificationRs;
 import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionUpdateRq;
+import com.ejada.common.events.subscription.SubscriptionApprovalAction;
 import com.ejada.common.marketplace.subscription.dto.SubscriptionInfoDto;
 import com.ejada.common.marketplace.subscription.dto.SubscriptionUpdateType;
 import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
@@ -45,6 +46,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -95,7 +97,8 @@ class MarketplaceCallbackOrchestratorTest {
                 updateEventMapper,
                 new ObjectMapper(),
                 transactionManager,
-                approvalPublisher);
+                approvalPublisher,
+                new com.ejada.subscription.tenant.TenantLinkFactory());
     }
 
     @Test
@@ -159,11 +162,14 @@ class MarketplaceCallbackOrchestratorTest {
         mapped.setExtCustomerId(456L);
         when(subscriptionMapper.toEntity(subscriptionInfo)).thenReturn(mapped);
 
-        Subscription persisted = new Subscription();
-        persisted.setSubscriptionId(200L);
-        persisted.setExtSubscriptionId(123L);
-        persisted.setExtCustomerId(456L);
-        when(subscriptionRepo.save(any(Subscription.class))).thenReturn(persisted);
+        when(subscriptionRepo.save(any(Subscription.class)))
+                .thenAnswer(invocation -> {
+                    Subscription value = invocation.getArgument(0);
+                    if (value.getSubscriptionId() == null) {
+                        value.setSubscriptionId(200L);
+                    }
+                    return value;
+                });
 
         when(featureRepo.findBySubscriptionSubscriptionId(200L)).thenReturn(List.of());
         when(additionalServiceRepo.findBySubscriptionSubscriptionId(200L)).thenReturn(List.of());
@@ -176,7 +182,19 @@ class MarketplaceCallbackOrchestratorTest {
                 orchestrator.processNotification(rqUid, "token", request);
 
         assertThat(result.success()).isTrue();
-        verify(approvalPublisher).publishApprovalRequest(rqUid, request, persisted);
+        ArgumentCaptor<com.ejada.subscription.tenant.TenantLink> linkCaptor =
+                ArgumentCaptor.forClass(com.ejada.subscription.tenant.TenantLink.class);
+        verify(approvalPublisher)
+                .publishApprovalDecision(
+                        eq(SubscriptionApprovalAction.APPROVED),
+                        eq(rqUid),
+                        eq(request),
+                        any(Subscription.class),
+                        linkCaptor.capture());
+
+        com.ejada.subscription.tenant.TenantLink link = linkCaptor.getValue();
+        assertThat(link.tenantCode()).isEqualTo("CUST-456");
+        assertThat(link.securityTenantId()).isNotNull();
     }
 
     @Test

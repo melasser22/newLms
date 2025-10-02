@@ -158,6 +158,12 @@ shared:
       async: true
     retention:
       enabled: true
+
+app:
+  subscription-approval:
+    topic: tenant.subscription-approvals
+    consumer-group: security-tenant-bootstrap
+    approval-role: ejada-officer
       days: 90
     masking:
       enabled: true

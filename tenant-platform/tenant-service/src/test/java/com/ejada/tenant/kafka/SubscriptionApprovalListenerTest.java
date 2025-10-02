@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import com.ejada.common.events.subscription.SubscriptionApprovalAction;
 import com.ejada.common.events.subscription.SubscriptionApprovalMessage;
+import com.ejada.common.tenant.TenantIdentifiers;
 import com.ejada.tenant.dto.TenantCreateReq;
 import com.ejada.tenant.exception.TenantConflictException;
 import com.ejada.tenant.exception.TenantErrorCode;
@@ -131,7 +132,8 @@ class SubscriptionApprovalListenerTest {
                         "ops@example.com",
                         "+966500000001",
                         null,
-                        Boolean.TRUE));
+                        Boolean.TRUE,
+                        TenantIdentifiers.deriveTenantId("TEN-42")));
     }
 
     @Test

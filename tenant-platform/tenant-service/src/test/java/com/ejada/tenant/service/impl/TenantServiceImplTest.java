@@ -37,7 +37,7 @@ class TenantServiceImplTest {
 
   @Test
   void createFailsWhenDuplicateCodeExists() {
-    TenantCreateReq req = new TenantCreateReq("CODE", "Tenant", null, null, null, true);
+    TenantCreateReq req = new TenantCreateReq("CODE", "Tenant", null, null, null, true, null);
     when(repository.existsByCodeAndIsDeletedFalse("CODE")).thenReturn(true);
 
     assertThatThrownBy(() -> service.create(req))
@@ -47,7 +47,7 @@ class TenantServiceImplTest {
 
   @Test
   void createFailsWhenDuplicateNameExists() {
-    TenantCreateReq req = new TenantCreateReq("CODE", "Tenant", null, null, null, true);
+    TenantCreateReq req = new TenantCreateReq("CODE", "Tenant", null, null, null, true, null);
     when(repository.existsByCodeAndIsDeletedFalse("CODE")).thenReturn(false);
     when(repository.existsByNameIgnoreCaseAndIsDeletedFalse("Tenant")).thenReturn(true);
 
@@ -58,7 +58,7 @@ class TenantServiceImplTest {
 
   @Test
   void createSucceedsWhenNoActiveDuplicates() {
-    TenantCreateReq req = new TenantCreateReq("CODE", "Tenant", null, null, null, true);
+    TenantCreateReq req = new TenantCreateReq("CODE", "Tenant", null, null, null, true, null);
     when(repository.existsByCodeAndIsDeletedFalse("CODE")).thenReturn(false);
     when(repository.existsByNameIgnoreCaseAndIsDeletedFalse("Tenant")).thenReturn(false);
 
@@ -66,7 +66,7 @@ class TenantServiceImplTest {
     when(mapper.toEntity(req)).thenReturn(entity);
     when(repository.save(entity)).thenReturn(entity);
     TenantRes mapped =
-        new TenantRes(1, "CODE", "Tenant", null, null, null, true, false, null, null);
+        new TenantRes(1, "CODE", "Tenant", null, null, null, true, false, null, null, null);
     when(mapper.toRes(entity)).thenReturn(mapped);
 
     BaseResponse<TenantRes> response = service.create(req);
@@ -113,7 +113,7 @@ class TenantServiceImplTest {
     existing.setName("Name");
     when(repository.findByIdAndIsDeletedFalse(11)).thenReturn(Optional.of(existing));
     when(repository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
-    TenantRes mapped = new TenantRes(11, "CODE", "Name", null, null, null, true, false, null, null);
+    TenantRes mapped = new TenantRes(11, "CODE", "Name", null, null, null, true, false, null, null, null);
     when(mapper.toRes(any(Tenant.class))).thenReturn(mapped);
 
     TenantUpdateReq req = new TenantUpdateReq(null, "Updated", null, null, null, null);

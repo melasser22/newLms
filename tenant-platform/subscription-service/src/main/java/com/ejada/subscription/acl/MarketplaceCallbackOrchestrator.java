@@ -10,6 +10,7 @@ import com.ejada.common.marketplace.subscription.dto.SubscriptionAdditionalServi
 import com.ejada.common.marketplace.subscription.dto.SubscriptionFeatureDto;
 import com.ejada.common.marketplace.subscription.dto.SubscriptionInfoDto;
 import com.ejada.common.marketplace.subscription.dto.SubscriptionUpdateType;
+import com.ejada.common.events.subscription.SubscriptionApprovalAction;
 import com.ejada.common.marketplace.token.TokenHashing;
 import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
 import com.ejada.subscription.mapper.SubscriptionAdditionalServiceMapper;
@@ -36,6 +37,8 @@ import com.ejada.subscription.repository.SubscriptionFeatureRepository;
 import com.ejada.subscription.repository.SubscriptionProductPropertyRepository;
 import com.ejada.subscription.repository.SubscriptionRepository;
 import com.ejada.subscription.repository.SubscriptionUpdateEventRepository;
+import com.ejada.subscription.tenant.TenantLink;
+import com.ejada.subscription.tenant.TenantLinkFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityNotFoundException;
@@ -86,6 +89,7 @@ public class MarketplaceCallbackOrchestrator {
     private final ObjectMapper objectMapper;
     private final PlatformTransactionManager transactionManager;
     private final SubscriptionApprovalPublisher approvalPublisher;
+    private final TenantLinkFactory tenantLinkFactory;
 
     private final Map<UUID, ServiceResult<ReceiveSubscriptionNotificationRs>> processedNotificationCache =
             new ConcurrentHashMap<>();
@@ -114,7 +118,13 @@ public class MarketplaceCallbackOrchestrator {
             finalizeNotificationSuccess(audit, rqUid, rq, sub);
 
             if (upsert.isNew()) {
-                approvalPublisher.publishApprovalRequest(rqUid, rq, sub);
+                TenantLink tenantLink = tenantLinkFactory.resolve(rq, sub);
+                boolean updated = updateTenantLinkIfMissing(sub, tenantLink);
+                if (updated) {
+                    subscriptionRepo.save(sub);
+                }
+                approvalPublisher.publishApprovalDecision(
+                        SubscriptionApprovalAction.APPROVED, rqUid, rq, sub, tenantLink);
             }
 
             return okNotification(response);
@@ -221,6 +231,23 @@ public class MarketplaceCallbackOrchestrator {
         }
         Subscription saved = subscriptionRepo.save(sub);
         return new UpsertResult(saved, isNew);
+    }
+
+    private boolean updateTenantLinkIfMissing(final Subscription sub, final TenantLink link) {
+        if (link == null) {
+            return false;
+        }
+        boolean changed = false;
+        if (link.tenantCode() != null && !link.tenantCode().equals(sub.getTenantCode())) {
+            sub.setTenantCode(link.tenantCode());
+            changed = true;
+        }
+        if (link.securityTenantId() != null
+                && !link.securityTenantId().equals(sub.getSecurityTenantId())) {
+            sub.setSecurityTenantId(link.securityTenantId());
+            changed = true;
+        }
+        return changed;
     }
 
     private void synchronizeSubscriptionChildren(final Subscription sub, final ReceiveSubscriptionNotificationRq rq) {

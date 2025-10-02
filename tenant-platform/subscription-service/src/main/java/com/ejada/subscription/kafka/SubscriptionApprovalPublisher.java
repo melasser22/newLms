@@ -5,8 +5,9 @@ import com.ejada.common.events.subscription.SubscriptionApprovalMessage;
 import com.ejada.common.events.subscription.SubscriptionApprovalProperties;
 import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotificationRq;
 import com.ejada.subscription.model.Subscription;
+import com.ejada.subscription.tenant.TenantLink;
+import com.ejada.subscription.tenant.TenantLinkFactory;
 import java.time.OffsetDateTime;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionException;
@@ -30,6 +31,7 @@ public class SubscriptionApprovalPublisher {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final SubscriptionApprovalProperties properties;
+    private final TenantLinkFactory tenantLinkFactory;
 
     /**
      * Sends an approval request message for the supplied subscription.
@@ -38,13 +40,26 @@ public class SubscriptionApprovalPublisher {
      * @param request original marketplace payload
      * @param subscription persisted subscription entity
      */
-    public void publishApprovalRequest(
+    public SubscriptionApprovalMessage publishApprovalRequest(
             final UUID rqUid,
             final ReceiveSubscriptionNotificationRq request,
             final Subscription subscription) {
+        return publishApprovalDecision(
+                SubscriptionApprovalAction.REQUEST, rqUid, request, subscription, null);
+    }
+
+    public SubscriptionApprovalMessage publishApprovalDecision(
+            final SubscriptionApprovalAction action,
+            final UUID rqUid,
+            final ReceiveSubscriptionNotificationRq request,
+            final Subscription subscription,
+            final TenantLink tenantLink) {
 
         UUID requestId = Optional.ofNullable(rqUid).orElseGet(UUID::randomUUID);
-        SubscriptionApprovalMessage message = buildMessage(requestId, request, subscription);
+        TenantLink resolvedLink =
+                tenantLink != null ? tenantLink : tenantLinkFactory.resolve(request, subscription);
+        SubscriptionApprovalMessage message =
+                buildMessage(action, requestId, request, subscription, resolvedLink);
 
         try {
             SendResult<String, Object> result =
@@ -58,6 +73,7 @@ public class SubscriptionApprovalPublisher {
                     properties.getTopic(),
                     result.getRecordMetadata().partition(),
                     result.getRecordMetadata().offset());
+            return message;
         } catch (CompletionException ex) {
             Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
             log.error(
@@ -72,15 +88,17 @@ public class SubscriptionApprovalPublisher {
     }
 
     private SubscriptionApprovalMessage buildMessage(
+            final SubscriptionApprovalAction action,
             final UUID requestId,
             final ReceiveSubscriptionNotificationRq request,
-            final Subscription subscription) {
+            final Subscription subscription,
+            final TenantLink tenantLink) {
 
-        String tenantCode = defaultTenantCode(subscription);
-        String tenantName = defaultTenantName(request, tenantCode);
+        String tenantCode = tenantLink != null ? tenantLink.tenantCode() : null;
+        String tenantName = tenantLink != null ? tenantLink.tenantName() : null;
 
         return new SubscriptionApprovalMessage(
-                SubscriptionApprovalAction.REQUEST,
+                action,
                 requestId,
                 subscription.getExtSubscriptionId(),
                 subscription.getExtCustomerId(),
@@ -97,25 +115,6 @@ public class SubscriptionApprovalPublisher {
                 null);
     }
 
-    private String defaultTenantCode(final Subscription subscription) {
-        Long customerId = subscription.getExtCustomerId();
-        String base = customerId != null
-                ? "CUST-" + customerId
-                : "SUB-" + Optional.ofNullable(subscription.getExtSubscriptionId()).orElse(0L);
-        String normalized = base.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9-]", "-");
-        return safeTrim(normalized, TENANT_CODE_MAX);
-    }
-
-    private String defaultTenantName(
-            final ReceiveSubscriptionNotificationRq request,
-            final String tenantCode) {
-        String primary = firstNonBlank(
-                request.customerInfo().customerNameEn(),
-                request.customerInfo().customerNameAr(),
-                tenantCode);
-        return safeTrim(primary, TENANT_NAME_MAX);
-    }
-
     private String safeTrim(final String value, final int maxLength) {
         if (!StringUtils.hasText(value)) {
             return null;
@@ -124,12 +123,4 @@ public class SubscriptionApprovalPublisher {
         return trimmed.length() <= maxLength ? trimmed : trimmed.substring(0, maxLength);
     }
 
-    private String firstNonBlank(final String... values) {
-        for (String value : values) {
-            if (StringUtils.hasText(value)) {
-                return value.trim();
-            }
-        }
-        return null;
-    }
 }

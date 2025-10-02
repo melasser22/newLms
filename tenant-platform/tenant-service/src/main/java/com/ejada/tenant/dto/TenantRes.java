@@ -2,6 +2,7 @@ package com.ejada.tenant.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Schema(name = "TenantRes")
 public record TenantRes(
@@ -13,6 +14,7 @@ public record TenantRes(
         String logoUrl,
         Boolean active,
         Boolean isDeleted,
+        UUID securityTenantId,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) { }
