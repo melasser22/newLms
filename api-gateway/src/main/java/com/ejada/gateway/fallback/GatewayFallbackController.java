@@ -1,5 +1,7 @@
 package com.ejada.gateway.fallback;
 
+import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.enums.StatusEnums.ApiStatus;
 import com.ejada.gateway.config.GatewayRoutesProperties;
 import java.time.Instant;
 import org.springframework.http.HttpStatus;
@@ -28,7 +30,7 @@ public class GatewayFallbackController {
   }
 
   @RequestMapping("/{routeId}")
-  public Mono<ResponseEntity<FallbackResponse>> fallback(@PathVariable String routeId) {
+  public Mono<ResponseEntity<BaseResponse<FallbackResponse>>> fallback(@PathVariable String routeId) {
     GatewayRoutesProperties.ServiceRoute.Resilience resilience = properties.findRouteById(routeId)
         .map(GatewayRoutesProperties.ServiceRoute::getResilience)
         .orElse(null);
@@ -44,7 +46,13 @@ public class GatewayFallbackController {
           .orElse(DEFAULT_MESSAGE);
     }
 
-    FallbackResponse body = new FallbackResponse(routeId, message, Instant.now());
-    return Mono.just(ResponseEntity.status(status).body(body));
+    FallbackResponse payload = new FallbackResponse(routeId, message, Instant.now());
+    BaseResponse<FallbackResponse> envelope = BaseResponse.<FallbackResponse>builder()
+        .status(ApiStatus.ERROR)
+        .code(status.name())
+        .message(message)
+        .data(payload)
+        .build();
+    return Mono.just(ResponseEntity.status(status).body(envelope));
   }
 }

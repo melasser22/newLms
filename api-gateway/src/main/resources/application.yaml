@@ -6,62 +6,196 @@ spring:
   autoconfigure:
     exclude:
       - com.ejada.shared_starter_ratelimit.RateLimitAutoConfiguration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${GATEWAY_JWK_SET_URI:}
+          issuer-uri: ${GATEWAY_ISSUER_URI:}
   cloud:
     compatibility-verifier:
       enabled: false
     gateway:
+      x-forwarded:
+        enabled: true
+        for-enabled: true
+        proto-enabled: true
+        host-enabled: true
+        port-enabled: true
+      metrics:
+        enabled: true
+        tags:
+          - tenantId
+          - routeId
       httpclient:
         connect-timeout: 5000
-        response-timeout: 10s
-    discovery:
-      client:
-        simple:
-          instances:
-            setup-service:
-              - uri: http://setup-service:8080
-            tenant-service:
-              - uri: http://tenant-service:8080
-            catalog-service:
-              - uri: http://catalog-service:8080
-            subscription-service:
-              - uri: http://subscription-service:8080
-            billing-service:
-              - uri: http://billing-service:8080
+        response-timeout: 15s
+        pool:
+          name: gateway-pool
+          type: elastic
+          max-idle-time: 60s
+          evict-in-background: 30s
+      redis-rate-limiter:
+        include-headers: true
+      default-filters:
+        - name: RequestSize
+          args:
+            maxSize: 10MB
+        - name: SaveSession
+        - name: AddRequestHeader
+          args:
+            name: X-Gateway-Trace
+            value: "#{T(java.util.UUID).randomUUID()}"
+      discovery:
+        locator:
+          enabled: false
+      routes: []
+    loadbalancer:
+      retry:
+        enabled: true
+    kubernetes:
+      reload:
+        enabled: true
+        mode: event
+        monitoring-config-maps: true
+        monitoring-secrets: true
+
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,env,configprops,gateway
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true
+    metrics:
+      enabled: true
+    gateway:
+      enabled: true
   tracing:
     sampling:
       probability: 1.0
   otlp:
     tracing:
-      endpoint: http://otel-collector:4317
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://otel-collector:4317}
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      region: ${GCP_REGION:unknown}
 
-# Disable servlet security auto configuration (we provide reactive equivalent)
 shared:
   security:
     resource-server:
       enabled: false
-
+      allowed-origins:
+        - https://lms.example.com
+        - https://admin.lms.example.com
+      permit-all:
+        - /actuator/health/**
+        - /actuator/info
+        - /actuator/prometheus
+      disable-csrf: true
+      jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}
+      issuer-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}
+    cors:
+      allow-credentials: false
+      max-age: 3600
   core:
     tenant:
       enabled: true
+      header-name: X-Tenant-Id
+      query-param: tenantId
+      resolve-from-jwt: true
+      jwt-claim-names:
+        - tenant_id
+        - tid
+      prefer-header-over-jwt: true
+      skip-patterns:
+        - /actuator/.*
+        - /favicon.ico
     correlation:
       enabled: true
-
+      header-name: X-Correlation-Id
+      echo-response-header: true
+      generate-if-missing: true
+      skip-patterns:
+        - /actuator/.*
   observability:
     application-name: ${spring.application.name}
-
   ratelimit:
-    enabled: false
+    enabled: true
+    capacity: 200
+    window: 1m
+    key-strategy: tenant
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 50
+        minimum-number-of-calls: 20
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 5
+        automatic-transition-from-open-to-half-open-enabled: true
+    instances:
+      tenant-service:
+        base-config: default
+      catalog-service:
+        base-config: default
+      subscription-service:
+        base-config: default
+      billing-service:
+        base-config: default
+      setup-service:
+        base-config: default
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 200ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - java.io.IOException
+          - org.springframework.web.reactive.function.client.WebClientResponseException
+    instances:
+      catalog-service:
+        base-config: default
+  bulkhead:
+    configs:
+      default:
+        max-concurrent-calls: 50
+        max-wait-duration: 1s
+    instances:
+      tenant-service:
+        base-config: default
 
 # Declarative downstream routes consumed by GatewayRoutesConfiguration
 gateway:
+  defaults:
+    resilience:
+      enabled: true
+      fallback-uri: forward:/fallback/default
+      fallback-status: SERVICE_UNAVAILABLE
+      retry:
+        enabled: true
+        retries: 2
+        methods:
+          - GET
+        statuses:
+          - BAD_GATEWAY
+          - SERVICE_UNAVAILABLE
+        backoff:
+          enabled: true
+          first-backoff: 100ms
+          max-backoff: 2s
+          factor: 2
+          based-on-previous-value: true
   routes:
     setup:
       id: setup-service
@@ -72,6 +206,7 @@ gateway:
       prefix-path: /core
       resilience:
         enabled: true
+        circuit-breaker-name: setup-service
         fallback-uri: forward:/fallback/setup-service
     tenant:
       id: tenant-service
@@ -81,6 +216,7 @@ gateway:
       strip-prefix: 1
       resilience:
         enabled: true
+        circuit-breaker-name: tenant-service
         fallback-uri: forward:/fallback/tenant-service
     catalog:
       id: catalog-service
@@ -90,6 +226,7 @@ gateway:
       strip-prefix: 1
       resilience:
         enabled: true
+        circuit-breaker-name: catalog-service
         fallback-uri: forward:/fallback/catalog-service
         fallback-message: Catalog service is currently unavailable. Please retry shortly.
         retry:
@@ -105,8 +242,8 @@ gateway:
           backoff:
             enabled: true
             first-backoff: 100ms
-            max-backoff: 2s
-            factor: 2
+            max-backoff: 3s
+            factor: 1.5
             based-on-previous-value: true
     subscription:
       id: subscription-service
@@ -117,6 +254,7 @@ gateway:
       prefix-path: /subscription
       resilience:
         enabled: true
+        circuit-breaker-name: subscription-service
         fallback-uri: forward:/fallback/subscription-service
     billing:
       id: billing-service
@@ -126,9 +264,18 @@ gateway:
       strip-prefix: 1
       resilience:
         enabled: true
+        circuit-breaker-name: billing-service
         fallback-uri: forward:/fallback/billing-service
 
 logging:
   level:
     root: INFO
     com.ejada.gateway: DEBUG
+  pattern:
+    level: "%5p [${spring.application.name},trace=%X{traceId:-},span=%X{spanId:-},tenant=%X{tenantId:-}]"
+
+reactor:
+  context-propagation: auto
+  netty:
+    ioWorkerCount: ${REACTOR_NETTY_IO_WORKERS:0}
+

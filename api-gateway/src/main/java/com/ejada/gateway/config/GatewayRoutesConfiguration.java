@@ -1,8 +1,12 @@
 package com.ejada.gateway.config;
 
+import java.time.Duration;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
@@ -22,13 +26,55 @@ public class GatewayRoutesConfiguration {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GatewayRoutesConfiguration.class);
 
+  private static final Duration PROVIDER_TIMEOUT = Duration.ofSeconds(5);
+
   @Bean
-  RouteLocator gatewayRoutes(RouteLocatorBuilder builder, GatewayRoutesProperties properties) {
+  RouteLocator gatewayRoutes(RouteLocatorBuilder builder,
+      GatewayRoutesProperties properties,
+      ObjectProvider<GatewayRouteDefinitionProvider> dynamicProviders) {
     RouteLocatorBuilder.Builder routes = builder.routes();
 
-    for (Map.Entry<String, GatewayRoutesProperties.ServiceRoute> entry : properties.getRoutes().entrySet()) {
-      GatewayRoutesProperties.ServiceRoute route = entry.getValue();
-      route.validate(entry.getKey());
+    Map<String, GatewayRoutesProperties.ServiceRoute> aggregated = new LinkedHashMap<>();
+
+    properties.getRoutes().forEach((key, route) -> {
+      route.applyDefaults(properties.getDefaults());
+      route.validate(key);
+      GatewayRoutesProperties.ServiceRoute previous = aggregated.put(route.getId(), route);
+      if (previous != null) {
+        LOGGER.warn("Route {} from static configuration replaced an existing definition", route.getId());
+      }
+    });
+
+    dynamicProviders.orderedStream().forEach(provider -> {
+      try {
+        List<GatewayRoutesProperties.ServiceRoute> loaded = provider.loadRoutes()
+            .map(route -> {
+              route.applyDefaults(properties.getDefaults());
+              return route;
+            })
+            .collectList()
+            .block(PROVIDER_TIMEOUT);
+        if (loaded == null || loaded.isEmpty()) {
+          LOGGER.info("Dynamic route provider {} returned no routes", provider.getProviderName());
+          return;
+        }
+        for (GatewayRoutesProperties.ServiceRoute route : loaded) {
+          if (route == null) {
+            continue;
+          }
+          route.validate(route.getId());
+          GatewayRoutesProperties.ServiceRoute previous = aggregated.put(route.getId(), route);
+          if (previous != null) {
+            LOGGER.warn("Route {} from provider {} replaced an existing definition", route.getId(), provider.getProviderName());
+          }
+        }
+        LOGGER.info("Loaded {} dynamic routes from {}", loaded.size(), provider.getProviderName());
+      } catch (Exception ex) {
+        LOGGER.warn("Failed to load dynamic routes from {}", provider.getProviderName(), ex);
+      }
+    });
+
+    for (GatewayRoutesProperties.ServiceRoute route : aggregated.values()) {
       GatewayRoutesProperties.ServiceRoute.Resilience resilience = route.getResilience();
 
       routes.route(route.getId(), predicate -> {
@@ -99,30 +145,38 @@ public class GatewayRoutesConfiguration {
             .uri(route.getUri());
       });
 
-      if (LOGGER.isInfoEnabled()) {
-        String resilienceSummary = resilience.isEnabled() ? resilience.toString() : "Resilience{enabled=false}";
-        String prefixSummary = StringUtils.hasText(route.getPrefixPath()) ? route.getPrefixPath() : "/";
-        if (route.getMethods().isEmpty()) {
-          LOGGER.info(
-              "Registered route {} -> {} ({} prefix={}) resilience={}",
-              route.getId(),
-              route.getUri(),
-              route.getPaths(),
-              prefixSummary,
-              resilienceSummary);
-        } else {
-          LOGGER.info(
-              "Registered route {} -> {} ({}, methods={}, prefix={}) resilience={}",
-              route.getId(),
-              route.getUri(),
-              route.getPaths(),
-              route.getMethods(),
-              prefixSummary,
-              resilienceSummary);
-        }
-      }
+      logRouteRegistration(route, resilience);
     }
 
     return routes.build();
+  }
+
+  private void logRouteRegistration(GatewayRoutesProperties.ServiceRoute route,
+      GatewayRoutesProperties.ServiceRoute.Resilience resilience) {
+    if (!LOGGER.isInfoEnabled()) {
+      return;
+    }
+    String resilienceSummary = (resilience != null && resilience.isEnabled())
+        ? resilience.toString()
+        : "Resilience{enabled=false}";
+    String prefixSummary = StringUtils.hasText(route.getPrefixPath()) ? route.getPrefixPath() : "/";
+    if (route.getMethods().isEmpty()) {
+      LOGGER.info(
+          "Registered route {} -> {} ({} prefix={}) resilience={}",
+          route.getId(),
+          route.getUri(),
+          route.getPaths(),
+          prefixSummary,
+          resilienceSummary);
+    } else {
+      LOGGER.info(
+          "Registered route {} -> {} ({}, methods={}, prefix={}) resilience={}",
+          route.getId(),
+          route.getUri(),
+          route.getPaths(),
+          route.getMethods(),
+          prefixSummary,
+          resilienceSummary);
+    }
   }
 }
