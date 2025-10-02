@@ -1,20 +1,5 @@
 # syntax=docker/dockerfile:1.7
 
-ARG MAVEN_IMAGE=maven:3.9.6-eclipse-temurin-21
-FROM ${MAVEN_IMAGE} AS builder
-
-WORKDIR /workspace
-
-ARG MODULE_ROOT
-ARG MODULE_PATH
-ARG ARTIFACT_NAME
-
-COPY shared-lib ./shared-lib
-COPY ${MODULE_ROOT} ./${MODULE_ROOT}
-
-RUN mvn -f shared-lib/pom.xml -B -DskipTests install \
-    && mvn -f ${MODULE_PATH}/pom.xml -B -DskipTests clean package
-
 FROM eclipse-temurin:21-jre-alpine AS runner
 
 ARG APP_GROUP=appgroup
@@ -33,7 +18,7 @@ RUN addgroup -g 1001 -S ${APP_GROUP} \
 
 WORKDIR /app
 
-COPY --from=builder /workspace/${MODULE_PATH}/target/*.jar ./
+COPY ${MODULE_PATH}/target/*.jar ./
 
 RUN set -eux; \
     BOOT_JAR=$(find . -maxdepth 1 -name "${ARTIFACT_NAME}-*.jar" ! -name "*-plain.jar" | head -n 1); \
