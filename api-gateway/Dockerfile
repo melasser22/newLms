@@ -7,7 +7,11 @@ COPY shared-lib ./shared-lib
 COPY api-gateway/pom.xml ./api-gateway/pom.xml
 COPY api-gateway/src ./api-gateway/src
 
-RUN mvn -pl api-gateway -am -B -DskipTests -f api-gateway/pom.xml clean package
+# Build and install the shared library modules first so that the
+# api-gateway module can resolve the imported shared BOM and starters
+# when packaged in isolation inside this container build.
+RUN mvn -f shared-lib/pom.xml -B -DskipTests install \
+    && mvn -f api-gateway/pom.xml -B -DskipTests clean package
 
 FROM eclipse-temurin:21-jre-alpine AS runner
 
