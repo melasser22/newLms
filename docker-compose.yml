@@ -204,6 +204,38 @@ services:
     networks:
       - backend
 
+  analytics-service:
+    build:
+      context: ./tenant-platform/analytics-service
+    restart: unless-stopped
+
+    depends_on:
+      - postgres
+      - redis
+      - otel-collector
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_SERVICE_NAME: analytics-service
+      SPRING_PROFILES_ACTIVE: dev
+      TZ: Asia/Riyadh
+    ports:
+      - "8089:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - backend
+
   catalog-service:
     build:
       context: ./tenant-platform/catalog-service
@@ -313,6 +345,7 @@ services:
       - catalog-service
       - subscription-service
       - billing-service
+      - analytics-service
       - security-service
       - redis
       - otel-collector
@@ -333,6 +366,7 @@ services:
       SPRING_CLOUD_DISCOVERY_CLIENT_SIMPLE_INSTANCES_CATALOG_SERVICE_0_URI: http://catalog-service:8080
       SPRING_CLOUD_DISCOVERY_CLIENT_SIMPLE_INSTANCES_SUBSCRIPTION_SERVICE_0_URI: http://subscription-service:8080
       SPRING_CLOUD_DISCOVERY_CLIENT_SIMPLE_INSTANCES_BILLING_SERVICE_0_URI: http://billing-service:8080
+      SPRING_CLOUD_DISCOVERY_CLIENT_SIMPLE_INSTANCES_ANALYTICS_SERVICE_0_URI: http://analytics-service:8080
     ports:
       - "8088:8080"
     healthcheck:
