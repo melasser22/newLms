@@ -28,8 +28,18 @@ public class GatewayRoutesProperties {
 
   private final Map<String, ServiceRoute> routes = new LinkedHashMap<>();
 
+  private RouteDefaults defaults = new RouteDefaults();
+
   public Map<String, ServiceRoute> getRoutes() {
     return routes;
+  }
+
+  public RouteDefaults getDefaults() {
+    return defaults;
+  }
+
+  public void setDefaults(RouteDefaults defaults) {
+    this.defaults = (defaults == null) ? new RouteDefaults() : defaults;
   }
 
   public Optional<ServiceRoute> findRouteById(String id) {
@@ -40,6 +50,23 @@ public class GatewayRoutesProperties {
         .filter(Objects::nonNull)
         .filter(route -> id.equals(route.getId()))
         .findFirst();
+  }
+
+  /**
+   * Optional defaults that can be merged into every declared route. Primarily used to
+   * avoid repeating resilience fallback values.
+   */
+  public static class RouteDefaults {
+
+    private ServiceRoute.Resilience resilience = new ServiceRoute.Resilience();
+
+    public ServiceRoute.Resilience getResilience() {
+      return resilience;
+    }
+
+    public void setResilience(ServiceRoute.Resilience resilience) {
+      this.resilience = (resilience == null) ? new ServiceRoute.Resilience() : resilience;
+    }
   }
 
   /**
@@ -152,6 +179,16 @@ public class GatewayRoutesProperties {
 
     public void setResilience(Resilience resilience) {
       this.resilience = (resilience == null) ? new Resilience() : resilience;
+    }
+
+    public void applyDefaults(RouteDefaults defaults) {
+      if (defaults == null) {
+        return;
+      }
+      if (this.resilience == null) {
+        this.resilience = new Resilience();
+      }
+      this.resilience.applyDefaults(defaults.getResilience());
     }
 
     public void validate(String key) {
@@ -288,6 +325,31 @@ public class GatewayRoutesProperties {
         this.retry = (retry == null) ? new Retry() : retry;
       }
 
+      public void applyDefaults(Resilience defaults) {
+        if (defaults == null) {
+          return;
+        }
+        if (!this.enabled) {
+          this.enabled = defaults.enabled;
+        }
+        if (!StringUtils.hasText(this.circuitBreakerName)) {
+          this.circuitBreakerName = defaults.circuitBreakerName;
+        }
+        if (!StringUtils.hasText(this.fallbackUri)) {
+          this.fallbackUri = defaults.fallbackUri;
+        }
+        if (this.fallbackStatus == null && defaults.fallbackStatus != null) {
+          this.fallbackStatus = defaults.fallbackStatus;
+        }
+        if (!StringUtils.hasText(this.fallbackMessage)) {
+          this.fallbackMessage = defaults.fallbackMessage;
+        }
+        if (this.retry == null) {
+          this.retry = new Retry();
+        }
+        this.retry.applyDefaults(defaults.retry);
+      }
+
       void validate(String key) {
         if (!enabled) {
           return;
@@ -415,6 +477,34 @@ public class GatewayRoutesProperties {
 
         public void setBackoff(Backoff backoff) {
           this.backoff = (backoff == null) ? new Backoff() : backoff;
+        }
+
+        public void applyDefaults(Retry defaults) {
+          if (defaults == null) {
+            return;
+          }
+          if (!this.enabled) {
+            this.enabled = defaults.enabled;
+          }
+          if (this.retries <= 0) {
+            this.retries = defaults.retries;
+          }
+          if (this.statuses.isEmpty()) {
+            this.statuses = new ArrayList<>(defaults.statuses);
+          }
+          if (this.series.isEmpty()) {
+            this.series = new ArrayList<>(defaults.series);
+          }
+          if (this.methods.isEmpty()) {
+            this.methods = new ArrayList<>(defaults.methods);
+          }
+          if (this.exceptions.isEmpty()) {
+            this.exceptions = new ArrayList<>(defaults.exceptions);
+          }
+          if (this.backoff == null) {
+            this.backoff = new Backoff();
+          }
+          this.backoff.applyDefaults(defaults.backoff);
         }
 
         void validate(String key) {
@@ -645,6 +735,27 @@ public class GatewayRoutesProperties {
 
           public void setBasedOnPreviousValue(boolean basedOnPreviousValue) {
             this.basedOnPreviousValue = basedOnPreviousValue;
+          }
+
+          public void applyDefaults(Backoff defaults) {
+            if (defaults == null) {
+              return;
+            }
+            if (!this.enabled) {
+              this.enabled = defaults.enabled;
+            }
+            if (this.firstBackoff == null) {
+              this.firstBackoff = defaults.firstBackoff;
+            }
+            if (this.maxBackoff == null) {
+              this.maxBackoff = defaults.maxBackoff;
+            }
+            if (this.factor <= 0) {
+              this.factor = defaults.factor;
+            }
+            if (!this.basedOnPreviousValue) {
+              this.basedOnPreviousValue = defaults.basedOnPreviousValue;
+            }
           }
 
           void validate(String key) {
