@@ -113,8 +113,7 @@ services:
 
   tenant-service:
     build:
-      context: .
-      dockerfile: tenant-platform/tenant-service/Dockerfile
+      context: ./tenant-platform/tenant-service
     restart: unless-stopped
 
     depends_on:
@@ -145,8 +144,7 @@ services:
 
   setup-service:
     build:
-      context: .
-      dockerfile: setup-service/Dockerfile
+      context: ./setup-service
     restart: unless-stopped
 
     depends_on:
@@ -177,8 +175,7 @@ services:
 
   billing-service:
     build:
-      context: .
-      dockerfile: tenant-platform/billing-service/Dockerfile
+      context: ./tenant-platform/billing-service
     restart: unless-stopped
 
     depends_on:
@@ -209,8 +206,7 @@ services:
 
   catalog-service:
     build:
-      context: .
-      dockerfile: tenant-platform/catalog-service/Dockerfile
+      context: ./tenant-platform/catalog-service
     restart: unless-stopped
 
     depends_on:
@@ -241,8 +237,7 @@ services:
 
   subscription-service:
     build:
-      context: .
-      dockerfile: tenant-platform/subscription-service/Dockerfile
+      context: ./tenant-platform/subscription-service
     restart: unless-stopped
 
     depends_on:
@@ -273,8 +268,7 @@ services:
 
   security-service:
     build:
-      context: .
-      dockerfile: sec-service/Dockerfile
+      context: ./sec-service
     restart: unless-stopped
 
     depends_on:
@@ -311,8 +305,7 @@ services:
 
   api-gateway:
     build:
-      context: .
-      dockerfile: api-gateway/Dockerfile
+      context: ./api-gateway
     restart: unless-stopped
     depends_on:
       - setup-service
