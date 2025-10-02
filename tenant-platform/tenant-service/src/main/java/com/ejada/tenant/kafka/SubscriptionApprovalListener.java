@@ -2,6 +2,7 @@ package com.ejada.tenant.kafka;
 
 import com.ejada.common.events.subscription.SubscriptionApprovalAction;
 import com.ejada.common.events.subscription.SubscriptionApprovalMessage;
+import com.ejada.common.tenant.TenantIdentifiers;
 import com.ejada.tenant.dto.TenantCreateReq;
 import com.ejada.tenant.exception.TenantConflictException;
 import com.ejada.tenant.service.TenantService;
@@ -53,7 +54,8 @@ public class SubscriptionApprovalListener {
                 message.contactEmail(),
                 message.contactPhone(),
                 null,
-                Boolean.TRUE);
+                Boolean.TRUE,
+                TenantIdentifiers.deriveTenantId(message.tenantCode()));
 
         try {
             tenantService.create(req);

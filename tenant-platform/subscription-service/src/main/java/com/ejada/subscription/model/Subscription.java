@@ -128,6 +128,12 @@ public class Subscription {
     @Column(name = "prev_subscription_update_action", length = 16)
     private String prevSubscriptionUpdateAction; // UPGRADE | DOWNGRADE | RENEWAL
 
+    @Column(name = "tenant_code", length = 64)
+    private String tenantCode;
+
+    @Column(name = "security_tenant_id")
+    private java.util.UUID securityTenantId;
+
     // housekeeping
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "meta", columnDefinition = "jsonb")
