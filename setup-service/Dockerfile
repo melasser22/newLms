@@ -9,7 +9,7 @@ RUN addgroup -g 1001 -S appgroup \
 
 WORKDIR /app
 
-COPY setup-service/target/*.jar ./
+COPY target/*.jar ./
 
 RUN set -eux; \
     BOOT_JAR=$(find . -maxdepth 1 -name 'setup-service-*.jar' ! -name '*-plain.jar' | head -n 1); \

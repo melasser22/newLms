@@ -9,7 +9,7 @@ RUN addgroup -g 1001 -S appgroup \
 
 WORKDIR /app
 
-COPY tenant-platform/billing-service/target/*.jar ./
+COPY target/*.jar ./
 
 RUN set -eux; \
     BOOT_JAR=$(find . -maxdepth 1 -name 'billing-service-*.jar' ! -name '*-plain.jar' | head -n 1); \

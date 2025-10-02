@@ -10,7 +10,7 @@ RUN addgroup -g 1001 -S appgroup \
 
 WORKDIR /app
 
-COPY api-gateway/target/*.jar ./
+COPY target/*.jar ./
 
 RUN set -eux; \
     BOOT_JAR=$(find . -maxdepth 1 -name 'api-gateway-*.jar' ! -name '*-plain.jar' | head -n 1); \
