@@ -278,7 +278,7 @@ services:
   api-gateway:
     build:
       context: .
-      dockerfile: api-gateway/Dockerfile
+      dockerfile: ./api-gateway/Dockerfile
     <<: [*restart_policy]
     depends_on:
       setup-service: { condition: service_started }
