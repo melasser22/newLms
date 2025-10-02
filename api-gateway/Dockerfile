@@ -3,12 +3,11 @@
 FROM maven:3.9.6-eclipse-temurin-21 AS builder
 WORKDIR /workspace
 
-COPY pom.xml ./
 COPY shared-lib ./shared-lib
 COPY api-gateway/pom.xml ./api-gateway/pom.xml
 COPY api-gateway/src ./api-gateway/src
 
-RUN mvn -pl api-gateway -am -B -DskipTests clean package
+RUN mvn -pl api-gateway -am -B -DskipTests -f api-gateway/pom.xml clean package
 
 FROM eclipse-temurin:21-jre-alpine AS runner
 
