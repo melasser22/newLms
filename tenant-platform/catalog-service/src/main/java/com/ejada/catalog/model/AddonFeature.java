@@ -2,6 +2,8 @@ package com.ejada.catalog.model;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -74,6 +76,7 @@ public class AddonFeature {
     @Column(name = "overage_currency", length = 3)
     private String overageCurrency = "SAR";
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "meta", columnDefinition = "jsonb")
     private String meta;
 

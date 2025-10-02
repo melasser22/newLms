@@ -14,6 +14,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -44,6 +46,7 @@ public class UsageEvent {
   private String tokenHash;
 
   /** Raw request payload for audit (JSON string stored in jsonb). */
+  @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
   private String payload;
 
@@ -63,6 +66,7 @@ public class UsageEvent {
   private String statusDesc;
 
   /** Optional details (errors etc.) as JSON. */
+  @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "status_dtls", columnDefinition = "jsonb")
   private String statusDtls;
 
