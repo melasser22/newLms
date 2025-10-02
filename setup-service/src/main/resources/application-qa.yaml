@@ -23,7 +23,8 @@ spring:
         default_schema: setup
         hbm2ddl.create_namespaces: true
         format_sql: true
-        jdbc.time_zone: UTC
+      jdbc:
+        time_zone: UTC
   flyway:
     enabled: true
     baseline-on-migrate: true
