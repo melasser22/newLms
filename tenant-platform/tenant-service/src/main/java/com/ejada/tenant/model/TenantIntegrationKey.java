@@ -18,6 +18,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 // Uncomment if using hibernate-types library:
 // import com.vladmihalcea.hibernate.type.array.StringArrayType;
@@ -107,6 +109,7 @@ public class TenantIntegrationKey {
     // private Map<String, Object> meta;
 
     // Option B: store raw JSON string
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "meta", columnDefinition = "jsonb")
     private String meta;
 
