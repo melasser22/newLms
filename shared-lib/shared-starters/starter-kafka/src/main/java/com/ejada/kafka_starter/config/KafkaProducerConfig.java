@@ -6,6 +6,7 @@ import com.ejada.common.context.ContextManager;
 import com.ejada.kafka_starter.props.KafkaProperties;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.core.*;
@@ -29,6 +30,7 @@ import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 
+@AutoConfiguration
 public class KafkaProducerConfig {
 
   @Bean
