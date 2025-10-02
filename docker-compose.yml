@@ -120,6 +120,7 @@ services:
         MODULE_PATH: tenant-platform/tenant-service
         ARTIFACT_NAME: tenant-service
     restart: unless-stopped
+
     depends_on:
       - postgres
       - otel-collector
@@ -155,6 +156,7 @@ services:
         MODULE_PATH: setup-service
         ARTIFACT_NAME: setup-service
     restart: unless-stopped
+
     depends_on:
       - postgres
       - otel-collector
@@ -190,6 +192,7 @@ services:
         MODULE_PATH: tenant-platform/billing-service
         ARTIFACT_NAME: billing-service
     restart: unless-stopped
+
     depends_on:
       - postgres
       - otel-collector
@@ -225,6 +228,7 @@ services:
         MODULE_PATH: tenant-platform/catalog-service
         ARTIFACT_NAME: catalog-service
     restart: unless-stopped
+
     depends_on:
       - postgres
       - otel-collector
@@ -260,6 +264,7 @@ services:
         MODULE_PATH: tenant-platform/subscription-service
         ARTIFACT_NAME: subscription-service
     restart: unless-stopped
+
     depends_on:
       - postgres
       - otel-collector
@@ -295,6 +300,7 @@ services:
         MODULE_PATH: sec-service
         ARTIFACT_NAME: sec-service
     restart: unless-stopped
+
     depends_on:
       - postgres
       - redis
