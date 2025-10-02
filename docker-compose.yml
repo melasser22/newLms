@@ -1,61 +1,9 @@
 version: "3.8"
 
-# ----------------------------- #
-#          Reusable bits        #
-# ----------------------------- #
-x-health-defaults: &health_defaults
-  interval: 10s
-  timeout: 5s
-  retries: 10
-  start_period: 15s
-
-x-restart: &restart_policy
-  restart: unless-stopped
-
-x-resources-light: &resources_light
-  deploy:
-    resources:
-      limits:
-        memory: 1g
-      reservations:
-        memory: 256m
-
-# --- Common environment anchors ---
-x-postgres-env: &postgres_env
-  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
-  SPRING_DATASOURCE_USERNAME: postgres
-  SPRING_DATASOURCE_PASSWORD: postgres
-
-x-redis-env: &redis_env
-  SPRING_DATA_REDIS_HOST: redis
-  SPRING_DATA_REDIS_PORT: 6379
-
-x-otel-env: &otel_env
-  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-  OTEL_TRACES_EXPORTER: otlp
-  OTEL_METRICS_EXPORTER: otlp
-
-# ----------------------------- #
-#       Networks & Volumes      #
-# ----------------------------- #
-networks:
-  backend:
-    driver: bridge
-
-volumes:
-  pgdata:
-  zkdata:
-  zklog:
-  kafkadata:
-
-# ----------------------------- #
-#            Services           #
-# ----------------------------- #
 services:
-
   postgres:
     image: postgres:16
-    <<: [*restart_policy, *resources_light]
+    restart: unless-stopped
     environment:
       POSTGRES_DB: lms
       POSTGRES_USER: postgres
@@ -66,28 +14,32 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      <<: *health_defaults
       test: ["CMD-SHELL", "pg_isready -U postgres -d lms"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     networks:
-      backend:
-        aliases: [postgres]
+      - backend
 
   redis:
     image: redis:7
-    <<: [*restart_policy, *resources_light]
+    restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     ports:
       - "6379:6379"
     healthcheck:
-      <<: *health_defaults
       test: ["CMD-SHELL", "redis-cli -h localhost ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     networks:
-      backend:
-        aliases: [redis]
+      - backend
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
-    <<: [*restart_policy, *resources_light]
+    restart: unless-stopped
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 3000
@@ -98,18 +50,19 @@ services:
       - zkdata:/var/lib/zookeeper/data
       - zklog:/var/lib/zookeeper/log
     healthcheck:
-      <<: *health_defaults
       test: ["CMD-SHELL", "echo srvr | nc -w 2 localhost 2181 | grep -q 'Mode:'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     networks:
-      backend:
-        aliases: [zookeeper]
+      - backend
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
-    <<: [*restart_policy, *resources_light]
+    restart: unless-stopped
     depends_on:
-      zookeeper:
-        condition: service_healthy
+      - zookeeper
     environment:
       TZ: Asia/Riyadh
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -132,179 +85,282 @@ services:
     volumes:
       - kafkadata:/var/lib/kafka/data
     healthcheck:
-      <<: *health_defaults
       test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:29092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     networks:
-      backend:
-        aliases: [kafka]
+      - backend
 
   otel-collector:
     image: otel/opentelemetry-collector:latest
-    <<: [*restart_policy, *resources_light]
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol/otel-collector-config.yaml"]
     volumes:
       - "./shared-lib/shared-starters/starter-observability/src/main/resources:/etc/otelcol:ro"
-    command: ["--config=/etc/otelcol/otel-collector-config.yaml"]
     ports:
-      - "4317:4317" # OTLP gRPC
-      - "4318:4318" # OTLP HTTP
+      - "4317:4317"
+      - "4318:4318"
     healthcheck:
-      <<: *health_defaults
       test: ["CMD", "/otelcol", "--version"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     networks:
-      backend:
-        aliases: [otel-collector]
-
-  # ----------------------------- #
-  #       Application stack       #
-  # ----------------------------- #
+      - backend
 
   tenant-service:
     build:
-      context: ./tenant-platform/tenant-service
-      dockerfile: Dockerfile
-    <<: [*restart_policy]
+      context: .
+      dockerfile: Dockerfile.spring-service
+      args:
+        MODULE_ROOT: tenant-platform
+        MODULE_PATH: tenant-platform/tenant-service
+        ARTIFACT_NAME: tenant-service
+    restart: unless-stopped
+
     depends_on:
-      postgres: { condition: service_healthy }
-      otel-collector: { condition: service_started }
+      - postgres
+      - otel-collector
     environment:
-      TZ: Asia/Riyadh
-      <<: [*postgres_env, *redis_env, *otel_env]
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
       OTEL_SERVICE_NAME: tenant-service
+      SPRING_PROFILES_ACTIVE: dev
+      TZ: Asia/Riyadh
     ports:
       - "8080:8080"
     healthcheck:
-      <<: *health_defaults
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     networks:
-      backend:
+      - backend
 
   setup-service:
     build:
-      context: ./setup-service
-      dockerfile: Dockerfile
-    <<: [*restart_policy]
+      context: .
+      dockerfile: Dockerfile.spring-service
+      args:
+        MODULE_ROOT: setup-service
+        MODULE_PATH: setup-service
+        ARTIFACT_NAME: setup-service
+    restart: unless-stopped
+
     depends_on:
-      postgres: { condition: service_healthy }
-      otel-collector: { condition: service_started }
+      - postgres
+      - otel-collector
     environment:
-      TZ: Asia/Riyadh
-      <<: [*postgres_env, *redis_env, *otel_env]
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
       OTEL_SERVICE_NAME: setup-service
+      SPRING_PROFILES_ACTIVE: dev
+      TZ: Asia/Riyadh
     ports:
       - "8081:8080"
     healthcheck:
-      <<: *health_defaults
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     networks:
-      backend:
+      - backend
 
   billing-service:
     build:
-      context: ./tenant-platform/billing-service
-      dockerfile: Dockerfile
-    <<: [*restart_policy]
+      context: .
+      dockerfile: Dockerfile.spring-service
+      args:
+        MODULE_ROOT: tenant-platform
+        MODULE_PATH: tenant-platform/billing-service
+        ARTIFACT_NAME: billing-service
+    restart: unless-stopped
+
     depends_on:
-      postgres: { condition: service_healthy }
-      otel-collector: { condition: service_started }
+      - postgres
+      - otel-collector
     environment:
-      TZ: Asia/Riyadh
-      <<: [*postgres_env, *redis_env, *otel_env]
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
       OTEL_SERVICE_NAME: billing-service
+      SPRING_PROFILES_ACTIVE: dev
+      TZ: Asia/Riyadh
     ports:
       - "8082:8080"
     healthcheck:
-      <<: *health_defaults
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     networks:
-      backend:
+      - backend
 
   catalog-service:
     build:
-      context: ./tenant-platform/catalog-service
-      dockerfile: Dockerfile
-    <<: [*restart_policy]
+      context: .
+      dockerfile: Dockerfile.spring-service
+      args:
+        MODULE_ROOT: tenant-platform
+        MODULE_PATH: tenant-platform/catalog-service
+        ARTIFACT_NAME: catalog-service
+    restart: unless-stopped
+
     depends_on:
-      postgres: { condition: service_healthy }
-      otel-collector: { condition: service_started }
+      - postgres
+      - otel-collector
     environment:
-      TZ: Asia/Riyadh
-      <<: [*postgres_env, *redis_env, *otel_env]
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
       OTEL_SERVICE_NAME: catalog-service
+      SPRING_PROFILES_ACTIVE: dev
+      TZ: Asia/Riyadh
     ports:
       - "8083:8080"
     healthcheck:
-      <<: *health_defaults
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     networks:
-      backend:
+      - backend
 
   subscription-service:
     build:
-      context: ./tenant-platform/subscription-service
-      dockerfile: Dockerfile
-    <<: [*restart_policy]
+      context: .
+      dockerfile: Dockerfile.spring-service
+      args:
+        MODULE_ROOT: tenant-platform
+        MODULE_PATH: tenant-platform/subscription-service
+        ARTIFACT_NAME: subscription-service
+    restart: unless-stopped
+
     depends_on:
-      postgres: { condition: service_healthy }
-      otel-collector: { condition: service_started }
+      - postgres
+      - otel-collector
     environment:
-      TZ: Asia/Riyadh
-      <<: [*postgres_env, *redis_env, *otel_env]
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
       OTEL_SERVICE_NAME: subscription-service
+      SPRING_PROFILES_ACTIVE: dev
+      TZ: Asia/Riyadh
     ports:
       - "8084:8080"
     healthcheck:
-      <<: *health_defaults
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     networks:
-      backend:
+      - backend
 
   security-service:
     build:
-      context: ./sec-service
-      dockerfile: Dockerfile
-    <<: [*restart_policy]
-    depends_on:
-      postgres: { condition: service_healthy }
-      redis:    { condition: service_healthy }
-      otel-collector: { condition: service_started }
-    environment:
-      TZ: Asia/Riyadh
-      <<: [*postgres_env, *redis_env, *otel_env]
+      context: .
+      dockerfile: Dockerfile.spring-service
+      args:
+        MODULE_ROOT: sec-service
+        MODULE_PATH: sec-service
+        ARTIFACT_NAME: sec-service
+    restart: unless-stopped
 
-      # Extra Redis settings (security-specific)
+    depends_on:
+      - postgres
+      - redis
+      - otel-collector
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
       SHARED_REDIS_HOST: redis
       SHARED_REDIS_PORT: 6379
       SHARED_REDIS_TIMEOUT: 5s
       SHARED_REDIS_KEY_PREFIX: security
       SHARED_REDIS_DEFAULT_TTL: 600s
-
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
       OTEL_SERVICE_NAME: security-service
+      SPRING_PROFILES_ACTIVE: dev
+      TZ: Asia/Riyadh
     ports:
       - "8085:8080"
     healthcheck:
-      <<: *health_defaults
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     networks:
-      backend:
+      - backend
 
   api-gateway:
     build:
-      context: ./api-gateway
-      dockerfile: Dockerfile
-    <<: [*restart_policy]
+      context: .
+      dockerfile: Dockerfile.spring-service
+      args:
+        MODULE_ROOT: api-gateway
+        MODULE_PATH: api-gateway
+        ARTIFACT_NAME: api-gateway
+        EXTRA_RUNTIME_PACKAGES: curl
+    restart: unless-stopped
     depends_on:
-      setup-service: { condition: service_started }
-      tenant-service: { condition: service_started }
-      catalog-service: { condition: service_started }
-      subscription-service: { condition: service_started }
-      billing-service: { condition: service_started }
-      security-service: { condition: service_started }
-      redis: { condition: service_healthy }
-      otel-collector: { condition: service_started }
+      - setup-service
+      - tenant-service
+      - catalog-service
+      - subscription-service
+      - billing-service
+      - security-service
+      - redis
+      - otel-collector
     environment:
-      TZ: Asia/Riyadh
-      <<: [*redis_env, *otel_env]
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
       OTEL_SERVICE_NAME: api-gateway
+      SPRING_PROFILES_ACTIVE: dev
+      TZ: Asia/Riyadh
       SHARED_SECURITY_MODE: hs256
       SHARED_SECURITY_HS256_SECRET: ${JWT_SECRET:-local-dev-secret}
       SHARED_SECURITY_RESOURCE_SERVER_ENABLED: "false"
@@ -316,7 +372,20 @@ services:
     ports:
       - "8088:8080"
     healthcheck:
-      <<: *health_defaults
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     networks:
-      backend:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  pgdata:
+  zkdata:
+  zklog:
+  kafkadata:
