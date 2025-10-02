@@ -178,6 +178,7 @@ shared:
         enabled: false
       outbox:
         enabled: false
+        table: audit_outbox
 
   openapi:
     enabled: true

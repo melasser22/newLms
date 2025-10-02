@@ -178,6 +178,7 @@ shared:
         enabled: false
       outbox:
         enabled: true
+        table: audit_outbox
   openapi:
     enabled: true
     title: " security Service API"
