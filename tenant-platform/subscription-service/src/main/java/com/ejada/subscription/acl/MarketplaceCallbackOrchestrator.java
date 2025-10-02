@@ -50,6 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -175,12 +176,29 @@ public class MarketplaceCallbackOrchestrator {
 
     private InboundNotificationAudit recordInboundAudit(
             final UUID rqUid, final String token, final Object payload, final String endpoint) {
-        InboundNotificationAudit audit = new InboundNotificationAudit();
-        audit.setRqUid(rqUid);
-        audit.setEndpoint(endpoint);
-        audit.setTokenHash(TokenHashing.sha256(token));
-        audit.setPayload(writeJson(payload));
-        return executeInNewTransaction(() -> auditRepo.save(audit), "persist inbound notification audit");
+        String tokenHash = token == null ? null : TokenHashing.sha256(token);
+        String payloadJson = payload == null ? null : writeJson(payload);
+
+        return executeInNewTransaction(
+                () ->
+                        auditRepo
+                                .findByRqUidAndEndpoint(rqUid, endpoint)
+                                .orElseGet(
+                                        () -> {
+                                            InboundNotificationAudit audit = new InboundNotificationAudit();
+                                            audit.setRqUid(rqUid);
+                                            audit.setEndpoint(endpoint);
+                                            audit.setTokenHash(tokenHash);
+                                            audit.setPayload(payloadJson);
+                                            try {
+                                                return auditRepo.save(audit);
+                                            } catch (DataIntegrityViolationException ex) {
+                                                return auditRepo
+                                                        .findByRqUidAndEndpoint(rqUid, endpoint)
+                                                        .orElseThrow(() -> ex);
+                                            }
+                                        }),
+                "persist inbound notification audit");
     }
 
     private UpsertResult upsertSubscription(final SubscriptionInfoDto info) {
