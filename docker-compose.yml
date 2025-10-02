@@ -160,8 +160,8 @@ services:
 
   tenant-service:
     build:
-      context: .
-      dockerfile: tenant-platform/tenant-service/Dockerfile
+      context: ./tenant-platform/tenant-service
+      dockerfile: Dockerfile
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
@@ -180,8 +180,8 @@ services:
 
   setup-service:
     build:
-      context: .
-      dockerfile: setup-service/Dockerfile
+      context: ./setup-service
+      dockerfile: Dockerfile
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
@@ -200,8 +200,8 @@ services:
 
   billing-service:
     build:
-      context: .
-      dockerfile: tenant-platform/billing-service/Dockerfile
+      context: ./tenant-platform/billing-service
+      dockerfile: Dockerfile
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
@@ -220,8 +220,8 @@ services:
 
   catalog-service:
     build:
-      context: .
-      dockerfile: tenant-platform/catalog-service/Dockerfile
+      context: ./tenant-platform/catalog-service
+      dockerfile: Dockerfile
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
@@ -240,8 +240,8 @@ services:
 
   subscription-service:
     build:
-      context: .
-      dockerfile: tenant-platform/subscription-service/Dockerfile
+      context: ./tenant-platform/subscription-service
+      dockerfile: Dockerfile
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
@@ -260,8 +260,8 @@ services:
 
   security-service:
     build:
-      context: .
-      dockerfile: sec-service/Dockerfile
+      context: ./sec-service
+      dockerfile: Dockerfile
     <<: [*restart_policy]
     depends_on:
       postgres: { condition: service_healthy }
@@ -289,8 +289,8 @@ services:
 
   api-gateway:
     build:
-      context: .
-      dockerfile: ./api-gateway/Dockerfile
+      context: ./api-gateway
+      dockerfile: Dockerfile
     <<: [*restart_policy]
     depends_on:
       setup-service: { condition: service_started }
