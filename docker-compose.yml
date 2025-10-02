@@ -114,11 +114,7 @@ services:
   tenant-service:
     build:
       context: .
-      dockerfile: Dockerfile.spring-service
-      args:
-        MODULE_ROOT: tenant-platform
-        MODULE_PATH: tenant-platform/tenant-service
-        ARTIFACT_NAME: tenant-service
+      dockerfile: tenant-platform/tenant-service/Dockerfile
     restart: unless-stopped
 
     depends_on:
@@ -150,11 +146,7 @@ services:
   setup-service:
     build:
       context: .
-      dockerfile: Dockerfile.spring-service
-      args:
-        MODULE_ROOT: setup-service
-        MODULE_PATH: setup-service
-        ARTIFACT_NAME: setup-service
+      dockerfile: setup-service/Dockerfile
     restart: unless-stopped
 
     depends_on:
@@ -186,11 +178,7 @@ services:
   billing-service:
     build:
       context: .
-      dockerfile: Dockerfile.spring-service
-      args:
-        MODULE_ROOT: tenant-platform
-        MODULE_PATH: tenant-platform/billing-service
-        ARTIFACT_NAME: billing-service
+      dockerfile: tenant-platform/billing-service/Dockerfile
     restart: unless-stopped
 
     depends_on:
@@ -222,11 +210,7 @@ services:
   catalog-service:
     build:
       context: .
-      dockerfile: Dockerfile.spring-service
-      args:
-        MODULE_ROOT: tenant-platform
-        MODULE_PATH: tenant-platform/catalog-service
-        ARTIFACT_NAME: catalog-service
+      dockerfile: tenant-platform/catalog-service/Dockerfile
     restart: unless-stopped
 
     depends_on:
@@ -258,11 +242,7 @@ services:
   subscription-service:
     build:
       context: .
-      dockerfile: Dockerfile.spring-service
-      args:
-        MODULE_ROOT: tenant-platform
-        MODULE_PATH: tenant-platform/subscription-service
-        ARTIFACT_NAME: subscription-service
+      dockerfile: tenant-platform/subscription-service/Dockerfile
     restart: unless-stopped
 
     depends_on:
@@ -294,11 +274,7 @@ services:
   security-service:
     build:
       context: .
-      dockerfile: Dockerfile.spring-service
-      args:
-        MODULE_ROOT: sec-service
-        MODULE_PATH: sec-service
-        ARTIFACT_NAME: sec-service
+      dockerfile: sec-service/Dockerfile
     restart: unless-stopped
 
     depends_on:
@@ -336,12 +312,7 @@ services:
   api-gateway:
     build:
       context: .
-      dockerfile: Dockerfile.spring-service
-      args:
-        MODULE_ROOT: api-gateway
-        MODULE_PATH: api-gateway
-        ARTIFACT_NAME: api-gateway
-        EXTRA_RUNTIME_PACKAGES: curl
+      dockerfile: api-gateway/Dockerfile
     restart: unless-stopped
     depends_on:
       - setup-service
