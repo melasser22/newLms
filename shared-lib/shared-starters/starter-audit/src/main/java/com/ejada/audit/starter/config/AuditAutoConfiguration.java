@@ -6,6 +6,8 @@ import com.ejada.audit.starter.api.ReactiveAuditService;
 import com.ejada.audit.starter.api.TenantProvider;
 import com.ejada.audit.starter.core.DefaultAuditService;
 import com.ejada.audit.starter.core.DefaultReactiveAuditService;
+import com.ejada.audit.starter.core.aop.AuditAspect;
+import com.ejada.audit.starter.core.aop.ReactiveAuditAspect;
 import com.ejada.audit.starter.core.dispatch.AuditDispatcher;
 import com.ejada.audit.starter.core.dispatch.sinks.DatabaseSink;
 import com.ejada.audit.starter.core.dispatch.sinks.OutboxSink;
@@ -147,9 +149,26 @@ public class AuditAutoConfiguration {
   }
 
   @Bean
+  @ConditionalOnClass(AuditAspect.class)
+  @ConditionalOnMissingBean
+  @ConditionalOnProperty(prefix = "shared.audit.aop", name = "enabled", havingValue = "true", matchIfMissing = true)
+  public AuditAspect auditAspect(AuditService auditService) {
+    return new AuditAspect(auditService);
+  }
+
+  @Bean
   @ConditionalOnMissingBean
   public ReactiveAuditService reactiveAuditService(AuditService auditService) {
     return new DefaultReactiveAuditService(auditService);
+  }
+
+  @Bean
+  @ConditionalOnClass(name = "reactor.core.publisher.Mono")
+  @ConditionalOnBean(ReactiveAuditService.class)
+  @ConditionalOnMissingBean
+  @ConditionalOnProperty(prefix = "shared.audit.aop", name = "enabled", havingValue = "true", matchIfMissing = true)
+  public ReactiveAuditAspect reactiveAuditAspect() {
+    return new ReactiveAuditAspect();
   }
 
   @Bean

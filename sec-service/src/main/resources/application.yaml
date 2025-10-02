@@ -45,6 +45,39 @@ shared:
         - /actuator/**
         - /v3/api-docs/**
         - /swagger-ui/**
+  audit:
+    enabled: true
+    web:
+      enabled: true
+      include-headers: true
+      track-bodies: true
+    aop:
+      enabled: true
+    dispatcher:
+      async: true
+    retention:
+      enabled: true
+      days: 90
+    masking:
+      enabled: true
+      fields-by-key:
+        - password
+        - secret
+        - token
+        - ssn
+    sinks:
+      db:
+        enabled: true
+        schema: security
+        table: audit_logs
+      kafka:
+        enabled: true
+        topic: audit_logs
+      otlp:
+        enabled: false
+      outbox:
+        enabled: true
+        table: audit_outbox
   security:
     enable-role-check: true
     jwt:
