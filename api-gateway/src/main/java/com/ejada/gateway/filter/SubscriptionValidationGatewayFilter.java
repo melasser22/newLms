@@ -19,6 +19,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.cloud.gateway.route.Route;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -88,7 +89,8 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
       return chain.filter(exchange);
     }
 
-    String routeId = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_ROUTE_ID_ATTR);
+    Route route = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
+    String routeId = route != null ? route.getId() : null;
     if (!properties.requiresValidation(routeId)) {
       return chain.filter(exchange);
     }
@@ -103,6 +105,11 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
           }
           return reject(exchange, decision.status(), decision.code(), decision.message());
         });
+  }
+
+  @Override
+  public int getOrder() {
+    return Ordered.HIGHEST_PRECEDENCE + 40;
   }
 
   private boolean shouldSkip(String path) {
@@ -137,7 +144,7 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
       String value = objectMapper.writeValueAsString(record);
       Duration ttl = Optional.ofNullable(properties.getCacheTtl()).filter(d -> !d.isZero() && !d.isNegative())
           .orElse(Duration.ofMinutes(5));
-      return redisTemplate.opsForValue().set(cacheKey, value, ttl);
+      return redisTemplate.opsForValue().set(cacheKey, value, ttl).then();
     } catch (JsonProcessingException e) {
       LOGGER.debug("Failed to serialise subscription record for cache", e);
       return Mono.empty();
