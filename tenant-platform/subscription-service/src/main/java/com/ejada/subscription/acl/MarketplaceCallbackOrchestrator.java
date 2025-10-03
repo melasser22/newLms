@@ -126,7 +126,13 @@ public class MarketplaceCallbackOrchestrator {
                         subscriptionRepo.save(sub);
                     }
                     approvalPublisher.publishApprovalDecision(
-                            SubscriptionApprovalAction.APPROVED, rqUid, rq, sub, tenantLink);
+                            SubscriptionApprovalAction.APPROVED,
+                            rqUid,
+                            sub,
+                            rq != null ? rq.customerInfo() : null,
+                            rq != null ? rq.adminUserInfo() : null,
+                            tenantLink,
+                            submissionResult.autoApprovalRule());
                     List<SubscriptionEnvironmentIdentifier> envIds = fetchEnvironmentIdentifiers(sub);
                     ReceiveSubscriptionNotificationRs response =
                             new ReceiveSubscriptionNotificationRs(

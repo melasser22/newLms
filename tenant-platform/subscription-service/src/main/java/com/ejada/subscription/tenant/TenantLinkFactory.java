@@ -1,5 +1,6 @@
 package com.ejada.subscription.tenant;
 
+import com.ejada.common.marketplace.subscription.dto.CustomerInfoDto;
 import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotificationRq;
 import com.ejada.common.tenant.TenantIdentifiers;
 import com.ejada.subscription.model.Subscription;
@@ -21,13 +22,18 @@ public class TenantLinkFactory {
 
     public TenantLink resolve(
             final ReceiveSubscriptionNotificationRq request, final Subscription subscription) {
+        CustomerInfoDto customerInfo = request != null ? request.customerInfo() : null;
+        return resolve(customerInfo, subscription);
+    }
+
+    public TenantLink resolve(final CustomerInfoDto customerInfo, final Subscription subscription) {
 
         String tenantCode = sanitizeCode(subscription != null ? subscription.getTenantCode() : null);
         if (!StringUtils.hasText(tenantCode) && subscription != null) {
             tenantCode = deriveDefaultCode(subscription);
         }
 
-        String tenantName = sanitizeName(resolveTenantName(request, tenantCode));
+        String tenantName = sanitizeName(resolveTenantName(customerInfo, tenantCode));
         UUID securityTenantId = subscription != null && subscription.getSecurityTenantId() != null
                 ? subscription.getSecurityTenantId()
                 : (StringUtils.hasText(tenantCode) ? TenantIdentifiers.deriveTenantId(tenantCode) : null);
@@ -44,14 +50,13 @@ public class TenantLinkFactory {
         return sanitizeCode(normalized);
     }
 
-    private String resolveTenantName(
-            final ReceiveSubscriptionNotificationRq request, final String tenantCode) {
-        if (request == null || request.customerInfo() == null) {
+    private String resolveTenantName(final CustomerInfoDto customerInfo, final String tenantCode) {
+        if (customerInfo == null) {
             return tenantCode;
         }
         return firstNonBlank(
-                request.customerInfo().customerNameEn(),
-                request.customerInfo().customerNameAr(),
+                customerInfo.customerNameEn(),
+                customerInfo.customerNameAr(),
                 tenantCode);
     }
 

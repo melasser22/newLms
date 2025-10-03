@@ -3,6 +3,8 @@ package com.ejada.subscription.kafka;
 import com.ejada.common.events.subscription.SubscriptionApprovalAction;
 import com.ejada.common.events.subscription.SubscriptionApprovalMessage;
 import com.ejada.common.events.subscription.SubscriptionApprovalProperties;
+import com.ejada.common.marketplace.subscription.dto.AdminUserInfoDto;
+import com.ejada.common.marketplace.subscription.dto.CustomerInfoDto;
 import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotificationRq;
 import com.ejada.subscription.model.Subscription;
 import com.ejada.subscription.tenant.TenantLink;
@@ -28,6 +30,8 @@ public class SubscriptionApprovalPublisher {
 
     private static final int TENANT_CODE_MAX = 64;
     private static final int TENANT_NAME_MAX = 128;
+    private static final int EMAIL_MAX = 255;
+    private static final int PHONE_MAX = 32;
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final SubscriptionApprovalProperties properties;
@@ -44,31 +48,43 @@ public class SubscriptionApprovalPublisher {
             final UUID rqUid,
             final ReceiveSubscriptionNotificationRq request,
             final Subscription subscription) {
+        TenantLink tenantLink = tenantLinkFactory.resolve(request, subscription);
+        CustomerInfoDto customerInfo = request != null ? request.customerInfo() : null;
+        AdminUserInfoDto adminUserInfo = request != null ? request.adminUserInfo() : null;
         return publishApprovalDecision(
-                SubscriptionApprovalAction.REQUEST, rqUid, request, subscription, null);
+                SubscriptionApprovalAction.REQUEST,
+                rqUid,
+                subscription,
+                customerInfo,
+                adminUserInfo,
+                tenantLink,
+                null);
     }
 
     public SubscriptionApprovalMessage publishApprovalDecision(
             final SubscriptionApprovalAction action,
-            final UUID rqUid,
-            final ReceiveSubscriptionNotificationRq request,
+            final UUID requestId,
             final Subscription subscription,
-            final TenantLink tenantLink) {
+            final CustomerInfoDto customerInfo,
+            final AdminUserInfoDto adminUserInfo,
+            final TenantLink tenantLink,
+            final String notes) {
 
-        UUID requestId = Optional.ofNullable(rqUid).orElseGet(UUID::randomUUID);
+        UUID resolvedRequestId = Optional.ofNullable(requestId).orElseGet(UUID::randomUUID);
         TenantLink resolvedLink =
-                tenantLink != null ? tenantLink : tenantLinkFactory.resolve(request, subscription);
+                tenantLink != null ? tenantLink : tenantLinkFactory.resolve(customerInfo, subscription);
         SubscriptionApprovalMessage message =
-                buildMessage(action, requestId, request, subscription, resolvedLink);
+                buildMessage(action, resolvedRequestId, subscription, customerInfo, adminUserInfo, resolvedLink, notes);
 
         try {
             SendResult<String, Object> result =
                     kafkaTemplate
-                            .send(properties.getTopic(), requestId.toString(), message)
+                            .send(properties.getTopic(), resolvedRequestId.toString(), message)
                             .join();
 
             log.info(
-                    "Published subscription approval request for subscription {} to topic {} (partition={}, offset={})",
+                    "Published subscription approval {} for subscription {} to topic {} (partition={}, offset={})",
+                    action,
                     subscription.getExtSubscriptionId(),
                     properties.getTopic(),
                     result.getRecordMetadata().partition(),
@@ -90,29 +106,41 @@ public class SubscriptionApprovalPublisher {
     private SubscriptionApprovalMessage buildMessage(
             final SubscriptionApprovalAction action,
             final UUID requestId,
-            final ReceiveSubscriptionNotificationRq request,
             final Subscription subscription,
-            final TenantLink tenantLink) {
+            final CustomerInfoDto customerInfo,
+            final AdminUserInfoDto adminUserInfo,
+            final TenantLink tenantLink,
+            final String notes) {
 
         String tenantCode = tenantLink != null ? tenantLink.tenantCode() : null;
         String tenantName = tenantLink != null ? tenantLink.tenantName() : null;
+
+        String customerNameEn = customerInfo != null ? customerInfo.customerNameEn() : null;
+        String customerNameAr = customerInfo != null ? customerInfo.customerNameAr() : null;
+        String contactEmail = customerInfo != null ? customerInfo.email() : null;
+        String contactPhone = customerInfo != null ? customerInfo.mobileNo() : null;
+        String adminEmail = adminUserInfo != null ? adminUserInfo.email() : null;
+        String adminMobile = adminUserInfo != null ? adminUserInfo.mobileNo() : null;
+
+        String resolvedAdminEmail = safeTrim(firstNonBlank(adminEmail, contactEmail), EMAIL_MAX);
+        String resolvedAdminMobile = safeTrim(firstNonBlank(adminMobile, contactPhone), PHONE_MAX);
 
         return new SubscriptionApprovalMessage(
                 action,
                 requestId,
                 subscription.getExtSubscriptionId(),
                 subscription.getExtCustomerId(),
-                safeTrim(request.customerInfo().customerNameEn(), TENANT_NAME_MAX),
-                safeTrim(request.customerInfo().customerNameAr(), TENANT_NAME_MAX),
-                request.adminUserInfo().email(),
-                request.adminUserInfo().mobileNo(),
+                safeTrim(customerNameEn, TENANT_NAME_MAX),
+                safeTrim(customerNameAr, TENANT_NAME_MAX),
+                resolvedAdminEmail,
+                resolvedAdminMobile,
                 tenantCode,
                 tenantName,
-                safeTrim(request.customerInfo().email(), 255),
-                safeTrim(request.customerInfo().mobileNo(), 32),
+                safeTrim(contactEmail, EMAIL_MAX),
+                safeTrim(contactPhone, PHONE_MAX),
                 properties.getApprovalRole(),
                 OffsetDateTime.now(),
-                null);
+                notes);
     }
 
     private String safeTrim(final String value, final int maxLength) {
@@ -121,6 +149,16 @@ public class SubscriptionApprovalPublisher {
         }
         String trimmed = value.trim();
         return trimmed.length() <= maxLength ? trimmed : trimmed.substring(0, maxLength);
+    }
+
+    private String firstNonBlank(final String first, final String second) {
+        if (StringUtils.hasText(first)) {
+            return first.trim();
+        }
+        if (StringUtils.hasText(second)) {
+            return second.trim();
+        }
+        return null;
     }
 
 }
