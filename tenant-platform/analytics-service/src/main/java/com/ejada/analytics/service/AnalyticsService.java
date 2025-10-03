@@ -98,7 +98,7 @@ public class AnalyticsService {
                             Collectors.toList(),
                             list ->
                                 list.stream()
-                                    .sorted(Comparator.comparing(UsageTrendPointDto::timestamp))
+                                    .sorted(Comparator.comparing(point -> point.timestamp()))
                                     .toList())));
 
     List<FeatureAdoptionResponse.FeatureTrendDto> features =
@@ -155,7 +155,9 @@ public class AnalyticsService {
 
     return new CostForecastResponse(
         tenantId,
-        forecasts.stream().sorted(Comparator.comparing(CostForecastResponse.FeatureForecastDto::featureKey)).toList(),
+        forecasts.stream()
+            .sorted(Comparator.comparing(feature -> feature.featureKey()))
+            .toList(),
         new CostForecastResponse.OffsetDateTimeRange(end, end.plusDays(FORECAST_HORIZON_DAYS)));
   }
 
