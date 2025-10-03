@@ -21,30 +21,22 @@ cd shared-lib
 mvn clean install
 ```
 
-### Build and run the setup service
+### Run the platform with Docker Compose
+
+From the repository root run:
 
 ```bash
-cd ../lms-setup
-mvn spring-boot:run
+docker-compose up --build
 ```
 
-Set the following variables before running:
-=======
-The service uses environment variables for database and security settings. Defaults are provided for local development:
-- `DB_URL`
-- `DB_USERNAME`
-- `DB_PASSWORD`
-- `JWT_SECRET`
-- `CRYPTO_ACTIVE_KID`
-- `CRYPTO_LOCAL_DEV_KEY`
+The compose file provisions infrastructure dependencies (PostgreSQL, Redis, Kafka, OTEL collector) alongside the domain services and the API Gateway. Only the gateway is exposed on the host via `http://localhost:8088`; all downstream services remain on the internal Docker network to prevent direct access.
 
 ### Running Tests
 
-Run unit tests for both modules:
+Run unit tests for the shared libraries:
 
 ```bash
 cd shared-lib && mvn test
-cd ../lms-setup && mvn test
 ```
 
 The build pulls dependencies from Maven Central; ensure network access is available.

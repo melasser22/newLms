@@ -28,4 +28,4 @@ From the project root, run:
 ```bash
 docker-compose up --build
 ```
-Services listen on `localhost:8081`..`8084`.
+All business services run on the internal Docker network; the only public entry point is the [API Gateway](../api-gateway) on `http://localhost:8088`.

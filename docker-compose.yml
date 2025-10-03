@@ -131,8 +131,7 @@ services:
       OTEL_SERVICE_NAME: tenant-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    ports:
-      - "8080:8080"
+    # Internal-only; traffic should originate from the api-gateway container.
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -162,8 +161,7 @@ services:
       OTEL_SERVICE_NAME: setup-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    ports:
-      - "8081:8080"
+    # Internal-only; traffic should originate from the api-gateway container.
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -193,8 +191,7 @@ services:
       OTEL_SERVICE_NAME: billing-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    ports:
-      - "8082:8080"
+    # Internal-only; traffic should originate from the api-gateway container.
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -225,8 +222,7 @@ services:
       OTEL_SERVICE_NAME: analytics-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    ports:
-      - "8089:8080"
+    # Internal-only; traffic should originate from the api-gateway container.
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
@@ -256,8 +252,7 @@ services:
       OTEL_SERVICE_NAME: catalog-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    ports:
-      - "8083:8080"
+    # Internal-only; traffic should originate from the api-gateway container.
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -287,8 +282,7 @@ services:
       OTEL_SERVICE_NAME: subscription-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    ports:
-      - "8084:8080"
+    # Internal-only; traffic should originate from the api-gateway container.
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -324,8 +318,7 @@ services:
       OTEL_SERVICE_NAME: security-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    ports:
-      - "8085:8080"
+    # Internal-only; traffic should originate from the api-gateway container.
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
