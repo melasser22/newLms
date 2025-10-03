@@ -196,6 +196,25 @@ gateway:
           max-backoff: 2s
           factor: 2
           based-on-previous-value: true
+  subscription:
+    enabled: true
+    validation-uri: lb://subscription-service/internal/subscriptions/{tenantId}
+    cache-ttl: 5m
+    fail-open: true
+    validate-all-routes: true
+    skip-patterns:
+      - /actuator/**
+      - /fallback/**
+    required-features:
+      catalog-service: catalog.read
+      billing-service: billing.manage
+      subscription-service: subscription.manage
+  webclient:
+    connect-timeout: 3s
+    response-timeout: 15s
+    read-timeout: 10s
+    write-timeout: 10s
+    max-in-memory-size: 5242880
   routes:
     setup:
       id: setup-service
