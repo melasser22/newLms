@@ -4,6 +4,7 @@ import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.context.ContextManager;
 import com.ejada.common.context.TenantMdcUtil;
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
 import com.ejada.starter_core.tenant.TenantResolution;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -70,10 +71,24 @@ public class ReactiveRequestContextFilter implements WebFilter {
         .cache(Duration.ofSeconds(1));
 
     RequestContextState state = new RequestContextState(props);
-    String correlationId = resolveCorrelationId(exchange);
+    String correlationId = exchange.getAttribute(GatewayRequestAttributes.CORRELATION_ID);
+    if (!StringUtils.hasText(correlationId)) {
+      correlationId = resolveCorrelationId(exchange);
+      if (StringUtils.hasText(correlationId)) {
+        exchange.getAttributes().put(GatewayRequestAttributes.CORRELATION_ID, correlationId);
+      }
+    }
     state.setCorrelationId(correlationId);
 
-    return resolveTenant(exchange, authentication)
+    Mono<TenantResolution> tenantResolutionMono;
+    String preResolvedTenant = exchange.getAttribute(GatewayRequestAttributes.TENANT_ID);
+    if (StringUtils.hasText(preResolvedTenant)) {
+      tenantResolutionMono = Mono.just(validateTenant(preResolvedTenant));
+    } else {
+      tenantResolutionMono = resolveTenant(exchange, authentication);
+    }
+
+    return tenantResolutionMono
         .flatMap(resolution -> {
           if (resolution.isInvalid()) {
             return rejectTenant(exchange, resolution.rawValue());
@@ -269,6 +284,7 @@ public class ReactiveRequestContextFilter implements WebFilter {
           MDC.put(HeaderNames.CORRELATION_ID, correlationId);
         }
         ContextManager.setCorrelationId(correlationId);
+        exchange.getAttributes().put(GatewayRequestAttributes.CORRELATION_ID, correlationId);
       }
 
       if (tenant != null && props.getTenant().isEnabled()) {
@@ -278,6 +294,7 @@ public class ReactiveRequestContextFilter implements WebFilter {
         if (props.getTenant().isEchoResponseHeader()) {
           exchange.getResponse().getHeaders().set(props.getTenant().getHeaderName(), tenant);
         }
+        exchange.getAttributes().put(GatewayRequestAttributes.TENANT_ID, tenant);
       }
 
       String userId = getUserId();

@@ -9,12 +9,17 @@ Enterprise-ready Spring Cloud Gateway that fronts the LMS microservices. It reus
 - **Performance** – Reactive rate limiting, tuned Netty client, weighted load balancing.
 - **Observability** – OpenTelemetry traces, Prometheus metrics, structured JSON logs.
 - **Operations** – Dynamic route reloads, blue/green routing flags, Helm deployment assets.
+- **Tenant & Subscription Enforcement** – Dedicated filters for correlation id propagation, tenant extraction, and subscription validation with Redis caching.
+- **Flexible Rate Limiting** – Built-in tenant and IP-based key resolvers that plug directly into Spring Cloud Gateway's `RequestRateLimiter` filter.
+- **Downstream Client Configuration** – Centralised, load-balanced `WebClient` builder with context propagation and timeout tuning.
 
 ## Configuration Overview
 
 All configuration lives in [`src/main/resources/application.yaml`](src/main/resources/application.yaml). Key sections include:
 
 - `gateway.routes` – declarative downstream routes with resilience settings.
+- `gateway.subscription` – subscription validation endpoint, caching, and feature mapping per route.
+- `gateway.webclient` – connection and response timeout settings for the shared `WebClient` builder.
 - `shared.security` – JWT/OIDC configuration and CORS policy.
 - `resilience4j.*` – circuit breaker/retry/bulkhead defaults.
 - `spring.cloud.gateway.*` – HTTP client tuning, rate limiting, metrics.
@@ -66,6 +71,7 @@ Horizontal Pod Autoscaler (HPA) targets CPU and the custom metric `gateway.reque
 - **Force route refresh**: `kubectl exec` into the pod and run `curl -X POST localhost:8080/actuator/refresh`.
 - **Tenant onboarding**: publish a new route via a `GatewayRouteDefinitionProvider` implementation backed by the onboarding DB; the refresher reloads automatically.
 - **Blue/green deployment**: add weighted routes in config (e.g., `weight: 90` vs `10`) or leverage service mesh rules.
+- **Subscription cache**: subscription lookups are cached for five minutes in Redis using the `gateway.subscription.cache-ttl` setting. Evict by deleting keys with the prefix `gateway:subscription:`.
 
 ## Testing & Quality Gates
 
@@ -73,6 +79,7 @@ Horizontal Pod Autoscaler (HPA) targets CPU and the custom metric `gateway.reque
 - `GatewaySecurityConfigurationTest` – ensures JWT/OIDC wiring.
 - `GatewayRoutesConfigurationTest` – checks dynamic route assembly.
 - Contract tests use WireMock to emulate downstream services and Testcontainers for Redis.
+- `SubscriptionValidationGatewayFilter` integrates with Testcontainers Redis to verify caching semantics (see `gateway.subscription` properties).
 
 ## Troubleshooting
 
