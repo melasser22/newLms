@@ -337,8 +337,9 @@ services:
 
   api-gateway:
     build:
-      context: ./api-gateway
-    restart: unless-stopped
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
+    <<: [*restart_policy]
     depends_on:
       - setup-service
       - tenant-service
