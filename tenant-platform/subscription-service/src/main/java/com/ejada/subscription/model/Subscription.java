@@ -84,6 +84,36 @@ public class Subscription {
     @Column(name = "subscription_stts_cd", length = 8, nullable = false)
     private String subscriptionSttsCd;
 
+    @Column(name = "approval_status", length = 32, nullable = false)
+    private String approvalStatus = SubscriptionApprovalStatus.PENDING_APPROVAL.name();
+
+    @Column(name = "approval_required")
+    private Boolean approvalRequired = Boolean.TRUE;
+
+    @Column(name = "submitted_at")
+    private OffsetDateTime submittedAt;
+
+    @Column(name = "submitted_by", length = 128)
+    private String submittedBy;
+
+    @Column(name = "approved_at")
+    private OffsetDateTime approvedAt;
+
+    @Column(name = "approved_by", length = 128)
+    private String approvedBy;
+
+    @Column(name = "rejected_at")
+    private OffsetDateTime rejectedAt;
+
+    @Column(name = "rejected_by", length = 128)
+    private String rejectedBy;
+
+    @Column(name = "tenant_id")
+    private Long tenantId;
+
+    @Column(name = "admin_user_id")
+    private Long adminUserId;
+
     @Column(name = "create_channel", length = 32)
     private String createChannel; // PORTAL | GCP_MARKETPLACE | ...
 
