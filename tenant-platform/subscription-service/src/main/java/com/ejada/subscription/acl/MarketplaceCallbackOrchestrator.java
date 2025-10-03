@@ -10,6 +10,7 @@ import com.ejada.common.marketplace.subscription.dto.SubscriptionAdditionalServi
 import com.ejada.common.marketplace.subscription.dto.SubscriptionFeatureDto;
 import com.ejada.common.marketplace.subscription.dto.SubscriptionInfoDto;
 import com.ejada.common.marketplace.subscription.dto.SubscriptionUpdateType;
+import com.ejada.common.events.subscription.SubscriptionApprovalAction;
 import com.ejada.common.marketplace.token.TokenHashing;
 import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
 import com.ejada.subscription.mapper.SubscriptionAdditionalServiceMapper;
@@ -23,6 +24,7 @@ import com.ejada.subscription.model.IdempotentRequest;
 import com.ejada.subscription.model.OutboxEvent;
 import com.ejada.subscription.model.Subscription;
 import com.ejada.subscription.model.SubscriptionAdditionalService;
+import com.ejada.subscription.model.SubscriptionApprovalRequest;
 import com.ejada.subscription.model.SubscriptionEnvironmentIdentifier;
 import com.ejada.subscription.model.SubscriptionFeature;
 import com.ejada.subscription.model.SubscriptionProductProperty;
@@ -36,6 +38,10 @@ import com.ejada.subscription.repository.SubscriptionFeatureRepository;
 import com.ejada.subscription.repository.SubscriptionProductPropertyRepository;
 import com.ejada.subscription.repository.SubscriptionRepository;
 import com.ejada.subscription.repository.SubscriptionUpdateEventRepository;
+import com.ejada.subscription.tenant.TenantLink;
+import com.ejada.subscription.tenant.TenantLinkFactory;
+import com.ejada.subscription.service.approval.ApprovalWorkflowService;
+import com.ejada.subscription.service.approval.ApprovalWorkflowService.SubmissionResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityNotFoundException;
@@ -50,6 +56,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -85,6 +92,8 @@ public class MarketplaceCallbackOrchestrator {
     private final ObjectMapper objectMapper;
     private final PlatformTransactionManager transactionManager;
     private final SubscriptionApprovalPublisher approvalPublisher;
+    private final TenantLinkFactory tenantLinkFactory;
+    private final ApprovalWorkflowService approvalWorkflowService;
 
     private final Map<UUID, ServiceResult<ReceiveSubscriptionNotificationRs>> processedNotificationCache =
             new ConcurrentHashMap<>();
@@ -106,17 +115,84 @@ public class MarketplaceCallbackOrchestrator {
             Subscription sub = upsert.subscription();
             synchronizeSubscriptionChildren(sub, rq);
 
-            List<SubscriptionEnvironmentIdentifier> envIds = fetchEnvironmentIdentifiers(sub);
-            ReceiveSubscriptionNotificationRs response =
-                    new ReceiveSubscriptionNotificationRs(Boolean.TRUE, envIdMapper.toDtoList(envIds));
+            SubmissionResult submissionResult =
+                    approvalWorkflowService.submitForApproval(sub, rq, upsert.isNew());
 
-            finalizeNotificationSuccess(audit, rqUid, rq, sub);
-
-            if (upsert.isNew()) {
-                approvalPublisher.publishApprovalRequest(rqUid, rq, sub);
-            }
-
-            return okNotification(response);
+            return switch (submissionResult.state()) {
+                case AUTO_APPROVED -> {
+                    TenantLink tenantLink = tenantLinkFactory.resolve(rq, sub);
+                    boolean updated = updateTenantLinkIfMissing(sub, tenantLink);
+                    if (updated) {
+                        subscriptionRepo.save(sub);
+                    }
+                    approvalPublisher.publishApprovalDecision(
+                            SubscriptionApprovalAction.APPROVED,
+                            rqUid,
+                            sub,
+                            rq != null ? rq.customerInfo() : null,
+                            rq != null ? rq.adminUserInfo() : null,
+                            tenantLink,
+                            submissionResult.autoApprovalRule());
+                    List<SubscriptionEnvironmentIdentifier> envIds = fetchEnvironmentIdentifiers(sub);
+                    ReceiveSubscriptionNotificationRs response =
+                            new ReceiveSubscriptionNotificationRs(
+                                    Boolean.TRUE, envIdMapper.toDtoList(envIds));
+                    finalizeNotificationSuccess(
+                            audit, rqUid, rq, sub, "I000000", "Subscription auto-approved");
+                    yield okNotification(response);
+                }
+                case ALREADY_APPROVED -> {
+                    List<SubscriptionEnvironmentIdentifier> envIds = fetchEnvironmentIdentifiers(sub);
+                    ReceiveSubscriptionNotificationRs response =
+                            new ReceiveSubscriptionNotificationRs(
+                                    Boolean.TRUE, envIdMapper.toDtoList(envIds));
+                    finalizeNotificationSuccess(
+                            audit, rqUid, rq, sub, "I000000", "Subscription already approved");
+                    yield okNotification(response);
+                }
+                case PENDING -> {
+                    TenantLink tenantLink = tenantLinkFactory.resolve(rq, sub);
+                    boolean updated = updateTenantLinkIfMissing(sub, tenantLink);
+                    if (updated) {
+                        subscriptionRepo.save(sub);
+                    }
+                    approvalPublisher.publishApprovalRequest(rqUid, rq, sub);
+                    finalizeNotificationPending(
+                            audit,
+                            rqUid,
+                            rq,
+                            sub,
+                            submissionResult.approvalRequest(),
+                            true,
+                            "Subscription submitted for approval");
+                    ReceiveSubscriptionNotificationRs response =
+                            new ReceiveSubscriptionNotificationRs(Boolean.TRUE, List.of());
+                    yield ServiceResult.withSingleDetail(
+                            rqUid != null ? rqUid.toString() : null,
+                            "I000001",
+                            "Subscription pending approval",
+                            "Subscription requires manual approval",
+                            response);
+                }
+                case ALREADY_PENDING -> {
+                    finalizeNotificationPending(
+                            audit,
+                            rqUid,
+                            rq,
+                            sub,
+                            submissionResult.approvalRequest(),
+                            false,
+                            "Subscription already submitted for approval");
+                    ReceiveSubscriptionNotificationRs response =
+                            new ReceiveSubscriptionNotificationRs(Boolean.TRUE, List.of());
+                    yield ServiceResult.withSingleDetail(
+                            rqUid != null ? rqUid.toString() : null,
+                            "I000001",
+                            "Subscription pending approval",
+                            "Subscription already awaiting approval",
+                            response);
+                }
+            };
 
         } catch (Exception ex) {
             return handleNotificationFailure(audit, ex);
@@ -175,12 +251,29 @@ public class MarketplaceCallbackOrchestrator {
 
     private InboundNotificationAudit recordInboundAudit(
             final UUID rqUid, final String token, final Object payload, final String endpoint) {
-        InboundNotificationAudit audit = new InboundNotificationAudit();
-        audit.setRqUid(rqUid);
-        audit.setEndpoint(endpoint);
-        audit.setTokenHash(TokenHashing.sha256(token));
-        audit.setPayload(writeJson(payload));
-        return executeInNewTransaction(() -> auditRepo.save(audit), "persist inbound notification audit");
+        String tokenHash = token == null ? null : TokenHashing.sha256(token);
+        String payloadJson = payload == null ? null : writeJson(payload);
+
+        return executeInNewTransaction(
+                () ->
+                        auditRepo
+                                .findByRqUidAndEndpoint(rqUid, endpoint)
+                                .orElseGet(
+                                        () -> {
+                                            InboundNotificationAudit audit = new InboundNotificationAudit();
+                                            audit.setRqUid(rqUid);
+                                            audit.setEndpoint(endpoint);
+                                            audit.setTokenHash(tokenHash);
+                                            audit.setPayload(payloadJson);
+                                            try {
+                                                return auditRepo.save(audit);
+                                            } catch (DataIntegrityViolationException ex) {
+                                                return auditRepo
+                                                        .findByRqUidAndEndpoint(rqUid, endpoint)
+                                                        .orElseThrow(() -> ex);
+                                            }
+                                        }),
+                "persist inbound notification audit");
     }
 
     private UpsertResult upsertSubscription(final SubscriptionInfoDto info) {
@@ -205,6 +298,23 @@ public class MarketplaceCallbackOrchestrator {
         return new UpsertResult(saved, isNew);
     }
 
+    private boolean updateTenantLinkIfMissing(final Subscription sub, final TenantLink link) {
+        if (link == null) {
+            return false;
+        }
+        boolean changed = false;
+        if (link.tenantCode() != null && !link.tenantCode().equals(sub.getTenantCode())) {
+            sub.setTenantCode(link.tenantCode());
+            changed = true;
+        }
+        if (link.securityTenantId() != null
+                && !link.securityTenantId().equals(sub.getSecurityTenantId())) {
+            sub.setSecurityTenantId(link.securityTenantId());
+            changed = true;
+        }
+        return changed;
+    }
+
     private void synchronizeSubscriptionChildren(final Subscription sub, final ReceiveSubscriptionNotificationRq rq) {
         SubscriptionInfoDto info = rq.subscriptionInfo();
         replaceFeatures(sub, info.subscriptionFeatureLst());
@@ -220,14 +330,45 @@ public class MarketplaceCallbackOrchestrator {
             final InboundNotificationAudit audit,
             final UUID rqUid,
             final ReceiveSubscriptionNotificationRq rq,
-            final Subscription sub) {
+            final Subscription sub,
+            final String statusCode,
+            final String statusDescription) {
         emitOutbox(
                 "SUBSCRIPTION",
                 sub.getSubscriptionId().toString(),
                 "CREATED_OR_UPDATED",
                 Map.of("extSubscriptionId", sub.getExtSubscriptionId(), "extCustomerId", sub.getExtCustomerId()));
         recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
-        markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
+        markAuditSuccess(audit.getInboundNotificationAuditId(), statusCode, statusDescription, null);
+    }
+
+    private void finalizeNotificationPending(
+            final InboundNotificationAudit audit,
+            final UUID rqUid,
+            final ReceiveSubscriptionNotificationRq rq,
+            final Subscription sub,
+            final SubscriptionApprovalRequest approvalRequest,
+            final boolean emitEvent,
+            final String description) {
+        if (emitEvent && approvalRequest != null) {
+            emitOutbox(
+                    "SUBSCRIPTION",
+                    sub.getSubscriptionId().toString(),
+                    "SUBSCRIPTION_APPROVAL_REQUESTED",
+                    Map.of(
+                            "extSubscriptionId",
+                            sub.getExtSubscriptionId(),
+                            "extCustomerId",
+                            sub.getExtCustomerId(),
+                            "approvalRequestId",
+                            approvalRequest.getApprovalRequestId(),
+                            "riskLevel",
+                            approvalRequest.getRiskLevel(),
+                            "priority",
+                            approvalRequest.getPriority()));
+        }
+        recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
+        markAuditSuccess(audit.getInboundNotificationAuditId(), "I000001", description, null);
     }
 
     private ServiceResult<ReceiveSubscriptionNotificationRs> handleNotificationFailure(

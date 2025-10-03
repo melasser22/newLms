@@ -3,7 +3,9 @@ package com.ejada.subscription.acl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,6 +16,7 @@ import com.ejada.common.marketplace.subscription.dto.CustomerInfoDto;
 import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotificationRq;
 import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotificationRs;
 import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionUpdateRq;
+import com.ejada.common.events.subscription.SubscriptionApprovalAction;
 import com.ejada.common.marketplace.subscription.dto.SubscriptionInfoDto;
 import com.ejada.common.marketplace.subscription.dto.SubscriptionUpdateType;
 import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
@@ -26,6 +29,7 @@ import com.ejada.subscription.mapper.SubscriptionUpdateEventMapper;
 import com.ejada.subscription.model.InboundNotificationAudit;
 import com.ejada.subscription.model.Subscription;
 import com.ejada.subscription.model.SubscriptionUpdateEvent;
+import com.ejada.subscription.model.SubscriptionApprovalRequest;
 import com.ejada.subscription.repository.InboundNotificationAuditRepository;
 import com.ejada.subscription.repository.IdempotentRequestRepository;
 import com.ejada.subscription.repository.OutboxEventRepository;
@@ -35,6 +39,8 @@ import com.ejada.subscription.repository.SubscriptionFeatureRepository;
 import com.ejada.subscription.repository.SubscriptionProductPropertyRepository;
 import com.ejada.subscription.repository.SubscriptionRepository;
 import com.ejada.subscription.repository.SubscriptionUpdateEventRepository;
+import com.ejada.subscription.service.approval.ApprovalWorkflowService;
+import com.ejada.subscription.service.approval.ApprovalWorkflowService.SubmissionResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -70,6 +76,7 @@ class MarketplaceCallbackOrchestratorTest {
     @Mock private SubscriptionEnvironmentIdentifierMapper envIdMapper;
     @Mock private SubscriptionUpdateEventMapper updateEventMapper;
     @Mock private SubscriptionApprovalPublisher approvalPublisher;
+    @Mock private ApprovalWorkflowService approvalWorkflowService;
 
     private MarketplaceCallbackOrchestrator orchestrator;
     private PlatformTransactionManager transactionManager;
@@ -95,7 +102,9 @@ class MarketplaceCallbackOrchestratorTest {
                 updateEventMapper,
                 new ObjectMapper(),
                 transactionManager,
-                approvalPublisher);
+                approvalPublisher,
+                new com.ejada.subscription.tenant.TenantLinkFactory(),
+                approvalWorkflowService);
     }
 
     @Test
@@ -159,11 +168,14 @@ class MarketplaceCallbackOrchestratorTest {
         mapped.setExtCustomerId(456L);
         when(subscriptionMapper.toEntity(subscriptionInfo)).thenReturn(mapped);
 
-        Subscription persisted = new Subscription();
-        persisted.setSubscriptionId(200L);
-        persisted.setExtSubscriptionId(123L);
-        persisted.setExtCustomerId(456L);
-        when(subscriptionRepo.save(any(Subscription.class))).thenReturn(persisted);
+        when(subscriptionRepo.save(any(Subscription.class)))
+                .thenAnswer(invocation -> {
+                    Subscription value = invocation.getArgument(0);
+                    if (value.getSubscriptionId() == null) {
+                        value.setSubscriptionId(200L);
+                    }
+                    return value;
+                });
 
         when(featureRepo.findBySubscriptionSubscriptionId(200L)).thenReturn(List.of());
         when(additionalServiceRepo.findBySubscriptionSubscriptionId(200L)).thenReturn(List.of());
@@ -172,11 +184,97 @@ class MarketplaceCallbackOrchestratorTest {
         when(envIdMapper.toDtoList(List.of())).thenReturn(List.of());
         when(idemRepo.existsByIdempotencyKey(rqUid)).thenReturn(false);
 
+        SubscriptionApprovalRequest approvalRequest = new SubscriptionApprovalRequest();
+        approvalRequest.setApprovalRequestId(88L);
+        when(approvalWorkflowService.submitForApproval(mapped, request, true))
+                .thenReturn(SubmissionResult.pending(mapped, approvalRequest));
+
         ServiceResult<ReceiveSubscriptionNotificationRs> result =
                 orchestrator.processNotification(rqUid, "token", request);
 
         assertThat(result.success()).isTrue();
-        verify(approvalPublisher).publishApprovalRequest(rqUid, request, persisted);
+        assertThat(result.statusCode()).isEqualTo("I000001");
+        verify(approvalPublisher)
+                .publishApprovalRequest(eq(rqUid), eq(request), any(Subscription.class));
+    }
+
+    @Test
+    void processNotificationAutoApprovesWhenWorkflowApproves() {
+        UUID rqUid = UUID.randomUUID();
+        SubscriptionInfoDto subscriptionInfo = new SubscriptionInfoDto(
+                321L,
+                654L,
+                999L,
+                2L,
+                "Enterprise",
+                "مشروع",
+                LocalDate.now(),
+                LocalDate.now().plusDays(30),
+                BigDecimal.TEN,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                "ACTIVE",
+                "MARKETPLACE",
+                Boolean.FALSE,
+                null,
+                null,
+                Boolean.FALSE,
+                null,
+                null,
+                null,
+                null,
+                null,
+                Boolean.FALSE,
+                null,
+                null,
+                List.of(),
+                List.of());
+
+        ReceiveSubscriptionNotificationRq request = new ReceiveSubscriptionNotificationRq(
+                new CustomerInfoDto("Acme", null, null, null, null, null, null, null, "owner@acme.com", null),
+                new AdminUserInfoDto("owner", "EN", "1234567890", "owner@acme.com"),
+                subscriptionInfo,
+                List.of());
+
+        InboundNotificationAudit savedAudit = new InboundNotificationAudit();
+        savedAudit.setInboundNotificationAuditId(42L);
+        when(auditRepo.save(any())).thenReturn(savedAudit);
+        when(auditRepo.markProcessed(any(), any(), any(), any())).thenReturn(1);
+        when(auditRepo.findByRqUidAndEndpoint(rqUid, "RECEIVE_NOTIFICATION")).thenReturn(Optional.empty());
+
+        when(subscriptionRepo.findByExtSubscriptionIdAndExtCustomerId(321L, 654L)).thenReturn(Optional.empty());
+
+        Subscription mapped = new Subscription();
+        mapped.setExtSubscriptionId(321L);
+        mapped.setExtCustomerId(654L);
+        when(subscriptionMapper.toEntity(subscriptionInfo)).thenReturn(mapped);
+
+        when(subscriptionRepo.save(any(Subscription.class)))
+                .thenAnswer(invocation -> {
+                    Subscription value = invocation.getArgument(0);
+                    if (value.getSubscriptionId() == null) {
+                        value.setSubscriptionId(300L);
+                    }
+                    return value;
+                });
+
+        when(featureRepo.findBySubscriptionSubscriptionId(300L)).thenReturn(List.of());
+        when(additionalServiceRepo.findBySubscriptionSubscriptionId(300L)).thenReturn(List.of());
+        when(propertyRepo.findBySubscriptionSubscriptionId(300L)).thenReturn(List.of());
+        when(envIdRepo.findBySubscriptionSubscriptionId(300L)).thenReturn(List.of());
+        when(envIdMapper.toDtoList(List.of())).thenReturn(List.of());
+        when(idemRepo.existsByIdempotencyKey(rqUid)).thenReturn(false);
+
+        SubscriptionApprovalRequest approvalRequest = new SubscriptionApprovalRequest();
+        when(approvalWorkflowService.submitForApproval(mapped, request, true))
+                .thenReturn(SubmissionResult.autoApproved(mapped, approvalRequest, "LOW_VALUE"));
+
+        ServiceResult<ReceiveSubscriptionNotificationRs> result =
+                orchestrator.processNotification(rqUid, "token", request);
+
+        assertThat(result.statusCode()).isEqualTo("I000000");
+        verify(approvalPublisher)
+                .publishApprovalDecision(eq(SubscriptionApprovalAction.APPROVED), eq(rqUid), eq(request), any(Subscription.class), any());
     }
 
     @Test

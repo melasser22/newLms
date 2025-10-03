@@ -1,0 +1,20 @@
+package com.ejada.analytics.dto;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+public record CostForecastResponse(
+    Long tenantId,
+    List<FeatureForecastDto> features,
+    OffsetDateTimeRange forecastWindow) {
+
+  public record FeatureForecastDto(
+      String featureKey,
+      BigDecimal currentUsage,
+      BigDecimal forecastedUsage,
+      BigDecimal planLimit,
+      boolean overageRisk,
+      List<String> recommendations) {}
+
+  public record OffsetDateTimeRange(java.time.OffsetDateTime start, java.time.OffsetDateTime end) {}
+}

@@ -500,6 +500,13 @@ public class SuperadminServiceImpl implements SuperadminService {
         if (!isSuperadmin) {
             throw new AccessDeniedException("Access denied. Only superadmins can perform this action");
         }
+
+        if (authentication.getPrincipal() instanceof Jwt jwt) {
+            Long superadminId = resolveSuperadminIdFromJwt(jwt);
+            if (superadminId == null) {
+                throw new AuthenticationCredentialsNotFoundException("No authenticated superadmin found");
+            }
+        }
     }
 
     private Long getCurrentSuperadminId() {

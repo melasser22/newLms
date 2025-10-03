@@ -19,6 +19,7 @@ public interface TenantMapper {
     // ---------- Create ----------
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "active", source = "active")
+    @Mapping(target = "securityTenantId", source = "securityTenantId")
     @Mapping(target = "isDeleted", constant = "false")
     // DB-managed timestamps
     @Mapping(target = "createdAt", ignore = true)
@@ -40,6 +41,7 @@ public interface TenantMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "securityTenantId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void update(@MappingTarget @NonNull Tenant entity, @NonNull TenantUpdateReq req);

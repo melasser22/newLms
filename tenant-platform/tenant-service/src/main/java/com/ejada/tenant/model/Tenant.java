@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import java.util.UUID;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -61,6 +62,9 @@ public class Tenant {
 
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = Boolean.FALSE;
+
+    @Column(name = "security_tenant_id")
+    private UUID securityTenantId;
 
     // If you mapped created_at/updated_at in DB, keep them here if you want to read them.
     @Column(name = "created_at", updatable = false, insertable = false)

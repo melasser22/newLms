@@ -20,6 +20,7 @@
     <module>tenant-service</module>
     <module>subscription-service</module>
     <module>billing-service</module>
+    <module>analytics-service</module>
   </modules>
 
   <properties>

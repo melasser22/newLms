@@ -31,6 +31,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -330,5 +332,43 @@ class SuperadminServiceImplTest {
 
         assertDoesNotThrow(() ->
             ReflectionTestUtils.invokeMethod(service, "ensureTokenFreshness", jwt, superadmin));
+    }
+
+    @Test
+    void listSuperadminsRejectsTokenIssuedBeforePasswordChange() {
+        LocalDateTime passwordChangedAt = LocalDateTime.of(2025, 9, 29, 16, 6, 0);
+
+        Superadmin superadmin = Superadmin.builder()
+            .id(21L)
+            .username("admin")
+            .passwordChangedAt(passwordChangedAt)
+            .build();
+
+        when(superadminRepository.findById(21L)).thenReturn(Optional.of(superadmin));
+
+        Instant issuedAt = passwordChangedAt.minusMinutes(5)
+            .atZone(ZoneId.systemDefault())
+            .toInstant();
+        Instant expiresAt = issuedAt.plusSeconds(3600);
+
+        Jwt jwt = Jwt.withTokenValue("token")
+            .header("alg", "HS256")
+            .claim("uid", 21)
+            .claim("roles", List.of("EJADA_OFFICER"))
+            .issuedAt(issuedAt)
+            .expiresAt(expiresAt)
+            .build();
+
+        JwtAuthenticationToken authentication = new JwtAuthenticationToken(
+            jwt,
+            List.of(new SimpleGrantedAuthority("ROLE_EJADA_OFFICER")));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        assertThatThrownBy(() -> service.listSuperadmins(PageRequest.of(0, 10)))
+            .isInstanceOf(AuthenticationCredentialsNotFoundException.class)
+            .hasMessageContaining("Authentication token is no longer valid");
+
+        verify(superadminRepository).findById(21L);
+        verify(superadminRepository, never()).findAll(any(Pageable.class));
     }
 }
