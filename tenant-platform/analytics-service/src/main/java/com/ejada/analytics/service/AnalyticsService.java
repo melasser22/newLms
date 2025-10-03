@@ -88,18 +88,18 @@ public class AnalyticsService {
             .collect(
                 Collectors.groupingBy(
                     v -> v.getId().getFeatureKey(),
-                    Collectors.mapping(
-                        v ->
-                            new UsageTrendPointDto(
-                                v.getId().getUsageDay(),
-                                safeBigDecimal(v.getTotalUsage()),
-                                Optional.ofNullable(v.getEventCount()).orElse(0L)),
-                        Collectors.collectingAndThen(
-                            Collectors.toList(),
-                            list ->
-                                list.stream()
-                                    .sorted(Comparator.comparing(point -> point.timestamp()))
-                                    .toList())));
+                    Collectors.collectingAndThen(
+                        Collectors.mapping(
+                            v ->
+                                new UsageTrendPointDto(
+                                    v.getId().getUsageDay(),
+                                    safeBigDecimal(v.getTotalUsage()),
+                                    Optional.ofNullable(v.getEventCount()).orElse(0L)),
+                            Collectors.toList()),
+                        list ->
+                            list.stream()
+                                .sorted(Comparator.comparing(UsageTrendPointDto::timestamp))
+                                .toList())));
 
     List<FeatureAdoptionResponse.FeatureTrendDto> features =
         trendByFeature.entrySet().stream()
