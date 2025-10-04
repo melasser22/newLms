@@ -16,6 +16,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.util.StringUtils;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
@@ -67,8 +68,8 @@ public class ApiVersioningGatewayFilter implements GatewayFilter {
       if (versioning.hasSupportedVersions() && !versioning.getSupportedVersions().contains(requestedVersion)) {
         if (!versioning.isFallbackToDefault()) {
           LOGGER.debug("Rejecting unsupported API version '{}' for route {}", requestedVersion, versioning);
-          exchange.getResponse().setStatusCode(HttpStatus.NOT_FOUND);
-          return exchange.getResponse().setComplete();
+          return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+              "Requested API version is not supported"));
         }
         LOGGER.debug("Falling back to default version {} for unsupported request version {}", effectiveVersion,
             requestedVersion);
