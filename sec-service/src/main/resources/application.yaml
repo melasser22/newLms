@@ -95,3 +95,8 @@ sec:
   superadmin:
     bootstrap:
       default-password: ${SEC_SUPERADMIN_DEFAULT_PASSWORD:Admin@123!}
+  permissions:
+    cache:
+      enabled: true
+      ttl-minutes: 5
+      max-size: 10000

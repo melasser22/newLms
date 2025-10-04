@@ -1,0 +1,6 @@
+sec:
+  permissions:
+    cache:
+      enabled: true
+      ttl-minutes: 10
+      max-size: 50000
