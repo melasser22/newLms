@@ -1,0 +1,110 @@
+{
+  "id": null,
+  "title": "Gateway Observability",
+  "uid": "gateway-observability",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Requests by Tenant",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMETHEUS_DS"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(gateway_requests_by_tenant_total{tenantId!\"unknown\"}[5m])) by (tenantId, statusCode)",
+          "legendFormat": "{{tenantId}} - {{statusCode}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Route Latency (P95)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMETHEUS_DS"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(gateway_route_latency_seconds_bucket[5m])) by (le, routeId))",
+          "legendFormat": "{{routeId}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "type": "gauge",
+      "title": "Subscription Cache Hit Rate",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMETHEUS_DS"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 1,
+          "unit": "percentunit"
+        }
+      },
+      "targets": [
+        {
+          "expr": "gateway_subscription_validation_cache_hit_rate"
+        }
+      ],
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 8 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Rate Limit Rejections",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMETHEUS_DS"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(gateway_ratelimit_rejections_total[5m])) by (strategy, tenantId)",
+          "legendFormat": "{{strategy}} - {{tenantId}}"
+        }
+      ],
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 8 }
+    },
+    {
+      "type": "state-timeline",
+      "title": "Circuit Breaker State",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMETHEUS_DS"
+      },
+      "targets": [
+        {
+          "expr": "gateway_circuit_breaker_state{state=\"open\"}",
+          "legendFormat": "{{serviceName}}"
+        }
+      ],
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 8 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Subscription Validation Duration",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMETHEUS_DS"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(gateway_subscription_validation_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P95"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 }
+    }
+  ],
+  "templating": {
+    "list": []
+  }
+}

@@ -1,6 +1,7 @@
 package com.ejada.gateway.config;
 
 import com.ejada.gateway.context.ReactiveRequestContextFilter;
+import com.ejada.gateway.observability.GatewayTracingHelper;
 import com.ejada.gateway.ratelimit.ReactiveRateLimiterFilter;
 import com.ejada.shared_starter_ratelimit.RateLimitProps;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
@@ -54,12 +55,13 @@ public class ReactiveContextConfiguration {
       GatewayRateLimitProperties gatewayRateLimitProperties,
       @Qualifier("jacksonObjectMapper") @Nullable ObjectMapper jacksonObjectMapper,
       ObjectProvider<ObjectMapper> objectMapperProvider,
-      ObjectProvider<MeterRegistry> meterRegistryProvider) {
+      ObjectProvider<MeterRegistry> meterRegistryProvider,
+      ObjectProvider<GatewayTracingHelper> tracingHelperProvider) {
     ObjectMapper mapper = (jacksonObjectMapper != null)
         ? jacksonObjectMapper
         : objectMapperProvider.getIfAvailable();
     MeterRegistry meterRegistry = meterRegistryProvider.getIfAvailable();
     return new ReactiveRateLimiterFilter(redisTemplate, props, keyResolver, mapper,
-        gatewayRateLimitProperties, meterRegistry);
+        gatewayRateLimitProperties, meterRegistry, tracingHelperProvider.getIfAvailable());
   }
 }

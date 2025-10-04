@@ -4,6 +4,8 @@ import com.ejada.common.dto.BaseResponse;
 import com.ejada.gateway.config.SubscriptionValidationProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -11,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -40,13 +43,16 @@ public class SubscriptionCacheService {
   private final ReactiveStringRedisTemplate redisTemplate;
   private final ObjectMapper objectMapper;
   private final WebClient webClient;
+  private final AtomicLong cacheHits = new AtomicLong();
+  private final AtomicLong cacheMisses = new AtomicLong();
 
   public SubscriptionCacheService(
       SubscriptionValidationProperties properties,
       ReactiveStringRedisTemplate redisTemplate,
       @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> primaryObjectMapper,
       ObjectProvider<ObjectMapper> fallbackObjectMapper,
-      WebClient.Builder webClientBuilder) {
+      WebClient.Builder webClientBuilder,
+      MeterRegistry meterRegistry) {
     this.properties = properties;
     this.redisTemplate = redisTemplate;
     ObjectMapper mapper = (primaryObjectMapper != null) ? primaryObjectMapper.getIfAvailable() : null;
@@ -55,14 +61,29 @@ public class SubscriptionCacheService {
     }
     this.objectMapper = mapper;
     this.webClient = webClientBuilder.clone().build();
+    Gauge.builder("gateway.subscription.validation.cache_hit_rate", this,
+            SubscriptionCacheService::calculateHitRate)
+        .description("Cache hit ratio for subscription validation lookups")
+        .register(meterRegistry);
   }
 
   public Mono<Optional<SubscriptionRecord>> getCached(String tenantId) {
     String key = cacheKey(tenantId);
     return redisTemplate.opsForValue().get(key)
-        .flatMap(json -> decode(json).map(Mono::just).orElseGet(Mono::empty))
+        .flatMap(json -> decode(json)
+            .map(record -> {
+              recordCacheHit();
+              return Mono.just(record);
+            })
+            .orElseGet(() -> {
+              recordCacheMiss();
+              return Mono.empty();
+            }))
         .map(Optional::of)
-        .defaultIfEmpty(Optional.empty());
+        .switchIfEmpty(Mono.fromCallable(() -> {
+          recordCacheMiss();
+          return Optional.empty();
+        }));
   }
 
   public Mono<SubscriptionRecord> fetch(String tenantId) {
@@ -75,6 +96,24 @@ public class SubscriptionCacheService {
         .doOnNext(record -> LOGGER.debug("Fetched subscription for tenant {} -> {}", tenantId,
             record.status()))
         .switchIfEmpty(Mono.just(SubscriptionRecord.inactive()));
+  }
+
+  double calculateHitRate() {
+    long hits = cacheHits.get();
+    long misses = cacheMisses.get();
+    long total = hits + misses;
+    if (total == 0) {
+      return 0.0d;
+    }
+    return (double) hits / total;
+  }
+
+  private void recordCacheHit() {
+    cacheHits.incrementAndGet();
+  }
+
+  private void recordCacheMiss() {
+    cacheMisses.incrementAndGet();
   }
 
   public Mono<SubscriptionRecord> fetchAndCache(String tenantId) {

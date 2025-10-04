@@ -4,12 +4,14 @@ import com.ejada.common.dto.BaseResponse;
 import com.ejada.common.enums.StatusEnums;
 import com.ejada.gateway.config.SubscriptionValidationProperties;
 import com.ejada.gateway.context.GatewayRequestAttributes;
+import com.ejada.gateway.observability.GatewayTracingHelper;
 import com.ejada.gateway.subscription.SubscriptionCacheService;
 import com.ejada.gateway.subscription.SubscriptionRecord;
 import com.ejada.gateway.subscription.SubscriptionUsageTracker;
 import com.ejada.gateway.subscription.SubscriptionUsageTracker.UsageCheck;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -20,6 +22,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -58,6 +61,7 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
   private final SubscriptionUsageTracker usageTracker;
   private final ObjectMapper objectMapper;
   private final MeterRegistry meterRegistry;
+  private final GatewayTracingHelper tracingHelper;
 
   public SubscriptionValidationGatewayFilter(
       SubscriptionValidationProperties properties,
@@ -65,7 +69,8 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
       SubscriptionUsageTracker usageTracker,
       @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> primaryObjectMapper,
       ObjectProvider<ObjectMapper> fallbackObjectMapper,
-      MeterRegistry meterRegistry) {
+      MeterRegistry meterRegistry,
+      GatewayTracingHelper tracingHelper) {
     this.properties = Objects.requireNonNull(properties, "properties");
     this.cacheService = Objects.requireNonNull(cacheService, "cacheService");
     this.usageTracker = Objects.requireNonNull(usageTracker, "usageTracker");
@@ -75,9 +80,11 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
     }
     this.objectMapper = Objects.requireNonNull(mapper, "objectMapper");
     this.meterRegistry = Objects.requireNonNull(meterRegistry, "meterRegistry");
+    this.tracingHelper = Objects.requireNonNull(tracingHelper, "tracingHelper");
   }
 
   @Override
+  @Timed(value = "gateway.subscription.validation", description = "Subscription validation latency")
   public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
     if (!properties.isEnabled()) {
       return chain.filter(exchange);
@@ -101,8 +108,17 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
 
     Set<String> requiredFeatures = properties.requiredFeaturesFor(routeId);
 
-    return ensureSubscription(tenantId, requiredFeatures, exchange)
+    long start = System.nanoTime();
+    AtomicBoolean cacheHit = new AtomicBoolean(false);
+
+    return ensureSubscription(tenantId, requiredFeatures, exchange, cacheHit)
         .flatMap(decision -> {
+          tracingHelper.recordSubscriptionValidation(exchange,
+              Duration.ofNanos(System.nanoTime() - start),
+              cacheHit.get(),
+              routeId,
+              decision.reason() != null ? decision.reason().name() : "unknown");
+          recordOutcomeMetrics(tenantId, decision);
           if (decision.allowed()) {
             if (decision.reason() == DecisionReason.GRACE_ALLOWED && decision.graceRemaining() != null) {
               exchange.getResponse().getHeaders().set(GRACE_HEADER,
@@ -136,8 +152,9 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
   }
 
   private Mono<SubscriptionDecision> ensureSubscription(String tenantId, Set<String> requiredFeatures,
-      ServerWebExchange exchange) {
+      ServerWebExchange exchange, AtomicBoolean cacheHit) {
     return cacheService.getCached(tenantId)
+        .doOnNext(optional -> optional.ifPresent(ignored -> cacheHit.set(true)))
         .flatMap(optional -> optional.map(record -> Mono.just(new SubscriptionContext(record, true)))
             .orElseGet(Mono::empty))
         .switchIfEmpty(cacheService.fetchAndCache(tenantId).map(record -> new SubscriptionContext(record, false)))
@@ -296,6 +313,22 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
     }
     return exchange.getResponse()
         .writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(payload)));
+  }
+
+  private void recordOutcomeMetrics(String tenantId, SubscriptionDecision decision) {
+    String resolvedTenant = StringUtils.hasText(tenantId) ? tenantId : "unknown";
+    String reason = decision.reason() != null ? decision.reason().name() : "UNKNOWN";
+    meterRegistry.counter("gateway.subscription.validation.outcomes",
+            "tenantId", resolvedTenant,
+            "outcome", decision.allowed() ? "success" : "failure",
+            "reason", reason)
+        .increment();
+    if (!decision.allowed()) {
+      meterRegistry.counter("gateway.subscription.validation.failures",
+              "tenantId", resolvedTenant,
+              "reason", reason)
+          .increment();
+    }
   }
 
   private record SubscriptionContext(SubscriptionRecord record, boolean fromCache) {

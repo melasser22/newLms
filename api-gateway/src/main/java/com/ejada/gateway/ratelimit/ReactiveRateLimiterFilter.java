@@ -6,9 +6,11 @@ import com.ejada.common.dto.BaseResponse;
 import com.ejada.gateway.config.GatewayRateLimitProperties;
 import com.ejada.gateway.config.GatewayRateLimitProperties.TierLimit;
 import com.ejada.gateway.context.GatewayRequestAttributes;
+import com.ejada.gateway.observability.GatewayTracingHelper;
 import com.ejada.shared_starter_ratelimit.RateLimitProps;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.nio.charset.StandardCharsets;
@@ -155,23 +157,26 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
   private final MeterRegistry meterRegistry;
   private final Counter bypassCounter;
   private final Counter burstCounter;
+  private final GatewayTracingHelper tracingHelper;
 
   @Autowired
   public ReactiveRateLimiterFilter(ReactiveStringRedisTemplate redisTemplate,
       RateLimitProps props,
       KeyResolver keyResolver,
       @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> jacksonObjectMapper,
-      ObjectProvider<ObjectMapper> objectMapperProvider) {
+      ObjectProvider<ObjectMapper> objectMapperProvider,
+      ObjectProvider<GatewayTracingHelper> tracingHelperProvider) {
     this(redisTemplate, props, keyResolver,
         resolveObjectMapper(jacksonObjectMapper, objectMapperProvider),
-        new GatewayRateLimitProperties(), null);
+        new GatewayRateLimitProperties(), null, tracingHelperProvider.getIfAvailable());
   }
 
   public ReactiveRateLimiterFilter(ReactiveStringRedisTemplate redisTemplate,
       RateLimitProps props,
       KeyResolver keyResolver,
       @Nullable ObjectMapper objectMapper) {
-    this(redisTemplate, props, keyResolver, objectMapper, new GatewayRateLimitProperties(), null);
+    this(redisTemplate, props, keyResolver, objectMapper, new GatewayRateLimitProperties(), null,
+        null);
   }
 
   public ReactiveRateLimiterFilter(ReactiveStringRedisTemplate redisTemplate,
@@ -179,7 +184,8 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
       KeyResolver keyResolver,
       @Nullable ObjectMapper objectMapper,
       @Nullable GatewayRateLimitProperties gatewayProps,
-      @Nullable MeterRegistry meterRegistry) {
+      @Nullable MeterRegistry meterRegistry,
+      @Nullable GatewayTracingHelper tracingHelper) {
     this.redisTemplate = Objects.requireNonNull(redisTemplate, "redisTemplate");
     this.props = Objects.requireNonNull(props, "props");
     this.keyResolver = Objects.requireNonNull(keyResolver, "keyResolver");
@@ -192,9 +198,11 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
     this.burstCounter = (meterRegistry != null)
         ? meterRegistry.counter("gateway.ratelimit.burst_used")
         : null;
+    this.tracingHelper = tracingHelper;
   }
 
   @Override
+  @Timed(value = "gateway.ratelimit.filter", description = "Rate limiter filter execution time")
   public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
     return resolveKey(exchange)
         .flatMap(key -> applyRateLimit(exchange, chain, key))
@@ -214,6 +222,7 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
     return executeRateLimit(key, limit)
         .flatMap(decision -> {
           applyHeaders(exchange, limit, decision);
+          recordRateLimitDecision(exchange, limit, decision);
           if (!decision.allowed()) {
             return reject(exchange);
           }
@@ -332,6 +341,35 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
     if (burstCounter != null) {
       burstCounter.increment();
     }
+  }
+
+  private void recordRateLimitDecision(ServerWebExchange exchange, LimitDefinition limit,
+      RateLimitDecision decision) {
+    if (tracingHelper != null) {
+      tracingHelper.recordRateLimitDecision(exchange,
+          decision.allowed(),
+          decision.remaining(),
+          decision.baseRemaining(),
+          decision.burstRemaining(),
+          limit.window(),
+          decision.burstConsumed(),
+          props.getKeyStrategy());
+    }
+    if (!decision.allowed()) {
+      recordRejection(exchange);
+    }
+  }
+
+  private void recordRejection(ServerWebExchange exchange) {
+    if (meterRegistry == null) {
+      return;
+    }
+    String strategy = trimToNull(props.getKeyStrategy());
+    String tenant = trimToNull(exchange.getAttribute(GatewayRequestAttributes.TENANT_ID));
+    meterRegistry.counter("gateway.ratelimit.rejections",
+            "strategy", strategy != null ? strategy : "unknown",
+            "tenantId", tenant != null ? tenant : "unknown")
+        .increment();
   }
 
   private String rateKey(String key, String algorithm) {

@@ -38,6 +38,8 @@ public class AdminAggregationProperties {
 
     private List<Service> services = new ArrayList<>();
 
+    private String redisProbeKey = "gateway:health:probe";
+
     public Duration getTimeout() {
       return timeout;
     }
@@ -52,6 +54,14 @@ public class AdminAggregationProperties {
 
     public void setServices(List<Service> services) {
       this.services = (services == null) ? new ArrayList<>() : new ArrayList<>(services);
+    }
+
+    public String getRedisProbeKey() {
+      return redisProbeKey;
+    }
+
+    public void setRedisProbeKey(String redisProbeKey) {
+      this.redisProbeKey = StringUtils.hasText(redisProbeKey) ? redisProbeKey.trim() : "gateway:health:probe";
     }
   }
 
