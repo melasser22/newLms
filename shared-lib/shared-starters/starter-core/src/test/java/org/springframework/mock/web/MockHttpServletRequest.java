@@ -158,6 +158,11 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
+    public String getRequestId() {
+        return null;
+    }
+
+    @Override
     public StringBuffer getRequestURL() {
         return new StringBuffer("http://" + getServerName() + requestUri);
     }

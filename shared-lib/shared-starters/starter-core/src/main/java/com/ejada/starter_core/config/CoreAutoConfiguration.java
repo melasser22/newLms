@@ -236,7 +236,7 @@ public class CoreAutoConfiguration {
       private boolean resolveFromJwt = true;
 
       /** Candidate claim names in JWT */
-      private String[] jwtClaimNames = new String[]{"tenant", "tenant_id", "tid"};
+      private String[] jwtClaimNames = new String[]{"tenant", "tenant_id", "tenantId", "tid"};
 
       /** Optional claim carrying the tenant slug in JWT */
       private String jwtTenantSlugClaim = "tenantSlug";
