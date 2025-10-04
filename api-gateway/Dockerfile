@@ -21,6 +21,6 @@ RUN set -eux; \
 
 USER appuser
 
-EXPOSE 8080
+EXPOSE 8000
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]

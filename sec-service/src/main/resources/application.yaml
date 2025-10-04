@@ -80,6 +80,8 @@ shared:
         table: audit_outbox
   security:
     enable-role-check: true
+    resource-server:
+      enabled: false
     jwt:
       token-period: 15m
       superadmin-ttl: PT24H

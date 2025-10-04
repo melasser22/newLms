@@ -1,3 +1,7 @@
+server:
+  port: ${SERVER_PORT:8000}
+  shutdown: graceful
+
 spring:
   application:
     name: api-gateway

@@ -32,5 +32,7 @@ shared:
     application-name: billing-service
   security:
     enable-role-check: true
+    resource-server:
+      enabled: false
     jwt:
       token-period: 15m
