@@ -29,6 +29,7 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
+import reactor.util.context.Context;
 
 /**
  * Resolves the tenant identifier early in the gateway pipeline so other
@@ -94,7 +95,15 @@ public class TenantExtractionGatewayFilter implements WebFilter {
       ServerWebExchange mutated = mutateRequest(exchange, tenantProps.getHeaderName(), sanitized, fromHeader);
       mutated.getAttributes().put(GatewayRequestAttributes.TENANT_ID, sanitized);
       mutated.getAttributes().putIfAbsent(HeaderNames.X_TENANT_ID, sanitized);
-      return chain.filter(mutated);
+      return chain.filter(mutated)
+          .contextWrite(context -> {
+            Context updated = context.put(GatewayRequestAttributes.TENANT_ID, sanitized);
+            String correlationId = mutated.getAttribute(GatewayRequestAttributes.CORRELATION_ID);
+            if (StringUtils.hasText(correlationId)) {
+              updated = updated.put(GatewayRequestAttributes.CORRELATION_ID, correlationId);
+            }
+            return updated;
+          });
     });
   }
 
