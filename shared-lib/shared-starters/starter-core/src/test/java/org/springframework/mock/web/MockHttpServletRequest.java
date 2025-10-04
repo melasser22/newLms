@@ -39,6 +39,11 @@ public class MockHttpServletRequest implements HttpServletRequest {
     private String serverName = "localhost";
     private String requestUri = "/";
 
+    @Override
+    public String getAuthType() {
+        return null;
+    }
+
     public void addHeader(String name, String value) {
         Objects.requireNonNull(name, "name");
         headers.computeIfAbsent(name.toLowerCase(Locale.ROOT), key -> new ArrayList<>()).add(value);
@@ -188,12 +193,6 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
     @Override
     public boolean isRequestedSessionIdFromURL() {
-        return false;
-    }
-
-    @Override
-    @Deprecated
-    public boolean isRequestedSessionIdFromUrl() {
         return false;
     }
 
@@ -349,12 +348,6 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
     @Override
     public RequestDispatcher getRequestDispatcher(String path) {
-        return null;
-    }
-
-    @Override
-    @Deprecated
-    public String getRealPath(String path) {
         return null;
     }
 
