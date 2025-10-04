@@ -1,0 +1,25 @@
+replicaCount: 3
+image:
+  repository: bitnami/redis
+  tag: 7.2
+  pullPolicy: IfNotPresent
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+sentinel:
+  image:
+    repository: bitnami/redis-sentinel
+    tag: 7.2
+  port: 26379
+  quorum: 2
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: standard-rwo
+service:
+  type: ClusterIP
+  port: 6379

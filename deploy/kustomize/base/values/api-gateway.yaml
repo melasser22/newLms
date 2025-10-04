@@ -1,0 +1,12 @@
+image:
+  tag: "latest"
+config:
+  warmupTenants:
+    - tenant-0001
+    - tenant-0002
+  backupRegions:
+    - eu-west1
+    - us-central1
+serviceMonitor:
+  additionalLabels:
+    release: prometheus-operator

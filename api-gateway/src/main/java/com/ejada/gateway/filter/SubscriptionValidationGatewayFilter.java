@@ -3,16 +3,12 @@ package com.ejada.gateway.filter;
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.gateway.config.SubscriptionValidationProperties;
 import com.ejada.gateway.context.GatewayRequestAttributes;
+import com.ejada.gateway.subscription.SubscriptionRecord;
+import com.ejada.gateway.subscription.SubscriptionValidationService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -23,54 +19,41 @@ import org.springframework.cloud.gateway.route.Route;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.lang.Nullable;
+import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.StringUtils;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 /**
- * Validates tenant subscriptions before forwarding traffic to downstream
- * services. Results are cached in Redis to avoid overwhelming the
- * subscription-service and to minimise latency.
+ * Validates tenant subscriptions before forwarding traffic to downstream services.
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 40)
 public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordered {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SubscriptionValidationGatewayFilter.class);
-
   private static final AntPathMatcher ANT_PATH_MATCHER = new AntPathMatcher();
-  private static final ParameterizedTypeReference<BaseResponse<SubscriptionPayload>> RESPONSE_TYPE =
-      new ParameterizedTypeReference<>() {
-      };
 
   private final SubscriptionValidationProperties properties;
-  private final ReactiveStringRedisTemplate redisTemplate;
+  private final SubscriptionValidationService validationService;
   private final ObjectMapper objectMapper;
-  private final WebClient webClient;
 
   public SubscriptionValidationGatewayFilter(
       SubscriptionValidationProperties properties,
-      ReactiveStringRedisTemplate redisTemplate,
+      SubscriptionValidationService validationService,
       @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> primaryObjectMapper,
-      ObjectProvider<ObjectMapper> fallbackObjectMapper,
-      WebClient.Builder webClientBuilder) {
+      ObjectProvider<ObjectMapper> fallbackObjectMapper) {
     this.properties = Objects.requireNonNull(properties, "properties");
-    this.redisTemplate = Objects.requireNonNull(redisTemplate, "redisTemplate");
+    this.validationService = Objects.requireNonNull(validationService, "validationService");
     ObjectMapper mapper = (primaryObjectMapper != null) ? primaryObjectMapper.getIfAvailable() : null;
     if (mapper == null) {
       mapper = (fallbackObjectMapper != null) ? fallbackObjectMapper.getIfAvailable() : null;
     }
     this.objectMapper = Objects.requireNonNull(mapper, "objectMapper");
-
-    this.webClient = webClientBuilder.clone().build();
   }
 
   @Override
@@ -96,11 +79,21 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
     }
 
     String requiredFeature = properties.getRequiredFeatures().get(routeId);
-
-    return ensureSubscription(tenantId, requiredFeature)
+    return validationService.getSubscription(tenantId, requiredFeature)
+        .map(record -> evaluate(record, requiredFeature))
+        .onErrorResume(ex -> {
+          LOGGER.warn("Subscription validation failed for tenant {}", tenantId, ex);
+          if (properties.isFailOpen()) {
+            return Mono.just(SubscriptionDecision.allow(null));
+          }
+          return Mono.just(SubscriptionDecision.deny(HttpStatus.SERVICE_UNAVAILABLE,
+              "ERR_SUBSCRIPTION_UNAVAILABLE", "Unable to validate subscription status"));
+        })
         .flatMap(decision -> {
           if (decision.allowed()) {
-            exchange.getAttributes().put(GatewayRequestAttributes.SUBSCRIPTION, decision.record());
+            if (decision.record() != null) {
+              exchange.getAttributes().put(GatewayRequestAttributes.SUBSCRIPTION, decision.record());
+            }
             return chain.filter(exchange);
           }
           return reject(exchange, decision.status(), decision.code(), decision.message());
@@ -121,82 +114,17 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
     return false;
   }
 
-  private Mono<SubscriptionDecision> ensureSubscription(String tenantId, @Nullable String requiredFeature) {
-    String cacheKey = properties.cacheKey(tenantId, requiredFeature);
-    return redisTemplate.opsForValue().get(cacheKey)
-        .flatMap(json -> decode(json).map(Mono::just).orElseGet(Mono::empty))
-        .switchIfEmpty(Mono.defer(() -> fetchSubscription(tenantId)
-            .flatMap(record -> cache(cacheKey, record).thenReturn(record))))
-        .map(record -> evaluate(record, requiredFeature))
-        .onErrorResume(ex -> {
-          LOGGER.warn("Subscription validation failed for tenant {}", tenantId, ex);
-          if (properties.isFailOpen()) {
-            return Mono.just(SubscriptionDecision.allow(null));
-          }
-          return Mono.just(SubscriptionDecision.deny(HttpStatus.SERVICE_UNAVAILABLE,
-              "ERR_SUBSCRIPTION_UNAVAILABLE",
-              "Unable to validate subscription status"));
-        });
-  }
-
-  private Mono<Void> cache(String cacheKey, SubscriptionRecord record) {
-    try {
-      String value = objectMapper.writeValueAsString(record);
-      Duration ttl = Optional.ofNullable(properties.getCacheTtl()).filter(d -> !d.isZero() && !d.isNegative())
-          .orElse(Duration.ofMinutes(5));
-      return redisTemplate.opsForValue().set(cacheKey, value, ttl).then();
-    } catch (JsonProcessingException e) {
-      LOGGER.debug("Failed to serialise subscription record for cache", e);
-      return Mono.empty();
-    }
-  }
-
-  private Optional<SubscriptionRecord> decode(String json) {
-    try {
-      return Optional.ofNullable(objectMapper.readValue(json, SubscriptionRecord.class));
-    } catch (Exception ex) {
-      LOGGER.debug("Failed to decode cached subscription payload", ex);
-      return Optional.empty();
-    }
-  }
-
-  private Mono<SubscriptionRecord> fetchSubscription(String tenantId) {
-    return webClient.get()
-        .uri(properties.getValidationUri(), tenantId)
-        .accept(MediaType.APPLICATION_JSON)
-        .retrieve()
-        .bodyToMono(RESPONSE_TYPE)
-        .map(this::extractPayload)
-        .doOnNext(record -> LOGGER.debug("Fetched subscription for tenant {} -> {}", tenantId, record.status))
-        .switchIfEmpty(Mono.just(SubscriptionRecord.inactive()));
-  }
-
-  private SubscriptionRecord extractPayload(BaseResponse<SubscriptionPayload> response) {
-    if (response == null) {
-      return SubscriptionRecord.inactive();
-    }
-    SubscriptionPayload payload = response.getData();
-    if (payload == null) {
-      return SubscriptionRecord.inactive();
-    }
-    boolean active = payload.active != null ? payload.active : "ACTIVE".equalsIgnoreCase(payload.status);
-    Set<String> features = (payload.features != null)
-        ? new HashSet<>(payload.features)
-        : Collections.emptySet();
-    return SubscriptionRecord.of(active, features, payload.expiresAt);
-  }
-
-  private SubscriptionDecision evaluate(SubscriptionRecord record, @Nullable String requiredFeature) {
-    if (!record.isActive()) {
+  private SubscriptionDecision evaluate(@Nullable SubscriptionRecord record, @Nullable String requiredFeature) {
+    SubscriptionRecord candidate = (record != null) ? record : SubscriptionRecord.inactive();
+    if (!candidate.isActive()) {
       return SubscriptionDecision.deny(HttpStatus.PAYMENT_REQUIRED,
-          "ERR_SUBSCRIPTION_INACTIVE",
-          "Subscription is inactive or expired");
+          "ERR_SUBSCRIPTION_INACTIVE", "Subscription is inactive or expired");
     }
-    if (StringUtils.hasText(requiredFeature) && !record.hasFeature(requiredFeature)) {
+    if (StringUtils.hasText(requiredFeature) && !candidate.hasFeature(requiredFeature)) {
       return SubscriptionDecision.deny(HttpStatus.FORBIDDEN,
           "ERR_SUBSCRIPTION_FEATURE", "Subscription does not include required feature");
     }
-    return SubscriptionDecision.allow(record);
+    return SubscriptionDecision.allow(candidate);
   }
 
   private Mono<Void> reject(ServerWebExchange exchange, HttpStatus status, String code, String message) {
@@ -214,7 +142,7 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
 
   private record SubscriptionDecision(boolean allowed, SubscriptionRecord record, HttpStatus status, String code, String message) {
 
-    static SubscriptionDecision allow(SubscriptionRecord record) {
+    static SubscriptionDecision allow(@Nullable SubscriptionRecord record) {
       return new SubscriptionDecision(true, record, HttpStatus.OK, null, null);
     }
 
@@ -222,48 +150,4 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
       return new SubscriptionDecision(false, null, status, code, message);
     }
   }
-
-  private record SubscriptionRecord(boolean active, Set<String> features, Instant expiresAt, String status) {
-
-    SubscriptionRecord {
-      features = (features == null) ? Set.of() : Set.copyOf(features);
-      status = StringUtils.hasText(status) ? status : (active ? "ACTIVE" : "INACTIVE");
-    }
-
-    static SubscriptionRecord of(boolean active, Set<String> features, Instant expiresAt) {
-      return new SubscriptionRecord(active, features, expiresAt, active ? "ACTIVE" : "INACTIVE");
-    }
-
-    static SubscriptionRecord inactive() {
-      return new SubscriptionRecord(false, Set.of(), null, "INACTIVE");
-    }
-
-    boolean isActive() {
-      if (!active) {
-        return false;
-      }
-      if (expiresAt == null) {
-        return true;
-      }
-      return expiresAt.isAfter(Instant.now());
-    }
-
-    boolean hasFeature(String feature) {
-      if (!StringUtils.hasText(feature)) {
-        return true;
-      }
-      return features.stream().anyMatch(value -> value.equalsIgnoreCase(feature));
-    }
-  }
-
-  private static final class SubscriptionPayload {
-    private Boolean active;
-    private String status;
-    private java.util.List<String> features;
-    private Instant expiresAt;
-
-    SubscriptionPayload() {
-    }
-  }
 }
-

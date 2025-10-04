@@ -16,6 +16,7 @@ public class GatewayWebClientProperties {
   private boolean wiretap = false;
   private boolean compress = true;
   private int maxInMemorySize = 4 * 1024 * 1024; // 4MB
+  private final GatewayOptimizationProperties.Pool pool = new GatewayOptimizationProperties.Pool();
 
   public Duration getConnectTimeout() {
     return connectTimeout;
@@ -71,6 +72,10 @@ public class GatewayWebClientProperties {
 
   public void setMaxInMemorySize(int maxInMemorySize) {
     this.maxInMemorySize = maxInMemorySize;
+  }
+
+  public GatewayOptimizationProperties.Pool getPool() {
+    return pool;
   }
 }
 

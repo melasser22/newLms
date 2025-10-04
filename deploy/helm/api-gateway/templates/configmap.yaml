@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "api-gateway.fullname" . }}-config
+  labels:
+    {{- include "api-gateway.labels" . | nindent 4 }}
+data:
+  application.yaml: |
+    gateway:
+      dr:
+        enabled: {{ .Values.config.drEnabled }}
+        backup-regions:
+{{- range .Values.config.backupRegions }}
+          - {{ . }}
+{{- end }}
+      optimization:
+        enabled: {{ .Values.config.optimizationEnabled }}
+        sampling-probability: {{ .Values.config.samplingProbability }}
+        warmup-tenants:
+{{- range .Values.config.warmupTenants }}
+          - {{ . }}
+{{- end }}
+    management:
+      metrics:
+        tags:
+          deployment: {{ .Release.Namespace }}

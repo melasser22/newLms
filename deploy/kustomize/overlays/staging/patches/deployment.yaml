@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway-api-gateway
+spec:
+  replicas: 4
+  template:
+    metadata:
+      labels:
+        rollout: canary
+    spec:
+      containers:
+        - name: api-gateway
+          env:
+            - name: GATEWAY_CANARY_WEIGHT
+              value: "25"

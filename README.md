@@ -113,6 +113,34 @@ Run a full platform build (all modules) with:
 mvn clean verify
 ```
 
+## Kubernetes Deployment
+
+- Helm charts and Kustomize overlays live under [`deploy/`](deploy/).
+- Base Helm chart enables HPA, PodDisruptionBudget, Redis Sentinel dependencies, and Prometheus ServiceMonitor.
+- Use `kustomize build deploy/kustomize/overlays/staging` for the staging canary rollout and `deploy/kustomize/overlays/production` for production.
+- The CI/CD workflow (`.github/workflows/ci-cd.yml`) performs build → test → SonarQube → Trivy → image push → automated canary deploy.
+
+### Resource Requirements
+
+| Component | CPU Request | CPU Limit | Memory Request | Memory Limit | Notes |
+| --- | --- | --- | --- | --- | --- |
+| API Gateway | 500m | 1000m | 1Gi | 2Gi | Autoscaled 3–10 pods (HPA on CPU/Mem) |
+| Redis Sentinel | 200m | 500m | 256Mi | 512Mi | StatefulSet with 3 replicas + hourly S3 backups |
+
+Enable disaster recovery controls via configuration:
+
+```yaml
+gateway:
+  dr:
+    enabled: true
+    backup-regions:
+      - eu-west1
+      - us-central1
+  optimization:
+    enabled: true
+    sampling-probability: 0.01
+```
+
 ## Operational Checklist
 
 - ✅ JWT validated once at the gateway.

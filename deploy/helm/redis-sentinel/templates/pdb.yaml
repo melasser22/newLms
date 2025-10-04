@@ -1,0 +1,12 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "redis-sentinel.fullname" . }}
+  labels:
+    {{- include "redis-sentinel.labels" . | nindent 4 }}
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "redis-sentinel.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}

@@ -1,0 +1,82 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "redis-sentinel.fullname" . }}-backup
+  labels:
+    {{- include "redis-sentinel.labels" . | nindent 4 }}
+spec:
+  schedule: "0 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ include "redis-sentinel.fullname" . }}-backup
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: amazon/aws-cli:2.15.38
+              args:
+                - /bin/sh
+                - -c
+                - |
+                  set -euo pipefail
+                  ts=$(date +"%Y%m%d%H%M%S")
+                  redis-cli -h {{ include "redis-sentinel.fullname" . }} -a "$REDIS_PASSWORD" --rdb /tmp/dump.rdb
+                  aws s3 cp /tmp/dump.rdb s3://$S3_BUCKET/$ts-dump.rdb
+              env:
+                - name: REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "redis-sentinel.fullname" . }}-auth
+                      key: redis-password
+                - name: S3_BUCKET
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "redis-sentinel.fullname" . }}-backup
+                      key: bucket
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "redis-sentinel.fullname" . }}-backup
+  labels:
+    {{- include "redis-sentinel.labels" . | nindent 4 }}
+type: Opaque
+data:
+  bucket: {{ "lms-redis-backups" | b64enc }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "redis-sentinel.fullname" . }}-backup
+  labels:
+    {{- include "redis-sentinel.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "redis-sentinel.fullname" . }}-backup
+  labels:
+    {{- include "redis-sentinel.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "redis-sentinel.fullname" . }}-backup
+  labels:
+    {{- include "redis-sentinel.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "redis-sentinel.fullname" . }}-backup
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "redis-sentinel.fullname" . }}-backup
+    namespace: {{ .Release.Namespace }}

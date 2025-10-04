@@ -21,6 +21,7 @@ import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
 /**
@@ -33,8 +34,9 @@ import reactor.netty.transport.logging.AdvancedByteBufFormat;
 public class WebClientConfig {
 
   @Bean
-  public ClientHttpConnector gatewayClientHttpConnector(GatewayWebClientProperties properties) {
-    HttpClient httpClient = HttpClient.create();
+  public ClientHttpConnector gatewayClientHttpConnector(GatewayWebClientProperties properties,
+      GatewayOptimizationProperties optimizationProperties) {
+    HttpClient httpClient = createHttpClient(properties, optimizationProperties);
     Duration connectTimeout = properties.getConnectTimeout();
     if (connectTimeout != null) {
       httpClient = httpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) connectTimeout.toMillis());
@@ -61,6 +63,34 @@ public class WebClientConfig {
       httpClient = httpClient.wiretap("gateway-webclient", LogLevel.DEBUG, AdvancedByteBufFormat.TEXTUAL);
     }
     return new ReactorClientHttpConnector(httpClient);
+  }
+
+  private HttpClient createHttpClient(GatewayWebClientProperties properties,
+      GatewayOptimizationProperties optimizationProperties) {
+    HttpClient httpClient;
+    if (optimizationProperties.isEnabled()) {
+      GatewayOptimizationProperties.Pool pool = properties.getPool();
+      ConnectionProvider.Builder builder = ConnectionProvider.builder("gateway-connection-pool")
+          .maxConnections(pool.getMaxConnections())
+          .pendingAcquireMaxCount(pool.getPendingAcquireMaxCount())
+          .pendingAcquireTimeout(pool.getAcquireTimeout());
+      if (pool.getMaxIdleTime() != null) {
+        builder.maxIdleTime(pool.getMaxIdleTime());
+      }
+      if (pool.getMaxLifeTime() != null) {
+        builder.maxLifeTime(pool.getMaxLifeTime());
+      }
+      if (pool.getEvictInBackground() != null) {
+        builder.evictInBackground(pool.getEvictInBackground());
+      }
+      if (pool.isMetricsEnabled()) {
+        builder.metrics(true);
+      }
+      httpClient = HttpClient.create(builder.build()).keepAlive(true);
+    } else {
+      httpClient = HttpClient.create();
+    }
+    return httpClient;
   }
 
   @Bean
