@@ -3,8 +3,10 @@ package com.ejada.gateway.filter;
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.gateway.config.SubscriptionValidationProperties;
 import com.ejada.gateway.context.GatewayRequestAttributes;
+import com.ejada.gateway.metrics.GatewayMetrics;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.annotation.Timed;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -13,6 +15,9 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -30,9 +35,11 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.server.ServerWebExchange;
 import org.springframework.util.AntPathMatcher;
+import org.springframework.web.server.ServerWebExchange;
 import org.springframework.lang.Nullable;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import reactor.core.publisher.Mono;
 
 /**
@@ -55,13 +62,17 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
   private final ReactiveStringRedisTemplate redisTemplate;
   private final ObjectMapper objectMapper;
   private final WebClient webClient;
+  private final GatewayMetrics gatewayMetrics;
+  private final Tracer tracer;
 
   public SubscriptionValidationGatewayFilter(
       SubscriptionValidationProperties properties,
       ReactiveStringRedisTemplate redisTemplate,
       @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> primaryObjectMapper,
       ObjectProvider<ObjectMapper> fallbackObjectMapper,
-      WebClient.Builder webClientBuilder) {
+      WebClient.Builder webClientBuilder,
+      GatewayMetrics gatewayMetrics,
+      @Nullable Tracer tracer) {
     this.properties = Objects.requireNonNull(properties, "properties");
     this.redisTemplate = Objects.requireNonNull(redisTemplate, "redisTemplate");
     ObjectMapper mapper = (primaryObjectMapper != null) ? primaryObjectMapper.getIfAvailable() : null;
@@ -71,9 +82,12 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
     this.objectMapper = Objects.requireNonNull(mapper, "objectMapper");
 
     this.webClient = webClientBuilder.clone().build();
+    this.gatewayMetrics = Objects.requireNonNull(gatewayMetrics, "gatewayMetrics");
+    this.tracer = tracer;
   }
 
   @Override
+  @Timed(value = "gateway.subscription.filter", description = "Subscription validation filter execution")
   public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
     if (!properties.isEnabled()) {
       return chain.filter(exchange);
@@ -101,6 +115,9 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
         .flatMap(decision -> {
           if (decision.allowed()) {
             exchange.getAttributes().put(GatewayRequestAttributes.SUBSCRIPTION, decision.record());
+            if (decision.record() != null && StringUtils.hasText(decision.record().tier())) {
+              exchange.getAttributes().put(GatewayRequestAttributes.SUBSCRIPTION_TIER, decision.record().tier());
+            }
             return chain.filter(exchange);
           }
           return reject(exchange, decision.status(), decision.code(), decision.message());
@@ -123,20 +140,40 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
 
   private Mono<SubscriptionDecision> ensureSubscription(String tenantId, @Nullable String requiredFeature) {
     String cacheKey = properties.cacheKey(tenantId, requiredFeature);
-    return redisTemplate.opsForValue().get(cacheKey)
-        .flatMap(json -> decode(json).map(Mono::just).orElseGet(Mono::empty))
-        .switchIfEmpty(Mono.defer(() -> fetchSubscription(tenantId)
-            .flatMap(record -> cache(cacheKey, record).thenReturn(record))))
-        .map(record -> evaluate(record, requiredFeature))
-        .onErrorResume(ex -> {
-          LOGGER.warn("Subscription validation failed for tenant {}", tenantId, ex);
-          if (properties.isFailOpen()) {
-            return Mono.just(SubscriptionDecision.allow(null));
-          }
-          return Mono.just(SubscriptionDecision.deny(HttpStatus.SERVICE_UNAVAILABLE,
-              "ERR_SUBSCRIPTION_UNAVAILABLE",
-              "Unable to validate subscription status"));
-        });
+    return Mono.defer(() -> {
+      long start = System.nanoTime();
+      AtomicBoolean recorded = new AtomicBoolean(false);
+      AtomicReference<String> source = new AtomicReference<>("cache");
+      return redisTemplate.opsForValue().get(cacheKey)
+          .flatMap(json -> decode(json).map(Mono::just).orElseGet(Mono::empty))
+          .doOnNext(record -> gatewayMetrics.recordSubscriptionCacheHit())
+          .switchIfEmpty(Mono.defer(() -> {
+            source.set("remote");
+            gatewayMetrics.recordSubscriptionCacheMiss();
+            return fetchSubscription(tenantId)
+                .flatMap(record -> cache(cacheKey, record).thenReturn(record));
+          }))
+          .map(record -> evaluate(record, requiredFeature))
+          .onErrorResume(ex -> {
+            recorded.set(true);
+            recordValidationTiming(start, false, source.get(), ex);
+            LOGGER.warn("Subscription validation failed for tenant {}", tenantId, ex);
+            gatewayMetrics.recordSubscriptionValidationOutcome(tenantId, false);
+            if (properties.isFailOpen()) {
+              return Mono.just(SubscriptionDecision.allow(null));
+            }
+            return Mono.just(SubscriptionDecision.deny(HttpStatus.SERVICE_UNAVAILABLE,
+                "ERR_SUBSCRIPTION_UNAVAILABLE",
+                "Unable to validate subscription status"));
+          })
+          .doOnSuccess(decision -> {
+            if (!recorded.get()) {
+              boolean allowed = decision != null && decision.allowed();
+              recordValidationTiming(start, allowed, source.get(), null);
+              gatewayMetrics.recordSubscriptionValidationOutcome(tenantId, allowed);
+            }
+          });
+    });
   }
 
   private Mono<Void> cache(String cacheKey, SubscriptionRecord record) {
@@ -148,6 +185,26 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
     } catch (JsonProcessingException e) {
       LOGGER.debug("Failed to serialise subscription record for cache", e);
       return Mono.empty();
+    }
+  }
+
+  private void recordValidationTiming(long startNanos, boolean success, String source, @Nullable Throwable error) {
+    if (tracer == null) {
+      return;
+    }
+    Span currentSpan = tracer.currentSpan();
+    if (currentSpan == null) {
+      return;
+    }
+    long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+    String outcome = success ? "success" : "failure";
+    currentSpan.event("subscription.validation." + outcome);
+    if (StringUtils.hasText(source)) {
+      currentSpan.tag("subscription.validation.source", source);
+    }
+    currentSpan.tag("subscription.validation.duration_ms", String.valueOf(durationMs));
+    if (!success && error != null) {
+      currentSpan.tag("subscription.validation.error", error.getClass().getSimpleName());
     }
   }
 
@@ -183,7 +240,7 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
     Set<String> features = (payload.features != null)
         ? new HashSet<>(payload.features)
         : Collections.emptySet();
-    return SubscriptionRecord.of(active, features, payload.expiresAt);
+    return new SubscriptionRecord(active, features, payload.expiresAt, payload.status, payload.tier);
   }
 
   private SubscriptionDecision evaluate(SubscriptionRecord record, @Nullable String requiredFeature) {
@@ -223,19 +280,22 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
     }
   }
 
-  private record SubscriptionRecord(boolean active, Set<String> features, Instant expiresAt, String status) {
+  private record SubscriptionRecord(boolean active, Set<String> features, Instant expiresAt, String status,
+      String tier) {
 
     SubscriptionRecord {
       features = (features == null) ? Set.of() : Set.copyOf(features);
       status = StringUtils.hasText(status) ? status : (active ? "ACTIVE" : "INACTIVE");
+      tier = StringUtils.hasText(tier) ? tier : status;
     }
 
     static SubscriptionRecord of(boolean active, Set<String> features, Instant expiresAt) {
-      return new SubscriptionRecord(active, features, expiresAt, active ? "ACTIVE" : "INACTIVE");
+      String status = active ? "ACTIVE" : "INACTIVE";
+      return new SubscriptionRecord(active, features, expiresAt, status, status);
     }
 
     static SubscriptionRecord inactive() {
-      return new SubscriptionRecord(false, Set.of(), null, "INACTIVE");
+      return new SubscriptionRecord(false, Set.of(), null, "INACTIVE", "INACTIVE");
     }
 
     boolean isActive() {
@@ -261,6 +321,7 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
     private String status;
     private java.util.List<String> features;
     private Instant expiresAt;
+    private String tier;
 
     SubscriptionPayload() {
     }

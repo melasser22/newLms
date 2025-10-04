@@ -198,6 +198,15 @@ gateway:
   bff:
     dashboard:
       tenant-service-uri: lb://tenant-service
+  tracing:
+    enhanced-tags:
+      enabled: false
+  logging:
+    access-log:
+      enabled: false
+      skip-patterns:
+        - /actuator/**
+        - /health
       analytics-service-uri: lb://analytics-service
       billing-service-uri: lb://billing-service
       default-period: MONTHLY

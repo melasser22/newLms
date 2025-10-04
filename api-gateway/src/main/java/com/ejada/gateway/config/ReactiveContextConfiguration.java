@@ -1,10 +1,12 @@
 package com.ejada.gateway.config;
 
 import com.ejada.gateway.context.ReactiveRequestContextFilter;
+import com.ejada.gateway.metrics.GatewayMetrics;
 import com.ejada.gateway.ratelimit.ReactiveRateLimiterFilter;
 import com.ejada.shared_starter_ratelimit.RateLimitProps;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.tracing.Tracer;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -50,10 +52,13 @@ public class ReactiveContextConfiguration {
       RateLimitProps props,
       KeyResolver keyResolver,
       @Qualifier("jacksonObjectMapper") @Nullable ObjectMapper jacksonObjectMapper,
-      ObjectProvider<ObjectMapper> objectMapperProvider) {
+      ObjectProvider<ObjectMapper> objectMapperProvider,
+      GatewayMetrics gatewayMetrics,
+      ObjectProvider<Tracer> tracerProvider) {
     ObjectMapper mapper = (jacksonObjectMapper != null)
         ? jacksonObjectMapper
         : objectMapperProvider.getIfAvailable();
-    return new ReactiveRateLimiterFilter(redisTemplate, props, keyResolver, mapper);
+    return new ReactiveRateLimiterFilter(redisTemplate, props, keyResolver, mapper, gatewayMetrics,
+        tracerProvider != null ? tracerProvider.getIfAvailable() : null);
   }
 }

@@ -3,6 +3,7 @@ package com.ejada.gateway.admin;
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.gateway.admin.model.AdminOverview;
 import com.ejada.gateway.admin.model.AdminRouteView;
+import com.ejada.gateway.admin.model.DetailedHealthResponse;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,5 +34,11 @@ public class AdminAggregationController {
   public Mono<BaseResponse<List<AdminRouteView>>> routes() {
     return Mono.fromSupplier(aggregationService::describeRoutes)
         .map(data -> BaseResponse.success("Gateway route catalogue", data));
+  }
+
+  @GetMapping("/health/detailed")
+  public Mono<BaseResponse<DetailedHealthResponse>> detailedHealth() {
+    return aggregationService.fetchDetailedHealth()
+        .map(data -> BaseResponse.success("Aggregated dependency health", data));
   }
 }

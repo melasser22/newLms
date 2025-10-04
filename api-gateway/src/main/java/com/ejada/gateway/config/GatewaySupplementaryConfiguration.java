@@ -8,6 +8,12 @@ import org.springframework.context.annotation.Configuration;
  * that are not part of the shared starters.
  */
 @Configuration
-@EnableConfigurationProperties({SubscriptionValidationProperties.class, GatewayBffProperties.class,AdminAggregationProperties.class})
+@EnableConfigurationProperties({
+    SubscriptionValidationProperties.class,
+    GatewayBffProperties.class,
+    AdminAggregationProperties.class,
+    GatewayTracingProperties.class,
+    GatewayLoggingProperties.class
+})
 public class GatewaySupplementaryConfiguration {
 }

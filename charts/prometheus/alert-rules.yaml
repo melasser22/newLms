@@ -1,0 +1,37 @@
+groups:
+  - name: gateway-observability
+    rules:
+      - alert: GatewayHighErrorRate
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+          / sum(rate(http_server_requests_seconds_count[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP 5xx rate on the API gateway"
+          description: "More than 5% of requests resulted in 5xx errors for 5 minutes."
+      - alert: GatewayRateLimitRejectionSpike
+        expr: sum(rate(gateway_ratelimit_rejections_total[1m])) > 100
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Rate limit rejections exceeding threshold"
+          description: "Gateway rejected more than 100 requests per minute due to rate limiting."
+      - alert: GatewayCircuitBreakerOpen
+        expr: max_over_time(gateway_circuit_breaker_state{state="OPEN"}[30s]) == 1
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Circuit breaker held open"
+          description: "At least one circuit breaker has been open for 30 seconds."
+      - alert: GatewaySubscriptionValidationFailures
+        expr: sum(rate(gateway_subscription_validation_failures_total[5m]))
+          / sum(rate(gateway_subscription_validation_requests_total[5m])) > 0.10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Subscription validation failure rate above 10%"
+          description: "More than 10% of subscription validations failed over the last 5 minutes."

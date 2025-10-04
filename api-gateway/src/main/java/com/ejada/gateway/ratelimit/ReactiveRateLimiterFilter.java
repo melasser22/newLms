@@ -3,9 +3,13 @@ package com.ejada.gateway.ratelimit;
 import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.context.ContextManager;
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.gateway.context.GatewayRequestAttributes;
+import com.ejada.gateway.metrics.GatewayMetrics;
 import com.ejada.shared_starter_ratelimit.RateLimitProps;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Locale;
@@ -27,6 +31,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
+import io.micrometer.core.annotation.Timed;
 import reactor.core.publisher.Mono;
 
 /**
@@ -43,27 +48,39 @@ public class ReactiveRateLimiterFilter implements WebFilter {
   private final RateLimitProps props;
   private final KeyResolver keyResolver;
   private final ObjectMapper objectMapper;
+  private final GatewayMetrics gatewayMetrics;
+  private final Tracer tracer;
 
   @Autowired
   public ReactiveRateLimiterFilter(ReactiveStringRedisTemplate redisTemplate,
       RateLimitProps props,
       KeyResolver keyResolver,
       @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> jacksonObjectMapper,
-      ObjectProvider<ObjectMapper> objectMapperProvider) {
-    this(redisTemplate, props, keyResolver, resolveObjectMapper(jacksonObjectMapper, objectMapperProvider));
+      ObjectProvider<ObjectMapper> objectMapperProvider,
+      GatewayMetrics gatewayMetrics,
+      ObjectProvider<Tracer> tracerProvider) {
+    this(redisTemplate, props, keyResolver,
+        resolveObjectMapper(jacksonObjectMapper, objectMapperProvider),
+        gatewayMetrics,
+        tracerProvider != null ? tracerProvider.getIfAvailable() : null);
   }
 
   public ReactiveRateLimiterFilter(ReactiveStringRedisTemplate redisTemplate,
       RateLimitProps props,
       KeyResolver keyResolver,
-      @Nullable ObjectMapper objectMapper) {
+      @Nullable ObjectMapper objectMapper,
+      GatewayMetrics gatewayMetrics,
+      @Nullable Tracer tracer) {
     this.redisTemplate = Objects.requireNonNull(redisTemplate, "redisTemplate");
     this.props = Objects.requireNonNull(props, "props");
     this.keyResolver = Objects.requireNonNull(keyResolver, "keyResolver");
     this.objectMapper = objectMapper;
+    this.gatewayMetrics = Objects.requireNonNull(gatewayMetrics, "gatewayMetrics");
+    this.tracer = tracer;
   }
 
   @Override
+  @Timed(value = "gateway.ratelimit.filter", description = "Reactive rate limiter evaluation")
   public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
     return resolveKey(exchange)
         .flatMap(key -> applyRateLimit(exchange, chain, key))
@@ -84,8 +101,12 @@ public class ReactiveRateLimiterFilter implements WebFilter {
               exchange.getResponse().getHeaders().set("X-RateLimit-Remaining",
                   String.valueOf(Math.max(0, capacity - count.intValue())));
               if (count > capacity) {
+                recordRateLimitDecision(exchange, key, false, count, capacity);
+                String tenantId = exchange.getAttribute(GatewayRequestAttributes.TENANT_ID);
+                gatewayMetrics.recordRateLimitRejection(props.getKeyStrategy(), tenantId);
                 return reject(exchange);
               }
+              recordRateLimitDecision(exchange, key, true, count, capacity);
               return chain.filter(exchange);
             })));
   }
@@ -174,6 +195,29 @@ public class ReactiveRateLimiterFilter implements WebFilter {
       return mapper;
     }
     return (fallback != null) ? fallback.getIfAvailable() : null;
+  }
+
+  private void recordRateLimitDecision(ServerWebExchange exchange, String key, boolean allowed, Long count, int capacity) {
+    if (tracer == null) {
+      return;
+    }
+    Span current = tracer.currentSpan();
+    if (current == null) {
+      return;
+    }
+    current.event(allowed ? "rate.limit.allowed" : "rate.limit.rejected");
+    current.tag("rate.limit.key", key);
+    if (StringUtils.hasText(props.getKeyStrategy())) {
+      current.tag("rate.limit.strategy", props.getKeyStrategy());
+    }
+    current.tag("rate.limit.capacity", String.valueOf(capacity));
+    if (count != null) {
+      current.tag("rate.limit.count", String.valueOf(count));
+    }
+    String tenantId = exchange.getAttribute(GatewayRequestAttributes.TENANT_ID);
+    if (StringUtils.hasText(tenantId)) {
+      current.tag("rate.limit.tenant", tenantId);
+    }
   }
 
   private static final String DEFAULT_FALLBACK_KEY = "anonymous";

@@ -2,8 +2,10 @@ package com.ejada.gateway.ratelimit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.ejada.gateway.metrics.GatewayMetrics;
 import com.ejada.shared_starter_ratelimit.RateLimitProps;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
@@ -28,6 +30,7 @@ class ReactiveRateLimiterFilterTest {
 
     private ReactiveRateLimiterFilter filter;
     private ReactiveRedisConnectionFactory connectionFactory;
+    private SimpleMeterRegistry meterRegistry;
 
     @BeforeEach
     void setUp() {
@@ -41,7 +44,9 @@ class ReactiveRateLimiterFilterTest {
         props.setRefillPerMinute(2);
         props.setKeyStrategy("tenant");
         KeyResolver keyResolver = exchange -> Mono.just("tenant-a");
-        this.filter = new ReactiveRateLimiterFilter(template, props, keyResolver, new ObjectMapper());
+        this.meterRegistry = new SimpleMeterRegistry();
+        GatewayMetrics gatewayMetrics = new GatewayMetrics(meterRegistry);
+        this.filter = new ReactiveRateLimiterFilter(template, props, keyResolver, new ObjectMapper(), gatewayMetrics, null);
         flushRedis();
     }
 
