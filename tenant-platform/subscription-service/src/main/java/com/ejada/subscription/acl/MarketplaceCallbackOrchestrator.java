@@ -48,6 +48,7 @@ import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -333,11 +334,10 @@ public class MarketplaceCallbackOrchestrator {
             final Subscription sub,
             final String statusCode,
             final String statusDescription) {
-        emitOutbox(
-                "SUBSCRIPTION",
-                sub.getSubscriptionId().toString(),
-                "CREATED_OR_UPDATED",
-                Map.of("extSubscriptionId", sub.getExtSubscriptionId(), "extCustomerId", sub.getExtCustomerId()));
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("extSubscriptionId", sub.getExtSubscriptionId());
+        payload.put("extCustomerId", sub.getExtCustomerId());
+        emitOutbox("SUBSCRIPTION", sub.getSubscriptionId().toString(), "CREATED_OR_UPDATED", payload);
         recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
         markAuditSuccess(audit.getInboundNotificationAuditId(), statusCode, statusDescription, null);
     }
@@ -351,21 +351,21 @@ public class MarketplaceCallbackOrchestrator {
             final boolean emitEvent,
             final String description) {
         if (emitEvent && approvalRequest != null) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("extSubscriptionId", sub.getExtSubscriptionId());
+            payload.put("extCustomerId", sub.getExtCustomerId());
+            payload.put("approvalRequestId", approvalRequest.getApprovalRequestId());
+            if (approvalRequest.getRiskLevel() != null) {
+                payload.put("riskLevel", approvalRequest.getRiskLevel());
+            }
+            if (approvalRequest.getPriority() != null) {
+                payload.put("priority", approvalRequest.getPriority());
+            }
             emitOutbox(
                     "SUBSCRIPTION",
                     sub.getSubscriptionId().toString(),
                     "SUBSCRIPTION_APPROVAL_REQUESTED",
-                    Map.of(
-                            "extSubscriptionId",
-                            sub.getExtSubscriptionId(),
-                            "extCustomerId",
-                            sub.getExtCustomerId(),
-                            "approvalRequestId",
-                            approvalRequest.getApprovalRequestId(),
-                            "riskLevel",
-                            approvalRequest.getRiskLevel(),
-                            "priority",
-                            approvalRequest.getPriority()));
+                    payload);
         }
         recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
         markAuditSuccess(audit.getInboundNotificationAuditId(), "I000001", description, null);

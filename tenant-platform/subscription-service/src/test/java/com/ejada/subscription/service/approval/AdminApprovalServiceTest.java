@@ -3,6 +3,7 @@ package com.ejada.subscription.service.approval;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -136,7 +137,7 @@ class AdminApprovalServiceTest {
 
         verify(approvalPublisher)
                 .publishApprovalDecision(
-                        SubscriptionApprovalAction.APPROVED,
+                        eq(SubscriptionApprovalAction.APPROVED),
                         any(UUID.class),
                         any(Subscription.class),
                         any(CustomerInfoDto.class),
