@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +20,7 @@ import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
  * configured rate limiting strategy.
  */
 @Configuration
-@ConditionalOnBean({RateLimitProps.class, KeyResolver.class})
+@ConditionalOnBean(KeyResolver.class)
 public class GatewayRateLimiterConfiguration {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GatewayRateLimiterConfiguration.class);
@@ -31,7 +32,9 @@ public class GatewayRateLimiterConfiguration {
 
   @Bean
   @Primary
-  public KeyResolver rateLimiterKeyResolver(RateLimitProps props, Map<String, KeyResolver> resolvers) {
+  public KeyResolver rateLimiterKeyResolver(ObjectProvider<RateLimitProps> propsProvider,
+      Map<String, KeyResolver> resolvers) {
+    RateLimitProps props = propsProvider.getIfAvailable(RateLimitProps::new);
     String strategy = normalizeStrategy(props.getKeyStrategy());
 
     KeyResolver resolver = selectResolver(strategy, resolvers);
