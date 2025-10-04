@@ -83,6 +83,7 @@ public class WebClientConfig {
       propagate(contextView, builder, GatewayRequestAttributes.CORRELATION_ID, HeaderNames.CORRELATION_ID);
       propagate(contextView, builder, GatewayRequestAttributes.TENANT_ID, HeaderNames.X_TENANT_ID);
       propagate(contextView, builder, HeaderNames.USER_ID, HeaderNames.USER_ID);
+      propagate(contextView, builder, GatewayRequestAttributes.API_VERSION, HeaderNames.API_VERSION);
       return next.exchange(builder.build());
     });
   }
