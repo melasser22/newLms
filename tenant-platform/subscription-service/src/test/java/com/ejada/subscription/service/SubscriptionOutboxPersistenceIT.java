@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -78,12 +79,12 @@ class SubscriptionOutboxPersistenceIT {
                 Mockito.mock(com.ejada.subscription.repository.SubscriptionUpdateEventRepository.class),
                 outboxRepo,
                 Mockito.mock(com.ejada.subscription.repository.IdempotentRequestRepository.class),
-                Mockito.mock(com.ejada.subscription.mapper.SubscriptionMapper.class),
-                Mockito.mock(com.ejada.subscription.mapper.SubscriptionFeatureMapper.class),
-                Mockito.mock(com.ejada.subscription.mapper.SubscriptionAdditionalServiceMapper.class),
-                Mockito.mock(com.ejada.subscription.mapper.SubscriptionProductPropertyMapper.class),
-                Mockito.mock(com.ejada.subscription.mapper.SubscriptionEnvironmentIdentifierMapper.class),
-                Mockito.mock(com.ejada.subscription.mapper.SubscriptionUpdateEventMapper.class),
+                Mappers.getMapper(com.ejada.subscription.mapper.SubscriptionMapper.class),
+                Mappers.getMapper(com.ejada.subscription.mapper.SubscriptionFeatureMapper.class),
+                Mappers.getMapper(com.ejada.subscription.mapper.SubscriptionAdditionalServiceMapper.class),
+                Mappers.getMapper(com.ejada.subscription.mapper.SubscriptionProductPropertyMapper.class),
+                Mappers.getMapper(com.ejada.subscription.mapper.SubscriptionEnvironmentIdentifierMapper.class),
+                Mappers.getMapper(com.ejada.subscription.mapper.SubscriptionUpdateEventMapper.class),
                 new ObjectMapper(),
                 txManager,
                 Mockito.mock(SubscriptionApprovalPublisher.class),
