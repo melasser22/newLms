@@ -198,6 +198,18 @@ gateway:
   bff:
     dashboard:
       tenant-service-uri: lb://tenant-service
+  security:
+    signature-validation:
+      enabled: false
+      skip-patterns:
+        - /public/**
+        - /actuator/**
+        - /auth/**
+    token-cache:
+      enabled: false
+      ttl: 15m
+    ip-filtering:
+      enabled: false
       analytics-service-uri: lb://analytics-service
       billing-service-uri: lb://billing-service
       default-period: MONTHLY

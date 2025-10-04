@@ -1,12 +1,25 @@
 package com.ejada.gateway.config;
 
-import com.ejada.starter_security.SharedSecurityProps;
+import com.ejada.gateway.security.ApiKeyAuthenticationFilter;
+import com.ejada.gateway.security.GatewaySecurityMetrics;
+import com.ejada.gateway.security.GatewayTokenIntrospectionService;
+import com.ejada.gateway.security.IpFilteringGatewayFilter;
+import com.ejada.gateway.security.RequestSignatureValidationFilter;
 import com.ejada.gateway.security.TenantAuthorizationManager;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
+import com.ejada.starter_security.SharedSecurityProps;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -22,6 +35,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.reactive.function.client.WebClient;
+import io.micrometer.core.instrument.MeterRegistry;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -32,10 +47,13 @@ import reactor.core.scheduler.Schedulers;
  */
 @Configuration
 @EnableWebFluxSecurity
+@EnableConfigurationProperties(GatewaySecurityProperties.class)
 public class GatewaySecurityConfiguration {
 
   @Bean
-  public ReactiveJwtDecoder reactiveJwtDecoder(JwtDecoder jwtDecoder, SharedSecurityProps props) {
+  public ReactiveJwtDecoder reactiveJwtDecoder(JwtDecoder jwtDecoder,
+      SharedSecurityProps props,
+      ObjectProvider<GatewayTokenIntrospectionService> introspectionServiceProvider) {
     ReactiveJwtDecoder primary = token -> Mono.fromCallable(() -> jwtDecoder.decode(token))
         .subscribeOn(Schedulers.boundedElastic());
 
@@ -47,7 +65,11 @@ public class GatewaySecurityConfiguration {
       delegates.add(oidcDecoder);
     }
 
-    return token -> Mono.defer(() -> tryDecode(delegates, token));
+    GatewayTokenIntrospectionService introspectionService = introspectionServiceProvider.getIfAvailable();
+    return token -> Mono.defer(() -> tryDecode(delegates, token)
+        .flatMap(jwt -> (introspectionService != null)
+            ? introspectionService.verify(token, jwt).thenReturn(jwt)
+            : Mono.just(jwt)));
   }
 
   @Bean
@@ -87,6 +109,64 @@ public class GatewaySecurityConfiguration {
   @Bean
   public TenantAuthorizationManager tenantAuthorizationManager(CoreAutoConfiguration.CoreProps coreProps) {
     return new TenantAuthorizationManager(coreProps);
+  }
+
+  @Bean
+  public GatewaySecurityMetrics gatewaySecurityMetrics(MeterRegistry meterRegistry) {
+    return new GatewaySecurityMetrics(meterRegistry);
+  }
+
+  @Bean
+  @ConditionalOnClass(ReactiveStringRedisTemplate.class)
+  @ConditionalOnBean(ReactiveStringRedisTemplate.class)
+  @ConditionalOnProperty(prefix = "gateway.security.api-key", name = "enabled", havingValue = "true", matchIfMissing = true)
+  public ApiKeyAuthenticationFilter apiKeyAuthenticationFilter(
+      ReactiveStringRedisTemplate redisTemplate,
+      GatewaySecurityMetrics metrics,
+      GatewaySecurityProperties properties,
+      @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> primaryObjectMapper,
+      ObjectProvider<ObjectMapper> fallbackObjectMapper) {
+    return new ApiKeyAuthenticationFilter(redisTemplate, metrics, properties, primaryObjectMapper, fallbackObjectMapper);
+  }
+
+  @Bean
+  @ConditionalOnClass(ReactiveStringRedisTemplate.class)
+  @ConditionalOnBean(ReactiveStringRedisTemplate.class)
+  @ConditionalOnProperty(prefix = "gateway.security.ip-filtering", name = "enabled", havingValue = "true")
+  public IpFilteringGatewayFilter ipFilteringGatewayFilter(
+      ReactiveStringRedisTemplate redisTemplate,
+      GatewaySecurityProperties properties,
+      GatewaySecurityMetrics metrics,
+      @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> primaryObjectMapper,
+      ObjectProvider<ObjectMapper> fallbackObjectMapper) {
+    return new IpFilteringGatewayFilter(redisTemplate, properties, metrics, primaryObjectMapper, fallbackObjectMapper);
+  }
+
+  @Bean
+  @ConditionalOnClass(ReactiveStringRedisTemplate.class)
+  @ConditionalOnBean(ReactiveStringRedisTemplate.class)
+  @ConditionalOnProperty(prefix = "gateway.security.signature-validation", name = "enabled", havingValue = "true")
+  public RequestSignatureValidationFilter requestSignatureValidationFilter(
+      ReactiveStringRedisTemplate redisTemplate,
+      GatewaySecurityProperties properties,
+      GatewaySecurityMetrics metrics,
+      @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> primaryObjectMapper,
+      ObjectProvider<ObjectMapper> fallbackObjectMapper) {
+    return new RequestSignatureValidationFilter(redisTemplate, properties, metrics, primaryObjectMapper, fallbackObjectMapper);
+  }
+
+  @Bean
+  @ConditionalOnClass({ReactiveStringRedisTemplate.class, WebClient.class})
+  @ConditionalOnBean(ReactiveStringRedisTemplate.class)
+  @ConditionalOnProperty(prefix = "gateway.security.token-cache", name = "enabled", havingValue = "true")
+  public GatewayTokenIntrospectionService gatewayTokenIntrospectionService(
+      GatewaySecurityProperties properties,
+      ReactiveStringRedisTemplate redisTemplate,
+      GatewaySecurityMetrics metrics,
+      @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> primaryObjectMapper,
+      ObjectProvider<ObjectMapper> fallbackObjectMapper,
+      WebClient.Builder webClientBuilder) {
+    return new GatewayTokenIntrospectionService(properties, redisTemplate, metrics, primaryObjectMapper, fallbackObjectMapper, webClientBuilder);
   }
 
   @Bean
