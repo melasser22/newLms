@@ -38,7 +38,7 @@ import org.testcontainers.utility.DockerImageName;
 @TestPropertySource(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 class SubscriptionApprovalConsumerIT {
 
-    private static final String APPROVAL_TOPIC = "subscription-approvals-it";
+    static final String APPROVAL_TOPIC = "subscription-approvals-it";
     private static final String CONSUMER_GROUP = "subscription-approvals-it-group";
 
     @Container
