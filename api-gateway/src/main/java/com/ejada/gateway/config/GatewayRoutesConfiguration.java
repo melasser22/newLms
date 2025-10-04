@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.ejada.gateway.filter.ApiVersioningGatewayFilter;
+import com.ejada.gateway.filter.RequestBodyTransformationGatewayFilterFactory;
+import com.ejada.gateway.filter.ResponseBodyTransformationGatewayFilterFactory;
 import com.ejada.gateway.filter.SessionAffinityGatewayFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +37,9 @@ public class GatewayRoutesConfiguration {
   @Bean
   RouteLocator gatewayRoutes(RouteLocatorBuilder builder,
       GatewayRoutesProperties properties,
-      ObjectProvider<GatewayRouteDefinitionProvider> dynamicProviders) {
+      ObjectProvider<GatewayRouteDefinitionProvider> dynamicProviders,
+      ObjectProvider<RequestBodyTransformationGatewayFilterFactory> requestTransformationFactory,
+      ObjectProvider<ResponseBodyTransformationGatewayFilterFactory> responseTransformationFactory) {
     RouteLocatorBuilder.Builder routes = builder.routes();
 
     Map<String, GatewayRoutesProperties.ServiceRoute> aggregated = new LinkedHashMap<>();
@@ -119,9 +123,11 @@ public class GatewayRoutesConfiguration {
                 filters.filter(new ApiVersioningGatewayFilter(route.getVersioning()));
               }
               route.getRequestHeaders().forEach(filters::addRequestHeader);
+              requestTransformationFactory.ifAvailable(factory -> filters.filter(factory.apply(route.getId())));
               if (route.getSessionAffinity().isEnabled()) {
                 filters.filter(new SessionAffinityGatewayFilter(route.getSessionAffinity()));
               }
+              responseTransformationFactory.ifAvailable(factory -> filters.filter(factory.apply(route.getId())));
               if (resilience.isEnabled()) {
                 filters.circuitBreaker(config -> {
                   config.setName(resilience.resolvedCircuitBreakerName(route.getId()));

@@ -25,6 +25,12 @@
       <artifactId>spring-cloud-starter-gateway</artifactId>
     </dependency>
 
+    <!-- JSONPath support for payload transformations -->
+    <dependency>
+      <groupId>com.jayway.jsonpath</groupId>
+      <artifactId>json-path</artifactId>
+    </dependency>
+
     <!-- Spring Security resource server (reactive) -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
