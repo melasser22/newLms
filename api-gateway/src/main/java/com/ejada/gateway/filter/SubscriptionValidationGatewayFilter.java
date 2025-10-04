@@ -122,7 +122,7 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
   }
 
   private Mono<SubscriptionDecision> ensureSubscription(String tenantId, @Nullable String requiredFeature) {
-    String cacheKey = properties.cacheKey(tenantId);
+    String cacheKey = properties.cacheKey(tenantId, requiredFeature);
     return redisTemplate.opsForValue().get(cacheKey)
         .flatMap(json -> decode(json).map(Mono::just).orElseGet(Mono::empty))
         .switchIfEmpty(Mono.defer(() -> fetchSubscription(tenantId)
