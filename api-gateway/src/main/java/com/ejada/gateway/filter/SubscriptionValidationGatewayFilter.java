@@ -101,6 +101,10 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
         .flatMap(decision -> {
           if (decision.allowed()) {
             exchange.getAttributes().put(GatewayRequestAttributes.SUBSCRIPTION, decision.record());
+            String tier = decision.record() != null ? decision.record().tier() : null;
+            if (StringUtils.hasText(tier)) {
+              exchange.getAttributes().put(GatewayRequestAttributes.SUBSCRIPTION_TIER, tier);
+            }
             return chain.filter(exchange);
           }
           return reject(exchange, decision.status(), decision.code(), decision.message());
@@ -183,7 +187,7 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
     Set<String> features = (payload.features != null)
         ? new HashSet<>(payload.features)
         : Collections.emptySet();
-    return SubscriptionRecord.of(active, features, payload.expiresAt);
+    return SubscriptionRecord.of(active, features, payload.expiresAt, payload.tier);
   }
 
   private SubscriptionDecision evaluate(SubscriptionRecord record, @Nullable String requiredFeature) {
@@ -223,19 +227,21 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
     }
   }
 
-  private record SubscriptionRecord(boolean active, Set<String> features, Instant expiresAt, String status) {
+  private record SubscriptionRecord(boolean active, Set<String> features, Instant expiresAt, String status,
+      String tier) {
 
     SubscriptionRecord {
       features = (features == null) ? Set.of() : Set.copyOf(features);
       status = StringUtils.hasText(status) ? status : (active ? "ACTIVE" : "INACTIVE");
+      tier = (tier == null) ? null : tier.trim();
     }
 
-    static SubscriptionRecord of(boolean active, Set<String> features, Instant expiresAt) {
-      return new SubscriptionRecord(active, features, expiresAt, active ? "ACTIVE" : "INACTIVE");
+    static SubscriptionRecord of(boolean active, Set<String> features, Instant expiresAt, @Nullable String tier) {
+      return new SubscriptionRecord(active, features, expiresAt, active ? "ACTIVE" : "INACTIVE", tier);
     }
 
     static SubscriptionRecord inactive() {
-      return new SubscriptionRecord(false, Set.of(), null, "INACTIVE");
+      return new SubscriptionRecord(false, Set.of(), null, "INACTIVE", null);
     }
 
     boolean isActive() {
@@ -261,6 +267,7 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
     private String status;
     private java.util.List<String> features;
     private Instant expiresAt;
+    private String tier;
 
     SubscriptionPayload() {
     }

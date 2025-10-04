@@ -25,4 +25,7 @@ public class RateLimitProps implements BaseStarterProperties {
 
   /** Duration of the fixed window for rate limiting. */
   private Duration window = Duration.ofMinutes(1);
+
+  /** Algorithm used for rate limiting window. */
+  private String algorithm = "sliding";
 }
