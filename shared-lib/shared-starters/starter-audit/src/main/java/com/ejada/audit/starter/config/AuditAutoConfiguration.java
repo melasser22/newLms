@@ -31,7 +31,11 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Condition;
+import org.springframework.context.annotation.ConditionContext;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.core.env.Environment;
+import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -228,11 +232,15 @@ public class AuditAutoConfiguration {
   @Bean
   @ConditionalOnProperty(prefix = "shared.audit.sinks.kafka", name = "enabled", havingValue = "true")
   @ConditionalOnClass(name = "com.ejada.audit.starter.core.dispatch.sinks.KafkaSink")
+  @Conditional(KafkaBootstrapConfiguredCondition.class)
   public Sink kafkaSink(AuditProperties props, Environment env) {
     Object k = props.getSinks().getKafka();
     String bootstrap = optionalString(k, "getBootstrapServers", null);
     if (bootstrap == null || bootstrap.isBlank()) {
-      bootstrap = env.getProperty("spring.kafka.bootstrap-servers", "kafka:9092");
+      bootstrap = env.getProperty("spring.kafka.bootstrap-servers");
+    }
+    if (bootstrap == null || bootstrap.isBlank()) {
+      throw new IllegalStateException("Kafka bootstrap servers must be configured");
     }
     String topic = optionalString(k, "getTopic", "audit.events.v1");
     String acks = optionalString(k, "getAcks", "all");
@@ -264,6 +272,26 @@ public class AuditAutoConfiguration {
 
     } catch (Exception e) {
       throw new IllegalStateException("No compatible KafkaSink constructor found", e);
+    }
+  }
+
+  static final class KafkaBootstrapConfiguredCondition implements Condition {
+
+    @Override
+    public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+      Environment env = context.getEnvironment();
+      String explicit = env.getProperty("shared.audit.sinks.kafka.bootstrap-servers");
+      String fallback = env.getProperty("spring.kafka.bootstrap-servers");
+      boolean configured = hasText(explicit) || hasText(fallback);
+      if (!configured) {
+        log.warn("Skipping Kafka audit sink auto-configuration because no bootstrap servers are defined. " +
+            "Set 'shared.audit.sinks.kafka.bootstrap-servers' or 'spring.kafka.bootstrap-servers' to enable the sink.");
+      }
+      return configured;
+    }
+
+    private boolean hasText(String value) {
+      return value != null && !value.isBlank();
     }
   }
 
