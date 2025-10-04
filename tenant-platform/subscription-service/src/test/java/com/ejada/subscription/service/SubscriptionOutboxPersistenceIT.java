@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.ejada.subscription.acl.MarketplaceCallbackOrchestrator;
 import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
 import com.ejada.subscription.repository.OutboxEventRepository;
+import com.ejada.subscription.tenant.TenantLinkFactory;
+import com.ejada.subscription.service.approval.ApprovalWorkflowService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.flywaydb.core.Flyway;
 import java.util.List;
@@ -84,7 +86,9 @@ class SubscriptionOutboxPersistenceIT {
                 Mockito.mock(com.ejada.subscription.mapper.SubscriptionUpdateEventMapper.class),
                 new ObjectMapper(),
                 txManager,
-                Mockito.mock(SubscriptionApprovalPublisher.class));
+                Mockito.mock(SubscriptionApprovalPublisher.class),
+                new TenantLinkFactory(),
+                Mockito.mock(ApprovalWorkflowService.class));
         outboxRepo.deleteAll();
     }
 

@@ -195,6 +195,12 @@ resilience4j:
 
 # Declarative downstream routes consumed by GatewayRoutesConfiguration
 gateway:
+  bff:
+    dashboard:
+      tenant-service-uri: lb://tenant-service
+      analytics-service-uri: lb://analytics-service
+      billing-service-uri: lb://billing-service
+      default-period: MONTHLY
   defaults:
     resilience:
       enabled: true

@@ -1,12 +1,8 @@
 package com.ejada.tenant.service.health;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
-@ConditionalOnMissingBean(TenantHealthMetricsProvider.class)
 public class DefaultTenantHealthMetricsProvider implements TenantHealthMetricsProvider {
 
     @Override
