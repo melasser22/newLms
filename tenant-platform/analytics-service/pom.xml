@@ -17,8 +17,8 @@
   <properties>
     <java.version>21</java.version>
     <qa.flyway.vendor>postgresql</qa.flyway.vendor>
-    <qa.flyway.schemas>public,billing</qa.flyway.schemas>
-    <qa.flyway.defaultSchema>billing</qa.flyway.defaultSchema>
+    <qa.flyway.schemas>tenant</qa.flyway.schemas>
+    <qa.flyway.defaultSchema>tenant</qa.flyway.defaultSchema>
     <qa.flyway.locations>classpath:db/migration/common,classpath:db/migration/${qa.flyway.vendor}</qa.flyway.locations>
     <qa.flyway.url>jdbc:postgresql://localhost:5432/ejada</qa.flyway.url>
     <qa.flyway.user>postgres</qa.flyway.user>
