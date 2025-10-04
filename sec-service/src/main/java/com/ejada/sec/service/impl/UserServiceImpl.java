@@ -10,7 +10,6 @@ import com.ejada.sec.repository.PasswordResetTokenRepository;
 import com.ejada.sec.repository.UserRepository;
 import com.ejada.sec.service.UserService;
 import com.ejada.sec.service.RefreshTokenService;
-import com.ejada.sec.util.TenantContextResolver;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -45,7 +43,7 @@ public class UserServiceImpl implements UserService {
   @Transactional
   @Override
   public BaseResponse<UserDto> update(Long userId, UpdateUserRequest req) {
-    User user = userRepository.findById(userId)
+    User user = userRepository.findByIdSecure(userId)
         .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
     userMapper.updateEntity(user, req);
     user = userRepository.save(user);
@@ -57,7 +55,7 @@ public class UserServiceImpl implements UserService {
   @Transactional
   @Override
   public BaseResponse<Void> delete(Long userId) {
-    userRepository.findById(userId).ifPresent(user -> {
+    userRepository.findByIdSecure(userId).ifPresent(user -> {
       revokeUserCredentials(userId);
       passwordResetTokenRepository.deleteByUserId(userId);
       userRepository.delete(user);
@@ -67,7 +65,7 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public BaseResponse<UserDto> get(Long userId) {
-    return userRepository.findById(userId)
+    return userRepository.findByIdSecure(userId)
         .map(u -> userMapper.toDto(u, resolver))
         .map(dto -> BaseResponse.success("User fetched", dto))
         .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
@@ -75,9 +73,8 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public BaseResponse<List<UserDto>> listByTenant() {
-    UUID tenantId = TenantContextResolver.requireTenantId();
     return BaseResponse.success(
-        "Users listed", userMapper.toDto(userRepository.findAllByTenantId(tenantId), resolver));
+        "Users listed", userMapper.toDto(userRepository.findAllSecure(), resolver));
   }
 
   @Transactional
@@ -105,7 +102,7 @@ public class UserServiceImpl implements UserService {
   }
 
   private BaseResponse<Void> setEnabled(Long userId, boolean flag, String message) {
-    User user = userRepository.findById(userId)
+    User user = userRepository.findByIdSecure(userId)
         .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
     user.setEnabled(flag);
     if (!flag) {
@@ -115,7 +112,7 @@ public class UserServiceImpl implements UserService {
     return BaseResponse.success(message, null);
   }
   private BaseResponse<Void> setLocked(Long userId, boolean flag, String message) {
-    User user = userRepository.findById(userId)
+    User user = userRepository.findByIdSecure(userId)
         .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
     user.setLocked(flag);
     if (flag) {
