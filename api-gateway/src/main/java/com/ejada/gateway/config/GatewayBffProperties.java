@@ -1,6 +1,8 @@
 package com.ejada.gateway.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.util.StringUtils;
 
 /**
@@ -9,6 +11,8 @@ import org.springframework.util.StringUtils;
  * recompiling the gateway which is useful across environments (local, CI,
  * production).
  */
+@RefreshScope
+@Validated
 @ConfigurationProperties(prefix = "gateway.bff")
 public class GatewayBffProperties {
 

@@ -1,0 +1,35 @@
+spring:
+  config:
+    activate:
+      on-profile: production
+  cloud:
+    config:
+      profile: production
+      label: main
+
+gateway:
+  webclient:
+    connect-timeout: 5s
+    response-timeout: 20s
+    read-timeout: 20s
+    write-timeout: 20s
+  subscription:
+    enabled: true
+    cache-ttl: 5m
+    fail-open: false
+  defaults:
+    resilience:
+      retry:
+        retries: 4
+        backoff:
+          first-backoff: 500ms
+          max-backoff: 5s
+          factor: 3
+
+shared:
+  ratelimit:
+    capacity: 300
+    window: 1m
+
+app:
+  env: production

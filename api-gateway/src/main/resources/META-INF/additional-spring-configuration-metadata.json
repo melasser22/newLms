@@ -1,0 +1,39 @@
+{
+  "properties": [
+    {
+      "name": "gateway.routes",
+      "type": "java.util.Map<java.lang.String, com.ejada.gateway.config.GatewayRoutesProperties$ServiceRoute>",
+      "description": "Declarative route definitions exposed through the API gateway."
+    },
+    {
+      "name": "gateway.webclient.connect-timeout",
+      "type": "java.time.Duration",
+      "description": "Connection timeout applied to downstream WebClient calls."
+    },
+    {
+      "name": "gateway.webclient.response-timeout",
+      "type": "java.time.Duration",
+      "description": "Overall response timeout for downstream WebClient calls."
+    },
+    {
+      "name": "gateway.subscription.validation-uri",
+      "type": "java.lang.String",
+      "description": "URI template used to validate tenant subscriptions before routing."
+    },
+    {
+      "name": "gateway.admin.aggregation.services",
+      "type": "java.util.List<com.ejada.gateway.config.AdminAggregationProperties$Service>",
+      "description": "Downstream admin services aggregated into the admin dashboard endpoints."
+    },
+    {
+      "name": "app.configuration-version",
+      "type": "java.lang.Long",
+      "description": "Monotonically increasing identifier representing the currently active configuration snapshot."
+    },
+    {
+      "name": "jasypt.encryptor.password",
+      "type": "java.lang.String",
+      "description": "Password used by Jasypt to decrypt ENC(...) values provided by the Config Server."
+    }
+  ]
+}
