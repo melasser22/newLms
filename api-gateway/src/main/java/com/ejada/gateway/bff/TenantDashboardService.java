@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreakerFactory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -40,6 +41,7 @@ public class TenantDashboardService {
   private final GatewayBffProperties.TenantDashboardProperties properties;
   private final ReactiveCircuitBreakerFactory<?, ?> circuitBreakerFactory;
 
+  @Autowired
   public TenantDashboardService(WebClient.Builder webClientBuilder,
       GatewayBffProperties properties,
       ObjectProvider<ReactiveCircuitBreakerFactory<?, ?>> circuitBreakerFactoryProvider) {
