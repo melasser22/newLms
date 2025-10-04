@@ -43,7 +43,7 @@ class SubscriptionApprovalConsumerIT {
             new PostgreSQLContainer<>(DockerImageName.parse("postgres:15-alpine"));
 
     private static final DockerImageName KAFKA_IMAGE =
-            DockerImageName.parse("confluentinc/cp-kafka:7.5.3")
+            DockerImageName.parse("confluentinc/cp-kafka:7.5.0")
                     .asCompatibleSubstituteFor("apache/kafka");
 
     @Container
