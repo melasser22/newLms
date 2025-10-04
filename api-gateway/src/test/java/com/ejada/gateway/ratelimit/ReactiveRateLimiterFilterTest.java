@@ -6,6 +6,7 @@ import com.ejada.shared_starter_ratelimit.RateLimitProps;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
@@ -39,7 +40,8 @@ class ReactiveRateLimiterFilterTest {
         props.setCapacity(2);
         props.setRefillPerMinute(2);
         props.setKeyStrategy("tenant");
-        this.filter = new ReactiveRateLimiterFilter(template, props, new ObjectMapper());
+        KeyResolver keyResolver = exchange -> Mono.just("tenant-a");
+        this.filter = new ReactiveRateLimiterFilter(template, props, keyResolver, new ObjectMapper());
         flushRedis();
     }
 
