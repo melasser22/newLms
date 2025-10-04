@@ -97,10 +97,14 @@ public class TenantExtractionGatewayFilter implements WebFilter {
       mutated.getAttributes().putIfAbsent(HeaderNames.X_TENANT_ID, sanitized);
       return chain.filter(mutated)
           .contextWrite(context -> {
-            Context updated = context.put(GatewayRequestAttributes.TENANT_ID, sanitized);
+            Context updated = context
+                .put(GatewayRequestAttributes.TENANT_ID, sanitized)
+                .put(HeaderNames.X_TENANT_ID, sanitized);
             String correlationId = mutated.getAttribute(GatewayRequestAttributes.CORRELATION_ID);
             if (StringUtils.hasText(correlationId)) {
-              updated = updated.put(GatewayRequestAttributes.CORRELATION_ID, correlationId);
+              updated = updated
+                  .put(GatewayRequestAttributes.CORRELATION_ID, correlationId)
+                  .put(HeaderNames.CORRELATION_ID, correlationId);
             }
             return updated;
           });
