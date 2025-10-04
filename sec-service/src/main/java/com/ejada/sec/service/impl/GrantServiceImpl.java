@@ -31,7 +31,7 @@ public class GrantServiceImpl implements GrantService {
   @Audited(action = AuditAction.UPDATE, entity = "UserRole", dataClass = DataClass.CREDENTIALS,
       message = "Assign roles to user")
   public void assignRolesToUser(AssignRolesToUserRequest req) {
-    User user = userRepository.findById(req.getUserId())
+    User user = userRepository.findByIdSecure(req.getUserId())
         .orElseThrow(() -> new NoSuchElementException("User not found: " + req.getUserId()));
     var roles = resolver.rolesByCodes(req.getTenantId(), req.getRoleCodes());
     roles.forEach(role -> {
@@ -47,7 +47,7 @@ public class GrantServiceImpl implements GrantService {
   @Audited(action = AuditAction.UPDATE, entity = "UserRole", dataClass = DataClass.CREDENTIALS,
       message = "Revoke roles from user")
   public void revokeRolesFromUser(RevokeRolesFromUserRequest req) {
-    User user = userRepository.findById(req.getUserId())
+    User user = userRepository.findByIdSecure(req.getUserId())
         .orElseThrow(() -> new NoSuchElementException("User not found: " + req.getUserId()));
     user.getRoles().removeIf(ur -> req.getRoleCodes().contains(ur.getRole().getCode()));
     userRepository.save(user);
@@ -85,7 +85,7 @@ public class GrantServiceImpl implements GrantService {
   @Audited(action = AuditAction.UPDATE, entity = "UserPrivilege", dataClass = DataClass.CREDENTIALS,
       message = "Set user privilege override")
   public void setUserPrivilegeOverride(SetUserPrivilegeOverrideRequest req) {
-    User user = userRepository.findById(req.getUserId())
+    User user = userRepository.findByIdSecure(req.getUserId())
         .orElseThrow(() -> new NoSuchElementException("User not found: " + req.getUserId()));
     Privilege p = privilegeRepository.findByTenantIdAndCode(req.getTenantId(), req.getPrivilegeCode())
         .orElseThrow(() -> new NoSuchElementException("Privilege not found: " + req.getPrivilegeCode()));

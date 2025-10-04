@@ -1,7 +1,7 @@
 package com.ejada.sec.repository;
 
+import com.ejada.data.repository.TenantAwareRepository;
 import com.ejada.sec.domain.RefreshToken;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,7 +11,25 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
+public interface RefreshTokenRepository extends TenantAwareRepository<RefreshToken, Long> {
+
+    default Optional<RefreshToken> findByIdAndTenantId(Long id, UUID tenantId) {
+        return findByIdAndUserTenantId(id, tenantId);
+    }
+
+    Optional<RefreshToken> findByIdAndUserTenantId(Long id, UUID tenantId);
+
+    default List<RefreshToken> findAllByTenantId(UUID tenantId) {
+        return findAllByUserTenantId(tenantId);
+    }
+
+    List<RefreshToken> findAllByUserTenantId(UUID tenantId);
+
+    default void deleteByIdAndTenantId(Long id, UUID tenantId) {
+        deleteByIdAndUserTenantId(id, tenantId);
+    }
+
+    void deleteByIdAndUserTenantId(Long id, UUID tenantId);
 
     Optional<RefreshToken> findByToken(String token);
 

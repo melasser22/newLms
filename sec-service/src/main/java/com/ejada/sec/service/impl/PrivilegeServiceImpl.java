@@ -41,7 +41,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
   public BaseResponse<PrivilegeDto> update(Long id, UpdatePrivilegeRequest req) {
     Privilege p =
         repository
-            .findById(id)
+            .findByIdSecure(id)
             .orElseThrow(() -> new NoSuchElementException("Privilege not found: " + id));
     mapper.updateEntity(p, req);
     p = repository.save(p);
@@ -54,7 +54,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
   @Override
   public BaseResponse<Void> delete(Long id) {
     return repository
-        .findById(id)
+        .findByIdSecure(id)
         .map(
             privilege -> {
               UUID tenantId = privilege.getTenantId();
@@ -75,7 +75,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         .orElseGet(
             () ->
                 repository
-                    .findById(id)
+                    .findByIdSecure(id)
                     .map(mapper::toDto)
                     .map(
                         dto -> {
@@ -92,7 +92,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         .map(list -> BaseResponse.success("Privileges listed", list))
         .orElseGet(
             () -> {
-              List<PrivilegeDto> list = mapper.toDto(repository.findAllByTenantId(tenantId));
+              List<PrivilegeDto> list = mapper.toDto(repository.findAllSecure());
               cache.set(privListKeySuffix(tenantId), list);
               return BaseResponse.success("Privileges listed", list);
             });

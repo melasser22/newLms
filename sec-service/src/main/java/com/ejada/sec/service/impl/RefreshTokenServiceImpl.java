@@ -39,7 +39,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   @Override
   public String issue(Long userId, boolean revokeExistingSessions, String rotatedFrom) {
     var now = Instant.now();
-    User user = userRepository.findById(userId)
+    User user = userRepository.findByIdSecure(userId)
         .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
 
     if (revokeExistingSessions) {

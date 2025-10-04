@@ -47,7 +47,7 @@ public class RoleServiceImpl implements RoleService {
   @Override
   public BaseResponse<RoleDto> update(Long roleId, UpdateRoleRequest req) {
       log.info("Updating role {}", roleId);
-      Role role = roleRepository.findById(roleId)
+      Role role = roleRepository.findByIdSecure(roleId)
           .orElseThrow(() -> new NoSuchElementException("Role not found: " + roleId));
       roleMapper.updateEntity(role, req);
       role = roleRepository.save(role);
@@ -62,7 +62,7 @@ public class RoleServiceImpl implements RoleService {
   public BaseResponse<Void> delete(Long roleId) {
       log.info("Deleting role {}", roleId);
       roleRepository
-          .findById(roleId)
+          .findByIdSecure(roleId)
           .ifPresent(role -> {
             roleRepository.delete(role);
             cache.delete(roleKeySuffix(role.getId()));
@@ -86,7 +86,7 @@ public class RoleServiceImpl implements RoleService {
               })
           .orElseGet(
               () ->
-                  roleRepository.findById(roleId)
+                  roleRepository.findByIdSecure(roleId)
                       .map(r -> roleMapper.toDto(r, resolver))
                       .map(
                           dto -> {
@@ -109,7 +109,7 @@ public class RoleServiceImpl implements RoleService {
           .orElseGet(
               () -> {
                 List<RoleDto> list =
-                    roleMapper.toDto(roleRepository.findAllByTenantId(tenantId), resolver);
+                    roleMapper.toDto(roleRepository.findAllSecure(), resolver);
                 cache.set(roleListKeySuffix(tenantId), list);
                 return BaseResponse.success("Roles listed", list);
               });

@@ -46,7 +46,7 @@ class RefreshTokenServiceImplTest {
   void issueGeneratesTokenWithConfiguredTtlAndDeletesExistingOnes() {
     UUID tenantId = UUID.randomUUID();
     User user = User.builder().id(5L).tenantId(tenantId).build();
-    when(userRepository.findById(5L)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdSecure(5L)).thenReturn(Optional.of(user));
     when(refreshTokenRepository.findActiveTokensByUserId(eq(5L), any())).thenReturn(java.util.Collections.emptyList());
     when(refreshTokenRepository.findActiveTokensByTenant(eq(tenantId), any())).thenReturn(java.util.Collections.emptyList());
     when(refreshTokenRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -74,7 +74,7 @@ class RefreshTokenServiceImplTest {
 
     UUID tenantId = UUID.randomUUID();
     User user = User.builder().id(7L).tenantId(tenantId).build();
-    when(userRepository.findById(7L)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdSecure(7L)).thenReturn(Optional.of(user));
 
     var stored = new ArrayList<RefreshToken>();
     Instant base = Instant.now();
@@ -120,7 +120,7 @@ class RefreshTokenServiceImplTest {
 
     UUID tenantId = UUID.randomUUID();
     User user = User.builder().id(11L).tenantId(tenantId).build();
-    when(userRepository.findById(11L)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdSecure(11L)).thenReturn(Optional.of(user));
 
     var stored = new ArrayList<RefreshToken>();
     Instant base = Instant.now();
