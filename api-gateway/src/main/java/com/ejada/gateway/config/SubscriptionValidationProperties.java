@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
 /**
@@ -109,7 +110,10 @@ public class SubscriptionValidationProperties {
     return StringUtils.hasText(routeId) && requiredFeatures.containsKey(routeId);
   }
 
-  public String cacheKey(String tenantId) {
+  public String cacheKey(String tenantId, @Nullable String feature) {
+    if (StringUtils.hasText(feature)) {
+      return cachePrefix + tenantId + ":" + feature;
+    }
     return cachePrefix + tenantId;
   }
 }
