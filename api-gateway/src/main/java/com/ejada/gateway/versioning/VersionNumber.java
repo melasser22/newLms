@@ -83,4 +83,12 @@ public final class VersionNumber {
       return null;
     }
   }
+
+  /**
+   * Canonicalises the version or throws when invalid. Provided to improve readability when
+   * dealing with configuration metadata.
+   */
+  public static String canonicaliseOrThrow(String value) {
+    return canonicalise(value);
+  }
 }

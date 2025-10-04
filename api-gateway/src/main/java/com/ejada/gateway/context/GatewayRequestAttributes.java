@@ -21,6 +21,14 @@ public final class GatewayRequestAttributes {
   /** Attribute storing the resolved API version for versioned routes. */
   public static final String API_VERSION = GatewayRequestAttributes.class.getName() + ".apiVersion";
 
+  /** Attribute storing the originally requested API version (if provided). */
+  public static final String API_VERSION_REQUESTED = GatewayRequestAttributes.class.getName()
+      + ".apiVersionRequested";
+
+  /** Attribute storing how the API version was resolved (header, path, default, mapping). */
+  public static final String API_VERSION_SOURCE = GatewayRequestAttributes.class.getName()
+      + ".apiVersionSource";
+
   private GatewayRequestAttributes() {
     // utility class
   }
