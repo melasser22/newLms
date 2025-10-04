@@ -3,17 +3,13 @@ package com.ejada.gateway.config;
 import com.ejada.gateway.filter.GatewayAccessLogFilter;
 import com.ejada.gateway.filter.GatewayMetricsFilter;
 import com.ejada.gateway.observability.GatewayTracingHelper;
+import com.ejada.gateway.resilience.CircuitBreakerRecoveryTester;
+import com.ejada.gateway.resilience.TenantCircuitBreakerMetrics;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.tracing.Tracer;
 import jakarta.annotation.PostConstruct;
-import java.util.EnumSet;
-import java.util.Locale;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,18 +25,23 @@ public class GatewayMetricsConfiguration {
   private final GatewayTracingProperties tracingProperties;
   private final ObjectProvider<CircuitBreakerRegistry> circuitBreakerRegistryProvider;
   private final ObjectProvider<Tracer> tracerProvider;
-  private final Set<String> registeredCircuitBreakerMeters = ConcurrentHashMap.newKeySet();
+  private final TenantCircuitBreakerMetrics circuitBreakerMetrics;
+  private final CircuitBreakerRecoveryTester recoveryTester;
 
   public GatewayMetricsConfiguration(MeterRegistry meterRegistry,
       GatewayLoggingProperties loggingProperties,
       GatewayTracingProperties tracingProperties,
       ObjectProvider<CircuitBreakerRegistry> circuitBreakerRegistryProvider,
-      ObjectProvider<Tracer> tracerProvider) {
+      ObjectProvider<Tracer> tracerProvider,
+      TenantCircuitBreakerMetrics circuitBreakerMetrics,
+      CircuitBreakerRecoveryTester recoveryTester) {
     this.meterRegistry = meterRegistry;
     this.loggingProperties = loggingProperties;
     this.tracingProperties = tracingProperties;
     this.circuitBreakerRegistryProvider = circuitBreakerRegistryProvider;
     this.tracerProvider = tracerProvider;
+    this.circuitBreakerMetrics = circuitBreakerMetrics;
+    this.recoveryTester = recoveryTester;
   }
 
   @Bean
@@ -65,23 +66,12 @@ public class GatewayMetricsConfiguration {
     if (registry == null) {
       return;
     }
-    registry.getAllCircuitBreakers().forEach(this::registerCircuitBreakerMeters);
-    registry.getEventPublisher().onEntryAdded(event -> registerCircuitBreakerMeters(event.getAddedEntry()));
+    registry.getAllCircuitBreakers().forEach(this::monitorCircuitBreaker);
+    registry.getEventPublisher().onEntryAdded(event -> monitorCircuitBreaker(event.getAddedEntry()));
   }
 
-  private void registerCircuitBreakerMeters(CircuitBreaker circuitBreaker) {
-    EnumSet<CircuitBreaker.State> states = EnumSet.allOf(CircuitBreaker.State.class);
-    for (CircuitBreaker.State state : states) {
-      String key = circuitBreaker.getName() + ":" + state.name();
-      if (!registeredCircuitBreakerMeters.add(key)) {
-        continue;
-      }
-      Gauge.builder("gateway.circuit_breaker.state", circuitBreaker,
-              cb -> cb.getState() == state ? 1.0 : 0.0)
-          .description("State of resilience4j circuit breakers exposed by the gateway")
-          .tags("serviceName", circuitBreaker.getName(),
-              "state", state.name().toLowerCase(Locale.ROOT))
-          .register(meterRegistry);
-    }
+  private void monitorCircuitBreaker(io.github.resilience4j.circuitbreaker.CircuitBreaker circuitBreaker) {
+    circuitBreakerMetrics.bind(circuitBreaker);
+    recoveryTester.monitor(circuitBreaker);
   }
 }

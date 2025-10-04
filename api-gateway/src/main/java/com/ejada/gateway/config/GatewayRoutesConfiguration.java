@@ -9,6 +9,7 @@ import com.ejada.gateway.filter.ApiVersioningGatewayFilter;
 import com.ejada.gateway.filter.RequestBodyTransformationGatewayFilterFactory;
 import com.ejada.gateway.filter.ResponseBodyTransformationGatewayFilterFactory;
 import com.ejada.gateway.filter.SessionAffinityGatewayFilter;
+import com.ejada.gateway.resilience.TenantCircuitBreakerMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -41,7 +42,8 @@ public class GatewayRoutesConfiguration {
       GatewayRoutesProperties properties,
       ObjectProvider<GatewayRouteDefinitionProvider> dynamicProviders,
       ObjectProvider<RequestBodyTransformationGatewayFilterFactory> requestTransformationFactory,
-      ObjectProvider<ResponseBodyTransformationGatewayFilterFactory> responseTransformationFactory) {
+      ObjectProvider<ResponseBodyTransformationGatewayFilterFactory> responseTransformationFactory,
+      TenantCircuitBreakerMetrics circuitBreakerMetrics) {
     RouteLocatorBuilder.Builder routes = builder.routes();
 
     Map<String, GatewayRoutesProperties.ServiceRoute> aggregated = new LinkedHashMap<>();
@@ -86,6 +88,12 @@ public class GatewayRoutesConfiguration {
 
     for (GatewayRoutesProperties.ServiceRoute route : aggregated.values()) {
       GatewayRoutesProperties.ServiceRoute.Resilience resilience = route.getResilience();
+      if (resilience != null && circuitBreakerMetrics != null) {
+        String circuitBreakerName = resilience.resolvedCircuitBreakerName(route.getId());
+        TenantCircuitBreakerMetrics.Priority priority = TenantCircuitBreakerMetrics.Priority
+            .valueOf(resilience.getPriority().name());
+        circuitBreakerMetrics.registerPriority(circuitBreakerName, priority);
+      }
 
       routes.route(route.getId(), predicate -> {
         String[] paths = route.getPaths().stream()
