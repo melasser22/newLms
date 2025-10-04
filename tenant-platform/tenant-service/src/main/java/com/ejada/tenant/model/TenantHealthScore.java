@@ -15,7 +15,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -33,8 +32,6 @@ import org.hibernate.annotations.DynamicUpdate;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class TenantHealthScore {
 
@@ -81,6 +78,51 @@ public class TenantHealthScore {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
+
+    @Builder(toBuilder = true)
+    public TenantHealthScore(
+            final Long id,
+            final Tenant tenant,
+            final Integer score,
+            final TenantHealthRiskCategory riskCategory,
+            final BigDecimal featureAdoptionRate,
+            final BigDecimal loginFrequencyScore,
+            final BigDecimal userEngagementScore,
+            final BigDecimal usageTrendPercent,
+            final BigDecimal supportTicketScore,
+            final BigDecimal paymentHistoryScore,
+            final BigDecimal apiHealthScore,
+            final OffsetDateTime evaluatedAt,
+            final OffsetDateTime createdAt) {
+        this.id = id;
+        this.tenant = tenant == null ? null : Tenant.ref(tenant.getId());
+        this.score = score;
+        this.riskCategory = riskCategory;
+        this.featureAdoptionRate = featureAdoptionRate;
+        this.loginFrequencyScore = loginFrequencyScore;
+        this.userEngagementScore = userEngagementScore;
+        this.usageTrendPercent = usageTrendPercent;
+        this.supportTicketScore = supportTicketScore;
+        this.paymentHistoryScore = paymentHistoryScore;
+        this.apiHealthScore = apiHealthScore;
+        this.evaluatedAt = evaluatedAt;
+        this.createdAt = createdAt;
+    }
+
+    public Tenant getTenant() {
+        return tenant == null ? null : Tenant.ref(tenant.getId());
+    }
+
+    public void setTenant(final Tenant tenant) {
+        this.tenant = tenant == null ? null : Tenant.ref(tenant.getId());
+    }
+
+    public static class TenantHealthScoreBuilder {
+        public TenantHealthScoreBuilder tenant(final Tenant tenant) {
+            this.tenant = tenant == null ? null : Tenant.ref(tenant.getId());
+            return this;
+        }
+    }
 
     @PrePersist
     void prePersist() {
