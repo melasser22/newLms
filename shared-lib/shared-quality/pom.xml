@@ -22,13 +22,13 @@
             <artifactId>maven-checkstyle-plugin</artifactId>
             <version>${plugin.checkstyle.version}</version>
             <configuration>
-            <configLocation>${maven.multiModuleProjectDirectory}/shared-quality/checkstyle.xml</configLocation>
-            <suppressionsLocation>${maven.multiModuleProjectDirectory}/shared-quality/suppressions.xml</suppressionsLocation>
+            <configLocation>${maven.multiModuleProjectDirectory}/shared-lib/shared-quality/checkstyle.xml</configLocation>
+            <suppressionsLocation>${maven.multiModuleProjectDirectory}/shared-lib/shared-quality/suppressions.xml</suppressionsLocation>
               <consoleOutput>true</consoleOutput>
               <encoding>${project.build.sourceEncoding}</encoding>
               <failOnViolation>${maven.build.isCI}</failOnViolation>
               <properties>
-                <checkstyle.suppressions.file>${maven.multiModuleProjectDirectory}/shared-quality/suppressions.xml</checkstyle.suppressions.file>
+                <checkstyle.suppressions.file>${maven.multiModuleProjectDirectory}/shared-lib/shared-quality/suppressions.xml</checkstyle.suppressions.file>
               </properties>
             </configuration>
           </plugin>
@@ -39,7 +39,7 @@
             <configuration>
               <effort>Max</effort>
               <threshold>Low</threshold>
-              <excludeFilterFile>${maven.multiModuleProjectDirectory}/shared-quality/spotbugs-exclude.xml</excludeFilterFile>
+              <excludeFilterFile>${maven.multiModuleProjectDirectory}/shared-lib/shared-quality/spotbugs-exclude.xml</excludeFilterFile>
             </configuration>
             <dependencies>
               <dependency>
@@ -55,7 +55,7 @@
             <version>${plugin.pmd.version}</version>
             <configuration>
               <rulesets>
-                <ruleset>${maven.multiModuleProjectDirectory}/shared-quality/pmd.xml</ruleset>
+                <ruleset>${maven.multiModuleProjectDirectory}/shared-lib/shared-quality/pmd.xml</ruleset>
               </rulesets>
             </configuration>
           </plugin>
