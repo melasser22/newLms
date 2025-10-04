@@ -15,8 +15,8 @@ Reference the configuration in your Maven build:
   <groupId>org.apache.maven.plugins</groupId>
   <artifactId>maven-checkstyle-plugin</artifactId>
   <configuration>
-    <configLocation>shared-quality/checkstyle.xml</configLocation>
-    <suppressionsLocation>shared-quality/suppressions.xml</suppressionsLocation>
+    <configLocation>shared-lib/shared-quality/checkstyle.xml</configLocation>
+    <suppressionsLocation>shared-lib/shared-quality/suppressions.xml</suppressionsLocation>
   </configuration>
 </plugin>
 ```
