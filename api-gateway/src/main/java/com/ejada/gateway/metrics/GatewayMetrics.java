@@ -1,10 +1,12 @@
 package com.ejada.gateway.metrics;
 
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.util.StringUtils;
 
 /**
  * Centralised gateway metrics for transformation and caching concerns.
@@ -19,7 +21,10 @@ public class GatewayMetrics {
 
   private final AtomicLong cacheMisses = new AtomicLong();
 
+  private final MeterRegistry meterRegistry;
+
   public GatewayMetrics(MeterRegistry meterRegistry) {
+    this.meterRegistry = meterRegistry;
     this.requestTransformations = Counter.builder("gateway.transformation.applied")
         .tag("phase", "request")
         .description("Number of request transformations applied by the gateway")
@@ -43,12 +48,20 @@ public class GatewayMetrics {
     responseTransformations.increment();
   }
 
-  public void recordCacheHit() {
+  public void recordCacheHit(String routeId, String cacheKey, CacheState state) {
     cacheHits.incrementAndGet();
+    meterRegistry.counter("gateway.cache.events",
+        "routeId", sanitize(routeId),
+        "cacheKey", sanitize(cacheKey),
+        "event", eventName(state)).increment();
   }
 
-  public void recordCacheMiss() {
+  public void recordCacheMiss(String routeId, String cacheKey) {
     cacheMisses.incrementAndGet();
+    meterRegistry.counter("gateway.cache.events",
+        "routeId", sanitize(routeId),
+        "cacheKey", sanitize(cacheKey),
+        "event", "miss").increment();
   }
 
   double calculateHitRate() {
@@ -59,6 +72,30 @@ public class GatewayMetrics {
       return 0.0d;
     }
     return (double) hits / total;
+  }
+
+  private String sanitize(String value) {
+    if (!StringUtils.hasText(value)) {
+      return "unknown";
+    }
+    return value;
+  }
+
+  private String eventName(CacheState state) {
+    if (state == null) {
+      return "hit";
+    }
+    return switch (state) {
+      case STALE -> "stale";
+      case NOT_MODIFIED -> "not-modified";
+      default -> "hit";
+    };
+  }
+
+  public enum CacheState {
+    FRESH,
+    STALE,
+    NOT_MODIFIED
   }
 }
 

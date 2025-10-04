@@ -229,6 +229,41 @@ gateway:
       skip-patterns:
         - /actuator/**
         - /health
+  cache:
+    enabled: true
+    warm-interval: 10m
+    warm-tenants:
+      - demo
+    topics:
+      tenant-updated: tenant.updated
+      catalog-plan-updated: catalog.plan.updated
+    kafka:
+      group-id: gateway-cache
+    routes:
+      - id: catalog-plans
+        route-id: catalog-service
+        method: GET
+        path: /api/v1/catalog/plans
+        ttl: 1h
+        stale-ttl: 30m
+        warm: true
+        tenant-scoped: true
+      - id: catalog-features
+        route-id: catalog-service
+        method: GET
+        path: /api/v1/catalog/features
+        ttl: 30m
+        stale-ttl: 15m
+        warm: true
+        tenant-scoped: true
+      - id: tenant-by-id
+        route-id: tenant-service
+        method: GET
+        path: /api/v1/tenants/{id}
+        ttl: 5m
+        stale-ttl: 5m
+        warm: false
+        tenant-scoped: true
   tracing:
     enhanced-tags:
       enabled: true
