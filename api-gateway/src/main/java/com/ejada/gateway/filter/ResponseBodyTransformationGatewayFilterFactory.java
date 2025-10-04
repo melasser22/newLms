@@ -1,10 +1,16 @@
 package com.ejada.gateway.filter;
 
+import com.ejada.gateway.cache.CacheRefreshService;
 import com.ejada.gateway.config.GatewayTransformationProperties.HeaderOperations;
 import com.ejada.gateway.transformation.HeaderTransformationService;
 import com.ejada.gateway.transformation.ResponseBodyTransformer;
 import com.ejada.gateway.transformation.ResponseCacheService;
+import com.ejada.gateway.transformation.ResponseCacheService.CacheMetadata;
+import com.ejada.gateway.transformation.ResponseCacheService.CacheResult;
 import com.ejada.gateway.transformation.ResponseCacheService.CachedResponse;
+import com.ejada.gateway.metrics.GatewayMetrics.CacheState;
+import java.time.Instant;
+import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
@@ -37,12 +43,16 @@ public class ResponseBodyTransformationGatewayFilterFactory {
 
   private final ResponseCacheService responseCacheService;
 
+  private final CacheRefreshService cacheRefreshService;
+
   public ResponseBodyTransformationGatewayFilterFactory(HeaderTransformationService headerTransformationService,
       ResponseBodyTransformer responseBodyTransformer,
-      ResponseCacheService responseCacheService) {
+      ResponseCacheService responseCacheService,
+      CacheRefreshService cacheRefreshService) {
     this.headerTransformationService = headerTransformationService;
     this.responseBodyTransformer = responseBodyTransformer;
     this.responseCacheService = responseCacheService;
+    this.cacheRefreshService = cacheRefreshService;
   }
 
   public GatewayFilter apply(String routeId) {
@@ -67,31 +77,65 @@ public class ResponseBodyTransformationGatewayFilterFactory {
       long startNanos = System.nanoTime();
       exchange.getAttributes().put("gateway.response.start", startNanos);
 
-      if (responseCacheService != null && shouldInvalidateCache(exchange.getRequest().getMethod())) {
+      HttpMethod method = exchange.getRequest().getMethod();
+      if (responseCacheService != null && shouldInvalidateCache(method)) {
         return responseCacheService.invalidate(effectiveRouteId, exchange)
             .then(chain.filter(exchange));
       }
 
-      if (isCacheable(exchange)) {
-        return responseCacheService.find(effectiveRouteId, exchange)
-            .flatMap(optional -> optional
-                .map(cached -> writeCachedResponse(exchange, cached, responseHeaders))
-                .orElseGet(() -> proceedWithDecoration(exchange, chain, effectiveRouteId, responseHeaders, startNanos, true)))
-            .switchIfEmpty(proceedWithDecoration(exchange, chain, effectiveRouteId, responseHeaders, startNanos, true));
+      if (!isCacheCandidate(method)) {
+        return proceedWithDecoration(exchange, chain, responseHeaders, startNanos, null);
       }
 
-      return proceedWithDecoration(exchange, chain, effectiveRouteId, responseHeaders, startNanos, false);
+      boolean bypass = clientBypassesCache(exchange);
+      CacheMetadata metadata = (responseCacheService != null)
+          ? responseCacheService.buildMetadata(effectiveRouteId, exchange).orElse(null)
+          : null;
+      if (metadata == null) {
+        return proceedWithDecoration(exchange, chain, responseHeaders, startNanos, null);
+      }
+
+      if (bypass) {
+        return proceedWithDecoration(exchange, chain, responseHeaders, startNanos, metadata);
+      }
+
+      return responseCacheService.find(effectiveRouteId, exchange)
+          .flatMap(result -> handleCacheResult(result, exchange, chain, responseHeaders, startNanos, metadata));
+    }
+
+    private Mono<Void> handleCacheResult(CacheResult result,
+        ServerWebExchange exchange,
+        GatewayFilterChain chain,
+        HeaderOperations responseHeaders,
+        long startNanos,
+        CacheMetadata metadata) {
+      if (result == null || !result.hasRoute()) {
+        return proceedWithDecoration(exchange, chain, responseHeaders, startNanos, metadata);
+      }
+
+      if (result.state() == CacheState.NOT_MODIFIED && result.response() != null) {
+        return writeNotModified(exchange, result, responseHeaders);
+      }
+
+      if (result.response() != null && result.state() != null) {
+        boolean stale = result.state() == CacheState.STALE;
+        if (stale && cacheRefreshService != null) {
+          cacheRefreshService.scheduleRevalidation(result.metadata());
+        }
+        return writeCachedResponse(exchange, result, responseHeaders, stale);
+      }
+
+      return proceedWithDecoration(exchange, chain, responseHeaders, startNanos, result.metadata());
     }
 
     private Mono<Void> proceedWithDecoration(ServerWebExchange exchange,
         GatewayFilterChain chain,
-        String effectiveRouteId,
         HeaderOperations responseHeaders,
         long startNanos,
-        boolean cacheEligible) {
+        CacheMetadata metadata) {
       ServerHttpResponse originalResponse = exchange.getResponse();
       DataBufferFactory bufferFactory = originalResponse.bufferFactory();
-      boolean cachingActive = cacheEligible && responseCacheService != null && responseCacheService.isCacheEnabled();
+      boolean cachingActive = metadata != null && responseCacheService != null && responseCacheService.isCacheEnabled();
 
       ServerHttpResponseDecorator decorated = new ServerHttpResponseDecorator(originalResponse) {
         @Override
@@ -113,7 +157,11 @@ public class ResponseBodyTransformationGatewayFilterFactory {
 
                 headerTransformationService.applyResponseHeaders(getHeaders(), responseHeaders);
 
+                Instant capturedAt = Instant.now();
+                String etag = null;
                 if (cachingActive) {
+                  etag = responseCacheService.generateEtag(processed);
+                  responseCacheService.applyCacheHeaders(getHeaders(), metadata.route(), etag, capturedAt, false);
                   originalResponse.getHeaders().set("X-Cache", "MISS");
                 }
 
@@ -124,8 +172,8 @@ public class ResponseBodyTransformationGatewayFilterFactory {
                 Mono<Void> writeMono = super.writeWith(Mono.just(wrap));
 
                 if (cachingActive && isSuccessful(status)) {
-                  CachedResponse snapshot = responseCacheService.snapshotResponse(this, processed);
-                  return responseCacheService.store(effectiveRouteId, exchange, snapshot)
+                  CachedResponse snapshot = responseCacheService.snapshotResponse(metadata.route(), this, processed, etag, capturedAt);
+                  return responseCacheService.store(metadata, snapshot)
                       .onErrorResume(ex -> {
                         LOGGER.warn("Failed to store response in cache", ex);
                         return Mono.empty();
@@ -156,24 +204,44 @@ public class ResponseBodyTransformationGatewayFilterFactory {
     }
 
     private Mono<Void> writeCachedResponse(ServerWebExchange exchange,
-        CachedResponse cachedResponse,
-        HeaderOperations responseHeaders) {
+        CacheResult result,
+        HeaderOperations responseHeaders,
+        boolean stale) {
+      CachedResponse cachedResponse = result.response();
+      CacheMetadata metadata = result.metadata();
       ServerHttpResponse response = exchange.getResponse();
       response.setStatusCode(HttpStatus.valueOf(cachedResponse.status()));
-      HttpHeaders headers = response.getHeaders();
-      headers.clear();
+      HttpHeaders headers = new HttpHeaders();
       headers.putAll(cachedResponse.headers());
+      responseCacheService.applyCacheHeaders(headers, metadata.route(), cachedResponse.etag(), cachedResponse.cachedAt(), stale);
       headerTransformationService.applyResponseHeaders(headers, responseHeaders);
-      headers.set("X-Cache", "HIT");
-      headers.setContentLength(cachedResponse.body().length);
+      headers.set("X-Cache", stale ? "STALE" : "HIT");
+      response.getHeaders().clear();
+      response.getHeaders().putAll(headers);
+      response.getHeaders().setContentLength(cachedResponse.body().length);
       DataBuffer buffer = response.bufferFactory().wrap(cachedResponse.body());
       return response.writeWith(Mono.just(buffer));
     }
 
-    private boolean isCacheable(ServerWebExchange exchange) {
+    private Mono<Void> writeNotModified(ServerWebExchange exchange,
+        CacheResult result,
+        HeaderOperations responseHeaders) {
+      CachedResponse cachedResponse = result.response();
+      CacheMetadata metadata = result.metadata();
+      ServerHttpResponse response = exchange.getResponse();
+      response.setStatusCode(HttpStatus.NOT_MODIFIED);
+      HttpHeaders headers = response.getHeaders();
+      headers.clear();
+      responseCacheService.applyCacheHeaders(headers, metadata.route(), cachedResponse.etag(), cachedResponse.cachedAt(), false);
+      headerTransformationService.applyResponseHeaders(headers, responseHeaders);
+      headers.set("X-Cache", "NOT_MODIFIED");
+      return response.setComplete();
+    }
+
+    private boolean isCacheCandidate(HttpMethod method) {
       return responseCacheService != null
           && responseCacheService.isCacheEnabled()
-          && HttpMethod.GET.equals(exchange.getRequest().getMethod());
+          && HttpMethod.GET.equals(method);
     }
 
     private boolean shouldInvalidateCache(HttpMethod method) {
@@ -181,6 +249,20 @@ public class ResponseBodyTransformationGatewayFilterFactory {
         return false;
       }
       return method == HttpMethod.POST || method == HttpMethod.PUT || method == HttpMethod.DELETE;
+    }
+
+    private boolean clientBypassesCache(ServerWebExchange exchange) {
+      HttpHeaders headers = exchange.getRequest().getHeaders();
+      String cacheControl = headers.getFirst(HttpHeaders.CACHE_CONTROL);
+      if (cacheControl != null) {
+        String lower = cacheControl.toLowerCase(Locale.ROOT);
+        if (lower.contains("no-cache") || lower.contains("no-store") || lower.contains("max-age=0")) {
+          return true;
+        }
+      }
+      return headers.getOrEmpty(HttpHeaders.PRAGMA).stream()
+          .map(value -> value.toLowerCase(Locale.ROOT))
+          .anyMatch(value -> value.contains("no-cache"));
     }
 
     private boolean isSuccessful(HttpStatus status) {
@@ -193,4 +275,3 @@ public class ResponseBodyTransformationGatewayFilterFactory {
     }
   }
 }
-

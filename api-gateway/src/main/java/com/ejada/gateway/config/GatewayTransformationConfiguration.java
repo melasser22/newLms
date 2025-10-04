@@ -1,6 +1,7 @@
 package com.ejada.gateway.config;
 
 import com.ejada.gateway.filter.RequestBodyTransformationGatewayFilterFactory;
+import com.ejada.gateway.cache.CacheRefreshService;
 import com.ejada.gateway.filter.ResponseBodyTransformationGatewayFilterFactory;
 import com.ejada.gateway.metrics.GatewayMetrics;
 import com.ejada.gateway.transformation.HeaderTransformationService;
@@ -69,8 +70,12 @@ public class GatewayTransformationConfiguration {
   public ResponseBodyTransformationGatewayFilterFactory responseBodyTransformationGatewayFilterFactory(
       HeaderTransformationService headerTransformationService,
       ResponseBodyTransformer responseBodyTransformer,
-      ObjectProvider<ResponseCacheService> cacheServiceProvider) {
-    return new ResponseBodyTransformationGatewayFilterFactory(headerTransformationService, responseBodyTransformer, cacheServiceProvider.getIfAvailable());
+      ObjectProvider<ResponseCacheService> cacheServiceProvider,
+      ObjectProvider<CacheRefreshService> cacheRefreshServiceProvider) {
+    return new ResponseBodyTransformationGatewayFilterFactory(headerTransformationService,
+        responseBodyTransformer,
+        cacheServiceProvider.getIfAvailable(),
+        cacheRefreshServiceProvider.getIfAvailable());
   }
 }
 
