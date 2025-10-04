@@ -8,6 +8,7 @@ import com.ejada.gateway.admin.model.DetailedHealthStatus.CircuitBreakerHealth;
 import com.ejada.gateway.admin.model.DetailedHealthStatus.RedisHealthStatus;
 import com.ejada.gateway.config.AdminAggregationProperties;
 import com.ejada.gateway.config.GatewayRoutesProperties;
+import com.ejada.gateway.loadbalancer.LoadBalancerHealthCheckAggregator;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.micrometer.core.annotation.Timed;
 import java.time.Duration;
@@ -43,17 +44,20 @@ public class AdminAggregationService {
   private final GatewayRoutesProperties routesProperties;
   private final ReactiveStringRedisTemplate redisTemplate;
   private final CircuitBreakerRegistry circuitBreakerRegistry;
+  private final LoadBalancerHealthCheckAggregator loadBalancerAggregator;
 
   public AdminAggregationService(WebClient.Builder webClientBuilder,
       AdminAggregationProperties adminProperties,
       GatewayRoutesProperties routesProperties,
       ObjectProvider<ReactiveStringRedisTemplate> redisTemplateProvider,
-      ObjectProvider<CircuitBreakerRegistry> circuitBreakerRegistryProvider) {
+      ObjectProvider<CircuitBreakerRegistry> circuitBreakerRegistryProvider,
+      ObjectProvider<LoadBalancerHealthCheckAggregator> loadBalancerAggregatorProvider) {
     this.webClientBuilder = webClientBuilder;
     this.adminProperties = adminProperties;
     this.routesProperties = routesProperties;
     this.redisTemplate = redisTemplateProvider.getIfAvailable();
     this.circuitBreakerRegistry = circuitBreakerRegistryProvider.getIfAvailable();
+    this.loadBalancerAggregator = loadBalancerAggregatorProvider.getIfAvailable();
   }
 
   @Timed(value = "gateway.admin.overview", description = "Aggregated overview retrieval")
@@ -70,6 +74,14 @@ public class AdminAggregationService {
         }))
         .map(AdminRouteView::fromRoute)
         .toList();
+  }
+
+  @Timed(value = "gateway.admin.loadbalancer.health", description = "Load balancer health snapshot")
+  public List<LoadBalancerHealthCheckAggregator.InstanceState> collectLoadBalancerHealth(String serviceId) {
+    if (loadBalancerAggregator == null) {
+      return List.of();
+    }
+    return loadBalancerAggregator.snapshot(serviceId);
   }
 
   @Timed(value = "gateway.admin.downstream.snapshots", description = "Downstream service snapshot aggregation")

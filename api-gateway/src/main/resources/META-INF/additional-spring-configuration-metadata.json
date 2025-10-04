@@ -6,6 +6,11 @@
       "description": "Declarative route definitions exposed through the API gateway."
     },
     {
+      "name": "gateway.routes.*.lb-strategy",
+      "type": "java.lang.String",
+      "description": "Load balancing strategy for a route (default or weighted-response-time)."
+    },
+    {
       "name": "gateway.webclient.connect-timeout",
       "type": "java.time.Duration",
       "description": "Connection timeout applied to downstream WebClient calls."

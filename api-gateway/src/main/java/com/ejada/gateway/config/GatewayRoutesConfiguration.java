@@ -206,10 +206,11 @@ public class GatewayRoutesConfiguration {
     String affinitySummary = route.getSessionAffinity().isEnabled()
         ? route.getSessionAffinity().toString()
         : "SessionAffinity{enabled=false}";
+    String lbSummary = route.getLbStrategy().name();
     String prefixSummary = StringUtils.hasText(route.getPrefixPath()) ? route.getPrefixPath() : "/";
     if (route.getMethods().isEmpty()) {
       LOGGER.info(
-          "Registered route {} -> {} ({} prefix={}) resilience={} versioning={} weight={} affinity={}",
+          "Registered route {} -> {} ({} prefix={}) resilience={} versioning={} weight={} affinity={} lb={}",
           route.getId(),
           route.getUri(),
           route.getPaths(),
@@ -217,10 +218,11 @@ public class GatewayRoutesConfiguration {
           resilienceSummary,
           versionSummary,
           weightSummary,
-          affinitySummary);
+          affinitySummary,
+          lbSummary);
     } else {
       LOGGER.info(
-          "Registered route {} -> {} ({}, methods={}, prefix={}) resilience={} versioning={} weight={} affinity={}",
+          "Registered route {} -> {} ({}, methods={}, prefix={}) resilience={} versioning={} weight={} affinity={} lb={}",
           route.getId(),
           route.getUri(),
           route.getPaths(),
@@ -229,7 +231,8 @@ public class GatewayRoutesConfiguration {
           resilienceSummary,
           versionSummary,
           weightSummary,
-          affinitySummary);
+          affinitySummary,
+          lbSummary);
     }
   }
 }
