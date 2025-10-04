@@ -201,6 +201,53 @@ gateway:
       analytics-service-uri: lb://analytics-service
       billing-service-uri: lb://billing-service
       default-period: MONTHLY
+  aggregation:
+    enabled: true
+    routes:
+      tenant-dashboard:
+        timeout: 4s
+        upstream-requests:
+          - id: tenant
+            uri: lb://tenant-service/api/v1/tenants/{tenantId}
+            circuit-breaker-name: agg-tenant
+          - id: subscriptions
+            uri: lb://subscription-service/api/v1/subscriptions?tenantId={tenantId}
+            circuit-breaker-name: agg-subscriptions
+            timeout: 3s
+          - id: usage
+            uri: lb://analytics-service/api/v1/analytics/tenants/{tenantId}/usage-summary
+            optional: true
+  fanout:
+    enabled: true
+    routes:
+      subscription-service:
+        targets:
+          - id: audit-log
+            uri: lb://audit-service/internal/audit/events
+            method: POST
+            headers:
+              X-Audit-Event: subscription-change
+  service-mesh:
+    enabled: true
+    type: istio
+    mtls:
+      enabled: false
+  graphql:
+    enabled: true
+    upstream-uri: lb://graphql-service/graphql
+    timeout: 5s
+    max-depth: 12
+    max-breadth: 80
+    max-complexity: 400
+  websocket:
+    enabled: true
+    max-connections-per-tenant: 50
+    routes:
+      notification-stream:
+        id: notification-stream
+        uri: lb://notification-service
+        paths:
+          - /ws/notifications
   defaults:
     resilience:
       enabled: true
@@ -390,6 +437,12 @@ gateway:
         enabled: true
         circuit-breaker-name: policy-service
         fallback-uri: forward:/fallback/default
+    dashboard:
+      id: tenant-dashboard
+      uri: no://op
+      paths:
+        - /api/dashboard
+      strip-prefix: 0
   admin:
     aggregation:
       timeout: 3s

@@ -5,8 +5,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.ejada.gateway.filter.AggregationGatewayFilter;
 import com.ejada.gateway.filter.ApiVersioningGatewayFilter;
+import com.ejada.gateway.filter.FanoutGatewayFilter;
 import com.ejada.gateway.filter.SessionAffinityGatewayFilter;
+import com.ejada.gateway.filter.WebsocketConnectionLimiterFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -25,7 +28,12 @@ import org.springframework.util.StringUtils;
  * enforce consistent filters across environments.
  */
 @Configuration
-@EnableConfigurationProperties(GatewayRoutesProperties.class)
+@EnableConfigurationProperties({
+    GatewayRoutesProperties.class,
+    GatewayAggregationProperties.class,
+    GatewayFanoutProperties.class,
+    GatewayWebsocketProperties.class
+})
 public class GatewayRoutesConfiguration {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GatewayRoutesConfiguration.class);
@@ -35,7 +43,13 @@ public class GatewayRoutesConfiguration {
   @Bean
   RouteLocator gatewayRoutes(RouteLocatorBuilder builder,
       GatewayRoutesProperties properties,
-      ObjectProvider<GatewayRouteDefinitionProvider> dynamicProviders) {
+      ObjectProvider<GatewayRouteDefinitionProvider> dynamicProviders,
+      GatewayAggregationProperties aggregationProperties,
+      AggregationGatewayFilter aggregationGatewayFilter,
+      GatewayFanoutProperties fanoutProperties,
+      FanoutGatewayFilter fanoutGatewayFilter,
+      GatewayWebsocketProperties websocketProperties,
+      WebsocketConnectionLimiterFilter websocketConnectionLimiterFilter) {
     RouteLocatorBuilder.Builder routes = builder.routes();
 
     Map<String, GatewayRoutesProperties.ServiceRoute> aggregated = new LinkedHashMap<>();
@@ -119,6 +133,16 @@ public class GatewayRoutesConfiguration {
                 filters.filter(new ApiVersioningGatewayFilter(route.getVersioning()));
               }
               route.getRequestHeaders().forEach(filters::addRequestHeader);
+              if (aggregationGatewayFilter != null
+                  && aggregationProperties != null
+                  && aggregationProperties.findRoute(route.getId()).isPresent()) {
+                filters.filter(aggregationGatewayFilter.apply(route.getId()));
+              }
+              if (fanoutGatewayFilter != null
+                  && fanoutProperties != null
+                  && fanoutProperties.findRoute(route.getId()).isPresent()) {
+                filters.filter(fanoutGatewayFilter.apply(route.getId()));
+              }
               if (route.getSessionAffinity().isEnabled()) {
                 filters.filter(new SessionAffinityGatewayFilter(route.getSessionAffinity()));
               }
@@ -165,6 +189,27 @@ public class GatewayRoutesConfiguration {
       });
 
       logRouteRegistration(route, resilience);
+    }
+
+    if (websocketProperties != null && websocketProperties.isEnabled()) {
+      websocketProperties.getRoutes().forEach((key, websocketRoute) -> {
+        if (websocketRoute == null) {
+          return;
+        }
+        websocketRoute.validate(key);
+        routes.route(websocketRoute.getId(), predicate -> predicate
+            .path(websocketRoute.getPaths().toArray(String[]::new))
+            .and()
+            .method(websocketRoute.getMethod())
+            .filters(filters -> {
+              if (websocketConnectionLimiterFilter != null) {
+                filters.filter(websocketConnectionLimiterFilter.apply(websocketRoute.getId()));
+              }
+              return filters;
+            })
+            .uri(websocketRoute.getUri()));
+        LOGGER.info("Registered websocket route {} -> {} ({})", websocketRoute.getId(), websocketRoute.getUri(), websocketRoute.getPaths());
+      });
     }
 
     return routes.build();

@@ -20,6 +20,9 @@ public final class GatewayRequestAttributes {
   /** Attribute storing the resolved API version for versioned routes. */
   public static final String API_VERSION = GatewayRequestAttributes.class.getName() + ".apiVersion";
 
+  /** Attribute storing tracing headers to propagate to downstream services. */
+  public static final String TRACE_HEADERS = GatewayRequestAttributes.class.getName() + ".traceHeaders";
+
   private GatewayRequestAttributes() {
     // utility class
   }

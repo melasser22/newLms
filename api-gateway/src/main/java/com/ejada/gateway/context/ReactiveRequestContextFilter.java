@@ -11,6 +11,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -20,6 +22,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -71,6 +74,7 @@ public class ReactiveRequestContextFilter implements WebFilter {
         .cache(Duration.ofSeconds(1));
 
     RequestContextState state = new RequestContextState(props);
+    state.setTraceHeaders(extractTraceHeaders(exchange));
     String correlationId = exchange.getAttribute(GatewayRequestAttributes.CORRELATION_ID);
     if (!StringUtils.hasText(correlationId)) {
       correlationId = resolveCorrelationId(exchange);
@@ -118,7 +122,33 @@ public class ReactiveRequestContextFilter implements WebFilter {
     if (state.getUserId() != null) {
       updated = updated.put(HeaderNames.USER_ID, state.getUserId());
     }
+    if (!state.getTraceHeaders().isEmpty()) {
+      updated = updated.put(GatewayRequestAttributes.TRACE_HEADERS, state.getTraceHeaders());
+    }
     return updated;
+  }
+
+  private java.util.Map<String, String> extractTraceHeaders(ServerWebExchange exchange) {
+    HttpHeaders headers = exchange.getRequest().getHeaders();
+    java.util.Map<String, String> extracted = new LinkedHashMap<>();
+    copyTraceHeader(headers, "X-B3-TraceId", extracted);
+    copyTraceHeader(headers, "X-B3-SpanId", extracted);
+    copyTraceHeader(headers, "X-B3-ParentSpanId", extracted);
+    copyTraceHeader(headers, "X-B3-Sampled", extracted);
+    copyTraceHeader(headers, "X-B3-Flags", extracted);
+    copyTraceHeader(headers, "traceparent", extracted);
+    copyTraceHeader(headers, "tracestate", extracted);
+    if (extracted.isEmpty()) {
+      return Collections.emptyMap();
+    }
+    return extracted;
+  }
+
+  private void copyTraceHeader(HttpHeaders headers, String name, java.util.Map<String, String> target) {
+    String value = trimToNull(headers.getFirst(name));
+    if (value != null) {
+      target.put(name, value);
+    }
   }
 
   private boolean shouldSkip(String path) {
@@ -248,6 +278,7 @@ public class ReactiveRequestContextFilter implements WebFilter {
     private String tenant;
     private Authentication authentication;
     private ContextManager.Tenant.Scope tenantScope;
+    private java.util.Map<String, String> traceHeaders = java.util.Collections.emptyMap();
 
     RequestContextState(CoreAutoConfiguration.CoreProps props) {
       this.props = props;
@@ -265,6 +296,14 @@ public class ReactiveRequestContextFilter implements WebFilter {
       this.authentication = authentication;
     }
 
+    void setTraceHeaders(java.util.Map<String, String> traceHeaders) {
+      if (traceHeaders == null || traceHeaders.isEmpty()) {
+        this.traceHeaders = java.util.Collections.emptyMap();
+        return;
+      }
+      this.traceHeaders = java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(traceHeaders));
+    }
+
     String getCorrelationId() {
       return correlationId;
     }
@@ -275,6 +314,10 @@ public class ReactiveRequestContextFilter implements WebFilter {
 
     String getUserId() {
       return authentication != null ? trimToNull(authentication.getName()) : null;
+    }
+
+    java.util.Map<String, String> getTraceHeaders() {
+      return traceHeaders;
     }
 
     void apply(ServerWebExchange exchange) {
@@ -301,6 +344,10 @@ public class ReactiveRequestContextFilter implements WebFilter {
       if (StringUtils.hasText(userId)) {
         MDC.put(HeaderNames.USER_ID, userId);
         ContextManager.setUserId(userId);
+      }
+
+      if (!traceHeaders.isEmpty()) {
+        exchange.getAttributes().put(GatewayRequestAttributes.TRACE_HEADERS, traceHeaders);
       }
     }
 
