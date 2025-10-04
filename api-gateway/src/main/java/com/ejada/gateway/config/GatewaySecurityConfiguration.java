@@ -1,16 +1,19 @@
 package com.ejada.gateway.config;
 
+import com.ejada.gateway.authorization.TenantAuthorizationManager;
+import com.ejada.gateway.config.GatewayRateLimitProperties;
 import com.ejada.gateway.security.ApiKeyAuthenticationFilter;
 import com.ejada.gateway.security.GatewaySecurityMetrics;
 import com.ejada.gateway.security.GatewayTokenIntrospectionService;
 import com.ejada.gateway.security.IpFilteringGatewayFilter;
 import com.ejada.gateway.security.RequestSignatureValidationFilter;
-import com.ejada.gateway.security.TenantAuthorizationManager;
+import com.ejada.gateway.subscription.SubscriptionCacheService;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
 import com.ejada.starter_security.SharedSecurityProps;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -107,8 +110,17 @@ public class GatewaySecurityConfiguration {
   }
 
   @Bean
-  public TenantAuthorizationManager tenantAuthorizationManager(CoreAutoConfiguration.CoreProps coreProps) {
-    return new TenantAuthorizationManager(coreProps);
+  public TenantAuthorizationManager tenantAuthorizationManager(
+      CoreAutoConfiguration.CoreProps coreProps,
+      ReactiveStringRedisTemplate redisTemplate,
+      SubscriptionCacheService subscriptionCacheService,
+      GatewayRateLimitProperties gatewayRateLimitProperties,
+      @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> primaryObjectMapper,
+      ObjectProvider<ObjectMapper> fallbackObjectMapper) {
+    ObjectMapper mapper = Optional.ofNullable(primaryObjectMapper.getIfAvailable())
+        .orElseGet(fallbackObjectMapper::getIfAvailable);
+    return new TenantAuthorizationManager(coreProps, redisTemplate, subscriptionCacheService,
+        gatewayRateLimitProperties, mapper);
   }
 
   @Bean
