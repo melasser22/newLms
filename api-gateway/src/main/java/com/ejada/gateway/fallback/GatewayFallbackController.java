@@ -3,13 +3,27 @@ package com.ejada.gateway.fallback;
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.common.enums.StatusEnums.ApiStatus;
 import com.ejada.gateway.config.GatewayRoutesProperties;
+import com.ejada.gateway.config.GatewayRoutesProperties.ServiceRoute;
+import com.ejada.gateway.config.GatewayRoutesProperties.ServiceRoute.Resilience;
+import com.ejada.gateway.context.GatewayRequestAttributes;
+import com.ejada.gateway.resilience.TenantCircuitBreakerMetrics;
+import com.ejada.gateway.resilience.TenantCircuitBreakerMetrics.Priority;
+import com.ejada.gateway.subscription.SubscriptionCacheService;
+import com.ejada.gateway.subscription.SubscriptionRecord;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 /**
@@ -24,35 +38,209 @@ public class GatewayFallbackController {
   private static final String DEFAULT_MESSAGE = "Downstream service is unavailable. Please retry shortly.";
 
   private final GatewayRoutesProperties properties;
+  private final SubscriptionCacheService subscriptionCacheService;
+  private final BillingFallbackQueue billingFallbackQueue;
+  private final TenantCircuitBreakerMetrics circuitBreakerMetrics;
 
-  public GatewayFallbackController(GatewayRoutesProperties properties) {
+  public GatewayFallbackController(GatewayRoutesProperties properties,
+      SubscriptionCacheService subscriptionCacheService,
+      BillingFallbackQueue billingFallbackQueue,
+      TenantCircuitBreakerMetrics circuitBreakerMetrics) {
     this.properties = properties;
+    this.subscriptionCacheService = subscriptionCacheService;
+    this.billingFallbackQueue = billingFallbackQueue;
+    this.circuitBreakerMetrics = circuitBreakerMetrics;
   }
 
   @RequestMapping("/{routeId}")
-  public Mono<ResponseEntity<BaseResponse<FallbackResponse>>> fallback(@PathVariable String routeId) {
-    GatewayRoutesProperties.ServiceRoute.Resilience resilience = properties.findRouteById(routeId)
-        .map(GatewayRoutesProperties.ServiceRoute::getResilience)
-        .orElse(null);
+  public Mono<ResponseEntity<BaseResponse<FallbackResponse>>> fallback(@PathVariable String routeId,
+      ServerWebExchange exchange) {
+    Optional<ServiceRoute> routeOptional = properties.findRouteById(routeId);
+    Resilience resilience = routeOptional.map(ServiceRoute::getResilience).orElse(null);
 
-    HttpStatus status = HttpStatus.SERVICE_UNAVAILABLE;
-    String message = DEFAULT_MESSAGE;
-    if (resilience != null) {
-      if (resilience.getFallbackStatus() != null) {
-        status = resilience.getFallbackStatus();
-      }
-      message = resilience.resolvedFallbackMessage()
-          .filter(StringUtils::hasText)
-          .orElse(DEFAULT_MESSAGE);
-    }
+    HttpStatus status = (resilience != null && resilience.getFallbackStatus() != null)
+        ? resilience.getFallbackStatus()
+        : HttpStatus.SERVICE_UNAVAILABLE;
+    String message = Optional.ofNullable(resilience)
+        .flatMap(res -> res.resolvedFallbackMessage())
+        .filter(StringUtils::hasText)
+        .orElse(DEFAULT_MESSAGE);
+    String tenantId = exchange.getAttribute(GatewayRequestAttributes.TENANT_ID);
+    String circuitBreakerName = Optional.ofNullable(resilience)
+        .map(res -> res.resolvedCircuitBreakerName(routeId))
+        .orElse(routeId);
+    Priority priority = Optional.ofNullable(resilience)
+        .map(Resilience::getPriority)
+        .map(value -> Priority.valueOf(value.name()))
+        .orElse(Priority.NON_CRITICAL);
 
-    FallbackResponse payload = new FallbackResponse(routeId, message, Instant.now());
+    return switch (routeId) {
+      case "catalog-service" -> catalogFallback(routeId, circuitBreakerName, tenantId, status, message,
+          exchange, priority);
+      case "billing-service" -> billingFallback(routeId, circuitBreakerName, tenantId, status, message,
+          exchange, priority);
+      case "subscription-service" -> subscriptionFallback(routeId, circuitBreakerName, tenantId, status,
+          message, exchange, priority);
+      default -> Mono.just(defaultFallback(routeId, circuitBreakerName, tenantId, status, message, priority));
+    };
+  }
+
+  private Mono<ResponseEntity<BaseResponse<FallbackResponse>>> catalogFallback(String routeId,
+      String circuitBreakerName,
+      String tenantId,
+      HttpStatus status,
+      String message,
+      ServerWebExchange exchange,
+      Priority priority) {
+    return subscriptionCacheService.getCached(tenantId)
+        .flatMap(optional -> optional
+            .map(record -> Mono.just(buildCatalogFallbackResponse(routeId, circuitBreakerName, tenantId, status,
+                message, exchange, record, priority)))
+            .orElseGet(() -> Mono.just(defaultFallback(routeId, circuitBreakerName, tenantId,
+                HttpStatus.SERVICE_UNAVAILABLE, DEFAULT_MESSAGE, priority))));
+  }
+
+  private ResponseEntity<BaseResponse<FallbackResponse>> buildCatalogFallbackResponse(String routeId,
+      String circuitBreakerName,
+      String tenantId,
+      HttpStatus status,
+      String message,
+      ServerWebExchange exchange,
+      SubscriptionRecord record,
+      Priority priority) {
+    String tier = Optional.ofNullable(exchange.getAttribute(GatewayRequestAttributes.SUBSCRIPTION_TIER))
+        .filter(StringUtils::hasText)
+        .map(String::trim)
+        .orElse("unknown");
+    CatalogFallbackPayload payload = new CatalogFallbackPayload(tier,
+        record != null ? record.enabledFeatures() : Set.of(),
+        record != null ? record.fetchedAt() : Instant.now());
+    Map<String, Object> metadata = new LinkedHashMap<>();
+    metadata.put("strategy", "catalog-cache");
+    metadata.put("priority", priority.name());
+    metadata.put("tenantId", Optional.ofNullable(tenantId).orElse("unknown"));
+    recordFallback(circuitBreakerName, tenantId, "CATALOG_CACHE", metadata);
+
+    return buildResponse(status, ApiStatus.WARNING, status.name(), message,
+        new FallbackResponse(routeId, message, Instant.now(), payload, metadata), headers -> {
+          headers.add("X-Catalog-Fallback", "cached-tier");
+          headers.add("X-Catalog-Tier", tier);
+          if (record != null && record.fetchedAt() != null) {
+            headers.add("X-Catalog-Cache-Timestamp", record.fetchedAt().toString());
+          }
+        });
+  }
+
+  private Mono<ResponseEntity<BaseResponse<FallbackResponse>>> billingFallback(String routeId,
+      String circuitBreakerName,
+      String tenantId,
+      HttpStatus status,
+      String message,
+      ServerWebExchange exchange,
+      Priority priority) {
+    return billingFallbackQueue.enqueue(tenantId, exchange.getRequest())
+        .map(queueKey -> {
+          BillingFallbackPayload payload = new BillingFallbackPayload(queueKey, Instant.now(),
+              exchange.getRequest().getURI().getPath(), exchange.getRequest().getMethodValue());
+          Map<String, Object> metadata = new LinkedHashMap<>();
+          metadata.put("strategy", "billing-queue");
+          metadata.put("priority", priority.name());
+          metadata.put("tenantId", Optional.ofNullable(tenantId).orElse("unknown"));
+          metadata.put("queueKey", queueKey);
+          recordFallback(circuitBreakerName, tenantId, "BILLING_QUEUED", metadata);
+          return buildResponse(status, ApiStatus.SUCCESS, status.name(), message,
+              new FallbackResponse(routeId, message, Instant.now(), payload, metadata), headers -> {
+                headers.add("X-Billing-Fallback", "queued");
+                headers.add("X-Billing-Queue", queueKey);
+              });
+        })
+        .onErrorReturn(defaultFallback(routeId, circuitBreakerName, tenantId,
+            HttpStatus.SERVICE_UNAVAILABLE, DEFAULT_MESSAGE, priority));
+  }
+
+  private Mono<ResponseEntity<BaseResponse<FallbackResponse>>> subscriptionFallback(String routeId,
+      String circuitBreakerName,
+      String tenantId,
+      HttpStatus status,
+      String message,
+      ServerWebExchange exchange,
+      Priority priority) {
+    return subscriptionCacheService.getCached(tenantId)
+        .flatMap(optional -> optional
+            .map(record -> Mono.just(buildSubscriptionFallbackResponse(routeId, circuitBreakerName, tenantId,
+                status, message, exchange, record, priority)))
+            .orElseGet(() -> Mono.just(defaultFallback(routeId, circuitBreakerName, tenantId,
+                HttpStatus.SERVICE_UNAVAILABLE, DEFAULT_MESSAGE, priority))));
+  }
+
+  private ResponseEntity<BaseResponse<FallbackResponse>> buildSubscriptionFallbackResponse(String routeId,
+      String circuitBreakerName,
+      String tenantId,
+      HttpStatus status,
+      String message,
+      ServerWebExchange exchange,
+      SubscriptionRecord record,
+      Priority priority) {
+    SubscriptionFallbackPayload payload = SubscriptionFallbackPayload.fromRecord(record);
+    Map<String, Object> metadata = new LinkedHashMap<>();
+    metadata.put("strategy", "subscription-stale");
+    metadata.put("priority", priority.name());
+    metadata.put("tenantId", Optional.ofNullable(tenantId).orElse("unknown"));
+    metadata.put("staleSince", payload.cachedAt().toString());
+    recordFallback(circuitBreakerName, tenantId, "SUBSCRIPTION_STALE", metadata);
+
+    return buildResponse(status, ApiStatus.WARNING, status.name(), message,
+        new FallbackResponse(routeId, message, Instant.now(), payload, metadata), headers -> {
+          headers.add("X-Subscription-Fallback", "stale-cache");
+          headers.add("X-Subscription-Stale-Since", payload.cachedAt().toString());
+          if (payload.cachedAt() != null) {
+            Duration staleFor = Duration.between(payload.cachedAt(), Instant.now());
+            headers.add("X-Subscription-Stale-For",
+                Long.toString(Math.max(0, staleFor.toSeconds())));
+          }
+        });
+  }
+
+  private ResponseEntity<BaseResponse<FallbackResponse>> defaultFallback(String routeId,
+      String circuitBreakerName,
+      String tenantId,
+      HttpStatus status,
+      String message,
+      Priority priority) {
+    Map<String, Object> metadata = new LinkedHashMap<>();
+    metadata.put("strategy", "default");
+    metadata.put("priority", priority.name());
+    metadata.put("tenantId", Optional.ofNullable(tenantId).orElse("unknown"));
+    recordFallback(circuitBreakerName, tenantId, "DEFAULT", metadata);
+    return buildResponse(status, ApiStatus.ERROR, status.name(), message,
+        new FallbackResponse(routeId, message, Instant.now(), null, metadata), null);
+  }
+
+  private ResponseEntity<BaseResponse<FallbackResponse>> buildResponse(HttpStatus httpStatus,
+      ApiStatus apiStatus,
+      String code,
+      String message,
+      FallbackResponse payload,
+      java.util.function.Consumer<org.springframework.http.HttpHeaders> headersCustomizer) {
     BaseResponse<FallbackResponse> envelope = BaseResponse.<FallbackResponse>builder()
-        .status(ApiStatus.ERROR)
-        .code(status.name())
+        .status(apiStatus)
+        .code(code)
         .message(message)
         .data(payload)
         .build();
-    return Mono.just(ResponseEntity.status(status).body(envelope));
+    BodyBuilder builder = ResponseEntity.status(httpStatus);
+    if (headersCustomizer != null) {
+      org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+      headersCustomizer.accept(headers);
+      builder.headers(headers);
+    }
+    return builder.body(envelope);
+  }
+
+  private void recordFallback(String circuitBreakerName,
+      String tenantId,
+      String fallbackType,
+      Map<String, Object> metadata) {
+    circuitBreakerMetrics.recordFallback(circuitBreakerName, tenantId, fallbackType, metadata);
   }
 }

@@ -645,6 +645,8 @@ public class GatewayRoutesProperties {
       /** Optional retry configuration when invoking the downstream service. */
       private Retry retry = new Retry();
 
+      private Priority priority = Priority.NON_CRITICAL;
+
       public boolean isEnabled() {
         return enabled;
       }
@@ -693,6 +695,14 @@ public class GatewayRoutesProperties {
         this.retry = (retry == null) ? new Retry() : retry;
       }
 
+      public Priority getPriority() {
+        return (priority == null) ? Priority.NON_CRITICAL : priority;
+      }
+
+      public void setPriority(Priority priority) {
+        this.priority = (priority == null) ? Priority.NON_CRITICAL : priority;
+      }
+
       public void applyDefaults(Resilience defaults) {
         if (defaults == null) {
           return;
@@ -716,6 +726,9 @@ public class GatewayRoutesProperties {
           this.retry = new Retry();
         }
         this.retry.applyDefaults(defaults.retry);
+        if (this.priority == null) {
+          this.priority = defaults.priority;
+        }
       }
 
       void validate(String key) {
@@ -758,12 +771,14 @@ public class GatewayRoutesProperties {
             && Objects.equals(fallbackUri, that.fallbackUri)
             && fallbackStatus == that.fallbackStatus
             && Objects.equals(fallbackMessage, that.fallbackMessage)
-            && Objects.equals(retry, that.retry);
+            && Objects.equals(retry, that.retry)
+            && priority == that.priority;
       }
 
       @Override
       public int hashCode() {
-        return Objects.hash(enabled, circuitBreakerName, fallbackUri, fallbackStatus, fallbackMessage, retry);
+        return Objects.hash(enabled, circuitBreakerName, fallbackUri, fallbackStatus, fallbackMessage, retry,
+            priority);
       }
 
       @Override
@@ -774,7 +789,13 @@ public class GatewayRoutesProperties {
             + ", fallbackUri='" + fallbackUri + '\''
             + ", fallbackStatus=" + fallbackStatus
             + ", retry=" + retry
+            + ", priority=" + priority
             + '}';
+      }
+
+      public enum Priority {
+        CRITICAL,
+        NON_CRITICAL
       }
 
       /**
