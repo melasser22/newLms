@@ -1,6 +1,7 @@
 package com.ejada.sec.repository;
 
 import com.ejada.common.context.ContextManager;
+import com.ejada.common.exception.ValidationException;
 import com.ejada.sec.domain.User;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 class UserRepositoryTenantIsolationTest {
@@ -23,6 +25,7 @@ class UserRepositoryTenantIsolationTest {
     private UUID tenantOne;
     private UUID tenantTwo;
     private Long tenantOneUserId;
+    private Long tenantTwoUserId;
 
     @BeforeEach
     void setUp() {
@@ -31,7 +34,8 @@ class UserRepositoryTenantIsolationTest {
 
         tenantOneUserId = userRepository.save(buildUser(tenantOne, "tenant1@example.com", "tenant1"))
                 .getId();
-        userRepository.save(buildUser(tenantTwo, "tenant2@example.com", "tenant2"));
+        tenantTwoUserId = userRepository.save(buildUser(tenantTwo, "tenant2@example.com", "tenant2"))
+                .getId();
     }
 
     @AfterEach
@@ -49,6 +53,14 @@ class UserRepositoryTenantIsolationTest {
     }
 
     @Test
+    void findByIdSecureThrowsWhenTenantContextMissing() {
+        ContextManager.Tenant.clear();
+        assertThatThrownBy(() -> userRepository.findByIdSecure(tenantOneUserId))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("Tenant context is required");
+    }
+
+    @Test
     void findAllSecureFiltersByTenantContext() {
         ContextManager.Tenant.set(tenantOne.toString());
         List<User> tenantOneUsers = userRepository.findAllSecure();
@@ -61,6 +73,33 @@ class UserRepositoryTenantIsolationTest {
         assertThat(tenantTwoUsers)
                 .hasSize(1)
                 .allMatch(user -> user.getTenantId().equals(tenantTwo));
+    }
+
+    @Test
+    void existsByIdSecureHonoursTenantBoundary() {
+        ContextManager.Tenant.set(tenantOne.toString());
+        assertThat(userRepository.existsByIdSecure(tenantOneUserId)).isTrue();
+        assertThat(userRepository.existsByIdSecure(tenantTwoUserId)).isFalse();
+    }
+
+    @Test
+    void countSecureReturnsTenantScopedCount() {
+        ContextManager.Tenant.set(tenantOne.toString());
+        assertThat(userRepository.countSecure()).isEqualTo(1);
+
+        ContextManager.Tenant.set(tenantTwo.toString());
+        assertThat(userRepository.countSecure()).isEqualTo(1);
+    }
+
+    @Test
+    void deleteByIdSecureRemovesOnlyCurrentTenantEntity() {
+        ContextManager.Tenant.set(tenantOne.toString());
+        userRepository.deleteByIdSecure(tenantTwoUserId);
+        assertThat(userRepository.existsByIdAndTenantId(tenantTwoUserId, tenantTwo)).isTrue();
+
+        ContextManager.Tenant.set(tenantTwo.toString());
+        userRepository.deleteByIdSecure(tenantTwoUserId);
+        assertThat(userRepository.existsByIdAndTenantId(tenantTwoUserId, tenantTwo)).isFalse();
     }
 
     private User buildUser(UUID tenantId, String email, String username) {
