@@ -24,8 +24,10 @@ public class TenantAccessPolicy {
                 .map(SharedSecurityProps::getRolePrefix)
                 .orElse("ROLE_");
 
-        String[] tokens = StringUtils.tokenizeToStringArray(allowedRoles, ",");
-        if (tokens == null || tokens.length == 0) {
+        String[] tokens = StringUtils.hasText(allowedRoles)
+                ? StringUtils.tokenizeToStringArray(allowedRoles, ",")
+                : new String[0];
+        if (tokens.length == 0) {
             this.allowedRoles = Collections.emptySet();
         } else {
             this.allowedRoles = Arrays.stream(tokens)

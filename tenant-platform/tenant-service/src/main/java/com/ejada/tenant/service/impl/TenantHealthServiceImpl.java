@@ -21,14 +21,12 @@ import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.util.EnumMap;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class TenantHealthServiceImpl implements TenantHealthService {
 
@@ -41,6 +39,19 @@ public class TenantHealthServiceImpl implements TenantHealthService {
     private final TenantHealthMetricsProvider metricsProvider;
     private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper objectMapper;
+
+    public TenantHealthServiceImpl(
+            final TenantRepository tenantRepository,
+            final TenantHealthScoreRepository tenantHealthScoreRepository,
+            final TenantHealthMetricsProvider metricsProvider,
+            final OutboxEventRepository outboxEventRepository,
+            final ObjectMapper objectMapper) {
+        this.tenantRepository = tenantRepository;
+        this.tenantHealthScoreRepository = tenantHealthScoreRepository;
+        this.metricsProvider = metricsProvider;
+        this.outboxEventRepository = outboxEventRepository;
+        this.objectMapper = objectMapper.copy();
+    }
 
     @Override
     public BaseResponse<TenantHealthScoreRes> getHealthScore(final Integer tenantId) {

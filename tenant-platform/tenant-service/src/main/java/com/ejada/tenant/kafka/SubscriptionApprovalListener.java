@@ -8,7 +8,6 @@ import com.ejada.tenant.exception.TenantConflictException;
 import com.ejada.tenant.service.TenantService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
@@ -20,12 +19,16 @@ import org.springframework.util.StringUtils;
  * Consumes subscription approval decisions and provisions tenants for approved subscriptions.
  */
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class SubscriptionApprovalListener {
 
     private final ObjectMapper objectMapper;
     private final TenantService tenantService;
+
+    public SubscriptionApprovalListener(final ObjectMapper objectMapper, final TenantService tenantService) {
+        this.objectMapper = objectMapper.copy();
+        this.tenantService = tenantService;
+    }
     @KafkaListener(
             topics = "${app.subscription-approval.topic}",
             groupId = "${app.subscription-approval.consumer-group}",
