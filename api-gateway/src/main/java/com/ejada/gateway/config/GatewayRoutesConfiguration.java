@@ -6,11 +6,14 @@ import java.util.List;
 import java.util.Map;
 
 import com.ejada.gateway.filter.ApiVersioningGatewayFilter;
+import com.ejada.gateway.filter.RequestBodyTransformationGatewayFilterFactory;
+import com.ejada.gateway.filter.ResponseBodyTransformationGatewayFilterFactory;
 import com.ejada.gateway.filter.SessionAffinityGatewayFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.BooleanSpec;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
@@ -33,9 +36,12 @@ public class GatewayRoutesConfiguration {
   private static final Duration PROVIDER_TIMEOUT = Duration.ofSeconds(5);
 
   @Bean
+  @RefreshScope
   RouteLocator gatewayRoutes(RouteLocatorBuilder builder,
       GatewayRoutesProperties properties,
-      ObjectProvider<GatewayRouteDefinitionProvider> dynamicProviders) {
+      ObjectProvider<GatewayRouteDefinitionProvider> dynamicProviders,
+      ObjectProvider<RequestBodyTransformationGatewayFilterFactory> requestTransformationFactory,
+      ObjectProvider<ResponseBodyTransformationGatewayFilterFactory> responseTransformationFactory) {
     RouteLocatorBuilder.Builder routes = builder.routes();
 
     Map<String, GatewayRoutesProperties.ServiceRoute> aggregated = new LinkedHashMap<>();
@@ -119,9 +125,11 @@ public class GatewayRoutesConfiguration {
                 filters.filter(new ApiVersioningGatewayFilter(route.getVersioning()));
               }
               route.getRequestHeaders().forEach(filters::addRequestHeader);
+              requestTransformationFactory.ifAvailable(factory -> filters.filter(factory.apply(route.getId())));
               if (route.getSessionAffinity().isEnabled()) {
                 filters.filter(new SessionAffinityGatewayFilter(route.getSessionAffinity()));
               }
+              responseTransformationFactory.ifAvailable(factory -> filters.filter(factory.apply(route.getId())));
               if (resilience.isEnabled()) {
                 filters.circuitBreaker(config -> {
                   config.setName(resilience.resolvedCircuitBreakerName(route.getId()));

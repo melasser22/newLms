@@ -50,6 +50,7 @@
     <jacoco.coverage.minimum>0.00</jacoco.coverage.minimum>
                 <!-- if any module uses Boot plugin -->
     <spring.boot.version>3.5.5</spring.boot.version>
+    <spring-boot.run.skip>true</spring-boot.run.skip>
     <flyway.version>11.8.2</flyway.version>
     <mockito.inline.version>5.2.0</mockito.inline.version>
     <bytebuddy.agent.version>1.17.7</bytebuddy.agent.version>
@@ -377,6 +378,22 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+
+      <!--
+        When the reactor is built with "-am" (e.g. `mvn -pl sec-service -am spring-boot:run`),
+        this aggregator module is also part of the build. The Spring Boot Maven Plugin's
+        `spring-boot:run` goal would then be invoked for the aggregator itself, which has no
+        main class. Explicitly skip the goal here to avoid the "Unable to find a suitable main
+        class" failure, while leaving child modules unaffected.
+      -->
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <inherited>false</inherited>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
       </plugin>
     </plugins>
   </build>

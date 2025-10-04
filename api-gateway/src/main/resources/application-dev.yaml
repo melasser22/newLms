@@ -1,0 +1,34 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  cloud:
+    config:
+      profile: dev
+      label: develop
+
+gateway:
+  webclient:
+    connect-timeout: 3s
+    response-timeout: 12s
+    read-timeout: 12s
+    write-timeout: 12s
+  subscription:
+    enabled: true
+    cache-ttl: 2m
+  defaults:
+    resilience:
+      retry:
+        retries: 2
+        backoff:
+          first-backoff: 200ms
+          max-backoff: 3s
+          factor: 2.5
+
+shared:
+  ratelimit:
+    capacity: 600
+    window: 45s
+
+app:
+  env: dev

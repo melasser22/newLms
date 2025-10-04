@@ -1,0 +1,35 @@
+spring:
+  config:
+    activate:
+      on-profile: staging
+  cloud:
+    config:
+      profile: staging
+      label: release-candidate
+
+gateway:
+  webclient:
+    connect-timeout: 4s
+    response-timeout: 15s
+    read-timeout: 15s
+    write-timeout: 15s
+  subscription:
+    enabled: true
+    cache-ttl: 3m
+    fail-open: false
+  defaults:
+    resilience:
+      retry:
+        retries: 3
+        backoff:
+          first-backoff: 300ms
+          max-backoff: 4s
+          factor: 2.5
+
+shared:
+  ratelimit:
+    capacity: 400
+    window: 1m
+
+app:
+  env: staging

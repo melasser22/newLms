@@ -111,6 +111,10 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
                   .increment();
             }
             exchange.getAttributes().put(GatewayRequestAttributes.SUBSCRIPTION, decision.record());
+            String tier = decision.record() != null ? decision.record().tier() : null;
+            if (StringUtils.hasText(tier)) {
+              exchange.getAttributes().put(GatewayRequestAttributes.SUBSCRIPTION_TIER, tier);
+            }
             return chain.filter(exchange);
           }
           return reject(exchange, decision);
@@ -204,7 +208,7 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
               record);
         })
         .defaultIfEmpty(decision);
-  }
+
 
   private SubscriptionDecision evaluate(@Nullable SubscriptionRecord record, Set<String> requiredFeatures,
       ServerWebExchange exchange) {
@@ -313,6 +317,7 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
     static SubscriptionDecision allowWithGrace(SubscriptionRecord record, Duration remaining) {
       return new SubscriptionDecision(true, record, HttpStatus.OK, null, null,
           DecisionReason.GRACE_ALLOWED, remaining, null);
+
     }
 
     static SubscriptionDecision deny(HttpStatus status, String code, String message, DecisionReason reason,
@@ -329,5 +334,6 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
     GRACE_WRITE_BLOCKED,
     FEATURE_QUOTA,
     ERROR
+
   }
 }

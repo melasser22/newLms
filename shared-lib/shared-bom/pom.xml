@@ -58,6 +58,7 @@
     <!-- Testing utilities -->
     <mockito.version>5.2.0</mockito.version>
     <bytebuddy.agent.version>1.17.7</bytebuddy.agent.version>
+    <jasypt.version>3.0.5</jasypt.version>
 
     <!-- Static analysis -->
     <spotbugs.annotations.version>4.7.3</spotbugs.annotations.version>
@@ -212,6 +213,11 @@
         <groupId>com.fasterxml.jackson.datatype</groupId>
         <artifactId>jackson-datatype-jsr310</artifactId>
         <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.ulisesbocchio</groupId>
+        <artifactId>jasypt-spring-boot-starter</artifactId>
+        <version>${jasypt.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>

@@ -9,12 +9,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * Configuration properties controlling the subscription validation filter.
  */
+@RefreshScope
+@Validated
 @ConfigurationProperties(prefix = "gateway.subscription")
 public class SubscriptionValidationProperties {
 

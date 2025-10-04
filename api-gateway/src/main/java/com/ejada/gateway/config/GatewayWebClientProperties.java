@@ -2,10 +2,14 @@ package com.ejada.gateway.config;
 
 import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * Tunable properties for the gateway {@link org.springframework.web.reactive.function.client.WebClient}.
  */
+@RefreshScope
+@Validated
 @ConfigurationProperties(prefix = "gateway.webclient")
 public class GatewayWebClientProperties {
 

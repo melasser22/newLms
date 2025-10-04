@@ -5,6 +5,7 @@ import com.ejada.gateway.ratelimit.ReactiveRateLimiterFilter;
 import com.ejada.shared_starter_ratelimit.RateLimitProps;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -25,7 +26,8 @@ import org.springframework.web.server.WebFilter;
  * Reactive equivalents for the servlet-based context/rate-limit filters.
  */
 @Configuration
-@EnableConfigurationProperties({CoreAutoConfiguration.CoreProps.class, RateLimitProps.class})
+@EnableConfigurationProperties({CoreAutoConfiguration.CoreProps.class, RateLimitProps.class,
+    GatewayRateLimitProperties.class})
 public class ReactiveContextConfiguration {
 
   @Bean
@@ -49,11 +51,15 @@ public class ReactiveContextConfiguration {
       ReactiveStringRedisTemplate redisTemplate,
       RateLimitProps props,
       KeyResolver keyResolver,
+      GatewayRateLimitProperties gatewayRateLimitProperties,
       @Qualifier("jacksonObjectMapper") @Nullable ObjectMapper jacksonObjectMapper,
-      ObjectProvider<ObjectMapper> objectMapperProvider) {
+      ObjectProvider<ObjectMapper> objectMapperProvider,
+      ObjectProvider<MeterRegistry> meterRegistryProvider) {
     ObjectMapper mapper = (jacksonObjectMapper != null)
         ? jacksonObjectMapper
         : objectMapperProvider.getIfAvailable();
-    return new ReactiveRateLimiterFilter(redisTemplate, props, keyResolver, mapper);
+    MeterRegistry meterRegistry = meterRegistryProvider.getIfAvailable();
+    return new ReactiveRateLimiterFilter(redisTemplate, props, keyResolver, mapper,
+        gatewayRateLimitProperties, meterRegistry);
   }
 }
