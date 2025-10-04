@@ -15,6 +15,7 @@
     <module>shared-quality</module>
     <module>shared-bom</module>
     <module>shared-common</module>
+    <module>shared-data</module>
     <module>shared-lib-crypto</module>
     <module>shared-starters</module>
     <module>shared-test-support</module> 
@@ -70,6 +71,11 @@
       <dependency>
         <groupId>com.ejada</groupId>
         <artifactId>shared-common</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>shared-data</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
