@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.gateway.route.RouteLocator;
+import org.springframework.cloud.gateway.route.builder.BooleanSpec;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -93,7 +94,15 @@ public class GatewayRoutesConfiguration {
             .map(HttpMethod::valueOf)
             .toArray(HttpMethod[]::new);
 
-        var methodPredicate = predicate.path(paths);
+        BooleanSpec methodPredicate;
+        if (route.getWeight().isEnabled()) {
+          methodPredicate = predicate
+              .weight(route.getWeight().getGroup(), route.getWeight().getValue())
+              .and()
+              .path(paths);
+        } else {
+          methodPredicate = predicate.path(paths);
+        }
         if (methods.length > 0) {
           methodPredicate = methodPredicate.and().method(methods);
         }
@@ -110,9 +119,6 @@ public class GatewayRoutesConfiguration {
                 filters.filter(new ApiVersioningGatewayFilter(route.getVersioning()));
               }
               route.getRequestHeaders().forEach(filters::addRequestHeader);
-              if (route.getWeight().isEnabled()) {
-                filters.weight(route.getWeight().getGroup(), (double) route.getWeight().getValue());
-              }
               if (route.getSessionAffinity().isEnabled()) {
                 filters.filter(new SessionAffinityGatewayFilter(route.getSessionAffinity()));
               }
