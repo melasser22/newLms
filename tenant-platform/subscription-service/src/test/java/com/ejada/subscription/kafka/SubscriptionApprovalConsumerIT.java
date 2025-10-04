@@ -20,19 +20,22 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.kafka.KafkaContainer;
 
 @SpringBootTest(classes = SubscriptionApplication.class)
 @Testcontainers
 @ActiveProfiles("test")
+@EmbeddedKafka(topics = SubscriptionApprovalConsumerIT.APPROVAL_TOPIC)
+@TestPropertySource(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 class SubscriptionApprovalConsumerIT {
 
     private static final String APPROVAL_TOPIC = "subscription-approvals-it";
@@ -41,13 +44,6 @@ class SubscriptionApprovalConsumerIT {
     @Container
     static final PostgreSQLContainer<?> POSTGRES =
             new PostgreSQLContainer<>(DockerImageName.parse("postgres:15-alpine"));
-
-    private static final DockerImageName KAFKA_IMAGE =
-            DockerImageName.parse("confluentinc/cp-kafka:7.5.0")
-                    .asCompatibleSubstituteFor("apache/kafka");
-
-    @Container
-    static final KafkaContainer KAFKA = new KafkaContainer(KAFKA_IMAGE);
 
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
@@ -63,7 +59,6 @@ class SubscriptionApprovalConsumerIT {
                 () -> "classpath:db/migration/postgresql,classpath:db/testdata/subscription");
         registry.add("spring.flyway.schemas", () -> "subscription");
         registry.add("spring.flyway.default-schema", () -> "subscription");
-        registry.add("spring.kafka.bootstrap-servers", KAFKA::getBootstrapServers);
         registry.add("spring.kafka.consumer.auto-offset-reset", () -> "earliest");
         registry.add(
                 "spring.kafka.producer.value-serializer",
