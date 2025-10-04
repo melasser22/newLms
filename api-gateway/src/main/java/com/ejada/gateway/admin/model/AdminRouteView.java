@@ -28,7 +28,8 @@ public record AdminRouteView(
     Map<String, String> requestHeaders,
     boolean resilienceEnabled,
     String fallbackUri,
-    String circuitBreakerName) {
+    String circuitBreakerName,
+    String loadBalancingStrategy) {
 
   public static AdminRouteView fromRoute(GatewayRoutesProperties.ServiceRoute route) {
     GatewayRoutesProperties.ServiceRoute.Versioning versioning = route.getVersioning();
@@ -56,6 +57,7 @@ public record AdminRouteView(
         Map.copyOf(route.getRequestHeaders()),
         resilience.isEnabled(),
         resilience.isEnabled() ? resilience.resolvedFallbackUri(route.getId()) : null,
-        resilience.isEnabled() ? resilience.resolvedCircuitBreakerName(route.getId()) : null);
+        resilience.isEnabled() ? resilience.resolvedCircuitBreakerName(route.getId()) : null,
+        route.getLbStrategy().name());
   }
 }

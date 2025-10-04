@@ -114,6 +114,9 @@ public class GatewayRoutesProperties {
     /** Session affinity preferences for stateful downstream services. */
     private SessionAffinity sessionAffinity = new SessionAffinity();
 
+    /** Load balancing strategy to apply when forwarding traffic to this route. */
+    private LoadBalancingStrategy lbStrategy = LoadBalancingStrategy.DEFAULT;
+
     public String getId() {
       return id;
     }
@@ -232,6 +235,18 @@ public class GatewayRoutesProperties {
       this.sessionAffinity = (sessionAffinity == null) ? new SessionAffinity() : sessionAffinity;
     }
 
+    public LoadBalancingStrategy getLbStrategy() {
+      return lbStrategy;
+    }
+
+    public void setLbStrategy(LoadBalancingStrategy lbStrategy) {
+      this.lbStrategy = (lbStrategy == null) ? LoadBalancingStrategy.DEFAULT : lbStrategy;
+    }
+
+    public void setLbStrategy(String lbStrategy) {
+      this.lbStrategy = LoadBalancingStrategy.from(lbStrategy);
+    }
+
     public void applyDefaults(RouteDefaults defaults) {
       if (defaults == null) {
         return;
@@ -319,6 +334,7 @@ public class GatewayRoutesProperties {
           + ", versioning=" + versioning
           + ", weight=" + weight
           + ", sessionAffinity=" + sessionAffinity
+          + ", lbStrategy=" + lbStrategy
           + '}';
     }
 
@@ -340,13 +356,14 @@ public class GatewayRoutesProperties {
           && Objects.equals(requestHeaders, that.requestHeaders)
           && Objects.equals(versioning, that.versioning)
           && Objects.equals(weight, that.weight)
-          && Objects.equals(sessionAffinity, that.sessionAffinity);
+          && Objects.equals(sessionAffinity, that.sessionAffinity)
+          && lbStrategy == that.lbStrategy;
     }
 
     @Override
     public int hashCode() {
       return Objects.hash(id, uri, paths, methods, stripPrefix, prefixPath, resilience, requestHeaders,
-          versioning, weight, sessionAffinity);
+          versioning, weight, sessionAffinity, lbStrategy);
     }
 
     /**
@@ -619,6 +636,22 @@ public class GatewayRoutesProperties {
             ", cookieName='" + cookieName + '\'' +
             ", headerName='" + headerName + '\'' +
             '}';
+      }
+    }
+
+    public enum LoadBalancingStrategy {
+      DEFAULT,
+      WEIGHTED_RESPONSE_TIME;
+
+      static LoadBalancingStrategy from(String value) {
+        if (!StringUtils.hasText(value)) {
+          return DEFAULT;
+        }
+        try {
+          return LoadBalancingStrategy.valueOf(value.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+          throw new IllegalStateException("Unsupported load balancing strategy: " + value, ex);
+        }
       }
     }
 
