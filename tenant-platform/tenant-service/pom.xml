@@ -16,6 +16,7 @@
 
   <properties>
     <java.version>21</java.version>
+    <spring-boot.run.skip>false</spring-boot.run.skip>
     <qa.flyway.vendor>postgresql</qa.flyway.vendor>
     <qa.flyway.schemas>public,tenant</qa.flyway.schemas>
     <qa.flyway.defaultSchema>tenant</qa.flyway.defaultSchema>

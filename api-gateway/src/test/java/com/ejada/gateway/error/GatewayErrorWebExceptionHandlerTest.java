@@ -73,9 +73,9 @@ class GatewayErrorWebExceptionHandlerTest {
   }
 
   private JsonNode readResponse(MockServerWebExchange exchange) throws Exception {
-    byte[] bytes = exchange.getResponse().getBodyAsByteArray().block();
-    assertNotNull(bytes);
-    return objectMapper.readTree(bytes);
+    String body = exchange.getResponse().getBodyAsString().block();
+    assertNotNull(body);
+    return objectMapper.readTree(body);
   }
 
   private static final class StaticObjectProvider<T> implements ObjectProvider<T> {
@@ -127,7 +127,7 @@ class GatewayErrorWebExceptionHandlerTest {
     }
 
     @Override
-    public void forEach(Consumer<T> action) {
+    public void forEach(Consumer<? super T> action) {
       if (instance != null) {
         action.accept(instance);
       }
