@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.context.event.EnvironmentChangeEvent;
+import org.springframework.cloud.context.environment.EnvironmentChangeEvent;
 import org.springframework.mock.env.MockEnvironment;
 
 class ConfigRefreshAuditListenerTest {
