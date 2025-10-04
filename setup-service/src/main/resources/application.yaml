@@ -31,5 +31,7 @@ shared:
     application-name: setup-service
   security:
     enable-role-check: true
+    resource-server:
+      enabled: false
     jwt:
       token-period: 15m

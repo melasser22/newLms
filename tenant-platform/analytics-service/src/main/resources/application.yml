@@ -37,3 +37,8 @@ management:
     health:
       probes:
         enabled: true
+
+shared:
+  security:
+    resource-server:
+      enabled: false

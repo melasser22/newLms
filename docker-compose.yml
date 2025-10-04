@@ -115,7 +115,6 @@ services:
     build:
       context: ./tenant-platform/tenant-service
     restart: unless-stopped
-
     depends_on:
       - postgres
       - otel-collector
@@ -131,8 +130,11 @@ services:
       OTEL_SERVICE_NAME: tenant-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
+    # Uncomment the mapping below for troubleshooting individual services outside the gateway.
+    # ports:
+    #   - "8080:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -146,7 +148,6 @@ services:
     build:
       context: ./setup-service
     restart: unless-stopped
-
     depends_on:
       - postgres
       - otel-collector
@@ -162,8 +163,10 @@ services:
       OTEL_SERVICE_NAME: setup-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    ports:
-      - "8081:8080"
+    expose:
+      - "8080"
+    # ports:
+    #   - "8081:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -177,7 +180,6 @@ services:
     build:
       context: ./tenant-platform/billing-service
     restart: unless-stopped
-
     depends_on:
       - postgres
       - otel-collector
@@ -193,8 +195,10 @@ services:
       OTEL_SERVICE_NAME: billing-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    ports:
-      - "8082:8080"
+    expose:
+      - "8080"
+    # ports:
+    #   - "8082:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -208,7 +212,6 @@ services:
     build:
       context: ./tenant-platform/analytics-service
     restart: unless-stopped
-
     depends_on:
       - postgres
       - redis
@@ -225,8 +228,10 @@ services:
       OTEL_SERVICE_NAME: analytics-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    ports:
-      - "8089:8080"
+    expose:
+      - "8080"
+    # ports:
+    #   - "8089:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
@@ -240,7 +245,6 @@ services:
     build:
       context: ./tenant-platform/catalog-service
     restart: unless-stopped
-
     depends_on:
       - postgres
       - otel-collector
@@ -256,8 +260,10 @@ services:
       OTEL_SERVICE_NAME: catalog-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    ports:
-      - "8083:8080"
+    expose:
+      - "8080"
+    # ports:
+    #   - "8083:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -271,7 +277,6 @@ services:
     build:
       context: ./tenant-platform/subscription-service
     restart: unless-stopped
-
     depends_on:
       - postgres
       - otel-collector
@@ -287,8 +292,10 @@ services:
       OTEL_SERVICE_NAME: subscription-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    ports:
-      - "8084:8080"
+    expose:
+      - "8080"
+    # ports:
+    #   - "8084:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -302,7 +309,6 @@ services:
     build:
       context: ./sec-service
     restart: unless-stopped
-
     depends_on:
       - postgres
       - redis
@@ -324,8 +330,10 @@ services:
       OTEL_SERVICE_NAME: security-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    ports:
-      - "8085:8080"
+    expose:
+      - "8080"
+    # ports:
+    #   - "8085:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -337,20 +345,33 @@ services:
 
   api-gateway:
     build:
-      context: .
-      dockerfile: ./api-gateway/Dockerfile
-    <<: [*restart_policy]
+      context: ./api-gateway
+    restart: unless-stopped
     depends_on:
-      - setup-service
-      - tenant-service
-      - catalog-service
-      - subscription-service
-      - billing-service
-      - analytics-service
-      - security-service
-      - redis
-      - otel-collector
+      redis:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+      setup-service:
+        condition: service_started
+      tenant-service:
+        condition: service_started
+      catalog-service:
+        condition: service_started
+      subscription-service:
+        condition: service_started
+      billing-service:
+        condition: service_started
+      analytics-service:
+        condition: service_started
+      security-service:
+        condition: service_started
     environment:
+      TZ: Asia/Riyadh
+      SERVER_PORT: 8000
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
@@ -358,7 +379,6 @@ services:
       OTEL_METRICS_EXPORTER: otlp
       OTEL_SERVICE_NAME: api-gateway
       SPRING_PROFILES_ACTIVE: dev
-      TZ: Asia/Riyadh
       SHARED_SECURITY_MODE: hs256
       SHARED_SECURITY_HS256_SECRET: ${JWT_SECRET:-local-dev-secret}
       SHARED_SECURITY_RESOURCE_SERVER_ENABLED: "false"
@@ -368,8 +388,9 @@ services:
       SPRING_CLOUD_DISCOVERY_CLIENT_SIMPLE_INSTANCES_SUBSCRIPTION_SERVICE_0_URI: http://subscription-service:8080
       SPRING_CLOUD_DISCOVERY_CLIENT_SIMPLE_INSTANCES_BILLING_SERVICE_0_URI: http://billing-service:8080
       SPRING_CLOUD_DISCOVERY_CLIENT_SIMPLE_INSTANCES_ANALYTICS_SERVICE_0_URI: http://analytics-service:8080
+      SPRING_CLOUD_DISCOVERY_CLIENT_SIMPLE_INSTANCES_SECURITY_SERVICE_0_URI: http://security-service:8080
     ports:
-      - "8088:8080"
+      - "8000:8000"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
