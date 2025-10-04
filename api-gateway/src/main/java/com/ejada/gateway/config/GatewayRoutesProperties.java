@@ -2,6 +2,7 @@ package com.ejada.gateway.config;
 
 import java.net.URI;
 import java.time.Duration;
+import com.ejada.gateway.versioning.VersionNumber;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -427,15 +428,13 @@ public class GatewayRoutesProperties {
           throw new IllegalStateException(
               "gateway.routes." + key + ".versioning." + property + " must not be blank when versioning is enabled");
         }
-        String candidate = value.trim().toLowerCase(Locale.ROOT);
-        if (candidate.startsWith("v")) {
-          candidate = candidate.substring(1);
-        }
-        if (!candidate.chars().allMatch(Character::isDigit)) {
+        try {
+          return VersionNumber.canonicalise(value);
+        } catch (IllegalArgumentException ex) {
           throw new IllegalStateException(
-              "gateway.routes." + key + ".versioning." + property + " must be a numeric version (e.g. v1, 2)");
+              "gateway.routes." + key + ".versioning." + property + " must be a numeric version (e.g. v1, 2.0)",
+              ex);
         }
-        return "v" + candidate;
       }
 
       @Override

@@ -3,12 +3,11 @@ package com.ejada.gateway.filter;
 import com.ejada.common.constants.HeaderNames;
 import com.ejada.gateway.config.GatewayRoutesProperties;
 import com.ejada.gateway.context.GatewayRequestAttributes;
+import com.ejada.gateway.versioning.VersionNumber;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
-import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
@@ -32,8 +31,6 @@ public class ApiVersioningGatewayFilter implements GatewayFilter {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ApiVersioningGatewayFilter.class);
 
-  private static final Pattern VERSION_PATTERN = Pattern.compile("^v(\\d+)$", Pattern.CASE_INSENSITIVE);
-
   private final GatewayRoutesProperties.ServiceRoute.Versioning versioning;
 
   public ApiVersioningGatewayFilter(GatewayRoutesProperties.ServiceRoute.Versioning versioning) {
@@ -51,34 +48,13 @@ public class ApiVersioningGatewayFilter implements GatewayFilter {
     String rawPath = originalUri.getRawPath();
 
     List<String> segments = tokenise(rawPath);
-    boolean hadVersionSegment = false;
-    String requestedVersion = null;
-
-    if (!segments.isEmpty()) {
-      String candidate = segments.get(0);
-      if (isVersionSegment(candidate)) {
-        hadVersionSegment = true;
-        requestedVersion = normalise(candidate);
-        segments.remove(0);
-      }
+    VersionResolution resolution = resolveVersion(segments);
+    if (resolution.isUnsupported()) {
+      return rejectInvalidVersion(exchange, resolution.getResolvedVersion());
     }
 
-    String effectiveVersion = versioning.getDefaultVersion();
-    if (hadVersionSegment && requestedVersion != null) {
-      if (versioning.hasSupportedVersions() && !versioning.getSupportedVersions().contains(requestedVersion)) {
-        if (!versioning.isFallbackToDefault()) {
-          LOGGER.debug("Rejecting unsupported API version '{}' for route {}", requestedVersion, versioning);
-          return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-              "Requested API version is not supported"));
-        }
-        LOGGER.debug("Falling back to default version {} for unsupported request version {}", effectiveVersion,
-            requestedVersion);
-      } else {
-        effectiveVersion = requestedVersion;
-      }
-    }
-
-    if (!hadVersionSegment && StringUtils.hasText(versioning.getDefaultVersion())) {
+    String effectiveVersion = resolution.getResolvedVersion();
+    if (!resolution.hadExplicitVersion() && StringUtils.hasText(versioning.getDefaultVersion())) {
       effectiveVersion = versioning.getDefaultVersion();
     }
 
@@ -120,14 +96,6 @@ public class ApiVersioningGatewayFilter implements GatewayFilter {
     return result;
   }
 
-  private static boolean isVersionSegment(String value) {
-    return StringUtils.hasText(value) && VERSION_PATTERN.matcher(value.trim()).matches();
-  }
-
-  private static String normalise(String value) {
-    return value == null ? null : value.trim().toLowerCase(Locale.ROOT);
-  }
-
   private static String rebuildPath(String originalPath, List<String> segments) {
     if (segments.isEmpty()) {
       return originalPath.startsWith("/") ? "/" : "";
@@ -138,5 +106,75 @@ public class ApiVersioningGatewayFilter implements GatewayFilter {
       rebuilt = rebuilt + '/';
     }
     return rebuilt;
+  }
+
+  private VersionResolution resolveVersion(List<String> pathSegments) {
+    boolean hadExplicitVersion = false;
+    String effectiveVersion = versioning.getDefaultVersion();
+
+    if (!pathSegments.isEmpty()) {
+      String candidate = pathSegments.get(0);
+      String canonical = canonicalise(candidate);
+      if (canonical != null) {
+        hadExplicitVersion = true;
+        pathSegments.remove(0);
+
+        if (versioning.hasSupportedVersions() && !versioning.getSupportedVersions().contains(canonical)) {
+          LOGGER.debug("Rejecting unsupported API version '{}' for route {}", canonical, versioning);
+          return VersionResolution.unsupportedVersion(canonical);
+        }
+        effectiveVersion = canonical;
+      }
+    }
+
+    return VersionResolution.resolved(hadExplicitVersion, effectiveVersion);
+  }
+
+  private static String canonicalise(String candidate) {
+    String canonical = VersionNumber.canonicaliseOrNull(candidate);
+    if (canonical == null) {
+      LOGGER.debug("Ignoring non-version path segment '{}'", candidate);
+    }
+    return canonical;
+  }
+
+  private static Mono<Void> rejectInvalidVersion(ServerWebExchange exchange, String version) {
+    if (exchange != null) {
+      exchange.getAttributes().put(GatewayRequestAttributes.API_VERSION, version);
+    }
+    return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested API version is not supported"));
+  }
+
+  private static final class VersionResolution {
+
+    private final boolean hadExplicitVersion;
+    private final String resolvedVersion;
+    private final boolean unsupported;
+
+    private VersionResolution(boolean hadExplicitVersion, String resolvedVersion, boolean unsupported) {
+      this.hadExplicitVersion = hadExplicitVersion;
+      this.resolvedVersion = resolvedVersion;
+      this.unsupported = unsupported;
+    }
+
+    static VersionResolution resolved(boolean hadExplicitVersion, String resolvedVersion) {
+      return new VersionResolution(hadExplicitVersion, resolvedVersion, false);
+    }
+
+    static VersionResolution unsupportedVersion(String version) {
+      return new VersionResolution(true, version, true);
+    }
+
+    boolean hadExplicitVersion() {
+      return hadExplicitVersion;
+    }
+
+    String getResolvedVersion() {
+      return resolvedVersion;
+    }
+
+    boolean isUnsupported() {
+      return unsupported;
+    }
   }
 }

@@ -80,13 +80,12 @@ class ApiVersioningGatewayFilterTest {
   }
 
   @Test
-  void rejectsUnsupportedVersionWhenFallbackDisabled() {
+  void rejectsUnsupportedVersion() {
     GatewayRoutesProperties.ServiceRoute route = buildRoute(List.of("/demo/**"));
     GatewayRoutesProperties.ServiceRoute.Versioning versioning = route.getVersioning();
     versioning.setEnabled(true);
     versioning.setDefaultVersion("v1");
     versioning.setSupportedVersions(List.of("v1"));
-    versioning.setFallbackToDefault(false);
     route.validate("demo");
 
     ApiVersioningGatewayFilter filter = new ApiVersioningGatewayFilter(versioning);
@@ -104,6 +103,33 @@ class ApiVersioningGatewayFilterTest {
           assertEquals("Requested API version is not supported", exception.getReason());
         })
         .verify();
+  }
+
+  @Test
+  void normalisesLooseVersionFormatting() {
+    GatewayRoutesProperties.ServiceRoute route = buildRoute(List.of("/demo/**"));
+    GatewayRoutesProperties.ServiceRoute.Versioning versioning = route.getVersioning();
+    versioning.setEnabled(true);
+    versioning.setDefaultVersion("v1");
+    versioning.setSupportedVersions(List.of("1", "v2.0"));
+    route.validate("demo");
+
+    ApiVersioningGatewayFilter filter = new ApiVersioningGatewayFilter(versioning);
+
+    MockServerWebExchange exchange = MockServerWebExchange.from(
+        MockServerHttpRequest.get("/1.0/demo/items").build());
+
+    AtomicReference<String> header = new AtomicReference<>();
+
+    GatewayFilterChain chain = webExchange -> {
+      header.set(webExchange.getRequest().getHeaders().getFirst(HeaderNames.API_VERSION));
+      return Mono.empty();
+    };
+
+    filter.filter(exchange, chain).block();
+
+    assertEquals("/demo/items", exchange.getRequest().getURI().getRawPath());
+    assertEquals("v1", header.get());
   }
 
   private GatewayRoutesProperties.ServiceRoute buildRoute(List<String> paths) {
