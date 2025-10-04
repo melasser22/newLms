@@ -6,7 +6,9 @@ import com.ejada.common.context.TenantMdcUtil;
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
+import com.ejada.starter_core.tenant.TenantError;
 import com.ejada.starter_core.tenant.TenantResolution;
+import com.ejada.starter_core.tenant.TenantSource;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
@@ -90,8 +92,8 @@ public class ReactiveRequestContextFilter implements WebFilter {
 
     return tenantResolutionMono
         .flatMap(resolution -> {
-          if (resolution.isInvalid()) {
-            return rejectTenant(exchange, resolution.rawValue());
+          if (resolution.hasError()) {
+            return rejectTenant(exchange, resolution);
           }
           state.setTenant(resolution.hasTenant() ? resolution.tenantId() : null);
           return authentication
@@ -208,17 +210,25 @@ public class ReactiveRequestContextFilter implements WebFilter {
     }
     String trimmed = candidate.trim();
     if (!trimmed.matches("[A-Za-z0-9_-]{1,36}")) {
-      return TenantResolution.invalid(trimmed);
+      return TenantResolution.invalid(trimmed, TenantSource.NONE);
     }
-    return TenantResolution.present(trimmed);
+    return TenantResolution.present(trimmed, TenantSource.NONE);
   }
 
-  private Mono<Void> rejectTenant(ServerWebExchange exchange, String rawValue) {
-    LOGGER.warn("Invalid tenant identifier: {}", rawValue);
+  private Mono<Void> rejectTenant(ServerWebExchange exchange, TenantResolution resolution) {
+    TenantError error = resolution.error();
+    int status = error != null ? error.httpStatus() : HttpStatus.BAD_REQUEST.value();
+    String code = error != null ? error.code() : "ERR_INVALID_TENANT";
+    String message = error != null ? error.message() : "Invalid " + HeaderNames.X_TENANT_ID;
+    if (resolution.rawValue() != null) {
+      LOGGER.warn("Tenant resolution error [{}]: {}", code, resolution.rawValue());
+    } else {
+      LOGGER.warn("Tenant resolution error [{}]", code);
+    }
     ServerHttpResponse response = exchange.getResponse();
-    response.setStatusCode(HttpStatus.BAD_REQUEST);
+    response.setStatusCode(HttpStatus.valueOf(status));
     response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-    BaseResponse<Void> body = BaseResponse.error("ERR_INVALID_TENANT", "Invalid " + HeaderNames.X_TENANT_ID);
+    BaseResponse<Void> body = BaseResponse.error(code, message);
     try {
       byte[] bytes = objectMapper.writeValueAsBytes(body);
       return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));

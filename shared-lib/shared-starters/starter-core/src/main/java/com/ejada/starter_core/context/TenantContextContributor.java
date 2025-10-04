@@ -1,9 +1,9 @@
 package com.ejada.starter_core.context;
 
-import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.context.ContextManager;
 import com.ejada.common.context.TenantMdcUtil;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
+import com.ejada.starter_core.tenant.TenantError;
 import com.ejada.starter_core.tenant.TenantResolution;
 import com.ejada.starter_core.tenant.TenantResolver;
 import jakarta.servlet.ServletException;
@@ -39,17 +39,26 @@ public class TenantContextContributor implements RequestContextContributor {
     public ContextScope contribute(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         TenantResolution resolution = tenantResolver.resolve(request);
-        if (resolution == null || resolution.isAbsent()) {
+        if (resolution == null) {
             return ContextScope.noop();
         }
-        if (resolution.isInvalid()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + HeaderNames.X_TENANT_ID);
+        if (resolution.isAbsent()) {
+            return ContextScope.noop();
+        }
+        if (resolution.hasError()) {
+            TenantError error = resolution.error();
+            String headerName = properties.getHeaderName();
+            if (error == null || resolution.isInvalid()) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + headerName);
+            } else {
+                response.sendError(error.httpStatus(), error.message());
+            }
             return () -> { };
         }
 
         String tenant = trimToNull(resolution.tenantId());
         if (tenant == null || !TENANT_PATTERN.matcher(tenant).matches()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + HeaderNames.X_TENANT_ID);
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + properties.getHeaderName());
             return () -> { };
         }
 

@@ -22,8 +22,8 @@ final class TenantIdValidator {
             return TenantResolution.absent();
         }
         if (!TENANT_PATTERN.matcher(trimmed).matches()) {
-            return TenantResolution.invalid(trimmed);
+            return TenantResolution.invalid(trimmed, TenantSource.NONE);
         }
-        return TenantResolution.present(trimmed);
+        return TenantResolution.present(trimmed, TenantSource.NONE);
     }
 }
