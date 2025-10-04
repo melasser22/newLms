@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +40,8 @@ import com.ejada.subscription.repository.SubscriptionRepository;
 import com.ejada.subscription.repository.SubscriptionUpdateEventRepository;
 import com.ejada.subscription.service.approval.ApprovalWorkflowService;
 import com.ejada.subscription.service.approval.ApprovalWorkflowService.SubmissionResult;
+import com.ejada.subscription.tenant.TenantLink;
+import com.ejada.subscription.tenant.TenantLinkFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -80,10 +81,12 @@ class MarketplaceCallbackOrchestratorTest {
 
     private MarketplaceCallbackOrchestrator orchestrator;
     private PlatformTransactionManager transactionManager;
+    private TenantLinkFactory tenantLinkFactory;
 
     @BeforeEach
     void setUp() {
         transactionManager = new NoOpTransactionManager();
+        tenantLinkFactory = new TenantLinkFactory();
         orchestrator = new MarketplaceCallbackOrchestrator(
                 subscriptionRepo,
                 featureRepo,
@@ -103,7 +106,7 @@ class MarketplaceCallbackOrchestratorTest {
                 new ObjectMapper(),
                 transactionManager,
                 approvalPublisher,
-                new com.ejada.subscription.tenant.TenantLinkFactory(),
+                tenantLinkFactory,
                 approvalWorkflowService);
     }
 
@@ -272,9 +275,18 @@ class MarketplaceCallbackOrchestratorTest {
         ServiceResult<ReceiveSubscriptionNotificationRs> result =
                 orchestrator.processNotification(rqUid, "token", request);
 
+        TenantLink expectedTenantLink = tenantLinkFactory.resolve(request, mapped);
+
         assertThat(result.statusCode()).isEqualTo("I000000");
         verify(approvalPublisher)
-                .publishApprovalDecision(eq(SubscriptionApprovalAction.APPROVED), eq(rqUid), eq(request), any(Subscription.class), any());
+                .publishApprovalDecision(
+                        eq(SubscriptionApprovalAction.APPROVED),
+                        eq(rqUid),
+                        eq(mapped),
+                        eq(request.customerInfo()),
+                        eq(request.adminUserInfo()),
+                        eq(expectedTenantLink),
+                        eq("LOW_VALUE"));
     }
 
     @Test
