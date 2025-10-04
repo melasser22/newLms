@@ -10,6 +10,7 @@ import com.ejada.gateway.filter.RequestBodyTransformationGatewayFilterFactory;
 import com.ejada.gateway.filter.ResponseBodyTransformationGatewayFilterFactory;
 import com.ejada.gateway.filter.SessionAffinityGatewayFilter;
 import com.ejada.gateway.resilience.TenantCircuitBreakerMetrics;
+import com.ejada.gateway.versioning.VersionNormalizationFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -43,6 +44,7 @@ public class GatewayRoutesConfiguration {
       ObjectProvider<GatewayRouteDefinitionProvider> dynamicProviders,
       ObjectProvider<RequestBodyTransformationGatewayFilterFactory> requestTransformationFactory,
       ObjectProvider<ResponseBodyTransformationGatewayFilterFactory> responseTransformationFactory,
+      ObjectProvider<VersionNormalizationFilter> versionNormalizationFilter,
       TenantCircuitBreakerMetrics circuitBreakerMetrics) {
     RouteLocatorBuilder.Builder routes = builder.routes();
 
@@ -129,6 +131,7 @@ public class GatewayRoutesConfiguration {
               if (StringUtils.hasText(route.getPrefixPath())) {
                 filters.prefixPath(route.getPrefixPath());
               }
+              versionNormalizationFilter.ifAvailable(filters::filter);
               if (route.getVersioning().isEnabled()) {
                 filters.filter(new ApiVersioningGatewayFilter(route.getVersioning()));
               }

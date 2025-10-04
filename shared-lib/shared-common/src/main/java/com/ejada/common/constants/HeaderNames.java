@@ -50,6 +50,8 @@ public final class HeaderNames {
     // 📜 Content / Localization
     public static final String CONTENT_TYPE = "Content-Type";
     public static final String ACCEPT = "Accept";
+    /** Header allowing clients to request a specific API version without encoding it in the URI. */
+    public static final String ACCEPT_VERSION = "Accept-Version";
     public static final String ACCEPT_LANGUAGE = "Accept-Language";
     public static final String LOCALE = "X-Locale";
 

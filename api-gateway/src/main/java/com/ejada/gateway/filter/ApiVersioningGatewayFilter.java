@@ -44,6 +44,20 @@ public class ApiVersioningGatewayFilter implements GatewayFilter {
     }
 
     ServerHttpRequest request = exchange.getRequest();
+    String presetVersion = exchange.getAttribute(GatewayRequestAttributes.API_VERSION);
+    if (StringUtils.hasText(presetVersion)) {
+      if (versioning.isPropagateHeader()) {
+        String currentHeader = request.getHeaders().getFirst(HeaderNames.API_VERSION);
+        if (!presetVersion.equalsIgnoreCase(currentHeader)) {
+          ServerHttpRequest mutated = request.mutate()
+              .headers(headers -> headers.set(HeaderNames.API_VERSION, presetVersion))
+              .build();
+          return chain.filter(exchange.mutate().request(mutated).build());
+        }
+      }
+      return chain.filter(exchange);
+    }
+
     URI originalUri = request.getURI();
     String rawPath = originalUri.getRawPath();
 

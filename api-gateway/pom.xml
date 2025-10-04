@@ -85,6 +85,13 @@
       <artifactId>shared-config</artifactId>
     </dependency>
 
+    <!-- API documentation for versioned routes -->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+      <version>2.7.0</version>
+    </dependency>
+
     <!-- Reactive Redis for rate limiting -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
