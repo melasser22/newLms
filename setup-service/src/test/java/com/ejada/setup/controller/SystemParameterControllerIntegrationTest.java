@@ -14,46 +14,51 @@ import com.ejada.starter_security.Role;
 import com.ejada.starter_security.RoleChecker;
 import com.ejada.starter_security.SharedSecurityProps;
 import com.ejada.starter_security.authorization.AuthorizationExpressions;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration;
-import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
+import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.http.MediaType;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-@SpringBootTest(classes = SystemParameterControllerIntegrationTest.TestApp.class)
-@AutoConfigureMockMvc(addFilters = false)
+@SpringJUnitConfig(SystemParameterControllerIntegrationTest.TestConfig.class)
 class SystemParameterControllerIntegrationTest {
 
     @Autowired
-    MockMvc mockMvc;
+    ApplicationContext applicationContext;
 
     @Autowired
     TestSystemParameterService testSystemParameterService;
 
     @Autowired
     CacheManager cacheManager;
+
+    @Autowired
+    MappingJackson2HttpMessageConverter jacksonMessageConverter;
+
+    MockMvc mockMvc;
 
     @BeforeEach
     void clearCache() {
@@ -64,6 +69,11 @@ class SystemParameterControllerIntegrationTest {
             }
         });
         testSystemParameterService.reset();
+
+        mockMvc = MockMvcBuilders.standaloneSetup(
+                applicationContext.getBean(SystemParameterController.class))
+            .setMessageConverters(jacksonMessageConverter)
+            .build();
 
         SecurityContextHolder.getContext().setAuthentication(
             new UsernamePasswordAuthenticationToken(
@@ -106,27 +116,11 @@ class SystemParameterControllerIntegrationTest {
             .andExpect(jsonPath("$.code").value(ErrorCodes.DATA_NOT_FOUND));
     }
 
+    @Configuration
     @EnableCaching(proxyTargetClass = true)
     @EnableMethodSecurity(proxyTargetClass = true)
-    // Exclude security auto-configuration to avoid loading the full resource server stack
-    // when only verifying controller/caching behaviour.
-    @EnableAutoConfiguration(exclude = {
-        DataSourceAutoConfiguration.class,
-        HibernateJpaAutoConfiguration.class,
-        JpaRepositoriesAutoConfiguration.class,
-        LiquibaseAutoConfiguration.class,
-        FlywayAutoConfiguration.class,
-        com.ejada.audit.starter.config.AuditAutoConfiguration.class,
-        com.ejada.starter_security.JwtDecoderAutoConfiguration.class,
-        com.ejada.starter_security.SecurityAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class,
-        org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration.class
-    })
     @Import(SystemParameterController.class)
-    static class TestApp {
+    static class TestConfig {
 
         @Bean
         CacheManager cacheManager() {
@@ -147,10 +141,8 @@ class SystemParameterControllerIntegrationTest {
         }
 
         @Bean
-        org.springframework.security.access.expression.method.MethodSecurityExpressionHandler methodSecurityExpressionHandler(
-                org.springframework.context.ApplicationContext applicationContext) {
-            org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler handler =
-                new org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler();
+        MethodSecurityExpressionHandler methodSecurityExpressionHandler(ApplicationContext applicationContext) {
+            DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
             handler.setApplicationContext(applicationContext);
             return handler;
         }
@@ -163,6 +155,16 @@ class SystemParameterControllerIntegrationTest {
         @Bean
         AuthorizationExpressions authorizationExpressions(RoleChecker roleChecker) {
             return new AuthorizationExpressions(roleChecker);
+        }
+
+        @Bean
+        ObjectMapper objectMapper() {
+            return Jackson2ObjectMapperBuilder.json().build();
+        }
+
+        @Bean
+        MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter(ObjectMapper objectMapper) {
+            return new MappingJackson2HttpMessageConverter(objectMapper);
         }
     }
 
