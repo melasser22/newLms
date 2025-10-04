@@ -11,6 +11,7 @@ import com.ejada.subscription.repository.SubscriptionAdditionalServiceRepository
 import com.ejada.subscription.repository.SubscriptionFeatureRepository;
 import com.ejada.subscription.repository.SubscriptionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class SubscriptionApprovalConsumer {
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Object mapper is managed bean")
     private final ObjectMapper objectMapper;
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionFeatureRepository featureRepository;

@@ -9,6 +9,7 @@ import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotifica
 import com.ejada.subscription.model.Subscription;
 import com.ejada.subscription.tenant.TenantLink;
 import com.ejada.subscription.tenant.TenantLinkFactory;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,7 +34,9 @@ public class SubscriptionApprovalPublisher {
     private static final int EMAIL_MAX = 255;
     private static final int PHONE_MAX = 32;
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Kafka template is managed bean")
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Properties bean is immutable for our use")
     private final SubscriptionApprovalProperties properties;
     private final TenantLinkFactory tenantLinkFactory;
 

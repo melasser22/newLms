@@ -5,6 +5,7 @@ import com.ejada.common.events.provisioning.ProvisionedFeature;
 import com.ejada.common.events.provisioning.TenantProvisioningMessage;
 import com.ejada.common.events.provisioning.TenantProvisioningProperties;
 import com.ejada.common.events.subscription.SubscriptionApprovalMessage;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +21,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class TenantProvisioningPublisher {
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Kafka template is managed bean")
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Configuration bean provided by Spring")
     private final TenantProvisioningProperties properties;
 
     public void publish(

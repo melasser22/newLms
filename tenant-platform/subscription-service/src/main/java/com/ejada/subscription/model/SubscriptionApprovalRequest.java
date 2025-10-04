@@ -1,5 +1,6 @@
 package com.ejada.subscription.model;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -131,4 +132,14 @@ public class SubscriptionApprovalRequest {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
+
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Subscription is managed JPA association")
+    public Subscription getSubscription() {
+        return subscription;
+    }
+
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Subscription lifecycle managed by JPA")
+    public void setSubscription(final Subscription subscription) {
+        this.subscription = subscription;
+    }
 }

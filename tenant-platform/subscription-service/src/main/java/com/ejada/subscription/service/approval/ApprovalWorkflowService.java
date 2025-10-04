@@ -9,6 +9,7 @@ import com.ejada.subscription.repository.SubscriptionActivityLogRepository;
 import com.ejada.subscription.repository.SubscriptionApprovalRequestRepository;
 import com.ejada.subscription.repository.SubscriptionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.OffsetDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class ApprovalWorkflowService {
     private final SubscriptionActivityLogRepository activityLogRepository;
     private final RiskAssessmentService riskAssessmentService;
     private final AutoApprovalService autoApprovalService;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Object mapper is managed bean")
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -131,8 +133,14 @@ public class ApprovalWorkflowService {
 
     public record SubmissionResult(
             SubmissionState state,
-            Subscription subscription,
-            SubscriptionApprovalRequest approvalRequest,
+            @SuppressFBWarnings(
+                            value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"},
+                            justification = "Subscription is managed entity")
+                    Subscription subscription,
+            @SuppressFBWarnings(
+                            value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"},
+                            justification = "Approval request is managed entity")
+                    SubscriptionApprovalRequest approvalRequest,
             String autoApprovalRule) {
 
         public static SubmissionResult pending(

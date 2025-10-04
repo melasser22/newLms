@@ -6,6 +6,7 @@ import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotifica
 import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionUpdateRq;
 import com.ejada.subscription.acl.MarketplaceCallbackOrchestrator;
 import com.ejada.subscription.service.SubscriptionInboundService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SubscriptionInboundServiceImpl implements SubscriptionInboundService {
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Orchestrator is managed bean")
     private final MarketplaceCallbackOrchestrator orchestrator;
 
     @Override
