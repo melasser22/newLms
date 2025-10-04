@@ -111,7 +111,7 @@ public class GatewayRoutesConfiguration {
               }
               route.getRequestHeaders().forEach(filters::addRequestHeader);
               if (route.getWeight().isEnabled()) {
-                filters.weight(route.getWeight().getGroup(), route.getWeight().getValue());
+                filters.weight(route.getWeight().getGroup(), (double) route.getWeight().getValue());
               }
               if (route.getSessionAffinity().isEnabled()) {
                 filters.filter(new SessionAffinityGatewayFilter(route.getSessionAffinity()));
