@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -94,6 +95,7 @@ public class MarketplaceCallbackOrchestrator {
     private final PlatformTransactionManager transactionManager;
     private final SubscriptionApprovalPublisher approvalPublisher;
     private final TenantLinkFactory tenantLinkFactory;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring manages dependency scope")
     private final ApprovalWorkflowService approvalWorkflowService;
 
     private final Map<UUID, ServiceResult<ReceiveSubscriptionNotificationRs>> processedNotificationCache =
@@ -102,6 +104,8 @@ public class MarketplaceCallbackOrchestrator {
     @Transactional
     public ServiceResult<ReceiveSubscriptionNotificationRs> processNotification(
             final UUID rqUid, final String token, final ReceiveSubscriptionNotificationRq rq) {
+
+        Objects.requireNonNull(rq, "request must not be null");
 
         var replay = replayNotificationIfProcessed(rqUid, rq);
         if (replay != null) {
@@ -130,8 +134,8 @@ public class MarketplaceCallbackOrchestrator {
                             SubscriptionApprovalAction.APPROVED,
                             rqUid,
                             sub,
-                            rq != null ? rq.customerInfo() : null,
-                            rq != null ? rq.adminUserInfo() : null,
+                            rq.customerInfo(),
+                            rq.adminUserInfo(),
                             tenantLink,
                             submissionResult.autoApprovalRule());
                     List<SubscriptionEnvironmentIdentifier> envIds = fetchEnvironmentIdentifiers(sub);
@@ -195,7 +199,7 @@ public class MarketplaceCallbackOrchestrator {
                 }
             };
 
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
             return handleNotificationFailure(audit, ex);
         }
     }

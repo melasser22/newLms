@@ -17,6 +17,7 @@ import com.ejada.subscription.repository.SubscriptionApprovalRequestRepository;
 import com.ejada.subscription.repository.SubscriptionRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +42,7 @@ public class AdminApprovalService {
     private final SubscriptionActivityLogRepository activityLogRepository;
     private final SubscriptionApprovalPublisher approvalPublisher;
     private final ApprovalActorProvider actorProvider;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Object mapper is managed bean")
     private final ObjectMapper objectMapper;
 
     @Transactional

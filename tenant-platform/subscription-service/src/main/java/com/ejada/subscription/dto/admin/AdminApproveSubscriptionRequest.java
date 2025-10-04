@@ -41,4 +41,9 @@ public record AdminApproveSubscriptionRequest(
     public boolean shouldNotifyCustomer() {
         return Boolean.TRUE.equals(notifyCustomer);
     }
+
+    @Override
+    public List<String> additionalChecks() {
+        return List.copyOf(this.additionalChecks);
+    }
 }
