@@ -183,8 +183,6 @@ class MarketplaceCallbackOrchestratorTest {
         when(featureRepo.findBySubscriptionSubscriptionId(200L)).thenReturn(List.of());
         when(additionalServiceRepo.findBySubscriptionSubscriptionId(200L)).thenReturn(List.of());
         when(propertyRepo.findBySubscriptionSubscriptionId(200L)).thenReturn(List.of());
-        when(envIdRepo.findBySubscriptionSubscriptionId(200L)).thenReturn(List.of());
-        when(envIdMapper.toDtoList(List.of())).thenReturn(List.of());
         when(idemRepo.existsByIdempotencyKey(rqUid)).thenReturn(false);
 
         SubscriptionApprovalRequest approvalRequest = new SubscriptionApprovalRequest();
