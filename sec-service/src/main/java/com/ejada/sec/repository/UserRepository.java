@@ -59,4 +59,7 @@ public interface UserRepository extends TenantAwareRepository<User, Long> {
     boolean existsByTenantIdAndUsername(UUID tenantId, String username);
 
     boolean existsByTenantIdAndEmail(UUID tenantId, String email);
+
+    @Query("SELECT DISTINCT ur.user.id FROM UserRole ur WHERE ur.role.id = :roleId")
+    List<Long> findUserIdsByRoleId(@Param("roleId") Long roleId);
 }

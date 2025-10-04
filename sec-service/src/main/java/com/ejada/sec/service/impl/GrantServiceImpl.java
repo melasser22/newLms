@@ -25,6 +25,7 @@ import com.ejada.sec.repository.UserPrivilegeRepository;
 import com.ejada.sec.repository.UserRepository;
 import com.ejada.sec.repository.UserRoleRepository;
 import com.ejada.sec.service.GrantService;
+import com.ejada.sec.service.PermissionEvaluationService;
 import com.ejada.sec.service.RoleHierarchyService;
 import com.ejada.sec.util.SecurityContextUtils;
 import jakarta.transaction.Transactional;
@@ -56,6 +57,7 @@ public class GrantServiceImpl implements GrantService {
     private final UserRoleRepository userRoleRepository;
     private final RolePrivilegeRepository rolePrivilegeRepository;
     private final UserPrivilegeRepository userPrivilegeRepository;
+    private final PermissionEvaluationService permissionEvaluationService;
     private final ReferenceResolver resolver;
 
     @Override
@@ -105,7 +107,8 @@ public class GrantServiceImpl implements GrantService {
             }
         }
 
-        rolesToAssign.forEach(role -> {
+        boolean rolesAdded = false;
+        for (Role role : rolesToAssign) {
             UserRoleId id = new UserRoleId(targetUser.getId(), role.getId());
             if (!userRoleRepository.existsById(id)) {
                 userRoleRepository.save(
@@ -117,8 +120,14 @@ public class GrantServiceImpl implements GrantService {
                 );
                 log.info("User {} assigned role {} (level {}) to user {}",
                     currentUser.getId(), role.getCode(), role.getLevel().getLevel(), targetUser.getId());
+                rolesAdded = true;
             }
-        });
+        }
+
+        if (rolesAdded) {
+            permissionEvaluationService.invalidateUserPermissions(targetUser.getId());
+            log.info("Invalidated permission cache after role assignment for user {}", targetUser.getId());
+        }
     }
 
     @Override
@@ -161,11 +170,13 @@ public class GrantServiceImpl implements GrantService {
             }
         }
 
-        targetUser.getRoles().removeIf(ur -> requestedCodes.contains(ur.getRole().getCode()));
-        userRepository.save(targetUser);
-
-        log.info("User {} revoked roles {} from user {}",
-            currentUser.getId(), requestedCodes, targetUser.getId());
+        boolean rolesRemoved = targetUser.getRoles().removeIf(ur -> requestedCodes.contains(ur.getRole().getCode()));
+        if (rolesRemoved) {
+            userRepository.save(targetUser);
+            permissionEvaluationService.invalidateUserPermissions(targetUser.getId());
+            log.info("User {} revoked roles {} from user {}",
+                currentUser.getId(), requestedCodes, targetUser.getId());
+        }
     }
 
     @Override
@@ -193,7 +204,8 @@ public class GrantServiceImpl implements GrantService {
 
         List<Privilege> privileges = resolver.privilegesByCodes(req.getTenantId(), req.getPrivilegeCodes());
 
-        privileges.forEach(privilege -> {
+        boolean privilegesAdded = false;
+        for (Privilege privilege : privileges) {
             RolePrivilegeId id = new RolePrivilegeId(role.getId(), privilege.getId());
             if (!rolePrivilegeRepository.existsById(id)) {
                 rolePrivilegeRepository.save(
@@ -203,11 +215,15 @@ public class GrantServiceImpl implements GrantService {
                         .privilege(privilege)
                         .build()
                 );
+                privilegesAdded = true;
             }
-        });
+        }
 
-        log.info("User {} granted {} privileges to role {}",
-            currentUser.getId(), privileges.size(), role.getCode());
+        if (privilegesAdded) {
+            permissionEvaluationService.invalidateRolePermissions(role.getId());
+            log.info("User {} granted {} privileges to role {}",
+                currentUser.getId(), privileges.size(), role.getCode());
+        }
     }
 
     @Override
@@ -235,13 +251,16 @@ public class GrantServiceImpl implements GrantService {
             return;
         }
 
-        role.getRolePrivileges().removeIf(
+        boolean removed = role.getRolePrivileges().removeIf(
             rp -> privilegeCodes.contains(rp.getPrivilege().getCode())
         );
-        roleRepository.save(role);
 
-        log.info("User {} revoked privileges from role {}",
-            currentUser.getId(), role.getCode());
+        if (removed) {
+            roleRepository.save(role);
+            permissionEvaluationService.invalidateRolePermissions(role.getId());
+            log.info("User {} revoked privileges from role {}",
+                currentUser.getId(), role.getCode());
+        }
     }
 
     @Override
@@ -279,6 +298,7 @@ public class GrantServiceImpl implements GrantService {
         userPrivilege.setNotedBy(currentUserId);
         userPrivilege.setNotedAt(java.time.Instant.now());
         userPrivilegeRepository.save(userPrivilege);
+        permissionEvaluationService.invalidateUserPermissions(targetUser.getId());
 
         log.info("User {} set privilege override {} = {} for user {}",
             currentUser.getId(), privilege.getCode(), req.getGranted(), targetUser.getId());
