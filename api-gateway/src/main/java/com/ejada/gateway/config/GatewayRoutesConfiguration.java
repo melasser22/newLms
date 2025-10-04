@@ -4,12 +4,14 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import com.ejada.gateway.filter.ApiVersioningGatewayFilter;
 import com.ejada.gateway.filter.SessionAffinityGatewayFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cloud.gateway.filter.factory.WeightGatewayFilterFactory;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
@@ -33,7 +35,8 @@ public class GatewayRoutesConfiguration {
   @Bean
   RouteLocator gatewayRoutes(RouteLocatorBuilder builder,
       GatewayRoutesProperties properties,
-      ObjectProvider<GatewayRouteDefinitionProvider> dynamicProviders) {
+      ObjectProvider<GatewayRouteDefinitionProvider> dynamicProviders,
+      WeightGatewayFilterFactory weightGatewayFilterFactory) {
     RouteLocatorBuilder.Builder routes = builder.routes();
 
     Map<String, GatewayRoutesProperties.ServiceRoute> aggregated = new LinkedHashMap<>();
@@ -110,7 +113,10 @@ public class GatewayRoutesConfiguration {
               }
               route.getRequestHeaders().forEach(filters::addRequestHeader);
               if (route.getWeight().isEnabled()) {
-                filters.weight(route.getWeight().getGroup(), route.getWeight().getValue());
+                WeightGatewayFilterFactory.Config weightConfig = new WeightGatewayFilterFactory.Config();
+                weightConfig.setGroup(route.getWeight().getGroup());
+                weightConfig.setWeight(route.getWeight().getValue());
+                filters.filter(weightGatewayFilterFactory.apply(weightConfig));
               }
               if (route.getSessionAffinity().isEnabled()) {
                 filters.filter(new SessionAffinityGatewayFilter(route.getSessionAffinity()));
