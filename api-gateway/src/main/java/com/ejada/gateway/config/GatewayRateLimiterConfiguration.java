@@ -27,6 +27,7 @@ public class GatewayRateLimiterConfiguration {
   private static final String STRATEGY_TENANT = "tenant";
   private static final String STRATEGY_IP = "ip";
   private static final String STRATEGY_USER = "user";
+  private static final String STRATEGY_TENANT_IP = "tenant_ip";
 
   @Bean
   @Primary
@@ -62,12 +63,19 @@ public class GatewayRateLimiterConfiguration {
     if (!StringUtils.hasText(strategy)) {
       return STRATEGY_TENANT;
     }
-    return strategy.trim().toLowerCase(Locale.ROOT);
+    return strategy.trim().toLowerCase(Locale.ROOT).replace('-', '_').replace('+', '_');
   }
 
   private KeyResolver selectResolver(String strategy, Map<String, KeyResolver> resolvers) {
     if (Objects.equals(strategy, STRATEGY_TENANT)) {
       return resolvers.get("tenantKeyResolver");
+    }
+    if (Objects.equals(strategy, STRATEGY_TENANT_IP)) {
+      KeyResolver composite = resolvers.get("tenantIpKeyResolver");
+      if (composite != null) {
+        return composite;
+      }
+      return resolvers.get("compositeKeyResolver");
     }
     if (Objects.equals(strategy, STRATEGY_IP)) {
       return resolvers.get("ipKeyResolver");
