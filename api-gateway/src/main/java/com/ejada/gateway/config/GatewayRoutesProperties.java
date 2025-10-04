@@ -15,10 +15,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * Configuration properties describing the downstream services that should be
@@ -26,6 +28,8 @@ import org.springframework.util.StringUtils;
  * documented plan so operators can declaratively manage routes per
  * environment.
  */
+@RefreshScope
+@Validated
 @ConfigurationProperties(prefix = "gateway")
 public class GatewayRoutesProperties {
 

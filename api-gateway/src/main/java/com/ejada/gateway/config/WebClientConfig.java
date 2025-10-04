@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -33,6 +34,7 @@ import reactor.netty.transport.logging.AdvancedByteBufFormat;
 public class WebClientConfig {
 
   @Bean
+  @RefreshScope
   public ClientHttpConnector gatewayClientHttpConnector(GatewayWebClientProperties properties) {
     HttpClient httpClient = HttpClient.create();
     Duration connectTimeout = properties.getConnectTimeout();
@@ -65,6 +67,7 @@ public class WebClientConfig {
 
   @Bean
   @LoadBalanced
+  @RefreshScope
   public WebClient.Builder loadBalancedWebClientBuilder(ClientHttpConnector gatewayClientHttpConnector,
       GatewayWebClientProperties properties,
       ObjectProvider<ExchangeFilterFunction> customFilters) {

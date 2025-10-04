@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.util.StringUtils;
 
 /**
@@ -15,6 +17,8 @@ import org.springframework.util.StringUtils;
  * describe which downstream services should be queried for health/status information and how long
  * the gateway should wait for those calls before falling back to graceful degradation.
  */
+@RefreshScope
+@Validated
 @ConfigurationProperties(prefix = "gateway.admin")
 public class AdminAggregationProperties {
 

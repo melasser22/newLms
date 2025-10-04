@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>API Gateway Configuration Reference</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; line-height: 1.6; }
+    h1 { color: #1a4d8f; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; }
+    th, td { border: 1px solid #cbd5e0; padding: 0.75rem; text-align: left; }
+    th { background-color: #f7fafc; }
+    caption { caption-side: top; text-align: left; font-weight: bold; margin-bottom: 0.5rem; }
+    code { background-color: #edf2f7; padding: 0.1rem 0.3rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>API Gateway Configuration Reference</h1>
+  <p>
+    This document was generated from the Spring configuration metadata exposed by
+    <code>additional-spring-configuration-metadata.json</code> and
+    <code>@ConfigurationProperties</code> declarations within the API Gateway module.
+  </p>
+
+  <h2>Gateway Properties</h2>
+  <table>
+    <caption>gateway.*</caption>
+    <thead>
+      <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>gateway.routes</code></td>
+        <td><code>Map&lt;String, ServiceRoute&gt;</code></td>
+        <td>Declarative downstream routes exposed through Spring Cloud Gateway.</td>
+        <td>Empty map</td>
+      </tr>
+      <tr>
+        <td><code>gateway.webclient.connect-timeout</code></td>
+        <td><code>Duration</code></td>
+        <td>Connection timeout applied to the reactive WebClient.</td>
+        <td>3s</td>
+      </tr>
+      <tr>
+        <td><code>gateway.webclient.response-timeout</code></td>
+        <td><code>Duration</code></td>
+        <td>Total response timeout enforced for downstream calls.</td>
+        <td>15s</td>
+      </tr>
+      <tr>
+        <td><code>gateway.subscription.validation-uri</code></td>
+        <td><code>String</code></td>
+        <td>URI template used to validate subscriptions before routing traffic.</td>
+        <td><code>lb://subscription-service/internal/subscriptions/{tenantId}</code></td>
+      </tr>
+      <tr>
+        <td><code>gateway.admin.aggregation.services</code></td>
+        <td><code>List&lt;Service&gt;</code></td>
+        <td>Downstream admin services aggregated into the admin dashboard endpoints.</td>
+        <td>Empty list</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Platform Metadata</h2>
+  <table>
+    <caption>app.*</caption>
+    <thead>
+      <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>app.env</code></td>
+        <td><code>String</code></td>
+        <td>Current environment identifier (local, dev, staging, production).</td>
+        <td><code>dev</code></td>
+      </tr>
+      <tr>
+        <td><code>app.version</code></td>
+        <td><code>String</code></td>
+        <td>Semantic version exposed for diagnostics and telemetry.</td>
+        <td><code>1.0.0</code></td>
+      </tr>
+      <tr>
+        <td><code>app.configuration-version</code></td>
+        <td><code>Long</code></td>
+        <td>Monotonically increasing identifier bumped after each refresh event.</td>
+        <td><code>1</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Encryption</h2>
+  <table>
+    <caption>jasypt.*</caption>
+    <thead>
+      <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>jasypt.encryptor.password</code></td>
+        <td><code>String</code></td>
+        <td>Password used to decrypt <code>ENC(...)</code> values supplied by the Config Server.</td>
+        <td><code>changeit</code></td>
+      </tr>
+      <tr>
+        <td><code>jasypt.encryptor.algorithm</code></td>
+        <td><code>String</code></td>
+        <td>Algorithm used for encryption/decryption.</td>
+        <td><code>PBEWithHmacSHA512AndAES_256</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    To refresh configuration at runtime without downtime, invoke
+    <code>POST /actuator/refresh</code>. Successful refreshes are logged with the
+    incremented configuration version for auditing.
+  </p>
+</body>
+</html>

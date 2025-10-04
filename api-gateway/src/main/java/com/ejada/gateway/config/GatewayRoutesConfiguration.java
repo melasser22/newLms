@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.BooleanSpec;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
@@ -33,6 +34,7 @@ public class GatewayRoutesConfiguration {
   private static final Duration PROVIDER_TIMEOUT = Duration.ofSeconds(5);
 
   @Bean
+  @RefreshScope
   RouteLocator gatewayRoutes(RouteLocatorBuilder builder,
       GatewayRoutesProperties properties,
       ObjectProvider<GatewayRouteDefinitionProvider> dynamicProviders) {

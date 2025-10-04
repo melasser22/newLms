@@ -1,0 +1,29 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+  cloud:
+    config:
+      profile: local
+      label: main
+
+gateway:
+  webclient:
+    connect-timeout: 2s
+    response-timeout: 10s
+    read-timeout: 10s
+    write-timeout: 10s
+  subscription:
+    enabled: false
+  defaults:
+    resilience:
+      retry:
+        retries: 1
+
+shared:
+  ratelimit:
+    capacity: 1000
+    window: 30s
+
+app:
+  env: local
