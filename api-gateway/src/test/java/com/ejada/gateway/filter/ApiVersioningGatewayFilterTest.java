@@ -5,16 +5,16 @@ import com.ejada.gateway.config.GatewayRoutesProperties;
 import com.ejada.gateway.context.GatewayRequestAttributes;
 import java.net.URI;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class ApiVersioningGatewayFilterTest {
 
@@ -94,16 +94,16 @@ class ApiVersioningGatewayFilterTest {
     MockServerWebExchange exchange = MockServerWebExchange.from(
         MockServerHttpRequest.get("/v9/demo/items").build());
 
-    AtomicBoolean invoked = new AtomicBoolean(false);
-    GatewayFilterChain chain = webExchange -> {
-      invoked.set(true);
-      return Mono.empty();
-    };
+    GatewayFilterChain chain = webExchange -> Mono.empty();
 
-    filter.filter(exchange, chain).block();
-
-    assertFalse(invoked.get());
-    assertEquals(404, exchange.getResponse().getStatusCode().value());
+    StepVerifier.create(filter.filter(exchange, chain))
+        .expectErrorSatisfies(throwable -> {
+          assertEquals(ResponseStatusException.class, throwable.getClass());
+          ResponseStatusException exception = (ResponseStatusException) throwable;
+          assertEquals(404, exception.getStatusCode().value());
+          assertEquals("Requested API version is not supported", exception.getReason());
+        })
+        .verify();
   }
 
   private GatewayRoutesProperties.ServiceRoute buildRoute(List<String> paths) {

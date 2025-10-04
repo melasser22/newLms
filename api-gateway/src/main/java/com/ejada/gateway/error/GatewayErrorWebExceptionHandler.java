@@ -8,12 +8,15 @@ import com.ejada.common.exception.NotFoundException;
 import com.ejada.common.exception.ValidationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.reactive.error.ErrorWebExceptionHandler;
-import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -22,7 +25,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -86,6 +91,8 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
       return HttpStatus.CONFLICT;
     }
     if (ex instanceof ValidationException
+        || ex instanceof WebExchangeBindException
+        || ex instanceof ConstraintViolationException
         || ex instanceof BusinessRuleException
         || ex instanceof BusinessException
         || ex instanceof IllegalArgumentException) {
@@ -100,6 +107,9 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
 
   private String determineErrorCode(Throwable ex, HttpStatus status) {
     if (ex instanceof ResponseStatusException) {
+      if (status == HttpStatus.NOT_FOUND) {
+        return "ERR_RESOURCE_NOT_FOUND";
+      }
       return status.is5xxServerError() ? "ERR_INTERNAL" : "ERR_STATUS";
     }
     if (ex instanceof NotFoundException || ex instanceof java.util.NoSuchElementException) {
@@ -108,7 +118,9 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     if (ex instanceof DuplicateResourceException || ex instanceof DataIntegrityViolationException) {
       return "ERR_DATA_CONFLICT";
     }
-    if (ex instanceof ValidationException) {
+    if (ex instanceof ValidationException
+        || ex instanceof WebExchangeBindException
+        || ex instanceof ConstraintViolationException) {
       return "ERR_VALIDATION";
     }
     if (ex instanceof BusinessRuleException) {
@@ -130,8 +142,15 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
   }
 
   private String determineMessage(Throwable ex, HttpStatus status) {
+    if (ex instanceof WebExchangeBindException bindException) {
+      return extractBindingMessage(bindException);
+    }
+    if (ex instanceof ConstraintViolationException constraintViolationException) {
+      return extractConstraintViolationMessage(constraintViolationException);
+    }
     if (ex instanceof ResponseStatusException rse) {
-      return rse.getReason();
+      String reason = rse.getReason();
+      return StringUtils.hasText(reason) ? reason : status.getReasonPhrase();
     }
     if (ex instanceof DataIntegrityViolationException) {
       return "Data conflict occurred";
@@ -139,10 +158,50 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     if (ex instanceof org.springframework.security.access.AccessDeniedException) {
       return "Access denied";
     }
+    if (status.is5xxServerError()) {
+      return "An unexpected error occurred";
+    }
     String message = ex.getMessage();
     if (!StringUtils.hasText(message)) {
-      return status.is5xxServerError() ? "An unexpected error occurred" : status.getReasonPhrase();
+      return status.getReasonPhrase();
     }
     return message;
+  }
+
+  private String extractBindingMessage(WebExchangeBindException ex) {
+    if (ex.getBindingResult() == null || CollectionUtils.isEmpty(ex.getBindingResult().getAllErrors())) {
+      return "Request validation failed";
+    }
+    return ex.getBindingResult().getAllErrors().stream()
+        .map(error -> {
+          String defaultMessage = error.getDefaultMessage();
+          if (StringUtils.hasText(defaultMessage)) {
+            return defaultMessage;
+          }
+          return error.getCode();
+        })
+        .filter(StringUtils::hasText)
+        .collect(Collectors.joining("; "));
+  }
+
+  private String extractConstraintViolationMessage(ConstraintViolationException ex) {
+    Set<ConstraintViolation<?>> violations = ex.getConstraintViolations();
+    if (violations == null || violations.isEmpty()) {
+      return "Request validation failed";
+    }
+    return violations.stream()
+        .map(violation -> {
+          String path = violation.getPropertyPath() != null ? violation.getPropertyPath().toString() : null;
+          String message = violation.getMessage();
+          if (StringUtils.hasText(path) && StringUtils.hasText(message)) {
+            return path + ": " + message;
+          }
+          if (StringUtils.hasText(message)) {
+            return message;
+          }
+          return path;
+        })
+        .filter(StringUtils::hasText)
+        .collect(Collectors.joining("; "));
   }
 }
