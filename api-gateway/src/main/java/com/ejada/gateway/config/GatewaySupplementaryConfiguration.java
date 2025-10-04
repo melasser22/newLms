@@ -10,6 +10,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  */
 @Configuration
 @EnableScheduling
-@EnableConfigurationProperties({SubscriptionValidationProperties.class, GatewayBffProperties.class,AdminAggregationProperties.class})
+@EnableConfigurationProperties({SubscriptionValidationProperties.class,
+    GatewayBffProperties.class,
+    AdminAggregationProperties.class,
+    GatewayLoggingProperties.class,
+    GatewayTracingProperties.class})
 public class GatewaySupplementaryConfiguration {
 }

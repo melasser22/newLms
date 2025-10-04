@@ -3,6 +3,8 @@ package com.ejada.gateway.ratelimit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.ejada.gateway.config.GatewayRateLimitProperties;
+import com.ejada.gateway.config.GatewayTracingProperties;
+import com.ejada.gateway.observability.GatewayTracingHelper;
 import com.ejada.shared_starter_ratelimit.RateLimitProps;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -33,6 +35,7 @@ class ReactiveRateLimiterFilterTest {
     private ReactiveRateLimiterFilter filter;
     private ReactiveRedisConnectionFactory connectionFactory;
     private GatewayRateLimitProperties gatewayRateLimitProperties;
+    private GatewayTracingHelper tracingHelper;
 
     @BeforeEach
     void setUp() {
@@ -49,8 +52,9 @@ class ReactiveRateLimiterFilterTest {
         this.gatewayRateLimitProperties = new GatewayRateLimitProperties();
         gatewayRateLimitProperties.setBurstMultiplier(1.0d);
         KeyResolver keyResolver = exchange -> Mono.just("tenant-a");
+        this.tracingHelper = new GatewayTracingHelper(null, new GatewayTracingProperties());
         this.filter = new ReactiveRateLimiterFilter(template, props, keyResolver, new ObjectMapper(),
-                gatewayRateLimitProperties, new SimpleMeterRegistry());
+                gatewayRateLimitProperties, new SimpleMeterRegistry(), tracingHelper);
         flushRedis();
     }
 
@@ -97,7 +101,7 @@ class ReactiveRateLimiterFilterTest {
         ReactiveStringRedisTemplate template = new ReactiveStringRedisTemplate(connectionFactory);
         KeyResolver keyResolver = exchange -> Mono.just("tenant-b");
         ReactiveRateLimiterFilter concurrentFilter = new ReactiveRateLimiterFilter(template, props, keyResolver,
-                new ObjectMapper(), gatewayProps, new SimpleMeterRegistry());
+                new ObjectMapper(), gatewayProps, new SimpleMeterRegistry(), tracingHelper);
 
         flushRedis();
 

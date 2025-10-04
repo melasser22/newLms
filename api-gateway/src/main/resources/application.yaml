@@ -205,6 +205,15 @@ resilience4j:
 
 # Declarative downstream routes consumed by GatewayRoutesConfiguration
 gateway:
+  logging:
+    access-log:
+      enabled: true
+      skip-patterns:
+        - /actuator/**
+        - /health
+  tracing:
+    enhanced-tags:
+      enabled: true
   bff:
     dashboard:
       tenant-service-uri: lb://tenant-service
