@@ -7,6 +7,7 @@ import com.ejada.starter_core.context.RequestContextContributor;
 import com.ejada.starter_core.context.TenantContextContributor;
 import com.ejada.starter_core.context.UserContextContributor;
 import com.ejada.starter_core.tenant.DefaultTenantResolver;
+import com.ejada.starter_core.tenant.TenantDirectory;
 import com.ejada.starter_core.tenant.TenantRequirementInterceptor;
 import com.ejada.starter_core.tenant.TenantResolver;
 import com.ejada.starter_core.web.FilterSkipUtils;
@@ -112,10 +113,11 @@ public class CoreAutoConfiguration {
    * ------------------------------------------- */
 
   @Bean
+  @ConditionalOnBean(TenantDirectory.class)
   @ConditionalOnProperty(prefix = "shared.core.tenant", name = "enabled", havingValue = "true", matchIfMissing = true)
   @ConditionalOnMissingBean(TenantResolver.class)
-  public TenantResolver tenantResolver(CoreProps props) {
-    return new DefaultTenantResolver(props.getTenant());
+  public TenantResolver tenantResolver(CoreProps props, TenantDirectory directory) {
+    return new DefaultTenantResolver(props.getTenant(), directory);
   }
 
   /** Registers the @RequireTenant/@OptionalTenant enforcement (400 if missing). */
@@ -236,8 +238,32 @@ public class CoreAutoConfiguration {
       /** Candidate claim names in JWT */
       private String[] jwtClaimNames = new String[]{"tenant", "tenant_id", "tid"};
 
+      /** Optional claim carrying the tenant slug in JWT */
+      private String jwtTenantSlugClaim = "tenantSlug";
+
       /** Resolution preference: header > query > jwt */
       private boolean preferHeaderOverJwt = true;
+
+      /** Allow resolving tenant from X-Tenant-Id header */
+      private boolean allowHeaderResolution = true;
+
+      /** Allow resolving tenant from request subdomain */
+      private boolean allowSubdomainResolution = true;
+
+      /** Allow resolving tenant from admin path segment */
+      private boolean allowPathResolution = true;
+
+      /** Fail the request when no tenant can be determined */
+      private boolean failIfTenantMissing = true;
+
+      /** Require API key authentication before accepting header based tenant resolution */
+      private boolean requireApiKeyForHeader = true;
+
+      /** Reserved subdomains that should never be treated as tenants */
+      private String[] reservedSubdomains = new String[]{"www", "app"};
+
+      /** Cache TTL in seconds for subdomain lookups (0 disables caching) */
+      private long subdomainCacheTtlSeconds = 300;
 
       /** Interceptor default policy if no annotation found: OPTIONAL or REQUIRED */
       private String defaultPolicy = "OPTIONAL";
@@ -262,8 +288,24 @@ public class CoreAutoConfiguration {
       public void setResolveFromJwt(boolean resolveFromJwt) { this.resolveFromJwt = resolveFromJwt; }
       public String[] getJwtClaimNames() { return jwtClaimNames; }
       public void setJwtClaimNames(String[] jwtClaimNames) { this.jwtClaimNames = jwtClaimNames; }
+      public String getJwtTenantSlugClaim() { return jwtTenantSlugClaim; }
+      public void setJwtTenantSlugClaim(String jwtTenantSlugClaim) { this.jwtTenantSlugClaim = jwtTenantSlugClaim; }
       public boolean isPreferHeaderOverJwt() { return preferHeaderOverJwt; }
       public void setPreferHeaderOverJwt(boolean preferHeaderOverJwt) { this.preferHeaderOverJwt = preferHeaderOverJwt; }
+      public boolean isAllowHeaderResolution() { return allowHeaderResolution; }
+      public void setAllowHeaderResolution(boolean allowHeaderResolution) { this.allowHeaderResolution = allowHeaderResolution; }
+      public boolean isAllowSubdomainResolution() { return allowSubdomainResolution; }
+      public void setAllowSubdomainResolution(boolean allowSubdomainResolution) { this.allowSubdomainResolution = allowSubdomainResolution; }
+      public boolean isAllowPathResolution() { return allowPathResolution; }
+      public void setAllowPathResolution(boolean allowPathResolution) { this.allowPathResolution = allowPathResolution; }
+      public boolean isFailIfTenantMissing() { return failIfTenantMissing; }
+      public void setFailIfTenantMissing(boolean failIfTenantMissing) { this.failIfTenantMissing = failIfTenantMissing; }
+      public boolean isRequireApiKeyForHeader() { return requireApiKeyForHeader; }
+      public void setRequireApiKeyForHeader(boolean requireApiKeyForHeader) { this.requireApiKeyForHeader = requireApiKeyForHeader; }
+      public String[] getReservedSubdomains() { return reservedSubdomains; }
+      public void setReservedSubdomains(String[] reservedSubdomains) { this.reservedSubdomains = reservedSubdomains; }
+      public long getSubdomainCacheTtlSeconds() { return subdomainCacheTtlSeconds; }
+      public void setSubdomainCacheTtlSeconds(long subdomainCacheTtlSeconds) { this.subdomainCacheTtlSeconds = subdomainCacheTtlSeconds; }
       public String getDefaultPolicy() { return defaultPolicy; }
       public void setDefaultPolicy(String defaultPolicy) { this.defaultPolicy = defaultPolicy; }
       public int getOrder() { return order; }

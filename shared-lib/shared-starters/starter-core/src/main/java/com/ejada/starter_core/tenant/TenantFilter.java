@@ -3,6 +3,7 @@ package com.ejada.starter_core.tenant;
 import com.ejada.common.context.ContextManager;
 import com.ejada.starter_core.config.CoreAutoConfiguration.CoreProps;
 import com.ejada.starter_core.web.FilterSkipUtils;
+import com.ejada.starter_core.tenant.TenantError;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -42,8 +43,13 @@ public class TenantFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws ServletException, IOException {
         TenantResolution resolution = resolver.resolve(req);
-        if (resolution.isInvalid()) {
-            res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + cfg.getHeaderName());
+        if (resolution.hasError()) {
+            TenantError error = resolution.error();
+            if (error == null || resolution.isInvalid()) {
+                res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + cfg.getHeaderName());
+            } else {
+                res.sendError(error.httpStatus(), error.message());
+            }
             return;
         }
 

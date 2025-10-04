@@ -4,6 +4,7 @@ package com.ejada.tenant.repository;
 import com.ejada.tenant.model.Tenant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -31,4 +32,8 @@ public interface TenantRepository extends JpaRepository<Tenant, Integer> {
     boolean existsByCodeAndIsDeletedFalseAndIdNot(String code, Integer id);
 
     boolean existsByNameIgnoreCaseAndIsDeletedFalseAndIdNot(String name, Integer id);
+
+    Optional<Tenant> findBySecurityTenantIdAndIsDeletedFalse(UUID securityTenantId);
+
+    Optional<Tenant> findByCodeIgnoreCaseAndIsDeletedFalse(String code);
 }
