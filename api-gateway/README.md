@@ -9,6 +9,7 @@ Enterprise-ready Spring Cloud Gateway that fronts the LMS microservices. It reus
 - **Performance** – Reactive rate limiting, tuned Netty client, weighted load balancing.
 - **Observability** – OpenTelemetry traces, Prometheus metrics, structured JSON logs.
 - **Operations** – Dynamic route reloads, blue/green routing flags, Helm deployment assets.
+- **Routing Intelligence** – API version normalisation, weighted canary traffic, session affinity cookies, and operator-facing admin aggregates.
 - **Tenant & Subscription Enforcement** – Dedicated filters for correlation id propagation, tenant extraction, and subscription validation with Redis caching.
 - **Flexible Rate Limiting** – Built-in tenant and IP-based key resolvers that plug directly into Spring Cloud Gateway's `RequestRateLimiter` filter.
 - **Downstream Client Configuration** – Centralised, load-balanced `WebClient` builder with context propagation and timeout tuning.

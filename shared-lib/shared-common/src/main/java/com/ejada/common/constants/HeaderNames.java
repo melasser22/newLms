@@ -39,6 +39,14 @@ public final class HeaderNames {
     public static final String PLATFORM = "X-Platform"; // e.g. iOS, Android, Web
     public static final String USER_ID = "X-USER_ID"; // e.g. iOS, Android, Web
 
+    // 📦 API Governance
+    /**
+     * Canonical API version header propagated by the API gateway whenever a
+     * request targets a versioned endpoint. Downstream services can rely on
+     * this header instead of parsing the URI.
+     */
+    public static final String API_VERSION = "X-Api-Version";
+
     // 📜 Content / Localization
     public static final String CONTENT_TYPE = "Content-Type";
     public static final String ACCEPT = "Accept";

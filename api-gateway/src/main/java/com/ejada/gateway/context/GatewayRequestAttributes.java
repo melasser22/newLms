@@ -17,6 +17,9 @@ public final class GatewayRequestAttributes {
   /** Attribute storing the cached subscription status for the current tenant. */
   public static final String SUBSCRIPTION = GatewayRequestAttributes.class.getName() + ".subscription";
 
+  /** Attribute storing the resolved API version for versioned routes. */
+  public static final String API_VERSION = GatewayRequestAttributes.class.getName() + ".apiVersion";
+
   private GatewayRequestAttributes() {
     // utility class
   }

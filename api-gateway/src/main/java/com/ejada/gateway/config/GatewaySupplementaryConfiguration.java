@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
  * that are not part of the shared starters.
  */
 @Configuration
-@EnableConfigurationProperties({SubscriptionValidationProperties.class})
+@EnableConfigurationProperties({SubscriptionValidationProperties.class, AdminAggregationProperties.class})
 public class GatewaySupplementaryConfiguration {
 }
 

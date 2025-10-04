@@ -4,7 +4,9 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -95,6 +97,18 @@ public class GatewayRoutesProperties {
     /** Optional resilience configuration for the route. */
     private Resilience resilience = new Resilience();
 
+    /** Optional request headers to automatically append before forwarding. */
+    private Map<String, String> requestHeaders = new LinkedHashMap<>();
+
+    /** Optional API version handling configuration. */
+    private Versioning versioning = new Versioning();
+
+    /** Optional traffic weighting (used for blue/green or canary deployments). */
+    private Weight weight = new Weight();
+
+    /** Session affinity preferences for stateful downstream services. */
+    private SessionAffinity sessionAffinity = new SessionAffinity();
+
     public String getId() {
       return id;
     }
@@ -181,6 +195,38 @@ public class GatewayRoutesProperties {
       this.resilience = (resilience == null) ? new Resilience() : resilience;
     }
 
+    public Map<String, String> getRequestHeaders() {
+      return requestHeaders;
+    }
+
+    public void setRequestHeaders(Map<String, String> requestHeaders) {
+      this.requestHeaders = sanitiseHeaders(requestHeaders);
+    }
+
+    public Versioning getVersioning() {
+      return versioning;
+    }
+
+    public void setVersioning(Versioning versioning) {
+      this.versioning = (versioning == null) ? new Versioning() : versioning;
+    }
+
+    public Weight getWeight() {
+      return weight;
+    }
+
+    public void setWeight(Weight weight) {
+      this.weight = (weight == null) ? new Weight() : weight;
+    }
+
+    public SessionAffinity getSessionAffinity() {
+      return sessionAffinity;
+    }
+
+    public void setSessionAffinity(SessionAffinity sessionAffinity) {
+      this.sessionAffinity = (sessionAffinity == null) ? new SessionAffinity() : sessionAffinity;
+    }
+
     public void applyDefaults(RouteDefaults defaults) {
       if (defaults == null) {
         return;
@@ -189,6 +235,37 @@ public class GatewayRoutesProperties {
         this.resilience = new Resilience();
       }
       this.resilience.applyDefaults(defaults.getResilience());
+    }
+
+    private Map<String, String> sanitiseHeaders(Map<String, String> headers) {
+      if (headers == null || headers.isEmpty()) {
+        return new LinkedHashMap<>();
+      }
+      Map<String, String> sanitized = new LinkedHashMap<>();
+      headers.forEach((key, value) -> {
+        if (!StringUtils.hasText(key)) {
+          return;
+        }
+        String headerValue = Objects.toString(value, null);
+        if (headerValue == null) {
+          return;
+        }
+        sanitized.put(key.trim(), headerValue.trim());
+      });
+      return sanitized;
+    }
+
+    private void validateHeaders(String key) {
+      for (Map.Entry<String, String> entry : requestHeaders.entrySet()) {
+        String headerName = entry.getKey();
+        if (!StringUtils.hasText(headerName)) {
+          throw new IllegalStateException("gateway.routes." + key + ".request-headers contains a blank header name");
+        }
+        if (!StringUtils.hasText(entry.getValue())) {
+          throw new IllegalStateException(
+              "gateway.routes." + key + ".request-headers." + headerName + " must have a value");
+        }
+      }
     }
 
     public void validate(String key) {
@@ -218,6 +295,10 @@ public class GatewayRoutesProperties {
             "gateway.routes." + key + ".prefixPath must start with '/' if provided");
       }
       resilience.validate(key);
+      versioning.validate(key);
+      weight.validate(key);
+      sessionAffinity.validate(key);
+      validateHeaders(key);
     }
 
     @Override
@@ -229,6 +310,10 @@ public class GatewayRoutesProperties {
           + ", methods=" + methods
           + ", stripPrefix=" + stripPrefix
           + ", prefixPath='" + prefixPath + '\''
+          + ", requestHeaders=" + requestHeaders
+          + ", versioning=" + versioning
+          + ", weight=" + weight
+          + ", sessionAffinity=" + sessionAffinity
           + '}';
     }
 
@@ -246,12 +331,292 @@ public class GatewayRoutesProperties {
           && Objects.equals(paths, that.paths)
           && Objects.equals(methods, that.methods)
           && Objects.equals(prefixPath, that.prefixPath)
-          && Objects.equals(resilience, that.resilience);
+          && Objects.equals(resilience, that.resilience)
+          && Objects.equals(requestHeaders, that.requestHeaders)
+          && Objects.equals(versioning, that.versioning)
+          && Objects.equals(weight, that.weight)
+          && Objects.equals(sessionAffinity, that.sessionAffinity);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(id, uri, paths, methods, stripPrefix, prefixPath, resilience);
+      return Objects.hash(id, uri, paths, methods, stripPrefix, prefixPath, resilience, requestHeaders,
+          versioning, weight, sessionAffinity);
+    }
+
+    /**
+     * Controls how the gateway interprets and propagates API version segments for a
+     * particular route.
+     */
+    public static class Versioning {
+
+      private boolean enabled;
+      private String defaultVersion = "v1";
+      private List<String> supportedVersions = new ArrayList<>();
+      private boolean fallbackToDefault = true;
+      private boolean propagateHeader = true;
+
+      public boolean isEnabled() {
+        return enabled;
+      }
+
+      public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+      }
+
+      public String getDefaultVersion() {
+        return defaultVersion;
+      }
+
+      public void setDefaultVersion(String defaultVersion) {
+        this.defaultVersion = (defaultVersion == null) ? null : defaultVersion.trim();
+      }
+
+      public List<String> getSupportedVersions() {
+        return Collections.unmodifiableList(supportedVersions);
+      }
+
+      public void setSupportedVersions(List<String> supportedVersions) {
+        if (supportedVersions == null) {
+          this.supportedVersions = new ArrayList<>();
+          return;
+        }
+        LinkedHashSet<String> deduped = supportedVersions.stream()
+            .filter(StringUtils::hasText)
+            .map(value -> value.trim().toLowerCase(Locale.ROOT))
+            .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        this.supportedVersions = new ArrayList<>(deduped);
+      }
+
+      public boolean isFallbackToDefault() {
+        return fallbackToDefault;
+      }
+
+      public void setFallbackToDefault(boolean fallbackToDefault) {
+        this.fallbackToDefault = fallbackToDefault;
+      }
+
+      public boolean isPropagateHeader() {
+        return propagateHeader;
+      }
+
+      public void setPropagateHeader(boolean propagateHeader) {
+        this.propagateHeader = propagateHeader;
+      }
+
+      public boolean hasSupportedVersions() {
+        return !supportedVersions.isEmpty();
+      }
+
+      void validate(String key) {
+        if (!enabled) {
+          return;
+        }
+        defaultVersion = canonicalise(defaultVersion, key, "default-version");
+        List<String> canonical = new ArrayList<>();
+        for (String version : supportedVersions) {
+          canonical.add(canonicalise(version, key, "supported-versions"));
+        }
+        LinkedHashSet<String> deduped = new LinkedHashSet<>(canonical);
+        deduped.add(defaultVersion);
+        supportedVersions = new ArrayList<>(deduped);
+      }
+
+      private String canonicalise(String value, String key, String property) {
+        if (!StringUtils.hasText(value)) {
+          throw new IllegalStateException(
+              "gateway.routes." + key + ".versioning." + property + " must not be blank when versioning is enabled");
+        }
+        String candidate = value.trim().toLowerCase(Locale.ROOT);
+        if (candidate.startsWith("v")) {
+          candidate = candidate.substring(1);
+        }
+        if (!candidate.chars().allMatch(Character::isDigit)) {
+          throw new IllegalStateException(
+              "gateway.routes." + key + ".versioning." + property + " must be a numeric version (e.g. v1, 2)");
+        }
+        return "v" + candidate;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) {
+          return true;
+        }
+        if (!(o instanceof Versioning versioning)) {
+          return false;
+        }
+        return enabled == versioning.enabled
+            && fallbackToDefault == versioning.fallbackToDefault
+            && propagateHeader == versioning.propagateHeader
+            && Objects.equals(defaultVersion, versioning.defaultVersion)
+            && Objects.equals(supportedVersions, versioning.supportedVersions);
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hash(enabled, defaultVersion, supportedVersions, fallbackToDefault, propagateHeader);
+      }
+
+      @Override
+      public String toString() {
+        return "Versioning{" +
+            "enabled=" + enabled +
+            ", defaultVersion='" + defaultVersion + '\'' +
+            ", supportedVersions=" + supportedVersions +
+            ", fallbackToDefault=" + fallbackToDefault +
+            ", propagateHeader=" + propagateHeader +
+            '}';
+      }
+    }
+
+    /**
+     * Weight configuration used to split traffic between multiple routes that share the same
+     * weight group. Enables canary or blue/green releases without redeploying the gateway.
+     */
+    public static class Weight {
+
+      private boolean enabled;
+      private String group;
+      private int value = 100;
+
+      public boolean isEnabled() {
+        return enabled;
+      }
+
+      public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+      }
+
+      public String getGroup() {
+        return group;
+      }
+
+      public void setGroup(String group) {
+        this.group = (group == null) ? null : group.trim();
+      }
+
+      public int getValue() {
+        return value;
+      }
+
+      public void setValue(int value) {
+        this.value = value;
+      }
+
+      void validate(String key) {
+        if (!enabled) {
+          return;
+        }
+        if (!StringUtils.hasText(group)) {
+          throw new IllegalStateException(
+              "gateway.routes." + key + ".weight.group must be provided when weight is enabled");
+        }
+        if (value <= 0) {
+          throw new IllegalStateException(
+              "gateway.routes." + key + ".weight.value must be a positive integer");
+        }
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) {
+          return true;
+        }
+        if (!(o instanceof Weight weight)) {
+          return false;
+        }
+        return enabled == weight.enabled
+            && value == weight.value
+            && Objects.equals(group, weight.group);
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hash(enabled, group, value);
+      }
+
+      @Override
+      public String toString() {
+        return "Weight{" +
+            "enabled=" + enabled +
+            ", group='" + group + '\'' +
+            ", value=" + value +
+            '}';
+      }
+    }
+
+    /**
+     * Session affinity preferences used when downstream services maintain conversational state.
+     */
+    public static class SessionAffinity {
+
+      private boolean enabled;
+      private String cookieName = "LMS-AFFINITY";
+      private String headerName = "X-Session-Affinity";
+
+      public boolean isEnabled() {
+        return enabled;
+      }
+
+      public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+      }
+
+      public String getCookieName() {
+        return cookieName;
+      }
+
+      public void setCookieName(String cookieName) {
+        this.cookieName = (cookieName == null || cookieName.isBlank()) ? "LMS-AFFINITY" : cookieName.trim();
+      }
+
+      public String getHeaderName() {
+        return headerName;
+      }
+
+      public void setHeaderName(String headerName) {
+        this.headerName = (headerName == null || headerName.isBlank()) ? "X-Session-Affinity" : headerName.trim();
+      }
+
+      void validate(String key) {
+        if (!enabled) {
+          return;
+        }
+        if (!StringUtils.hasText(cookieName)) {
+          cookieName = "LMS-AFFINITY";
+        }
+        if (!StringUtils.hasText(headerName)) {
+          headerName = "X-Session-Affinity";
+        }
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) {
+          return true;
+        }
+        if (!(o instanceof SessionAffinity that)) {
+          return false;
+        }
+        return enabled == that.enabled
+            && Objects.equals(cookieName, that.cookieName)
+            && Objects.equals(headerName, that.headerName);
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hash(enabled, cookieName, headerName);
+      }
+
+      @Override
+      public String toString() {
+        return "SessionAffinity{" +
+            "enabled=" + enabled +
+            ", cookieName='" + cookieName + '\'' +
+            ", headerName='" + headerName + '\'' +
+            '}';
+      }
     }
 
     /**

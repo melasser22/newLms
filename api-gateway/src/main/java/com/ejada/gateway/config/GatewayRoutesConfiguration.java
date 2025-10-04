@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.ejada.gateway.filter.ApiVersioningGatewayFilter;
+import com.ejada.gateway.filter.SessionAffinityGatewayFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -103,6 +105,16 @@ public class GatewayRoutesConfiguration {
               if (StringUtils.hasText(route.getPrefixPath())) {
                 filters.prefixPath(route.getPrefixPath());
               }
+              if (route.getVersioning().isEnabled()) {
+                filters.filter(new ApiVersioningGatewayFilter(route.getVersioning()));
+              }
+              route.getRequestHeaders().forEach(filters::addRequestHeader);
+              if (route.getWeight().isEnabled()) {
+                filters.weight(route.getWeight().getGroup(), route.getWeight().getValue());
+              }
+              if (route.getSessionAffinity().isEnabled()) {
+                filters.filter(new SessionAffinityGatewayFilter(route.getSessionAffinity()));
+              }
               if (resilience.isEnabled()) {
                 filters.circuitBreaker(config -> {
                   config.setName(resilience.resolvedCircuitBreakerName(route.getId()));
@@ -159,24 +171,39 @@ public class GatewayRoutesConfiguration {
     String resilienceSummary = (resilience != null && resilience.isEnabled())
         ? resilience.toString()
         : "Resilience{enabled=false}";
+    String versionSummary = route.getVersioning().isEnabled()
+        ? route.getVersioning().toString()
+        : "Versioning{enabled=false}";
+    String weightSummary = route.getWeight().isEnabled()
+        ? route.getWeight().toString()
+        : "Weight{enabled=false}";
+    String affinitySummary = route.getSessionAffinity().isEnabled()
+        ? route.getSessionAffinity().toString()
+        : "SessionAffinity{enabled=false}";
     String prefixSummary = StringUtils.hasText(route.getPrefixPath()) ? route.getPrefixPath() : "/";
     if (route.getMethods().isEmpty()) {
       LOGGER.info(
-          "Registered route {} -> {} ({} prefix={}) resilience={}",
+          "Registered route {} -> {} ({} prefix={}) resilience={} versioning={} weight={} affinity={}",
           route.getId(),
           route.getUri(),
           route.getPaths(),
           prefixSummary,
-          resilienceSummary);
+          resilienceSummary,
+          versionSummary,
+          weightSummary,
+          affinitySummary);
     } else {
       LOGGER.info(
-          "Registered route {} -> {} ({}, methods={}, prefix={}) resilience={}",
+          "Registered route {} -> {} ({}, methods={}, prefix={}) resilience={} versioning={} weight={} affinity={}",
           route.getId(),
           route.getUri(),
           route.getPaths(),
           route.getMethods(),
           prefixSummary,
-          resilienceSummary);
+          resilienceSummary,
+          versionSummary,
+          weightSummary,
+          affinitySummary);
     }
   }
 }
