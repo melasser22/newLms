@@ -1,8 +1,13 @@
 package com.ejada.gateway.config;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
@@ -21,6 +26,9 @@ public class SubscriptionValidationProperties {
 
   /** Cache time-to-live for subscription lookups. */
   private Duration cacheTtl = Duration.ofMinutes(5);
+
+  /** Grace period duration after subscription expiry during which read-only access is allowed. */
+  private Duration gracePeriod = Duration.ofDays(7);
 
   /** Cache key prefix. */
   private String cachePrefix = "gateway:subscription:";
@@ -59,6 +67,18 @@ public class SubscriptionValidationProperties {
 
   public void setCacheTtl(Duration cacheTtl) {
     this.cacheTtl = cacheTtl;
+  }
+
+  public Duration getGracePeriod() {
+    return gracePeriod;
+  }
+
+  public void setGracePeriod(Duration gracePeriod) {
+    if (gracePeriod == null || gracePeriod.isNegative()) {
+      this.gracePeriod = Duration.ZERO;
+    } else {
+      this.gracePeriod = gracePeriod;
+    }
   }
 
   public String getCachePrefix() {
@@ -108,6 +128,20 @@ public class SubscriptionValidationProperties {
       return true;
     }
     return StringUtils.hasText(routeId) && requiredFeatures.containsKey(routeId);
+  }
+
+  public Set<String> requiredFeaturesFor(String routeId) {
+    if (!StringUtils.hasText(routeId)) {
+      return Collections.emptySet();
+    }
+    String value = requiredFeatures.get(routeId);
+    if (!StringUtils.hasText(value)) {
+      return Collections.emptySet();
+    }
+    return Arrays.stream(value.split(","))
+        .map(String::trim)
+        .filter(StringUtils::hasText)
+        .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
   public String cacheKey(String tenantId, @Nullable String feature) {
