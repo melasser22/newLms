@@ -2,8 +2,11 @@ package com.ejada.gateway.ratelimit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.ejada.gateway.config.GatewayRateLimitProperties;
 import com.ejada.shared_starter_ratelimit.RateLimitProps;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
@@ -14,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import org.testcontainers.containers.GenericContainer;
@@ -28,6 +32,7 @@ class ReactiveRateLimiterFilterTest {
 
     private ReactiveRateLimiterFilter filter;
     private ReactiveRedisConnectionFactory connectionFactory;
+    private GatewayRateLimitProperties gatewayRateLimitProperties;
 
     @BeforeEach
     void setUp() {
@@ -40,8 +45,12 @@ class ReactiveRateLimiterFilterTest {
         props.setCapacity(2);
         props.setRefillPerMinute(2);
         props.setKeyStrategy("tenant");
+        props.setAlgorithm("sliding");
+        this.gatewayRateLimitProperties = new GatewayRateLimitProperties();
+        gatewayRateLimitProperties.setBurstMultiplier(1.0d);
         KeyResolver keyResolver = exchange -> Mono.just("tenant-a");
-        this.filter = new ReactiveRateLimiterFilter(template, props, keyResolver, new ObjectMapper());
+        this.filter = new ReactiveRateLimiterFilter(template, props, keyResolver, new ObjectMapper(),
+                gatewayRateLimitProperties, new SimpleMeterRegistry());
         flushRedis();
     }
 
@@ -55,6 +64,9 @@ class ReactiveRateLimiterFilterTest {
         assertThat(exchange.getResponse().getStatusCode()).isNull();
         assertThat(exchange.getResponse().getHeaders().getFirst("X-RateLimit-Limit")).isEqualTo("2");
         assertThat(exchange.getResponse().getHeaders().getFirst("X-RateLimit-Remaining")).isEqualTo("1");
+        assertThat(exchange.getResponse().getHeaders().getFirst("X-RateLimit-Policy")).isEqualTo("default");
+        assertThat(exchange.getResponse().getHeaders().getFirst("X-RateLimit-Reset")).isNotBlank();
+        assertThat(exchange.getResponse().getHeaders().getFirst("X-RateLimit-Window")).isEqualTo("60");
     }
 
     @Test
@@ -72,6 +84,43 @@ class ReactiveRateLimiterFilterTest {
         assertThat(exchange3.getResponse().getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         String body = exchange3.getResponse().getBodyAsString().block();
         assertThat(body).contains("ERR_RATE_LIMIT");
+    }
+
+    @Test
+    void slidingWindowEnforcesLimitsUnderConcurrency() {
+        RateLimitProps props = new RateLimitProps();
+        props.setCapacity(5);
+        props.setKeyStrategy("tenant");
+        props.setAlgorithm("sliding");
+        GatewayRateLimitProperties gatewayProps = new GatewayRateLimitProperties();
+        gatewayProps.setBurstMultiplier(1.0d);
+        ReactiveStringRedisTemplate template = new ReactiveStringRedisTemplate(connectionFactory);
+        KeyResolver keyResolver = exchange -> Mono.just("tenant-b");
+        ReactiveRateLimiterFilter concurrentFilter = new ReactiveRateLimiterFilter(template, props, keyResolver,
+                new ObjectMapper(), gatewayProps, new SimpleMeterRegistry());
+
+        flushRedis();
+
+        WebFilterChain chain = serverWebExchange -> Mono.empty();
+
+        var exchanges = IntStream.range(0, 6)
+                .mapToObj(i -> MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/data" + i).build()))
+                .toList();
+
+        StepVerifier.create(Flux.fromIterable(exchanges)
+                        .flatMap(exchange -> concurrentFilter.filter(exchange, chain).thenReturn(exchange)))
+                .expectNextCount(6)
+                .verifyComplete();
+
+        long rejected = exchanges.stream()
+                .filter(exchange -> HttpStatus.TOO_MANY_REQUESTS.equals(exchange.getResponse().getStatusCode()))
+                .count();
+        long allowed = exchanges.stream()
+                .filter(exchange -> exchange.getResponse().getStatusCode() == null)
+                .count();
+
+        assertThat(allowed).isEqualTo(5);
+        assertThat(rejected).isEqualTo(1);
     }
 
     private void flushRedis() {
