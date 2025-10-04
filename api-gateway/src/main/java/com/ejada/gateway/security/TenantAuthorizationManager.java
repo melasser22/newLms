@@ -1,6 +1,6 @@
 package com.ejada.gateway.security;
 
-import com.ejada.common.context.ContextManager;
+import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
 import com.ejada.starter_core.web.FilterSkipUtils;
 import org.springframework.security.authorization.AuthorizationDecision;
@@ -31,7 +31,10 @@ public class TenantAuthorizationManager implements ReactiveAuthorizationManager<
     }
     return authentication
         .filter(Authentication::isAuthenticated)
-        .map(auth -> new AuthorizationDecision(StringUtils.hasText(ContextManager.Tenant.get())))
+        .flatMap(auth -> Mono.deferContextual(ctx -> {
+          String tenantId = ctx.getOrDefault(GatewayRequestAttributes.TENANT_ID, null);
+          return Mono.just(new AuthorizationDecision(StringUtils.hasText(tenantId)));
+        }))
         .defaultIfEmpty(new AuthorizationDecision(false));
   }
 }

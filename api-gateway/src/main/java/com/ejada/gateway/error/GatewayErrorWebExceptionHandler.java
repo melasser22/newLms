@@ -15,12 +15,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.reactive.error.ErrorWebExceptionHandler;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -30,7 +32,7 @@ import reactor.core.publisher.Mono;
  * {@code GlobalExceptionHandler} from the shared servlet stack.
  */
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Order(-2)
 public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GatewayErrorWebExceptionHandler.class);
@@ -45,59 +47,102 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
 
   @Override
   public @NonNull Mono<Void> handle(ServerWebExchange exchange, @NonNull Throwable ex) {
-    if (exchange.getResponse().isCommitted()) {
+    ServerHttpResponse response = exchange.getResponse();
+
+    if (response.isCommitted()) {
       return Mono.error(ex);
     }
 
-    ErrorResponse errorResponse = mapException(ex);
-    exchange.getResponse().setStatusCode(errorResponse.status());
-    exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+    HttpStatus status = determineStatus(ex);
+    String errorCode = determineErrorCode(ex, status);
+    String message = determineMessage(ex, status);
+
+    response.setStatusCode(status);
+    response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
     try {
-      byte[] bytes = objectMapper.writeValueAsBytes(errorResponse.body());
-      return exchange.getResponse().writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(bytes)));
+      BaseResponse<Void> errorResponse = BaseResponse.error(errorCode, message);
+      byte[] bytes = objectMapper.writeValueAsBytes(errorResponse);
+      DataBuffer buffer = response.bufferFactory().wrap(bytes);
+      return response.writeWith(Mono.just(buffer));
     } catch (JsonProcessingException e) {
       LOGGER.error("Failed to serialize error response", e);
-      return exchange.getResponse().setComplete();
+      return response.setComplete();
     }
   }
 
-  private ErrorResponse mapException(Throwable ex) {
+  private HttpStatus determineStatus(Throwable ex) {
     if (ex instanceof ResponseStatusException rse) {
-      HttpStatusCode status = rse.getStatusCode();
-      String code = status.value() >= 500 ? "ERR_INTERNAL" : "ERR_STATUS";
-      return new ErrorResponse(status, BaseResponse.error(code, rse.getReason()));
+      HttpStatus status = HttpStatus.resolve(rse.getStatusCode().value());
+      return status != null ? status : HttpStatus.INTERNAL_SERVER_ERROR;
     }
     if (ex instanceof NotFoundException || ex instanceof java.util.NoSuchElementException) {
-      return new ErrorResponse(HttpStatus.NOT_FOUND, BaseResponse.error("ERR_RESOURCE_NOT_FOUND", ex.getMessage()));
+      return HttpStatus.NOT_FOUND;
     }
-    if (ex instanceof DuplicateResourceException) {
-      return new ErrorResponse(HttpStatus.CONFLICT, BaseResponse.error("ERR_DATA_CONFLICT", ex.getMessage()));
+    if (ex instanceof DuplicateResourceException || ex instanceof IllegalStateException) {
+      return HttpStatus.CONFLICT;
     }
     if (ex instanceof DataIntegrityViolationException) {
-      return new ErrorResponse(HttpStatus.CONFLICT, BaseResponse.error("ERR_DATA_CONFLICT", "Data conflict occurred"));
+      return HttpStatus.CONFLICT;
     }
-    if (ex instanceof ValidationException) {
-      return new ErrorResponse(HttpStatus.BAD_REQUEST, BaseResponse.error("ERR_VALIDATION", ex.getMessage()));
-    }
-    if (ex instanceof BusinessRuleException) {
-      return new ErrorResponse(HttpStatus.BAD_REQUEST, BaseResponse.error("ERR_BUSINESS_RULE", ex.getMessage()));
-    }
-    if (ex instanceof BusinessException) {
-      return new ErrorResponse(HttpStatus.BAD_REQUEST, BaseResponse.error("ERR_BUSINESS_LOGIC", ex.getMessage()));
-    }
-    if (ex instanceof IllegalArgumentException) {
-      return new ErrorResponse(HttpStatus.BAD_REQUEST, BaseResponse.error("ERR_INVALID_ARGUMENT", ex.getMessage()));
-    }
-    if (ex instanceof IllegalStateException) {
-      return new ErrorResponse(HttpStatus.CONFLICT, BaseResponse.error("ERR_ILLEGAL_STATE", ex.getMessage()));
+    if (ex instanceof ValidationException
+        || ex instanceof BusinessRuleException
+        || ex instanceof BusinessException
+        || ex instanceof IllegalArgumentException) {
+      return HttpStatus.BAD_REQUEST;
     }
     if (ex instanceof org.springframework.security.access.AccessDeniedException) {
-      return new ErrorResponse(HttpStatus.FORBIDDEN, BaseResponse.error("ERR_ACCESS_DENIED", "Access denied"));
+      return HttpStatus.FORBIDDEN;
     }
     LOGGER.error("Unexpected gateway error", ex);
-    return new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, BaseResponse.error("ERR_INTERNAL", "An unexpected error occurred"));
+    return HttpStatus.INTERNAL_SERVER_ERROR;
   }
 
-  private record ErrorResponse(HttpStatusCode status, BaseResponse<?> body) {}
+  private String determineErrorCode(Throwable ex, HttpStatus status) {
+    if (ex instanceof ResponseStatusException) {
+      return status.is5xxServerError() ? "ERR_INTERNAL" : "ERR_STATUS";
+    }
+    if (ex instanceof NotFoundException || ex instanceof java.util.NoSuchElementException) {
+      return "ERR_RESOURCE_NOT_FOUND";
+    }
+    if (ex instanceof DuplicateResourceException || ex instanceof DataIntegrityViolationException) {
+      return "ERR_DATA_CONFLICT";
+    }
+    if (ex instanceof ValidationException) {
+      return "ERR_VALIDATION";
+    }
+    if (ex instanceof BusinessRuleException) {
+      return "ERR_BUSINESS_RULE";
+    }
+    if (ex instanceof BusinessException) {
+      return "ERR_BUSINESS_LOGIC";
+    }
+    if (ex instanceof IllegalArgumentException) {
+      return "ERR_INVALID_ARGUMENT";
+    }
+    if (ex instanceof IllegalStateException) {
+      return "ERR_ILLEGAL_STATE";
+    }
+    if (ex instanceof org.springframework.security.access.AccessDeniedException) {
+      return "ERR_ACCESS_DENIED";
+    }
+    return "ERR_INTERNAL";
+  }
+
+  private String determineMessage(Throwable ex, HttpStatus status) {
+    if (ex instanceof ResponseStatusException rse) {
+      return rse.getReason();
+    }
+    if (ex instanceof DataIntegrityViolationException) {
+      return "Data conflict occurred";
+    }
+    if (ex instanceof org.springframework.security.access.AccessDeniedException) {
+      return "Access denied";
+    }
+    String message = ex.getMessage();
+    if (!StringUtils.hasText(message)) {
+      return status.is5xxServerError() ? "An unexpected error occurred" : status.getReasonPhrase();
+    }
+    return message;
+  }
 }
