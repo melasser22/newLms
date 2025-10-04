@@ -293,6 +293,11 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
+    public String getProtocolRequestId() {
+        return null;
+    }
+
+    @Override
     public String getScheme() {
         return "http";
     }
