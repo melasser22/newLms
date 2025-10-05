@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.util.StringUtils;
@@ -73,14 +74,17 @@ public class ApiVersioningGatewayFilter implements GatewayFilter {
     }
 
     String normalisedPath = rebuildPath(rawPath, segments);
-    ServerHttpRequest.Builder requestBuilder = request.mutate();
     if (!normalisedPath.equals(rawPath)) {
       URI newUri = UriComponentsBuilder.fromUri(originalUri)
           .replacePath(normalisedPath)
           .build(true)
           .toUri();
-      requestBuilder.uri(newUri);
+      ServerWebExchangeUtils.addOriginalRequestUrl(exchange, originalUri);
+      ServerWebExchangeUtils.resetRequestUri(exchange, newUri);
+      request = exchange.getRequest();
     }
+
+    ServerHttpRequest.Builder requestBuilder = request.mutate();
 
     if (versioning.isPropagateHeader()) {
       final String headerValue = effectiveVersion;
