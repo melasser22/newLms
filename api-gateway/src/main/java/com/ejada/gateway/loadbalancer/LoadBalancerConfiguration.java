@@ -3,6 +3,7 @@ package com.ejada.gateway.loadbalancer;
 import com.ejada.gateway.config.GatewayRoutesProperties;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClients;
 import org.springframework.cloud.loadbalancer.core.ReactorServiceInstanceLoadBalancer;
 import org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
@@ -49,6 +50,7 @@ public class LoadBalancerConfiguration {
     }
 
     @Bean
+    @ConditionalOnProperty(name = LoadBalancerClientFactory.PROPERTY_NAME)
     public ReactorServiceInstanceLoadBalancer reactorServiceInstanceLoadBalancer(
         LoadBalancerClientFactory clientFactory,
         LoadBalancerHealthCheckAggregator aggregator,
