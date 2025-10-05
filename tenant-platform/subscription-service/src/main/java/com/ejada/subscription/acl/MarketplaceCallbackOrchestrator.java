@@ -274,9 +274,7 @@ public class MarketplaceCallbackOrchestrator {
             final Subscription sub,
             final String statusCode,
             final String statusDescription) {
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("extSubscriptionId", sub.getExtSubscriptionId());
-        payload.put("extCustomerId", sub.getExtCustomerId());
+        Map<String, Object> payload = buildSubscriptionPayload(sub);
         subscriptionOutboxService.emit(
                 "SUBSCRIPTION", sub.getSubscriptionId().toString(), "CREATED_OR_UPDATED", payload);
         idempotentRequestService.record(rqUid, NOTIFICATION, rq);
@@ -293,9 +291,7 @@ public class MarketplaceCallbackOrchestrator {
             final boolean emitEvent,
             final String description) {
         if (emitEvent && approvalRequest != null) {
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("extSubscriptionId", sub.getExtSubscriptionId());
-            payload.put("extCustomerId", sub.getExtCustomerId());
+            Map<String, Object> payload = buildSubscriptionPayload(sub);
             payload.put("approvalRequestId", approvalRequest.getApprovalRequestId());
             if (approvalRequest.getRiskLevel() != null) {
                 payload.put("riskLevel", approvalRequest.getRiskLevel());
@@ -312,6 +308,13 @@ public class MarketplaceCallbackOrchestrator {
         idempotentRequestService.record(rqUid, NOTIFICATION, rq);
         notificationAuditService.markSuccess(
                 audit.getInboundNotificationAuditId(), "I000001", description, null);
+    }
+
+    private Map<String, Object> buildSubscriptionPayload(final Subscription sub) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("extSubscriptionId", sub.getExtSubscriptionId());
+        payload.put("extCustomerId", sub.getExtCustomerId());
+        return payload;
     }
 
     private ServiceResult<ReceiveSubscriptionNotificationRs> handleNotificationFailure(
