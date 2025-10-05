@@ -25,6 +25,8 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -118,7 +120,8 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
     return chain.filter(mutatedExchange)
         .contextWrite(ctx -> ctx
             .put(GatewayRequestAttributes.TENANT_ID, record.tenantId())
-            .put(HeaderNames.X_TENANT_ID, record.tenantId()))
+            .put(HeaderNames.X_TENANT_ID, record.tenantId())
+            .put(SecurityContext.class, new SecurityContextImpl(authentication)))
         .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
   }
 

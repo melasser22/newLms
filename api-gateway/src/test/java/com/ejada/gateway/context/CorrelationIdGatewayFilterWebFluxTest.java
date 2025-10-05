@@ -8,12 +8,14 @@ import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestConstructor;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @WebFluxTest(controllers = CorrelationIdGatewayFilterWebFluxTest.DemoController.class)
 @Import({CorrelationIdGatewayFilter.class, CorrelationIdGatewayFilterWebFluxTest.TestConfig.class})
+@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class CorrelationIdGatewayFilterWebFluxTest {
 
   private final WebTestClient webTestClient;
