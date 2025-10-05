@@ -81,8 +81,11 @@ public class MarketplaceCallbackOrchestrator {
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring manages dependency scope")
     private final ApprovalWorkflowService approvalWorkflowService;
     private final NotificationReplayService notificationReplayService;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring manages dependency scope")
     private final NotificationAuditService notificationAuditService;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring manages dependency scope")
     private final SubscriptionOutboxService subscriptionOutboxService;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring manages dependency scope")
     private final IdempotentRequestService idempotentRequestService;
 
     @Transactional

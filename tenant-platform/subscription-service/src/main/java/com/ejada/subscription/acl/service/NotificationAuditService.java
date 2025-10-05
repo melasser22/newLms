@@ -4,6 +4,7 @@ import com.ejada.common.marketplace.token.TokenHashing;
 import com.ejada.subscription.model.InboundNotificationAudit;
 import com.ejada.subscription.repository.InboundNotificationAuditRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class NotificationAuditService {
 
     private final InboundNotificationAuditRepository auditRepository;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring manages dependency scope")
     private final ObjectMapper objectMapper;
     private final NewTransactionExecutor newTransactionExecutor;
 

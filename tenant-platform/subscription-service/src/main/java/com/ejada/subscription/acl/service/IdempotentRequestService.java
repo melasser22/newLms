@@ -4,6 +4,7 @@ import com.ejada.common.marketplace.token.TokenHashing;
 import com.ejada.subscription.model.IdempotentRequest;
 import com.ejada.subscription.repository.IdempotentRequestRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class IdempotentRequestService {
 
     private final IdempotentRequestRepository idempotentRequestRepository;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring manages dependency scope")
     private final ObjectMapper objectMapper;
     private final NewTransactionExecutor newTransactionExecutor;
 
