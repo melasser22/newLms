@@ -250,7 +250,7 @@ gateway:
             rewrite-path: /v2/tenants/{remaining}
             weight: 90
             deprecated: true
-            warning: Tenant API v1 is deprecated and will be removed. Use Accept-Version: v2.
+            warning: "Tenant API v1 is deprecated and will be removed. Use Accept-Version: v2."
             sunset: 2024-12-31T00:00:00Z
             policy-link: https://docs.example.com/tenant-api-deprecation
             compatibility:

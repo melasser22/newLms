@@ -148,6 +148,12 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     if (ex instanceof ConstraintViolationException constraintViolationException) {
       return extractConstraintViolationMessage(constraintViolationException);
     }
+    if (ex instanceof ValidationException validationException) {
+      String details = validationException.getDetails();
+      if (StringUtils.hasText(details)) {
+        return details;
+      }
+    }
     if (ex instanceof ResponseStatusException rse) {
       String reason = rse.getReason();
       return StringUtils.hasText(reason) ? reason : status.getReasonPhrase();
