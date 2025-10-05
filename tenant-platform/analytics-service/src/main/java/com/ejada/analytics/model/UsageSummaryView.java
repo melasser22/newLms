@@ -28,7 +28,10 @@ public class UsageSummaryView {
   private OffsetDateTime lastEventAt;
 
   public UsageSummaryViewId getId() {
-    return id;
+    if (id == null) {
+      return null;
+    }
+    return new UsageSummaryViewId(id.getTenantId(), id.getFeatureKey(), id.getUsagePeriod());
   }
 
   public Long getEventCount() {
