@@ -70,12 +70,22 @@ public class ConsumptionServiceImpl implements ConsumptionService {
             return ServiceResult.ok(rqUid.toString(), body);
 
         } catch (RuntimeException ex) {
-            String debugId = Long.toString(System.nanoTime());
-            ServiceResult<TrackProductConsumptionRs> failure =
-                    ServiceResult.error(rqUid.toString(), debugId, List.of("Unexpected Error"));
-            recordFailureAudit(rqUid, token, rq, ex);
+            String diagnosticKey = recordFailureAudit(rqUid, token, rq, ex);
+            if (diagnosticKey == null || diagnosticKey.isBlank()) {
+                diagnosticKey = Long.toString(System.nanoTime());
+            }
+
+            List<String> failureDetails = new ArrayList<>();
+            failureDetails.add("Unexpected Error");
+            failureDetails.add("Diagnostic Key: " + diagnosticKey);
+
             markCurrentTransactionForRollback();
-            return failure;
+            return ServiceResult.error(
+                    rqUid.toString(),
+                    "EINT000",
+                    "Unexpected Error",
+                    failureDetails,
+                    diagnosticKey);
         }
     }
 
@@ -130,7 +140,7 @@ public class ConsumptionServiceImpl implements ConsumptionService {
         eventRepo.save(eventMapper.build(
                 rqUid,
                 TokenHashing.sha256(token),
-                toJson(rq),
+                toJsonOrDefault(rq, "{}"),
                 rq != null ? rq.productId() : null,
                 "I000000",
                 "Successful Operation",
@@ -150,39 +160,41 @@ public class ConsumptionServiceImpl implements ConsumptionService {
         }
     }
 
-    private void recordFailureAudit(final UUID rqUid,
-                                    final String token,
-                                    final TrackProductConsumptionRq rq,
-                                    final RuntimeException ex) {
+    private String recordFailureAudit(final UUID rqUid,
+                                      final String token,
+                                      final TrackProductConsumptionRq rq,
+                                      final RuntimeException ex) {
         try {
-            requiresNewTx.executeWithoutResult(status ->
-                    eventRepo.save(eventMapper.build(
-                            rqUid,
-                            TokenHashing.sha256(token),
-                            safeJson(rq),
-                            rq != null ? rq.productId() : null,
-                            "EINT000",
-                            "Unexpected Error",
-                            toJson(List.of(ex.getClass().getSimpleName() + ": " + ex.getMessage()))
-                    )));
+            return requiresNewTx.execute(status -> {
+                String diagnosticDetails = toJsonOrDefault(
+                        List.of(ex.getClass().getSimpleName() + ": " + ex.getMessage()),
+                        "[]");
+
+                var saved = eventRepo.save(eventMapper.build(
+                        rqUid,
+                        TokenHashing.sha256(token),
+                        toJsonOrDefault(rq, null),
+                        rq != null ? rq.productId() : null,
+                        "EINT000",
+                        "Unexpected Error",
+                        diagnosticDetails
+                ));
+
+                return saved.getUsageEventId() != null
+                        ? "usage-event:" + saved.getUsageEventId()
+                        : null;
+            });
         } catch (RuntimeException auditEx) {
             log.warn("Failed to persist error audit for trackProductConsumption {}", rqUid, auditEx);
-        }
-    }
-
-    private String toJson(final Object obj) {
-        try {
-            return objectMapper.writeValueAsString(obj);
-        } catch (Exception e) {
-            return "{}";
-        }
-    }
-
-    private String safeJson(final Object obj) {
-        try {
-            return objectMapper.writeValueAsString(obj);
-        } catch (Exception e) {
             return null;
+        }
+    }
+
+    private String toJsonOrDefault(final Object obj, final String fallback) {
+        try {
+            return objectMapper.writeValueAsString(obj);
+        } catch (Exception e) {
+            return fallback;
         }
     }
 

@@ -84,8 +84,8 @@ class ConsumptionServiceImplTest {
 
     assertThat(result.success()).isFalse();
     assertThat(result.statusCode()).isEqualTo("EINT000");
-    assertThat(result.statusDetails()).contains("Unexpected Error");
-    assertThat(result.debugId()).isNotBlank();
+    assertThat(result.statusDetails()).contains("Unexpected Error", "Diagnostic Key: usage-event:2");
+    assertThat(result.debugId()).isEqualTo("usage-event:2");
 
     verify(eventMapper).build(eq(rqUid), any(), any(), eq(11L), eq("EINT000"), eq("Unexpected Error"), any());
     verify(eventRepository, times(1)).save(auditEvent);
