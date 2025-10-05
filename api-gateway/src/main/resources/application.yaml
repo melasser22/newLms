@@ -27,6 +27,14 @@ spring:
       username: ${SPRING_CLOUD_CONFIG_USERNAME:}
       password: ${SPRING_CLOUD_CONFIG_PASSWORD:}
       fail-fast: true
+  r2dbc:
+    url: ${SPRING_R2DBC_URL:}
+    username: ${SPRING_R2DBC_USERNAME:}
+    password: ${SPRING_R2DBC_PASSWORD:}
+  sql:
+    init:
+      mode: ${SPRING_SQL_INIT_MODE:never}
+      schema-locations: classpath:schema.sql
     compatibility-verifier:
       enabled: false
     gateway:
