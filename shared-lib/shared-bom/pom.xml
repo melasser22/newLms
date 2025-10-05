@@ -16,6 +16,7 @@
     <!-- Platforms -->
     <spring.boot.version>3.5.5</spring.boot.version>
     <spring.cloud.version>2024.0.2</spring.cloud.version> <!-- 2024.0.3 is not on Central -->
+    <spring.cloud.contract.version>4.2.2</spring.cloud.contract.version>
 
     <!-- Observability & testing infrastructure -->
     <otel.version>1.45.0</otel.version>
@@ -83,6 +84,16 @@
         <version>${spring.cloud.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-contract-verifier</artifactId>
+        <version>${spring.cloud.contract.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-contract-wiremock</artifactId>
+        <version>${spring.cloud.contract.version}</version>
       </dependency>
       <dependency>
         <groupId>org.testcontainers</groupId>
