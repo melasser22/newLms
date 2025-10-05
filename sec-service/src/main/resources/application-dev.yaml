@@ -54,6 +54,9 @@ spring:
     redis:
       repositories:
         enabled: false
+  mail:
+    host: localhost
+    port: 1025
 
 management:
   endpoints:
@@ -249,3 +252,16 @@ logging:
     org.springframework.cache.interceptor.CacheAspectSupport: ERROR
 
 debug: false
+
+sec:
+  mfa:
+    otp:
+      length: 6
+      expiry-minutes: 5
+      max-attempts: 3
+    console:
+      enabled: true
+    email:
+      enabled: false
+    sms:
+      enabled: false

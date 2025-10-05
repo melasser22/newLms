@@ -4,3 +4,33 @@ sec:
       enabled: true
       ttl-minutes: 10
       max-size: 50000
+  mfa:
+    otp:
+      length: 6
+      expiry-minutes: 5
+      max-attempts: 3
+    console:
+      enabled: false
+    email:
+      enabled: true
+      from: noreply@yourcompany.com
+      subject: Your Verification Code
+    sms:
+      enabled: true
+      twilio:
+        account-sid: ${TWILIO_ACCOUNT_SID}
+        auth-token: ${TWILIO_AUTH_TOKEN}
+        from-number: ${TWILIO_FROM_NUMBER}
+
+spring:
+  mail:
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
