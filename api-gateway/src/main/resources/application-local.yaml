@@ -27,3 +27,7 @@ shared:
 
 app:
   env: local
+
+jasypt:
+  encryptor:
+    fail-on-missing-password: false

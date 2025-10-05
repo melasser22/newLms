@@ -27,10 +27,17 @@ public class MultiTenantJasyptConfiguration {
   @ConditionalOnMissingBean(name = "jasyptStringEncryptor")
   public StringEncryptor jasyptStringEncryptor(TenantJasyptProperties properties) {
     if (!StringUtils.hasText(properties.getPassword())) {
-      throw new IllegalStateException(
-          "Jasypt encryption password is not configured. "
-              + "Set the JASYPT_ENCRYPTOR_PASSWORD environment variable or the "
-              + "jasypt.encryptor.password property before starting the API Gateway.");
+      if (properties.isFailOnMissingPassword()) {
+        throw new IllegalStateException(
+            "Jasypt encryption password is not configured. "
+                + "Set the JASYPT_ENCRYPTOR_PASSWORD environment variable or the "
+                + "jasypt.encryptor.password property before starting the API Gateway.");
+      }
+
+      LOGGER.warn(
+          "Jasypt encryption password is not configured; falling back to a no-op encryptor. "
+              + "Do not use this configuration in production environments.");
+      return new NoOpStringEncryptor();
     }
 
     LOGGER.info("Initialising Jasypt encryptor with algorithm '{}' and pool size {}", properties.getAlgorithm(),

@@ -28,6 +28,8 @@ public class TenantJasyptProperties {
 
   private String stringOutputType = "base64";
 
+  private boolean failOnMissingPassword = true;
+
   public String getPassword() {
     return password;
   }
@@ -90,6 +92,14 @@ public class TenantJasyptProperties {
 
   public void setStringOutputType(String stringOutputType) {
     this.stringOutputType = stringOutputType;
+  }
+
+  public boolean isFailOnMissingPassword() {
+    return failOnMissingPassword;
+  }
+
+  public void setFailOnMissingPassword(boolean failOnMissingPassword) {
+    this.failOnMissingPassword = failOnMissingPassword;
   }
 }
 

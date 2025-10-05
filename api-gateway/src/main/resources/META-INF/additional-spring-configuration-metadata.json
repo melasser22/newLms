@@ -74,6 +74,12 @@
       "name": "jasypt.encryptor.string-output-type",
       "type": "java.lang.String",
       "description": "Encoding applied to decrypted strings (for example base64)."
+    },
+    {
+      "name": "jasypt.encryptor.fail-on-missing-password",
+      "type": "java.lang.Boolean",
+      "description": "Whether the gateway should fail fast when the Jasypt password is missing.",
+      "defaultValue": true
     }
   ]
 }

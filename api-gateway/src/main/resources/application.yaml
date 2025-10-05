@@ -419,6 +419,7 @@ jasypt:
     salt-generator-classname: org.jasypt.salt.RandomSaltGenerator
     iv-generator-classname: org.jasypt.iv.RandomIvGenerator
     string-output-type: base64
+    fail-on-missing-password: ${JASYPT_ENCRYPTOR_FAIL_ON_MISSING_PASSWORD:true}
     property:
       prefix: ENC(
       suffix: )
