@@ -73,6 +73,8 @@ spring:
           enabled: false
       routes: []
     loadbalancer:
+      client:
+        name: ${SPRING_CLOUD_LOADBALANCER_CLIENT_NAME:${spring.application.name}}
       retry:
         enabled: true
       sticky-session:
