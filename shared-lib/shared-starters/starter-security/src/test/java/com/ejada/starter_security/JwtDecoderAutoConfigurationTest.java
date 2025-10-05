@@ -60,6 +60,22 @@ class JwtDecoderAutoConfigurationTest {
         });
   }
 
+  @Test
+  void legacyJwtSecretPropertyIsBackwardsCompatible() {
+    contextRunner.withPropertyValues("shared.security.jwt.secret=" + BASE64_SECRET)
+        .run(context -> {
+          assertThat(context).hasNotFailed();
+          JwtDecoder decoder = context.getBean(JwtDecoder.class);
+          try {
+            String token = createHs256Token(BASE64_SECRET, "legacy-user");
+            Jwt jwt = decoder.decode(token);
+            assertThat(jwt.getSubject()).isEqualTo("legacy-user");
+          } catch (JOSEException e) {
+            fail("Failed to create test token", e);
+          }
+        });
+  }
+
   private static String createHs256Token(String base64Secret, String subject) throws JOSEException {
     byte[] keyBytes = Base64.getDecoder().decode(base64Secret);
     JWSSigner signer = new MACSigner(keyBytes);
