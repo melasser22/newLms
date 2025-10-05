@@ -4,6 +4,8 @@ app:
   schema: tenant
 
 spring:
+  main:
+    application-startup: buffering
   datasource:
     url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ejada}?currentSchema=${app.schema}}"
     username: ${DB_USERNAME}

@@ -1,4 +1,6 @@
 spring:
+  main:
+    application-startup: buffering
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     consumer:
