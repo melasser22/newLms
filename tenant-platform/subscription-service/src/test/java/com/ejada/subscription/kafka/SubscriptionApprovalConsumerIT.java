@@ -32,7 +32,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 @SpringBootTest(classes = SubscriptionApplication.class)
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("test")
 @EmbeddedKafka(topics = SubscriptionApprovalConsumerIT.APPROVAL_TOPIC)
 @TestPropertySource(
