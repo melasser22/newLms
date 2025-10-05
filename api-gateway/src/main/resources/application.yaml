@@ -411,8 +411,14 @@ app:
 # Encryption support for secrets served by the Config Server (ENC(...) syntax).
 jasypt:
   encryptor:
-    password: ${JASYPT_ENCRYPTOR_PASSWORD:changeit}
-    algorithm: PBEWithHmacSHA512AndAES_256
+    password: ${JASYPT_ENCRYPTOR_PASSWORD:}
+    algorithm: PBEWITHHMACSHA512ANDAES_256
+    key-obtention-iterations: 1000
+    pool-size: 1
+    provider-name: SunJCE
+    salt-generator-classname: org.jasypt.salt.RandomSaltGenerator
+    iv-generator-classname: org.jasypt.iv.RandomIvGenerator
+    string-output-type: base64
     property:
       prefix: ENC(
       suffix: )

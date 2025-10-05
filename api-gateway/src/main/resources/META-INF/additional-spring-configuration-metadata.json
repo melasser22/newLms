@@ -39,6 +39,41 @@
       "name": "jasypt.encryptor.password",
       "type": "java.lang.String",
       "description": "Password used by Jasypt to decrypt ENC(...) values provided by the Config Server."
+    },
+    {
+      "name": "jasypt.encryptor.algorithm",
+      "type": "java.lang.String",
+      "description": "Encryption algorithm applied to secrets decrypted by the API gateway."
+    },
+    {
+      "name": "jasypt.encryptor.key-obtention-iterations",
+      "type": "java.lang.Integer",
+      "description": "Number of key stretching iterations applied by the encryptor."
+    },
+    {
+      "name": "jasypt.encryptor.pool-size",
+      "type": "java.lang.Integer",
+      "description": "Size of the encryptor pool used to decrypt secrets concurrently."
+    },
+    {
+      "name": "jasypt.encryptor.provider-name",
+      "type": "java.lang.String",
+      "description": "Security provider used when initialising the encryptor (for example SunJCE)."
+    },
+    {
+      "name": "jasypt.encryptor.salt-generator-classname",
+      "type": "java.lang.String",
+      "description": "Fully qualified class name of the salt generator implementation."
+    },
+    {
+      "name": "jasypt.encryptor.iv-generator-classname",
+      "type": "java.lang.String",
+      "description": "Fully qualified class name of the IV generator implementation."
+    },
+    {
+      "name": "jasypt.encryptor.string-output-type",
+      "type": "java.lang.String",
+      "description": "Encoding applied to decrypted strings (for example base64)."
     }
   ]
 }
