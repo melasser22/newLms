@@ -97,7 +97,8 @@ public class RequestSignatureValidationFilter implements WebFilter, Ordered {
               .get(properties.getSignatureValidation().redisKey(tenantId))
               .switchIfEmpty(Mono.defer(() -> {
                 metrics.incrementBlocked("signature", tenantId);
-                return reject(exchange, HttpStatus.UNAUTHORIZED, "ERR_SIGNATURE_SECRET", "Signature secret not found");
+                return reject(exchange, HttpStatus.UNAUTHORIZED, "ERR_SIGNATURE_SECRET", "Signature secret not found")
+                    .then(Mono.empty());
               }))
               .flatMap(secret -> verifyAndContinue(secret, providedSignature, tenantId, body, exchange, chain));
         });
@@ -119,7 +120,7 @@ public class RequestSignatureValidationFilter implements WebFilter, Ordered {
         metrics.incrementBlocked("signature", tenantId);
         return reject(exchange, HttpStatus.UNAUTHORIZED, "ERR_SIGNATURE_INVALID", "Invalid request signature");
       }
-      ServerHttpRequest decoratedRequest = decorateRequest(exchange.getRequest(), body);
+      ServerHttpRequest decoratedRequest = decorateRequest(exchange, body);
       ServerWebExchange mutated = exchange.mutate().request(decoratedRequest).build();
       return chain.filter(mutated);
     } catch (Exception ex) {
@@ -151,13 +152,14 @@ public class RequestSignatureValidationFilter implements WebFilter, Ordered {
     return trimToNull(tenant);
   }
 
-  private ServerHttpRequest decorateRequest(ServerHttpRequest request, byte[] body) {
-    DataBufferFactory bufferFactory = request.bufferFactory();
-    return new ServerHttpRequestDecorator(request, body, bufferFactory);
+  private ServerHttpRequest decorateRequest(ServerWebExchange exchange, byte[] body) {
+    DataBufferFactory bufferFactory = exchange.getResponse().bufferFactory();
+    return new ServerHttpRequestDecorator(exchange.getRequest(), body, bufferFactory);
   }
 
   private String buildPayload(ServerHttpRequest request, byte[] body) {
-    String method = request.getMethodValue();
+    HttpMethod methodEnum = request.getMethod();
+    String method = methodEnum != null ? methodEnum.name() : "UNKNOWN";
     String path = request.getURI().getRawPath();
     String query = request.getURI().getRawQuery();
     return method + "\n" + path + "\n" + (query != null ? query : "") + "\n" + new String(body, StandardCharsets.UTF_8);

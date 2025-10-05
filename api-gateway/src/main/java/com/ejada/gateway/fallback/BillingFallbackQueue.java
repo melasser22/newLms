@@ -56,7 +56,8 @@ public class BillingFallbackQueue {
   public Mono<String> enqueue(String tenantId, ServerHttpRequest request) {
     Map<String, Object> payload = new LinkedHashMap<>();
     payload.put("tenantId", StringUtils.hasText(tenantId) ? tenantId : "unknown");
-    payload.put("method", request.getMethodValue());
+    String method = request.getMethod() != null ? request.getMethod().name() : "UNKNOWN";
+    payload.put("method", method);
     URI uri = request.getURI();
     payload.put("path", uri.getPath());
     payload.put("query", uri.getQuery());

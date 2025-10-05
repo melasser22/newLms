@@ -99,7 +99,7 @@ public class GatewayRateLimitProperties {
       }
       if (parts.length == 2 && StringUtils.hasText(parts[1])) {
         try {
-          window = DurationStyle.detectAndParse(parts[1].trim(), DurationStyle.SUFFIX);
+          window = DurationStyle.detectAndParse(parts[1].trim());
         } catch (Exception ignored) {
           window = DEFAULT_WINDOW;
         }

@@ -118,14 +118,18 @@ public class SubscriptionCacheService {
 
   public Mono<SubscriptionRecord> fetchAndCache(String tenantId) {
     String key = cacheKey(tenantId);
-    return fetch(tenantId).flatMap(record -> cache(key, record).thenReturn(record));
+    return fetch(tenantId).flatMap(record -> cacheByKey(key, record).thenReturn(record));
   }
 
-  public Mono<Void> cache(String tenantId, SubscriptionRecord record) {
-    return cache(cacheKey(tenantId), record);
+  public Mono<Void> cacheTenant(String tenantId, SubscriptionRecord record) {
+    return cacheByKey(cacheKey(tenantId), record);
   }
 
   public Mono<Void> cache(String cacheKey, SubscriptionRecord record) {
+    return cacheByKey(cacheKey, record);
+  }
+
+  private Mono<Void> cacheByKey(String cacheKey, SubscriptionRecord record) {
     try {
       String value = objectMapper.writeValueAsString(record);
       Duration ttl = Optional.ofNullable(properties.getCacheTtl())

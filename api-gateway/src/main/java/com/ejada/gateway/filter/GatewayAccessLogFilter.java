@@ -10,11 +10,13 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.route.Route;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
@@ -86,7 +88,10 @@ public class GatewayAccessLogFilter implements WebFilter, Ordered {
     payload.put("timestamp", Instant.now().toString());
     payload.put("correlationId", resolveCorrelationId(exchange));
     payload.put("tenantId", trimToNull(exchange.getAttribute(GatewayRequestAttributes.TENANT_ID)));
-    payload.put("method", exchange.getRequest().getMethodValue());
+    String method = Optional.ofNullable(exchange.getRequest().getMethod())
+        .map(HttpMethod::name)
+        .orElse("UNKNOWN");
+    payload.put("method", method);
     payload.put("path", exchange.getRequest().getPath().value());
     payload.put("statusCode", exchange.getResponse().getStatusCode() != null
         ? exchange.getResponse().getStatusCode().value()

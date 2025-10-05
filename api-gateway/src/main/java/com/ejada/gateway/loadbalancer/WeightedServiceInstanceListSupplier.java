@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.springframework.cloud.client.ServiceInstance;
-import org.springframework.cloud.loadbalancer.core.DelegatingServiceInstanceListSupplier;
 import org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
+import org.springframework.cloud.client.loadbalancer.Request;
 import reactor.core.publisher.Flux;
 
 /**
@@ -15,7 +15,7 @@ import reactor.core.publisher.Flux;
  * metadata from {@link LoadBalancerHealthCheckAggregator}. Downstream load balancers can use the
  * enriched metadata to influence routing decisions without duplicating the calculations.
  */
-public class WeightedServiceInstanceListSupplier extends DelegatingServiceInstanceListSupplier {
+public class WeightedServiceInstanceListSupplier implements ServiceInstanceListSupplier {
 
   public static final String METADATA_WEIGHT = "gateway.lb.weight";
   public static final String METADATA_ZONE = "gateway.lb.zone";
@@ -24,21 +24,26 @@ public class WeightedServiceInstanceListSupplier extends DelegatingServiceInstan
   public static final String METADATA_RESPONSE_TIME = "gateway.lb.response-time";
 
   private final LoadBalancerHealthCheckAggregator aggregator;
+  private final ServiceInstanceListSupplier delegate;
 
   public WeightedServiceInstanceListSupplier(ServiceInstanceListSupplier delegate,
       LoadBalancerHealthCheckAggregator aggregator) {
-    super(delegate);
+    this.delegate = Objects.requireNonNull(delegate, "delegate");
     this.aggregator = Objects.requireNonNull(aggregator, "aggregator");
   }
 
   @Override
   public Flux<List<ServiceInstance>> get() {
-    return super.get().map(this::enrichInstances);
+    return delegate.get().map(this::enrichInstances);
+  }
+
+  public Flux<List<ServiceInstance>> get(Request request) {
+    return delegate.get(request).map(this::enrichInstances);
   }
 
   @Override
-  public Flux<List<ServiceInstance>> get(org.springframework.cloud.client.loadbalancer.Request request) {
-    return super.get(request).map(this::enrichInstances);
+  public String getServiceId() {
+    return delegate.getServiceId();
   }
 
   private List<ServiceInstance> enrichInstances(List<ServiceInstance> instances) {

@@ -70,7 +70,8 @@ public class CircuitBreakerRecoveryTester {
 
   private void schedule(String circuitBreakerName, CircuitBreaker circuitBreaker) {
     cancel(circuitBreakerName);
-    Duration wait = Optional.ofNullable(circuitBreaker.getCircuitBreakerConfig().getWaitDurationInOpenState())
+    Duration wait = Optional.ofNullable(circuitBreaker.getCircuitBreakerConfig().getWaitIntervalFunctionInOpenState())
+        .map(function -> Duration.ofMillis(Math.max(1, function.apply(1))))
         .filter(d -> !d.isNegative() && !d.isZero())
         .orElse(Duration.ofSeconds(30));
     metrics.markRecoveryScheduled(circuitBreakerName);
@@ -86,7 +87,7 @@ public class CircuitBreakerRecoveryTester {
     if (serviceOptional.isEmpty()) {
       metrics.markRecoveryProbe(circuitBreakerName, false);
       LOGGER.debug("Skipping recovery probe for {} as no admin service mapping was found", circuitBreakerName);
-      return Mono.empty();
+      return Mono.<Void>empty();
     }
     AdminAggregationProperties.Service service = serviceOptional.get();
     Duration timeout = service.resolveTimeout(adminProperties.getAggregation().getTimeout());
@@ -101,11 +102,11 @@ public class CircuitBreakerRecoveryTester {
           LOGGER.info("Recovery probe for {} succeeded", circuitBreakerName);
           metrics.markRecoveryProbe(circuitBreakerName, true);
           cancel(circuitBreakerName);
-        }))
+        })).then()
         .onErrorResume(ex -> {
           LOGGER.debug("Recovery probe for {} failed: {}", circuitBreakerName, ex.getMessage());
           metrics.markRecoveryProbe(circuitBreakerName, false);
-          return Mono.empty();
+          return Mono.<Void>empty();
         });
   }
 

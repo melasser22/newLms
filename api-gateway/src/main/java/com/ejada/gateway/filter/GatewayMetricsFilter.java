@@ -9,6 +9,7 @@ import org.springframework.cloud.gateway.route.Route;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -46,7 +47,7 @@ public class GatewayMetricsFilter implements WebFilter, Ordered {
   }
 
   private void recordMetrics(ServerWebExchange exchange, Timer.Sample sample, long durationNanos) {
-    HttpStatus status = exchange.getResponse().getStatusCode();
+    HttpStatusCode status = exchange.getResponse().getStatusCode();
     int statusCode = status != null ? status.value() : HttpStatus.OK.value();
     String tenant = trimToDefault(exchange.getAttribute(GatewayRequestAttributes.TENANT_ID));
     meterRegistry.counter("gateway.requests.by_tenant",

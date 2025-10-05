@@ -23,6 +23,7 @@ import org.springframework.cloud.client.loadbalancer.Request;
 import org.springframework.cloud.client.loadbalancer.RequestData;
 import org.springframework.cloud.client.loadbalancer.RequestDataContext;
 import org.springframework.cloud.client.loadbalancer.Response;
+import org.springframework.cloud.gateway.route.Route;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.cloud.loadbalancer.core.ReactorServiceInstanceLoadBalancer;
 import org.springframework.cloud.loadbalancer.core.RoundRobinLoadBalancer;
@@ -140,8 +141,11 @@ public class TenantAffinityLoadBalancer implements ReactorServiceInstanceLoadBal
     if (requestData == null) {
       return null;
     }
-    Object attr = requestData.getAttributes().get(ServerWebExchangeUtils.GATEWAY_ROUTE_ID_ATTR);
-    if (attr instanceof String text && StringUtils.hasText(text)) {
+    Object routeAttr = requestData.getAttributes().get(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
+    if (routeAttr instanceof Route route) {
+      return route.getId();
+    }
+    if (routeAttr instanceof String text && StringUtils.hasText(text)) {
       return text;
     }
     return null;
@@ -262,14 +266,6 @@ public class TenantAffinityLoadBalancer implements ReactorServiceInstanceLoadBal
   }
 
   private record WeightedInstance(ServiceInstance instance, LoadBalancerHealthCheckAggregator.InstanceState state) {
-
-    ServiceInstance instance() {
-      return instance;
-    }
-
-    LoadBalancerHealthCheckAggregator.InstanceState state() {
-      return state;
-    }
 
     String instanceKey() {
       return state.getInstanceId();

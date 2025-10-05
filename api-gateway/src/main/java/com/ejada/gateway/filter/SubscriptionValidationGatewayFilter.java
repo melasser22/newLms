@@ -15,14 +15,16 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -127,7 +129,7 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
                   .increment();
             }
             exchange.getAttributes().put(GatewayRequestAttributes.SUBSCRIPTION, decision.record());
-            String tier = decision.record() != null ? decision.record().tier() : null;
+            String tier = resolveTier(decision.record());
             if (StringUtils.hasText(tier)) {
               exchange.getAttributes().put(GatewayRequestAttributes.SUBSCRIPTION_TIER, tier);
             }
@@ -225,6 +227,8 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
               record);
         })
         .defaultIfEmpty(decision);
+
+  }
 
 
   private SubscriptionDecision evaluate(@Nullable SubscriptionRecord record, Set<String> requiredFeatures,
@@ -368,5 +372,39 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
     FEATURE_QUOTA,
     ERROR
 
+  }
+
+  private static final Pattern TIER_PATTERN = Pattern.compile("(?i)tier[:/_-]?([a-z0-9]+)");
+
+  private String resolveTier(@Nullable SubscriptionRecord record) {
+    if (record == null) {
+      return null;
+    }
+    for (String feature : Optional.ofNullable(record.enabledFeatures()).orElse(Set.of())) {
+      String tier = extractTier(feature);
+      if (tier != null) {
+        return tier;
+      }
+    }
+    if (record.allocations() != null) {
+      for (String key : record.allocations().keySet()) {
+        String tier = extractTier(key);
+        if (tier != null) {
+          return tier;
+        }
+      }
+    }
+    return null;
+  }
+
+  private String extractTier(String candidate) {
+    if (!StringUtils.hasText(candidate)) {
+      return null;
+    }
+    Matcher matcher = TIER_PATTERN.matcher(candidate.trim());
+    if (matcher.matches() || matcher.find()) {
+      return matcher.group(1).toLowerCase();
+    }
+    return null;
   }
 }

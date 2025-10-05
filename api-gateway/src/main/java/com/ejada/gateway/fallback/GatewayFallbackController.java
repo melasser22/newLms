@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.http.ResponseEntity;
@@ -108,10 +109,10 @@ public class GatewayFallbackController {
       ServerWebExchange exchange,
       SubscriptionRecord record,
       Priority priority) {
-    String tier = Optional.ofNullable(exchange.getAttribute(GatewayRequestAttributes.SUBSCRIPTION_TIER))
-        .filter(StringUtils::hasText)
-        .map(String::trim)
-        .orElse("unknown");
+    String rawTier = Optional.ofNullable(exchange.getAttribute(GatewayRequestAttributes.SUBSCRIPTION_TIER))
+        .map(Object::toString)
+        .orElse(null);
+    String tier = StringUtils.hasText(rawTier) ? rawTier.trim() : "unknown";
     CatalogFallbackPayload payload = new CatalogFallbackPayload(tier,
         record != null ? record.enabledFeatures() : Set.of(),
         record != null ? record.fetchedAt() : Instant.now());
@@ -140,8 +141,11 @@ public class GatewayFallbackController {
       Priority priority) {
     return billingFallbackQueue.enqueue(tenantId, exchange.getRequest())
         .map(queueKey -> {
+          String method = Optional.ofNullable(exchange.getRequest().getMethod())
+              .map(HttpMethod::name)
+              .orElse("UNKNOWN");
           BillingFallbackPayload payload = new BillingFallbackPayload(queueKey, Instant.now(),
-              exchange.getRequest().getURI().getPath(), exchange.getRequest().getMethodValue());
+              exchange.getRequest().getURI().getPath(), method);
           Map<String, Object> metadata = new LinkedHashMap<>();
           metadata.put("strategy", "billing-queue");
           metadata.put("priority", priority.name());

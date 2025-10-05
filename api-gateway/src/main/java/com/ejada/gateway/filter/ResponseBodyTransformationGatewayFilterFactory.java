@@ -23,6 +23,7 @@ import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
@@ -147,7 +148,8 @@ public class ResponseBodyTransformationGatewayFilterFactory {
                 buffer.read(originalBytes);
                 DataBufferUtils.release(buffer);
 
-                HttpStatus status = getStatusCode();
+                HttpStatusCode statusCode = getStatusCode();
+                HttpStatus status = statusCode != null ? HttpStatus.resolve(statusCode.value()) : null;
                 MediaType contentType = getHeaders().getContentType();
                 byte[] processed = originalBytes;
 
@@ -171,7 +173,7 @@ public class ResponseBodyTransformationGatewayFilterFactory {
 
                 Mono<Void> writeMono = super.writeWith(Mono.just(wrap));
 
-                if (cachingActive && isSuccessful(status)) {
+                if (cachingActive && isSuccessful(statusCode)) {
                   CachedResponse snapshot = responseCacheService.snapshotResponse(metadata.route(), this, processed, etag, capturedAt);
                   return responseCacheService.store(metadata, snapshot)
                       .onErrorResume(ex -> {
@@ -265,7 +267,7 @@ public class ResponseBodyTransformationGatewayFilterFactory {
           .anyMatch(value -> value.contains("no-cache"));
     }
 
-    private boolean isSuccessful(HttpStatus status) {
+    private boolean isSuccessful(HttpStatusCode status) {
       return status != null && status.is2xxSuccessful();
     }
 
