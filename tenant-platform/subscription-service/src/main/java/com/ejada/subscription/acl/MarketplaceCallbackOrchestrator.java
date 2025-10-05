@@ -1,6 +1,10 @@
 package com.ejada.subscription.acl;
 
+import static com.ejada.subscription.acl.MarketplaceCallbackEndpoints.NOTIFICATION;
+import static com.ejada.subscription.acl.MarketplaceCallbackEndpoints.UPDATE;
+
 import com.ejada.common.dto.ServiceResult;
+import com.ejada.common.events.subscription.SubscriptionApprovalAction;
 import com.ejada.common.exception.ServiceResultException;
 import com.ejada.common.marketplace.subscription.dto.ProductPropertyDto;
 import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionNotificationRq;
@@ -10,8 +14,10 @@ import com.ejada.common.marketplace.subscription.dto.SubscriptionAdditionalServi
 import com.ejada.common.marketplace.subscription.dto.SubscriptionFeatureDto;
 import com.ejada.common.marketplace.subscription.dto.SubscriptionInfoDto;
 import com.ejada.common.marketplace.subscription.dto.SubscriptionUpdateType;
-import com.ejada.common.events.subscription.SubscriptionApprovalAction;
-import com.ejada.common.marketplace.token.TokenHashing;
+import com.ejada.subscription.acl.service.IdempotentRequestService;
+import com.ejada.subscription.acl.service.NotificationAuditService;
+import com.ejada.subscription.acl.service.NotificationReplayService;
+import com.ejada.subscription.acl.service.SubscriptionOutboxService;
 import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
 import com.ejada.subscription.mapper.SubscriptionAdditionalServiceMapper;
 import com.ejada.subscription.mapper.SubscriptionEnvironmentIdentifierMapper;
@@ -20,8 +26,6 @@ import com.ejada.subscription.mapper.SubscriptionMapper;
 import com.ejada.subscription.mapper.SubscriptionProductPropertyMapper;
 import com.ejada.subscription.mapper.SubscriptionUpdateEventMapper;
 import com.ejada.subscription.model.InboundNotificationAudit;
-import com.ejada.subscription.model.IdempotentRequest;
-import com.ejada.subscription.model.OutboxEvent;
 import com.ejada.subscription.model.Subscription;
 import com.ejada.subscription.model.SubscriptionAdditionalService;
 import com.ejada.subscription.model.SubscriptionApprovalRequest;
@@ -29,20 +33,16 @@ import com.ejada.subscription.model.SubscriptionEnvironmentIdentifier;
 import com.ejada.subscription.model.SubscriptionFeature;
 import com.ejada.subscription.model.SubscriptionProductProperty;
 import com.ejada.subscription.model.SubscriptionUpdateEvent;
-import com.ejada.subscription.repository.InboundNotificationAuditRepository;
-import com.ejada.subscription.repository.IdempotentRequestRepository;
-import com.ejada.subscription.repository.OutboxEventRepository;
 import com.ejada.subscription.repository.SubscriptionAdditionalServiceRepository;
 import com.ejada.subscription.repository.SubscriptionEnvironmentIdentifierRepository;
 import com.ejada.subscription.repository.SubscriptionFeatureRepository;
 import com.ejada.subscription.repository.SubscriptionProductPropertyRepository;
 import com.ejada.subscription.repository.SubscriptionRepository;
 import com.ejada.subscription.repository.SubscriptionUpdateEventRepository;
-import com.ejada.subscription.tenant.TenantLink;
-import com.ejada.subscription.tenant.TenantLinkFactory;
 import com.ejada.subscription.service.approval.ApprovalWorkflowService;
 import com.ejada.subscription.service.approval.ApprovalWorkflowService.SubmissionResult;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ejada.subscription.tenant.TenantLink;
+import com.ejada.subscription.tenant.TenantLinkFactory;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
@@ -54,52 +54,36 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class MarketplaceCallbackOrchestrator {
 
-    private static final String EP_NOTIFICATION = "RECEIVE_NOTIFICATION";
-    private static final String EP_UPDATE = "RECEIVE_UPDATE";
-
     private final SubscriptionRepository subscriptionRepo;
     private final SubscriptionFeatureRepository featureRepo;
     private final SubscriptionAdditionalServiceRepository additionalServiceRepo;
     private final SubscriptionProductPropertyRepository propertyRepo;
     private final SubscriptionEnvironmentIdentifierRepository envIdRepo;
-    private final InboundNotificationAuditRepository auditRepo;
     private final SubscriptionUpdateEventRepository updateEventRepo;
-    private final OutboxEventRepository outboxRepo;
-    private final IdempotentRequestRepository idemRepo;
     private final SubscriptionMapper subscriptionMapper;
     private final SubscriptionFeatureMapper featureMapper;
     private final SubscriptionAdditionalServiceMapper additionalServiceMapper;
     private final SubscriptionProductPropertyMapper propertyMapper;
     private final SubscriptionEnvironmentIdentifierMapper envIdMapper;
     private final SubscriptionUpdateEventMapper updateEventMapper;
-    @SuppressFBWarnings("EI_EXPOSE_REP2")
-    private final ObjectMapper objectMapper;
-    private final PlatformTransactionManager transactionManager;
     private final SubscriptionApprovalPublisher approvalPublisher;
     private final TenantLinkFactory tenantLinkFactory;
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring manages dependency scope")
     private final ApprovalWorkflowService approvalWorkflowService;
-
-    private final Map<UUID, ServiceResult<ReceiveSubscriptionNotificationRs>> processedNotificationCache =
-            new ConcurrentHashMap<>();
+    private final NotificationReplayService notificationReplayService;
+    private final NotificationAuditService notificationAuditService;
+    private final SubscriptionOutboxService subscriptionOutboxService;
+    private final IdempotentRequestService idempotentRequestService;
 
     @Transactional
     public ServiceResult<ReceiveSubscriptionNotificationRs> processNotification(
@@ -107,12 +91,13 @@ public class MarketplaceCallbackOrchestrator {
 
         Objects.requireNonNull(rq, "request must not be null");
 
-        var replay = replayNotificationIfProcessed(rqUid, rq);
+        var replay = notificationReplayService.replayNotificationIfProcessed(rqUid, rq);
         if (replay != null) {
             return replay;
         }
 
-        InboundNotificationAudit audit = recordInboundAudit(rqUid, token, rq, EP_NOTIFICATION);
+        InboundNotificationAudit audit =
+                notificationAuditService.recordInboundAudit(rqUid, token, rq, NOTIFICATION);
 
         try {
             SubscriptionInfoDto si = rq.subscriptionInfo();
@@ -211,7 +196,8 @@ public class MarketplaceCallbackOrchestrator {
             return okVoid();
         }
 
-        InboundNotificationAudit audit = recordInboundAudit(rqUid, token, rq, EP_UPDATE);
+        InboundNotificationAudit audit =
+                notificationAuditService.recordInboundAudit(rqUid, token, rq, UPDATE);
 
         try {
             SubscriptionUpdateEvent event = persistUpdateEvent(rq, rqUid);
@@ -229,56 +215,6 @@ public class MarketplaceCallbackOrchestrator {
         } catch (Exception ex) {
             return handleUpdateFailure(audit, ex, "processing failed");
         }
-    }
-
-    private ServiceResult<ReceiveSubscriptionNotificationRs> replayNotificationIfProcessed(
-            final UUID rqUid, final ReceiveSubscriptionNotificationRq rq) {
-        if (rqUid == null || rq == null || rq.subscriptionInfo() == null) {
-            return null;
-        }
-
-        return processedNotificationCache.computeIfAbsent(
-                rqUid,
-                key -> auditRepo.findByRqUidAndEndpoint(key, EP_NOTIFICATION)
-                        .filter(audit -> Boolean.TRUE.equals(audit.getProcessed()))
-                        .map(audit -> {
-                            var info = rq.subscriptionInfo();
-                            var maybeSub = subscriptionRepo.findByExtSubscriptionIdAndExtCustomerId(
-                                    info.subscriptionId(), info.customerId());
-                            List<SubscriptionEnvironmentIdentifier> ids = maybeSub
-                                    .map(s -> envIdRepo.findBySubscriptionSubscriptionId(s.getSubscriptionId()))
-                                    .orElseGet(List::of);
-                            var rs = new ReceiveSubscriptionNotificationRs(Boolean.TRUE, envIdMapper.toDtoList(ids));
-                            return okNotification(rs);
-                        })
-                        .orElse(null));
-    }
-
-    private InboundNotificationAudit recordInboundAudit(
-            final UUID rqUid, final String token, final Object payload, final String endpoint) {
-        String tokenHash = token == null ? null : TokenHashing.sha256(token);
-        String payloadJson = payload == null ? null : writeJson(payload);
-
-        return executeInNewTransaction(
-                () ->
-                        auditRepo
-                                .findByRqUidAndEndpoint(rqUid, endpoint)
-                                .orElseGet(
-                                        () -> {
-                                            InboundNotificationAudit audit = new InboundNotificationAudit();
-                                            audit.setRqUid(rqUid);
-                                            audit.setEndpoint(endpoint);
-                                            audit.setTokenHash(tokenHash);
-                                            audit.setPayload(payloadJson);
-                                            try {
-                                                return auditRepo.save(audit);
-                                            } catch (DataIntegrityViolationException ex) {
-                                                return auditRepo
-                                                        .findByRqUidAndEndpoint(rqUid, endpoint)
-                                                        .orElseThrow(() -> ex);
-                                            }
-                                        }),
-                "persist inbound notification audit");
     }
 
     private UpsertResult upsertSubscription(final SubscriptionInfoDto info) {
@@ -341,9 +277,11 @@ public class MarketplaceCallbackOrchestrator {
         Map<String, Object> payload = new HashMap<>();
         payload.put("extSubscriptionId", sub.getExtSubscriptionId());
         payload.put("extCustomerId", sub.getExtCustomerId());
-        emitOutbox("SUBSCRIPTION", sub.getSubscriptionId().toString(), "CREATED_OR_UPDATED", payload);
-        recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
-        markAuditSuccess(audit.getInboundNotificationAuditId(), statusCode, statusDescription, null);
+        subscriptionOutboxService.emit(
+                "SUBSCRIPTION", sub.getSubscriptionId().toString(), "CREATED_OR_UPDATED", payload);
+        idempotentRequestService.record(rqUid, NOTIFICATION, rq);
+        notificationAuditService.markSuccess(
+                audit.getInboundNotificationAuditId(), statusCode, statusDescription, null);
     }
 
     private void finalizeNotificationPending(
@@ -365,22 +303,27 @@ public class MarketplaceCallbackOrchestrator {
             if (approvalRequest.getPriority() != null) {
                 payload.put("priority", approvalRequest.getPriority());
             }
-            emitOutbox(
+            subscriptionOutboxService.emit(
                     "SUBSCRIPTION",
                     sub.getSubscriptionId().toString(),
                     "SUBSCRIPTION_APPROVAL_REQUESTED",
                     payload);
         }
-        recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
-        markAuditSuccess(audit.getInboundNotificationAuditId(), "I000001", description, null);
+        idempotentRequestService.record(rqUid, NOTIFICATION, rq);
+        notificationAuditService.markSuccess(
+                audit.getInboundNotificationAuditId(), "I000001", description, null);
     }
 
     private ServiceResult<ReceiveSubscriptionNotificationRs> handleNotificationFailure(
             final InboundNotificationAudit audit, final Exception ex) {
         log.error("receiveSubscriptionNotification failed", ex);
         var failure = err("EINT000", "Unexpected Error", jsonMsg("processing failed"));
-        markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error", jsonMsg(ex.getMessage()));
-        markRollbackOnlyIfActive();
+        notificationAuditService.markFailure(
+                audit.getInboundNotificationAuditId(),
+                "EINT000",
+                "Unexpected Error",
+                jsonMsg(ex.getMessage()));
+        notificationAuditService.markRollbackOnlyIfActive();
         throw new ServiceResultException(failure, ex);
     }
 
@@ -407,13 +350,17 @@ public class MarketplaceCallbackOrchestrator {
             final Subscription sub) {
         event.setProcessed(true);
         event.setProcessedAt(OffsetDateTime.now());
-        emitOutbox(
+        subscriptionOutboxService.emit(
                 "SUBSCRIPTION",
                 sub.getSubscriptionId().toString(),
                 "STATUS_CHANGED",
                 Map.of("newStatus", sub.getSubscriptionSttsCd()));
-        recordIdempotentRequest(rqUid, EP_UPDATE, rq);
-        markAuditSuccess(audit.getInboundNotificationAuditId(), "I000000", "Successful Operation", null);
+        idempotentRequestService.record(rqUid, UPDATE, rq);
+        notificationAuditService.markSuccess(
+                audit.getInboundNotificationAuditId(),
+                "I000000",
+                "Successful Operation",
+                null);
     }
 
     private ServiceResult<Void> handleUpdateFailure(
@@ -422,8 +369,12 @@ public class MarketplaceCallbackOrchestrator {
             log.error("receiveSubscriptionUpdate failed", ex);
         }
         var failure = err("EINT000", "Unexpected Error", jsonMsg(message));
-        markAuditFailure(audit.getInboundNotificationAuditId(), "EINT000", "Unexpected Error", jsonMsg(ex.getMessage()));
-        markRollbackOnlyIfActive();
+        notificationAuditService.markFailure(
+                audit.getInboundNotificationAuditId(),
+                "EINT000",
+                "Unexpected Error",
+                jsonMsg(ex.getMessage()));
+        notificationAuditService.markRollbackOnlyIfActive();
         throw new ServiceResultException(failure, ex);
     }
 
@@ -574,95 +525,9 @@ public class MarketplaceCallbackOrchestrator {
         }
     }
 
-    private String writeJson(final Object o) {
-        try {
-            return objectMapper.writeValueAsString(o);
-        } catch (Exception e) {
-            return "{\"error\":\"serialize\"}";
-        }
-    }
-
     private String jsonMsg(final String msg) {
         String safe = msg == null ? "" : msg.replace("\"", "'");
         return "{\"message\":\"" + safe + "\"}";
-    }
-
-    private void markAuditSuccess(final Long id, final String code, final String desc, final String detailsJson) {
-        runInNewTransaction(() -> auditRepo.markProcessed(id, code, desc, detailsJson), "mark inbound audit success");
-    }
-
-    private void markAuditFailure(final Long id, final String code, final String desc, final String detailsJson) {
-        runInNewTransaction(() -> auditRepo.markProcessed(id, code, desc, detailsJson), "mark inbound audit failure");
-    }
-
-    private void emitOutbox(final String aggregate, final String id, final String type, final Map<String, ?> payload) {
-        try {
-            OutboxEvent ev = new OutboxEvent();
-            ev.setAggregateType(aggregate);
-            ev.setAggregateId(id);
-            ev.setEventType(type);
-            ev.setPayload(writeJson(payload));
-            outboxRepo.save(ev);
-        } catch (Exception e) {
-            log.warn("Outbox emit failed: {} {} - {}", type, id, e.toString());
-            log.debug("Outbox emit failure details", e);
-        }
-    }
-
-    private void recordIdempotentRequest(final UUID rqUid, final String endpoint, final Object payload) {
-        if (rqUid == null) {
-            return;
-        }
-        runInNewTransaction(
-                () -> {
-                    if (idemRepo.existsByIdempotencyKey(rqUid)) {
-                        return;
-                    }
-                    IdempotentRequest request = new IdempotentRequest();
-                    request.setIdempotencyKey(rqUid);
-                    request.setEndpoint(endpoint);
-                    request.setRequestHash(TokenHashing.sha256(writeJson(payload)));
-                    try {
-                        idemRepo.save(request);
-                    } catch (Exception ex) {
-                        log.warn(
-                                "Failed to persist idempotent request {} for endpoint {}",
-                                rqUid,
-                                endpoint,
-                                ex);
-                    }
-                },
-                "persist idempotent request");
-    }
-
-    private void runInNewTransaction(final Runnable task, final String description) {
-        try {
-            executeInNewTransaction(
-                    () -> {
-                        task.run();
-                        return null;
-                    },
-                    description);
-        } catch (RuntimeException ignored) {
-            // already logged inside executeInNewTransaction
-        }
-    }
-
-    private <T> T executeInNewTransaction(final Supplier<T> supplier, final String description) {
-        TransactionTemplate template = new TransactionTemplate(transactionManager);
-        template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-        try {
-            return template.execute(status -> supplier.get());
-        } catch (RuntimeException txEx) {
-            log.error("{}", description, txEx);
-            throw txEx;
-        }
-    }
-
-    private void markRollbackOnlyIfActive() {
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-        }
     }
 
     private static ServiceResult<ReceiveSubscriptionNotificationRs> okNotification(
