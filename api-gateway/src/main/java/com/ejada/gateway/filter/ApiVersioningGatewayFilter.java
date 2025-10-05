@@ -74,14 +74,17 @@ public class ApiVersioningGatewayFilter implements GatewayFilter {
     }
 
     String normalisedPath = rebuildPath(rawPath, segments);
+    ServerWebExchange currentExchange = exchange;
+
     if (!normalisedPath.equals(rawPath)) {
       URI newUri = UriComponentsBuilder.fromUri(originalUri)
           .replacePath(normalisedPath)
           .build(true)
           .toUri();
-      ServerWebExchangeUtils.addOriginalRequestUrl(exchange, originalUri);
-      ServerWebExchangeUtils.resetRequestUri(exchange, newUri);
-      request = exchange.getRequest();
+      ServerWebExchangeUtils.addOriginalRequestUrl(currentExchange, originalUri);
+      ServerHttpRequest updatedRequest = request.mutate().uri(newUri).build();
+      currentExchange = currentExchange.mutate().request(updatedRequest).build();
+      request = currentExchange.getRequest();
     }
 
     ServerHttpRequest.Builder requestBuilder = request.mutate();
@@ -92,7 +95,7 @@ public class ApiVersioningGatewayFilter implements GatewayFilter {
     }
 
     ServerHttpRequest mutatedRequest = requestBuilder.build();
-    ServerWebExchange mutatedExchange = exchange.mutate()
+    ServerWebExchange mutatedExchange = currentExchange.mutate()
         .request(mutatedRequest)
         .build();
     mutatedExchange.getAttributes().put(GatewayRequestAttributes.API_VERSION, effectiveVersion);
