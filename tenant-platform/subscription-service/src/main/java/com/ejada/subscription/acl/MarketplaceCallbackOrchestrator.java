@@ -338,10 +338,11 @@ public class MarketplaceCallbackOrchestrator {
             final Subscription sub,
             final String statusCode,
             final String statusDescription) {
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("extSubscriptionId", sub.getExtSubscriptionId());
-        payload.put("extCustomerId", sub.getExtCustomerId());
-        emitOutbox("SUBSCRIPTION", sub.getSubscriptionId().toString(), "CREATED_OR_UPDATED", payload);
+        emitOutbox(
+                "SUBSCRIPTION",
+                sub.getSubscriptionId().toString(),
+                "CREATED_OR_UPDATED",
+                buildSubscriptionPayload(sub));
         recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
         markAuditSuccess(audit.getInboundNotificationAuditId(), statusCode, statusDescription, null);
     }
@@ -355,24 +356,34 @@ public class MarketplaceCallbackOrchestrator {
             final boolean emitEvent,
             final String description) {
         if (emitEvent && approvalRequest != null) {
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("extSubscriptionId", sub.getExtSubscriptionId());
-            payload.put("extCustomerId", sub.getExtCustomerId());
-            payload.put("approvalRequestId", approvalRequest.getApprovalRequestId());
-            if (approvalRequest.getRiskLevel() != null) {
-                payload.put("riskLevel", approvalRequest.getRiskLevel());
-            }
-            if (approvalRequest.getPriority() != null) {
-                payload.put("priority", approvalRequest.getPriority());
-            }
             emitOutbox(
                     "SUBSCRIPTION",
                     sub.getSubscriptionId().toString(),
                     "SUBSCRIPTION_APPROVAL_REQUESTED",
-                    payload);
+                    buildApprovalRequestPayload(sub, approvalRequest));
         }
         recordIdempotentRequest(rqUid, EP_NOTIFICATION, rq);
         markAuditSuccess(audit.getInboundNotificationAuditId(), "I000001", description, null);
+    }
+
+    private Map<String, Object> buildSubscriptionPayload(final Subscription sub) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("extSubscriptionId", sub.getExtSubscriptionId());
+        payload.put("extCustomerId", sub.getExtCustomerId());
+        return payload;
+    }
+
+    private Map<String, Object> buildApprovalRequestPayload(
+            final Subscription sub, final SubscriptionApprovalRequest approvalRequest) {
+        Map<String, Object> payload = buildSubscriptionPayload(sub);
+        payload.put("approvalRequestId", approvalRequest.getApprovalRequestId());
+        if (approvalRequest.getRiskLevel() != null) {
+            payload.put("riskLevel", approvalRequest.getRiskLevel());
+        }
+        if (approvalRequest.getPriority() != null) {
+            payload.put("priority", approvalRequest.getPriority());
+        }
+        return payload;
     }
 
     private ServiceResult<ReceiveSubscriptionNotificationRs> handleNotificationFailure(
