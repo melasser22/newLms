@@ -1,10 +1,12 @@
 package com.ejada.sec.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.sec.domain.SecurityEventType;
 import com.ejada.sec.domain.User;
 import com.ejada.sec.dto.AuthRequest;
 import com.ejada.sec.dto.AuthResponse;
@@ -12,6 +14,7 @@ import com.ejada.sec.dto.RegisterRequest;
 import com.ejada.sec.dto.UserDto;
 import com.ejada.sec.repository.UserRepository;
 import com.ejada.sec.service.RefreshTokenService;
+import com.ejada.sec.service.SecurityEventService;
 import com.ejada.sec.service.TokenIssuer;
 import com.ejada.sec.service.UserService;
 import java.util.Optional;
@@ -29,12 +32,15 @@ class AuthServiceImplTest {
   @Mock private UserService userService;
   @Mock private RefreshTokenService refreshTokenService;
   @Mock private TokenIssuer tokenIssuer;
+  @Mock private SecurityEventService securityEventService;
 
   private AuthServiceImpl service;
 
   @BeforeEach
   void setUp() {
-    service = new AuthServiceImpl(userRepository, userService, refreshTokenService, tokenIssuer);
+    service =
+        new AuthServiceImpl(
+            userRepository, userService, refreshTokenService, tokenIssuer, securityEventService);
   }
 
   @Test
@@ -116,5 +122,25 @@ class AuthServiceImplTest {
     assertThat(response.getCode()).isEqualTo("ERR-AUTH-LOCKED");
     assertThat(response.getMessage()).contains("Account disabled or locked");
     assertThat(response.getData()).isNull();
+    verify(securityEventService)
+        .logEvent(
+            argThat(event -> event.getEventType() == SecurityEventType.LOGIN_FAILURE));
+  }
+
+  @Test
+  void loginLogsFailureForUnknownUser() {
+    UUID tenantId = UUID.randomUUID();
+    AuthRequest request = AuthRequest.builder()
+        .tenantId(tenantId)
+        .identifier("missing-user")
+        .password("pw")
+        .build();
+
+    BaseResponse<AuthResponse> response = service.login(request);
+
+    assertThat(response.isSuccess()).isFalse();
+    assertThat(response.getCode()).isEqualTo("ERR-AUTH-INVALID");
+    verify(securityEventService)
+        .logLoginFailure(eq(tenantId), eq("missing-user"), isNull(), isNull());
   }
 }

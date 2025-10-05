@@ -14,4 +14,7 @@ import lombok.experimental.SuperBuilder;
 public class AuthRequest extends BaseRequest {
   @NotBlank private String identifier; // username or email
   @NotBlank private String password;
+  private String ipAddress;
+  private String userAgent;
+  private String location;
 }
