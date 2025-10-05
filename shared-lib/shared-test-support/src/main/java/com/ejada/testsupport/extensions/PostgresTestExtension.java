@@ -3,6 +3,8 @@ package com.ejada.testsupport.extensions;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.opentest4j.TestAbortedException;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.LinkedHashMap;
@@ -17,6 +19,7 @@ public class PostgresTestExtension implements BeforeAllCallback, AfterAllCallbac
 
     @Override
     public void beforeAll(ExtensionContext context) {
+        ensureDockerAvailable();
         ensureContainerStarted(context);
 
         Map<String, String> properties = new LinkedHashMap<>();
@@ -48,6 +51,14 @@ public class PostgresTestExtension implements BeforeAllCallback, AfterAllCallbac
 
     private ExtensionContext.Store getClassStore(ExtensionContext context) {
         return context.getStore(ExtensionContext.Namespace.create(PostgresTestExtension.class, context.getRequiredTestClass()));
+    }
+
+    private void ensureDockerAvailable() {
+        try {
+            DockerClientFactory.instance().client();
+        } catch (IllegalStateException ex) {
+            throw new TestAbortedException("Docker is not available for PostgresTestExtension", ex);
+        }
     }
 
     static PostgreSQLContainer<?> getContainer() {
