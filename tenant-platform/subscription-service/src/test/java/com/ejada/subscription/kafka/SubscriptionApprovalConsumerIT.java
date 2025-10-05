@@ -122,7 +122,6 @@ class SubscriptionApprovalConsumerIT {
                 .executeInTransaction(operations -> {
                     operations
                             .send(APPROVAL_TOPIC, message.requestId().toString(), message)
-                            .completable()
                             .get(10, TimeUnit.SECONDS);
                     return null;
                 });
