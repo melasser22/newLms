@@ -13,10 +13,10 @@ WORKDIR /app
 COPY target/*.jar ./
 
 RUN set -eux; \
-    BOOT_JAR=$(find . -maxdepth 1 -name 'api-gateway-*.jar' ! -name '*-plain.jar' | head -n 1); \
+    BOOT_JAR=$(find . -maxdepth 1 -type f -name 'api-gateway-*.jar' ! -name '*-plain.jar' ! -name '*-stubs.jar' ! -name '*.original' | sort | head -n 1); \
     [ -n "$BOOT_JAR" ]; \
     mv "$BOOT_JAR" app.jar; \
-    find . -maxdepth 1 -name 'api-gateway-*-plain.jar' -delete; \
+    find . -maxdepth 1 -type f \( -name 'api-gateway-*-plain.jar' -o -name 'api-gateway-*-stubs.jar' -o -name 'api-gateway-*.jar.original' \) -delete; \
     chown -R appuser:appgroup /app
 
 USER appuser
