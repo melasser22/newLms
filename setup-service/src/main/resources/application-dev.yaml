@@ -190,7 +190,7 @@ shared:
     in-memory:
       activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
       keys:
-        ${CRYPTO_ACTIVE_KID:local-dev-key}: ${CRYPTO_LOCAL_DEV_KEY:?set CRYPTO_LOCAL_DEV_KEY via Vault or Secrets Manager}
+        ${CRYPTO_ACTIVE_KID:local-dev-key}: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
     vault:
       endpoint: ${VAULT_URI:}
       transitPath: ${VAULT_TRANSIT_PATH:transit}
