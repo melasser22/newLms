@@ -24,6 +24,7 @@ All configuration lives in [`src/main/resources/application.yaml`](src/main/reso
 - `shared.security` – JWT/OIDC configuration and CORS policy.
 - `resilience4j.*` – circuit breaker/retry/bulkhead defaults.
 - `spring.cloud.gateway.*` – HTTP client tuning, rate limiting, metrics.
+- `jasypt.encryptor.*` – password and cipher settings for decrypting secrets served by the Config Server.
 
 A configuration reload (Spring Cloud Config or Kubernetes ConfigMap) triggers the [`GatewayRoutesRefresher`](src/main/java/com/ejada/gateway/config/GatewayRoutesRefresher.java) which publishes a `RefreshRoutesEvent` and reloads dynamic routes without downtime.
 
@@ -38,6 +39,21 @@ mvn -pl api-gateway test
 ```
 
 Enable debug logging by exporting `LOGGING_LEVEL_COM_EJADA_GATEWAY=DEBUG`.
+
+### Decrypting Secure Configuration
+
+Encrypted values retrieved from Spring Cloud Config (or environment-specific YAML files) rely on
+Jasypt. Provide the encryption password through the `JASYPT_ENCRYPTOR_PASSWORD` environment variable
+before starting the gateway:
+
+```bash
+export JASYPT_ENCRYPTOR_PASSWORD="local-dev-secret"
+mvn -pl api-gateway spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+The default encryptor uses `PBEWITHHMACSHA512ANDAES_256` with a random IV and salt generator. Override
+any of the `jasypt.encryptor.*` settings if you need to align with a cloud KMS strategy or
+per-tenant key rotation.
 
 ## Building the Container
 
