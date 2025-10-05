@@ -52,8 +52,7 @@ public class RequestBodyTransformer {
       return original;
     }
   }
-}
-
   private static final Configuration BASE_CONFIGURATION = Configuration.defaultConfiguration()
-      .addOptions(Option.DEFAULT_PATH_LEAF_TO_NULL, Option.SUPPRESS_EXCEPTIONS, Option.CREATE_PATH);
+      .addOptions(Option.DEFAULT_PATH_LEAF_TO_NULL, Option.SUPPRESS_EXCEPTIONS);
+}
 

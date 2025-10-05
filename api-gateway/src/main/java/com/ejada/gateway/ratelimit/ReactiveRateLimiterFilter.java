@@ -318,7 +318,10 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
       if (Math.abs(now - timestamp) > INTERNAL_REQUEST_MAX_SKEW_SECONDS) {
         return false;
       }
-      String payload = timestampPart + ":" + exchange.getRequest().getMethodValue() + ":"
+      String method = exchange.getRequest().getMethod() != null
+          ? exchange.getRequest().getMethod().name()
+          : "UNKNOWN";
+      String payload = timestampPart + ":" + method + ":"
           + exchange.getRequest().getPath().value();
       Mac mac = Mac.getInstance("HmacSHA256");
       mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));

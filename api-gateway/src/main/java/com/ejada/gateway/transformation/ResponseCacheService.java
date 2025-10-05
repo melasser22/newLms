@@ -10,9 +10,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -29,7 +32,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.DigestUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
@@ -92,7 +94,7 @@ public class ResponseCacheService {
       method = HttpMethod.GET;
     }
     String signatureSource = method.name() + ':' + canonicalPath + '?' + canonicalQuery;
-    String signature = DigestUtils.sha1DigestAsHex(signatureSource.getBytes(StandardCharsets.UTF_8));
+    String signature = sha256Hex(signatureSource.getBytes(StandardCharsets.UTF_8));
     String cacheKey = CACHE_PREFIX + route.cacheKeyPrefix() + ':' + tenantId + ':' + signature;
     return Optional.of(new CacheMetadata(route, tenantId, cacheKey, canonicalPath, canonicalQuery, method));
   }
@@ -236,7 +238,7 @@ public class ResponseCacheService {
     if (body == null || body.length == 0) {
       return '"' + Base64.getEncoder().encodeToString(new byte[0]) + '"';
     }
-    byte[] digest = DigestUtils.md5Digest(body);
+    byte[] digest = sha256(body);
     return '"' + Base64.getUrlEncoder().withoutPadding().encodeToString(digest) + '"';
   }
 
@@ -374,5 +376,18 @@ public class ResponseCacheService {
       Objects.requireNonNull(expiresAt, "expiresAt");
       Objects.requireNonNull(staleAt, "staleAt");
     }
+  }
+
+  private byte[] sha256(byte[] input) {
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      return digest.digest(input);
+    } catch (NoSuchAlgorithmException ex) {
+      throw new IllegalStateException("SHA-256 algorithm not available", ex);
+    }
+  }
+
+  private String sha256Hex(byte[] input) {
+    return HexFormat.of().formatHex(sha256(input));
   }
 }

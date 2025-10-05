@@ -5,9 +5,7 @@ import com.ejada.gateway.config.GatewayTransformationProperties.RequestTransform
 import com.ejada.gateway.config.GatewayTransformationProperties.RouteTransformation;
 import com.ejada.gateway.config.GatewayTransformationProperties.RequestRule;
 import com.ejada.gateway.config.GatewayTransformationProperties.RequestOperation;
-import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.Option;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -66,10 +64,10 @@ public class TransformationRuleCache {
 
   private CompiledRequestRule compileRule(RequestRule rule) {
     try {
-      JsonPath path = JsonPath.using(BASE_CONFIGURATION).compile(rule.getJsonPath());
+      JsonPath path = JsonPath.compile(rule.getJsonPath());
       JsonPath target = null;
       if (rule.getOperation() == RequestOperation.RENAME && rule.getTargetPath() != null) {
-        target = JsonPath.using(BASE_CONFIGURATION).compile(rule.getTargetPath());
+        target = JsonPath.compile(rule.getTargetPath());
       }
       return new CompiledRequestRule(rule, path, target);
     } catch (Exception ex) {
@@ -81,7 +79,4 @@ public class TransformationRuleCache {
   private record CachedRequestRules(long version, List<CompiledRequestRule> rules) {
   }
 }
-
-  private static final Configuration BASE_CONFIGURATION = Configuration.defaultConfiguration()
-      .addOptions(Option.DEFAULT_PATH_LEAF_TO_NULL, Option.SUPPRESS_EXCEPTIONS, Option.CREATE_PATH);
 

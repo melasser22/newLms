@@ -3,7 +3,6 @@ package com.ejada.gateway.admin;
 import com.ejada.gateway.admin.model.AdminServiceSnapshot;
 import com.ejada.gateway.admin.model.AdminServiceState;
 import com.ejada.gateway.admin.model.DetailedHealthStatus;
-import org.springframework.boot.actuate.autoconfigure.health.Readiness;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.ReactiveHealthIndicator;
 import org.springframework.stereotype.Component;
@@ -13,7 +12,6 @@ import reactor.core.publisher.Mono;
  * Contributes readiness information by validating critical gateway dependencies.
  */
 @Component
-@Readiness
 public class GatewayReadinessIndicator implements ReactiveHealthIndicator {
 
   private final AdminAggregationService adminAggregationService;

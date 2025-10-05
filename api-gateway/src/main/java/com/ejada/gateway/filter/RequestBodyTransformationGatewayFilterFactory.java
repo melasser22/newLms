@@ -102,10 +102,11 @@ public class RequestBodyTransformationGatewayFilterFactory {
             if (shouldTransformBody && readable > 0) {
               transformed = requestBodyTransformer.transform(effectiveRouteId, bodyBytes);
             }
+            byte[] finalTransformed = transformed;
 
             DataBufferFactory bufferFactory = mutatedExchange.getResponse().bufferFactory();
             Flux<DataBuffer> newBody = Flux.defer(() -> {
-              DataBuffer newBuffer = bufferFactory.wrap(transformed);
+              DataBuffer newBuffer = bufferFactory.wrap(finalTransformed);
               return Mono.just(newBuffer);
             });
 

@@ -81,7 +81,8 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
         .switchIfEmpty(Mono.defer(() -> {
           LOGGER.debug("API key not found for redis key {}", redisKey);
           metrics.incrementBlocked("api_key", null);
-          return reject(exchange, HttpStatus.UNAUTHORIZED, "ERR_API_KEY_INVALID", "Invalid API key");
+          return reject(exchange, HttpStatus.UNAUTHORIZED, "ERR_API_KEY_INVALID", "Invalid API key")
+              .then(Mono.empty());
         }))
         .flatMap(record -> validateAndAuthenticate(record, apiKey, exchange, chain));
   }

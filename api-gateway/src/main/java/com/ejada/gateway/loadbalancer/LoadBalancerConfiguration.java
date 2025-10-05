@@ -3,7 +3,7 @@ package com.ejada.gateway.loadbalancer;
 import com.ejada.gateway.config.GatewayRoutesProperties;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.client.loadbalancer.LoadBalancerClientFactory;
+import org.springframework.cloud.loadbalancer.support.LoadBalancerClientFactory;
 import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClients;
 import org.springframework.cloud.loadbalancer.core.ReactorServiceInstanceLoadBalancer;
 import org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
@@ -11,6 +11,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.env.Environment;
 
 /**
  * Central configuration that replaces the default round-robin load balancer with the
@@ -49,8 +50,9 @@ public class LoadBalancerConfiguration {
       LoadBalancerHealthCheckAggregator aggregator,
       GatewayRoutesProperties routesProperties,
       WebSocketStickTable stickTable,
-      @Value("${spring.cloud.loadbalancer.zone:}") String localZone) {
-    String serviceId = clientFactory.getName();
+      @Value("${spring.cloud.loadbalancer.zone:}") String localZone,
+      Environment environment) {
+    String serviceId = LoadBalancerClientFactory.getName(environment);
     ObjectProvider<ServiceInstanceListSupplier> provider = clientFactory
         .getLazyProvider(serviceId, ServiceInstanceListSupplier.class);
     return new TenantAffinityLoadBalancer(serviceId, provider, aggregator, routesProperties, stickTable, localZone);
