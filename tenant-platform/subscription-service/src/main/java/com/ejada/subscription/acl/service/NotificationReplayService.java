@@ -9,10 +9,12 @@ import com.ejada.subscription.model.SubscriptionEnvironmentIdentifier;
 import com.ejada.subscription.repository.InboundNotificationAuditRepository;
 import com.ejada.subscription.repository.SubscriptionEnvironmentIdentifierRepository;
 import com.ejada.subscription.repository.SubscriptionRepository;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import java.time.Duration;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,8 +27,12 @@ public class NotificationReplayService {
     private final SubscriptionEnvironmentIdentifierRepository envIdentifierRepository;
     private final SubscriptionEnvironmentIdentifierMapper envIdentifierMapper;
 
-    private final Map<UUID, ServiceResult<ReceiveSubscriptionNotificationRs>> processedCache =
-            new ConcurrentHashMap<>();
+    private final Cache<UUID, Optional<ServiceResult<ReceiveSubscriptionNotificationRs>>>
+            processedCache =
+                    Caffeine.newBuilder()
+                            .maximumSize(10_000)
+                            .expireAfterWrite(Duration.ofHours(1))
+                            .build();
 
     public ServiceResult<ReceiveSubscriptionNotificationRs> replayNotificationIfProcessed(
             final UUID rqUid, final ReceiveSubscriptionNotificationRq rq) {
@@ -34,27 +40,33 @@ public class NotificationReplayService {
             return null;
         }
 
-        return processedCache.computeIfAbsent(
-                rqUid,
-                key ->
-                        auditRepository
-                                .findByRqUidAndEndpoint(key, MarketplaceCallbackEndpoints.NOTIFICATION)
-                                .filter(audit -> Boolean.TRUE.equals(audit.getProcessed()))
-                                .map(audit -> {
-                                    var info = rq.subscriptionInfo();
-                                    var maybeSub =
-                                            subscriptionRepository.findByExtSubscriptionIdAndExtCustomerId(
-                                                    info.subscriptionId(), info.customerId());
-                                    List<SubscriptionEnvironmentIdentifier> ids = maybeSub
-                                            .map(sub ->
-                                                    envIdentifierRepository.findBySubscriptionSubscriptionId(
-                                                            sub.getSubscriptionId()))
-                                            .orElseGet(List::of);
-                                    ReceiveSubscriptionNotificationRs rs =
-                                            new ReceiveSubscriptionNotificationRs(
-                                                    Boolean.TRUE, envIdentifierMapper.toDtoList(ids));
-                                    return ServiceResult.ok(rs);
-                                })
-                                .orElse(null));
+        Optional<ServiceResult<ReceiveSubscriptionNotificationRs>> cachedResult =
+                processedCache.getIfPresent(rqUid);
+        if (cachedResult != null) {
+            return cachedResult.orElse(null);
+        }
+
+        Optional<ServiceResult<ReceiveSubscriptionNotificationRs>> computedResult =
+                auditRepository
+                        .findByRqUidAndEndpoint(rqUid, MarketplaceCallbackEndpoints.NOTIFICATION)
+                        .filter(audit -> Boolean.TRUE.equals(audit.getProcessed()))
+                        .map(audit -> {
+                            var info = rq.subscriptionInfo();
+                            var maybeSub =
+                                    subscriptionRepository.findByExtSubscriptionIdAndExtCustomerId(
+                                            info.subscriptionId(), info.customerId());
+                            List<SubscriptionEnvironmentIdentifier> ids = maybeSub
+                                    .map(sub ->
+                                            envIdentifierRepository.findBySubscriptionSubscriptionId(
+                                                    sub.getSubscriptionId()))
+                                    .orElseGet(List::of);
+                            ReceiveSubscriptionNotificationRs rs =
+                                    new ReceiveSubscriptionNotificationRs(
+                                            Boolean.TRUE, envIdentifierMapper.toDtoList(ids));
+                            return ServiceResult.ok(rs);
+                        });
+
+        processedCache.put(rqUid, computedResult);
+        return computedResult.orElse(null);
     }
 }
