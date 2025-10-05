@@ -14,7 +14,9 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -118,13 +120,19 @@ class SubscriptionApprovalConsumerIT {
                 OffsetDateTime.now(),
                 null);
 
-        kafkaTemplate
-                .executeInTransaction(operations -> {
-                    operations
-                            .send(APPROVAL_TOPIC, message.requestId().toString(), message)
-                            .get(10, TimeUnit.SECONDS);
-                    return null;
-                });
+        kafkaTemplate.executeInTransaction(operations -> {
+            try {
+                operations
+                        .send(APPROVAL_TOPIC, message.requestId().toString(), message)
+                        .get(10, TimeUnit.SECONDS);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while sending kafka message", ex);
+            } catch (ExecutionException | TimeoutException ex) {
+                throw new IllegalStateException("Failed to send kafka message", ex);
+            }
+            return null;
+        });
 
         assertThat(latch.await(15, TimeUnit.SECONDS)).as("listener should publish provisioning payload").isTrue();
 
