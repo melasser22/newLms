@@ -58,8 +58,8 @@ WHERE code = 'END_USER';
 -- ============================================
 
 -- Ensure role_level has valid values
-ALTER TABLE roles 
-ADD CONSTRAINT IF NOT EXISTS ck_role_level_valid 
+ALTER TABLE roles
+ADD CONSTRAINT ck_role_level_valid
 CHECK (role_level IN (
     'PLATFORM_ADMIN', 
     'TENANT_ADMIN', 
@@ -70,8 +70,8 @@ CHECK (role_level IN (
 ));
 
 -- Prevent deletion of system roles via constraint (soft constraint)
-ALTER TABLE roles 
-ADD CONSTRAINT IF NOT EXISTS ck_system_role_protection 
+ALTER TABLE roles
+ADD CONSTRAINT ck_system_role_protection
 CHECK (is_system_role = false OR id IS NOT NULL);
 
 -- ============================================
