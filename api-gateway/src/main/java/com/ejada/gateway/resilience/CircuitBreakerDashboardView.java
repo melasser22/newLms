@@ -22,5 +22,6 @@ public record CircuitBreakerDashboardView(
     Instant lastRecoveryProbeSuccess,
     Instant lastRecoveryProbeFailure,
     boolean recoveryScheduled,
-    Instant recoveryScheduledAt) {
+    Instant recoveryScheduledAt,
+    Map<String, Long> tenantFallbackCounts) {
 }
