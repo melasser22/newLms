@@ -5,6 +5,7 @@ import com.ejada.actuator.starter.config.SharedActuatorProperties;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 import org.springframework.core.env.Environment;
+import org.springframework.util.StringUtils;
 
 public class CommonTagsCustomizer implements MeterRegistryCustomizer<MeterRegistry> {
 
@@ -24,7 +25,8 @@ public class CommonTagsCustomizer implements MeterRegistryCustomizer<MeterRegist
       tags.add("application"); tags.add(env.getProperty("spring.application.name", "app"));
     }
     if (common.isEnvironmentEnabled()) {
-      tags.add("env"); tags.add(env.getProperty("ENV", env.getProperty("SPRING_PROFILES_ACTIVE", "default")));
+      tags.add("env");
+      tags.add(resolveEnvironmentTag());
     }
     if (common.isRegionEnabled()) {
       tags.add("region"); tags.add(env.getProperty("REGION", "unknown"));
@@ -35,5 +37,13 @@ public class CommonTagsCustomizer implements MeterRegistryCustomizer<MeterRegist
     if (!tags.isEmpty()) {
       registry.config().commonTags(tags.toArray(String[]::new));
     }
+  }
+
+  private String resolveEnvironmentTag() {
+    var environment = env.getProperty("ENV");
+    if (!StringUtils.hasText(environment)) {
+      environment = env.getProperty("SPRING_PROFILES_ACTIVE");
+    }
+    return StringUtils.hasText(environment) ? environment : "default";
   }
 }
