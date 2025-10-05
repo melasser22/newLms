@@ -93,7 +93,7 @@ class ApiKeyAuthenticationFilterTest {
     StepVerifier.create(filter.filter(exchange, chain)).verifyComplete();
 
     assertThat(exchange.getRequest().getHeaders().getFirst(HeaderNames.X_TENANT_ID)).isEqualTo("tenant-a");
-    assertThat(exchange.getAttribute(GatewayRequestAttributes.TENANT_ID)).isEqualTo("tenant-a");
+    assertThat((String) exchange.getAttribute(GatewayRequestAttributes.TENANT_ID)).isEqualTo("tenant-a");
     assertThat(authenticationRef.get()).isInstanceOf(ApiKeyAuthenticationToken.class);
     double validated = meterRegistry.get("gateway.security.api_key_validated").counter().count();
     assertThat(validated).isEqualTo(1.0d);
