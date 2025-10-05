@@ -254,24 +254,95 @@ public class AuditAutoConfiguration {
     try {
       Class<?> kClazz = Class.forName("com.ejada.audit.starter.core.dispatch.sinks.KafkaSink");
 
-      // Try (String,String,String,String,int)
-      try {
-        Constructor<?> c = kClazz.getConstructor(String.class, String.class, String.class, String.class, int.class);
-        return (Sink) c.newInstance(bootstrap, topic, acks, compression, timeoutMs != null ? timeoutMs : 5000);
-      } catch (NoSuchMethodException ignored) {}
+      int effectiveTimeout = timeoutMs != null ? timeoutMs : 5000;
+      List<ConstructorCandidate> candidates = List.of(
+          ConstructorCandidate.of(new Class<?>[]{String.class, String.class, String.class, String.class, int.class},
+              new Object[]{bootstrap, topic, acks, compression, effectiveTimeout}),
+          ConstructorCandidate.of(new Class<?>[]{String.class, String.class, String.class, String.class, Integer.class},
+              new Object[]{bootstrap, topic, acks, compression, effectiveTimeout}),
+          ConstructorCandidate.of(new Class<?>[]{String.class, String.class, Map.class},
+              new Object[]{bootstrap, topic, conf}),
+          ConstructorCandidate.of(new Class<?>[]{CharSequence.class, CharSequence.class, Map.class},
+              new Object[]{bootstrap, topic, conf}),
+          ConstructorCandidate.of(new Class<?>[]{String.class, String.class, Properties.class},
+              new Object[]{bootstrap, topic, toProperties(conf)}),
+          ConstructorCandidate.of(new Class<?>[]{String.class, String.class},
+              new Object[]{bootstrap, topic})
+      );
 
-      // Try (String,String,Map)
-      try {
-        Constructor<?> c = kClazz.getConstructor(String.class, String.class, Map.class);
-        return (Sink) c.newInstance(bootstrap, topic, conf);
-      } catch (NoSuchMethodException ignored) {}
+      for (ConstructorCandidate candidate : candidates) {
+        Constructor<?> match = findMatchingConstructor(kClazz, candidate.parameterTypes());
+        if (match != null) {
+          try {
+            return (Sink) match.newInstance(candidate.arguments());
+          } catch (ReflectiveOperationException reflectionFailure) {
+            log.debug("Failed to instantiate KafkaSink using constructor {}", match, reflectionFailure);
+          }
+        }
+      }
 
-      // Try (String,String)
-      Constructor<?> c = kClazz.getConstructor(String.class, String.class);
-      return (Sink) c.newInstance(bootstrap, topic);
+      throw new IllegalStateException("No compatible KafkaSink constructor found on class " + kClazz.getName());
 
+    } catch (IllegalStateException e) {
+      throw e;
     } catch (Exception e) {
       throw new IllegalStateException("No compatible KafkaSink constructor found", e);
+    }
+  }
+
+  private Constructor<?> findMatchingConstructor(Class<?> type, Class<?>[] desiredSignature) {
+    for (Constructor<?> ctor : type.getConstructors()) {
+      Class<?>[] parameterTypes = ctor.getParameterTypes();
+      if (parameterTypes.length != desiredSignature.length) {
+        continue;
+      }
+      boolean compatible = true;
+      for (int i = 0; i < parameterTypes.length; i++) {
+        if (!isTypeCompatible(parameterTypes[i], desiredSignature[i])) {
+          compatible = false;
+          break;
+        }
+      }
+      if (compatible) {
+        return ctor;
+      }
+    }
+    return null;
+  }
+
+  private boolean isTypeCompatible(Class<?> actual, Class<?> expected) {
+    if (actual.isAssignableFrom(expected)) {
+      return true;
+    }
+    if (actual.isPrimitive()) {
+      return (actual == int.class && expected == Integer.class)
+          || (actual == long.class && expected == Long.class)
+          || (actual == boolean.class && expected == Boolean.class)
+          || (actual == double.class && expected == Double.class)
+          || (actual == float.class && expected == Float.class)
+          || (actual == short.class && expected == Short.class)
+          || (actual == byte.class && expected == Byte.class)
+          || (actual == char.class && expected == Character.class);
+    }
+    if (expected.isAssignableFrom(actual)) {
+      return true;
+    }
+    return false;
+  }
+
+  private Properties toProperties(Map<String, Object> values) {
+    Properties properties = new Properties();
+    values.forEach((key, value) -> {
+      if (key != null && value != null) {
+        properties.put(key, String.valueOf(value));
+      }
+    });
+    return properties;
+  }
+
+  private record ConstructorCandidate(Class<?>[] parameterTypes, Object[] arguments) {
+    static ConstructorCandidate of(Class<?>[] parameterTypes, Object[] arguments) {
+      return new ConstructorCandidate(parameterTypes, arguments);
     }
   }
 
