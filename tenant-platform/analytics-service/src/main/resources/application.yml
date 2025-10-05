@@ -54,6 +54,9 @@ management:
 
 shared:
   security:
+    mode: ${SHARED_SECURITY_MODE:hs256}
+    hs256:
+      secret: ${SHARED_SECURITY_HS256_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
     resource-server:
       enabled: false
     jwt:
