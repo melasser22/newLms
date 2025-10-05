@@ -26,7 +26,7 @@ spring:
       label: ${SPRING_CLOUD_CONFIG_LABEL:main}
       username: ${SPRING_CLOUD_CONFIG_USERNAME:}
       password: ${SPRING_CLOUD_CONFIG_PASSWORD:}
-      fail-fast: true
+      fail-fast: ${SPRING_CLOUD_CONFIG_FAIL_FAST:false}
   r2dbc:
     url: ${SPRING_R2DBC_URL:}
     username: ${SPRING_R2DBC_USERNAME:}
