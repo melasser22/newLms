@@ -10,13 +10,13 @@ import java.net.InetSocketAddress;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
-import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import org.testcontainers.containers.GenericContainer;
@@ -71,7 +71,7 @@ class IpFilteringGatewayFilterTest {
         .build();
     MockServerWebExchange exchange = MockServerWebExchange.from(request);
 
-    WebFilterChain chain = webExchange -> Mono.empty();
+    GatewayFilterChain chain = webExchange -> Mono.empty();
 
     StepVerifier.create(filter.filter(exchange, chain)).verifyComplete();
 
@@ -91,7 +91,7 @@ class IpFilteringGatewayFilterTest {
         .build();
     MockServerWebExchange exchange = MockServerWebExchange.from(request);
 
-    WebFilterChain chain = webExchange -> Mono.empty();
+    GatewayFilterChain chain = webExchange -> Mono.empty();
 
     StepVerifier.create(filter.filter(exchange, chain)).verifyComplete();
 
@@ -109,7 +109,7 @@ class IpFilteringGatewayFilterTest {
         .build();
     MockServerWebExchange exchange = MockServerWebExchange.from(request);
 
-    WebFilterChain chain = webExchange -> Mono.empty();
+    GatewayFilterChain chain = webExchange -> Mono.empty();
 
     StepVerifier.create(filter.filter(exchange, chain)).verifyComplete();
 

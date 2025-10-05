@@ -98,7 +98,7 @@ class TenantAffinityLoadBalancerTest {
     HttpHeaders headers = new HttpHeaders();
     headers.add("X-Tenant-Id", tenant);
     Map<String, Object> attributes = new HashMap<>();
-    attributes.put(ServerWebExchangeUtils.GATEWAY_ROUTE_ID_ATTR, routeId);
+    attributes.put(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR, routeId);
     RequestData data = new RequestData(HttpMethod.GET, URI.create("http://gateway/test"), headers,
         new LinkedMultiValueMap<>(), attributes);
     RequestDataContext context = new RequestDataContext(data);
@@ -110,7 +110,7 @@ class TenantAffinityLoadBalancerTest {
     headers.add(HttpHeaders.UPGRADE, "websocket");
     headers.add("Sec-WebSocket-Key", websocketKey);
     Map<String, Object> attributes = new HashMap<>();
-    attributes.put(ServerWebExchangeUtils.GATEWAY_ROUTE_ID_ATTR, routeId);
+    attributes.put(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR, routeId);
     RequestData data = new RequestData(HttpMethod.GET, URI.create("http://gateway/ws"), headers,
         new LinkedMultiValueMap<>(), attributes);
     RequestDataContext context = new RequestDataContext(data);

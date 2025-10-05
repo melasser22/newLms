@@ -95,7 +95,8 @@ class ApiKeyAuthenticationFilterTest {
     assertThat(exchange.getRequest().getHeaders().getFirst(HeaderNames.X_TENANT_ID)).isEqualTo("tenant-a");
     assertThat(exchange.getAttribute(GatewayRequestAttributes.TENANT_ID)).isEqualTo("tenant-a");
     assertThat(authenticationRef.get()).isInstanceOf(ApiKeyAuthenticationToken.class);
-    assertThat(meterRegistry.get("gateway.security.api_key_validated").counter().count()).isEqualTo(1.0);
+    double validated = meterRegistry.get("gateway.security.api_key_validated").counter().count();
+    assertThat(validated).isEqualTo(1.0d);
   }
 
   @Test
@@ -112,7 +113,8 @@ class ApiKeyAuthenticationFilterTest {
     assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     String body = exchange.getResponse().getBodyAsString().block();
     assertThat(body).contains("ERR_API_KEY_INVALID");
-    assertThat(meterRegistry.get("gateway.security.blocked").counter().count()).isEqualTo(1.0);
+    double blocked = meterRegistry.get("gateway.security.blocked").counter().count();
+    assertThat(blocked).isEqualTo(1.0d);
   }
 
   private void flushRedis() {
