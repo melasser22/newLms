@@ -8,8 +8,11 @@ import com.ejada.analytics.dto.PeakUsageWindowDto;
 import com.ejada.analytics.dto.UsageSummaryResponse;
 import com.ejada.analytics.dto.UsageTrendPointDto;
 import com.ejada.analytics.model.FeatureUsageDailyView;
+import com.ejada.analytics.model.FeatureUsageDailyViewId;
 import com.ejada.analytics.model.PeakUsageHourView;
+import com.ejada.analytics.model.PeakUsageHourViewId;
 import com.ejada.analytics.model.UsageSummaryView;
+import com.ejada.analytics.model.UsageSummaryViewId;
 import com.ejada.analytics.repository.FeatureUsageDailyViewRepository;
 import com.ejada.analytics.repository.PeakUsageHourViewRepository;
 import com.ejada.analytics.repository.UsageSummaryViewRepository;
@@ -59,18 +62,23 @@ public class AnalyticsService {
     Map<String, List<PeakUsageWindowDto>> peakWindows = buildPeakWindows(tenantId, range);
     Map<String, List<FeatureUsageDailyView>> usageDailyByFeature =
         loadDailyUsage(tenantId, range, FORECAST_LOOKBACK_DAYS).stream()
-            .collect(Collectors.groupingBy(v -> v.getId().getFeatureKey()));
+            .filter(view -> view.getId() != null && view.getId().getFeatureKey() != null)
+            .collect(Collectors.groupingBy(v -> requireFeatureKey(v.getId())));
 
     List<FeatureUsageSummaryDto> features =
         summaries.stream()
-            .sorted(Comparator.comparing(v -> v.getId().getFeatureKey()))
+            .filter(summary -> summary.getId() != null && summary.getId().getFeatureKey() != null)
+            .sorted(Comparator.comparing(v -> requireFeatureKey(v.getId())))
             .limit(DEFAULT_FEATURE_LIMIT)
             .map(
-                view ->
-                    buildFeatureSummary(
-                        view,
-                        peakWindows.getOrDefault(view.getId().getFeatureKey(), List.of()),
-                        usageDailyByFeature.getOrDefault(view.getId().getFeatureKey(), List.of())))
+                view -> {
+                  UsageSummaryViewId id = requireUsageSummaryId(view);
+                  String featureKey = requireFeatureKey(id);
+                  return buildFeatureSummary(
+                      view,
+                      peakWindows.getOrDefault(featureKey, List.of()),
+                      usageDailyByFeature.getOrDefault(featureKey, List.of()));
+                })
             .toList();
 
     return new UsageSummaryResponse(tenantId, period, range.start(), range.end(), features);
@@ -85,14 +93,19 @@ public class AnalyticsService {
 
     Map<String, List<UsageTrendPointDto>> trendByFeature =
         usage.stream()
+            .filter(
+                view ->
+                    view.getId() != null
+                        && view.getId().getFeatureKey() != null
+                        && view.getId().getUsageDay() != null)
             .collect(
                 Collectors.groupingBy(
-                    v -> v.getId().getFeatureKey(),
+                    v -> requireFeatureKey(v.getId()),
                     Collectors.collectingAndThen(
                         Collectors.mapping(
                             v ->
                                 new UsageTrendPointDto(
-                                    v.getId().getUsageDay(),
+                                    requireUsageDay(v.getId()),
                                     safeBigDecimal(v.getTotalUsage()),
                                     Optional.ofNullable(v.getEventCount()).orElse(0L)),
                             Collectors.toList()),
@@ -120,14 +133,19 @@ public class AnalyticsService {
 
     Map<String, List<FeatureUsageDailyView>> byFeature =
         usage.stream()
+            .filter(
+                view ->
+                    view.getId() != null
+                        && view.getId().getFeatureKey() != null
+                        && view.getId().getUsageDay() != null)
             .collect(
                 Collectors.groupingBy(
-                    v -> v.getId().getFeatureKey(),
+                    v -> requireFeatureKey(v.getId()),
                     Collectors.collectingAndThen(
                         Collectors.toList(),
                         list ->
                             list.stream()
-                                .sorted(Comparator.comparing(v -> v.getId().getUsageDay()))
+                                .sorted(Comparator.comparing(v -> requireUsageDay(v.getId())))
                                 .toList())));
 
     List<CostForecastResponse.FeatureForecastDto> forecasts = new ArrayList<>();
@@ -135,7 +153,7 @@ public class AnalyticsService {
         (feature, points) -> {
           BigDecimal currentUsage =
               points.stream()
-                  .filter(v -> v.getId().getUsageDay().isAfter(end.minusDays(30)))
+                  .filter(v -> requireUsageDay(v.getId()).isAfter(end.minusDays(30)))
                   .map(v -> safeBigDecimal(v.getTotalUsage()))
                   .reduce(BigDecimal.ZERO, BigDecimal::add);
           BigDecimal planLimit =
@@ -165,6 +183,8 @@ public class AnalyticsService {
       UsageSummaryView view,
       List<PeakUsageWindowDto> peakUsage,
       List<FeatureUsageDailyView> usageHistory) {
+    UsageSummaryViewId id = requireUsageSummaryId(view);
+    String featureKey = requireFeatureKey(id);
     BigDecimal totalUsage = safeBigDecimal(view.getTotalUsage());
     Long eventCount = Optional.ofNullable(view.getEventCount()).orElse(0L);
     BigDecimal planLimit = view.getPlanLimit();
@@ -174,7 +194,7 @@ public class AnalyticsService {
     List<String> recommendations = buildForecastRecommendations(totalUsage, forecast, planLimit);
 
     return new FeatureUsageSummaryDto(
-        view.getId().getFeatureKey(),
+        featureKey,
         totalUsage,
         eventCount,
         planLimit,
@@ -191,9 +211,14 @@ public class AnalyticsService {
         peakUsageHourViewRepository.findForTenantBetween(tenantId, peakStart, range.end());
 
     return peakUsage.stream()
+        .filter(
+            view ->
+                view.getId() != null
+                    && view.getId().getFeatureKey() != null
+                    && view.getId().getUsageHour() != null)
         .collect(
             Collectors.groupingBy(
-                v -> v.getId().getFeatureKey(),
+                v -> requireFeatureKey(v.getId()),
                 Collectors.collectingAndThen(
                     Collectors.toList(),
                     list ->
@@ -203,7 +228,7 @@ public class AnalyticsService {
                             .map(
                                 v ->
                                     new PeakUsageWindowDto(
-                                        v.getId().getUsageHour(),
+                                        requireUsageHour(v.getId()),
                                         Optional.ofNullable(v.getEventCount()).orElse(0L),
                                         safeBigDecimal(v.getTotalUsage())))
                             .toList())));
@@ -221,8 +246,13 @@ public class AnalyticsService {
     }
     List<FeatureUsageDailyView> ordered =
         usageHistory.stream()
-            .sorted(Comparator.comparing(v -> v.getId().getUsageDay()))
+            .filter(view -> view.getId() != null && view.getId().getUsageDay() != null)
+            .sorted(Comparator.comparing(v -> requireUsageDay(v.getId())))
             .toList();
+
+    if (ordered.isEmpty()) {
+      return BigDecimal.ZERO;
+    }
 
     int n = ordered.size();
     double sumX = 0;
@@ -283,6 +313,30 @@ public class AnalyticsService {
 
   private BigDecimal safeBigDecimal(BigDecimal value) {
     return value == null ? BigDecimal.ZERO : value;
+  }
+
+  private UsageSummaryViewId requireUsageSummaryId(UsageSummaryView view) {
+    return Objects.requireNonNull(view.getId(), "Usage summary row is missing its identifier");
+  }
+
+  private String requireFeatureKey(UsageSummaryViewId id) {
+    return Objects.requireNonNull(id.getFeatureKey(), "Usage summary identifier lacks feature key");
+  }
+
+  private String requireFeatureKey(FeatureUsageDailyViewId id) {
+    return Objects.requireNonNull(id.getFeatureKey(), "Daily usage identifier lacks feature key");
+  }
+
+  private String requireFeatureKey(PeakUsageHourViewId id) {
+    return Objects.requireNonNull(id.getFeatureKey(), "Peak usage identifier lacks feature key");
+  }
+
+  private OffsetDateTime requireUsageDay(FeatureUsageDailyViewId id) {
+    return Objects.requireNonNull(id.getUsageDay(), "Daily usage identifier lacks usage day");
+  }
+
+  private OffsetDateTime requireUsageHour(PeakUsageHourViewId id) {
+    return Objects.requireNonNull(id.getUsageHour(), "Peak usage identifier lacks usage hour");
   }
 
   private DateRange resolveRange(AnalyticsPeriod period) {
