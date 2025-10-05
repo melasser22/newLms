@@ -3,10 +3,9 @@ package com.ejada.subscription.acl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.ejada.common.dto.ServiceResult;
@@ -18,6 +17,10 @@ import com.ejada.common.marketplace.subscription.dto.ReceiveSubscriptionUpdateRq
 import com.ejada.common.events.subscription.SubscriptionApprovalAction;
 import com.ejada.common.marketplace.subscription.dto.SubscriptionInfoDto;
 import com.ejada.common.marketplace.subscription.dto.SubscriptionUpdateType;
+import com.ejada.subscription.acl.service.IdempotentRequestService;
+import com.ejada.subscription.acl.service.NotificationAuditService;
+import com.ejada.subscription.acl.service.NotificationReplayService;
+import com.ejada.subscription.acl.service.SubscriptionOutboxService;
 import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
 import com.ejada.subscription.mapper.SubscriptionAdditionalServiceMapper;
 import com.ejada.subscription.mapper.SubscriptionEnvironmentIdentifierMapper;
@@ -29,9 +32,6 @@ import com.ejada.subscription.model.InboundNotificationAudit;
 import com.ejada.subscription.model.Subscription;
 import com.ejada.subscription.model.SubscriptionUpdateEvent;
 import com.ejada.subscription.model.SubscriptionApprovalRequest;
-import com.ejada.subscription.repository.InboundNotificationAuditRepository;
-import com.ejada.subscription.repository.IdempotentRequestRepository;
-import com.ejada.subscription.repository.OutboxEventRepository;
 import com.ejada.subscription.repository.SubscriptionAdditionalServiceRepository;
 import com.ejada.subscription.repository.SubscriptionEnvironmentIdentifierRepository;
 import com.ejada.subscription.repository.SubscriptionFeatureRepository;
@@ -42,21 +42,17 @@ import com.ejada.subscription.service.approval.ApprovalWorkflowService;
 import com.ejada.subscription.service.approval.ApprovalWorkflowService.SubmissionResult;
 import com.ejada.subscription.tenant.TenantLink;
 import com.ejada.subscription.tenant.TenantLinkFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.SimpleTransactionStatus;
 
 @ExtendWith(MockitoExtension.class)
 class MarketplaceCallbackOrchestratorTest {
@@ -66,10 +62,7 @@ class MarketplaceCallbackOrchestratorTest {
     @Mock private SubscriptionAdditionalServiceRepository additionalServiceRepo;
     @Mock private SubscriptionProductPropertyRepository propertyRepo;
     @Mock private SubscriptionEnvironmentIdentifierRepository envIdRepo;
-    @Mock private InboundNotificationAuditRepository auditRepo;
     @Mock private SubscriptionUpdateEventRepository updateEventRepo;
-    @Mock private OutboxEventRepository outboxRepo;
-    @Mock private IdempotentRequestRepository idemRepo;
     @Mock private SubscriptionMapper subscriptionMapper;
     @Mock private SubscriptionFeatureMapper featureMapper;
     @Mock private SubscriptionAdditionalServiceMapper additionalServiceMapper;
@@ -78,14 +71,16 @@ class MarketplaceCallbackOrchestratorTest {
     @Mock private SubscriptionUpdateEventMapper updateEventMapper;
     @Mock private SubscriptionApprovalPublisher approvalPublisher;
     @Mock private ApprovalWorkflowService approvalWorkflowService;
+    @Mock private NotificationReplayService notificationReplayService;
+    @Mock private NotificationAuditService notificationAuditService;
+    @Mock private SubscriptionOutboxService subscriptionOutboxService;
+    @Mock private IdempotentRequestService idempotentRequestService;
 
     private MarketplaceCallbackOrchestrator orchestrator;
-    private PlatformTransactionManager transactionManager;
     private TenantLinkFactory tenantLinkFactory;
 
     @BeforeEach
     void setUp() {
-        transactionManager = new NoOpTransactionManager();
         tenantLinkFactory = new TenantLinkFactory();
         orchestrator = new MarketplaceCallbackOrchestrator(
                 subscriptionRepo,
@@ -93,21 +88,20 @@ class MarketplaceCallbackOrchestratorTest {
                 additionalServiceRepo,
                 propertyRepo,
                 envIdRepo,
-                auditRepo,
                 updateEventRepo,
-                outboxRepo,
-                idemRepo,
                 subscriptionMapper,
                 featureMapper,
                 additionalServiceMapper,
                 propertyMapper,
                 envIdMapper,
                 updateEventMapper,
-                new ObjectMapper(),
-                transactionManager,
                 approvalPublisher,
                 tenantLinkFactory,
-                approvalWorkflowService);
+                approvalWorkflowService,
+                notificationReplayService,
+                notificationAuditService,
+                subscriptionOutboxService,
+                idempotentRequestService);
     }
 
     @Test
@@ -160,9 +154,9 @@ class MarketplaceCallbackOrchestratorTest {
 
         InboundNotificationAudit savedAudit = new InboundNotificationAudit();
         savedAudit.setInboundNotificationAuditId(15L);
-        when(auditRepo.save(any())).thenReturn(savedAudit);
-        when(auditRepo.markProcessed(any(), any(), any(), any())).thenReturn(1);
-        when(auditRepo.findByRqUidAndEndpoint(rqUid, "RECEIVE_NOTIFICATION")).thenReturn(Optional.empty());
+        when(notificationReplayService.replayNotificationIfProcessed(rqUid, request)).thenReturn(null);
+        when(notificationAuditService.recordInboundAudit(rqUid, "token", request, "RECEIVE_NOTIFICATION"))
+                .thenReturn(savedAudit);
 
         when(subscriptionRepo.findByExtSubscriptionIdAndExtCustomerId(123L, 456L)).thenReturn(Optional.empty());
 
@@ -183,7 +177,6 @@ class MarketplaceCallbackOrchestratorTest {
         when(featureRepo.findBySubscriptionSubscriptionId(200L)).thenReturn(List.of());
         when(additionalServiceRepo.findBySubscriptionSubscriptionId(200L)).thenReturn(List.of());
         when(propertyRepo.findBySubscriptionSubscriptionId(200L)).thenReturn(List.of());
-        when(idemRepo.existsByIdempotencyKey(rqUid)).thenReturn(false);
 
         SubscriptionApprovalRequest approvalRequest = new SubscriptionApprovalRequest();
         approvalRequest.setApprovalRequestId(88L);
@@ -195,6 +188,9 @@ class MarketplaceCallbackOrchestratorTest {
 
         assertThat(result.success()).isTrue();
         assertThat(result.statusCode()).isEqualTo("I000001");
+        verify(notificationReplayService).replayNotificationIfProcessed(rqUid, request);
+        verify(notificationAuditService)
+                .recordInboundAudit(rqUid, "token", request, "RECEIVE_NOTIFICATION");
         verify(approvalPublisher)
                 .publishApprovalRequest(eq(rqUid), eq(request), any(Subscription.class));
     }
@@ -239,9 +235,9 @@ class MarketplaceCallbackOrchestratorTest {
 
         InboundNotificationAudit savedAudit = new InboundNotificationAudit();
         savedAudit.setInboundNotificationAuditId(42L);
-        when(auditRepo.save(any())).thenReturn(savedAudit);
-        when(auditRepo.markProcessed(any(), any(), any(), any())).thenReturn(1);
-        when(auditRepo.findByRqUidAndEndpoint(rqUid, "RECEIVE_NOTIFICATION")).thenReturn(Optional.empty());
+        when(notificationReplayService.replayNotificationIfProcessed(rqUid, request)).thenReturn(null);
+        when(notificationAuditService.recordInboundAudit(rqUid, "token", request, "RECEIVE_NOTIFICATION"))
+                .thenReturn(savedAudit);
 
         when(subscriptionRepo.findByExtSubscriptionIdAndExtCustomerId(321L, 654L)).thenReturn(Optional.empty());
 
@@ -264,7 +260,6 @@ class MarketplaceCallbackOrchestratorTest {
         when(propertyRepo.findBySubscriptionSubscriptionId(300L)).thenReturn(List.of());
         when(envIdRepo.findBySubscriptionSubscriptionId(300L)).thenReturn(List.of());
         when(envIdMapper.toDtoList(List.of())).thenReturn(List.of());
-        when(idemRepo.existsByIdempotencyKey(rqUid)).thenReturn(false);
 
         SubscriptionApprovalRequest approvalRequest = new SubscriptionApprovalRequest();
         when(approvalWorkflowService.submitForApproval(mapped, request, true))
@@ -276,6 +271,11 @@ class MarketplaceCallbackOrchestratorTest {
         TenantLink expectedTenantLink = tenantLinkFactory.resolve(request, mapped);
 
         assertThat(result.statusCode()).isEqualTo("I000000");
+        verify(subscriptionOutboxService)
+                .emit(eq("SUBSCRIPTION"), eq("300"), eq("CREATED_OR_UPDATED"), any(Map.class));
+        verify(idempotentRequestService).record(rqUid, "RECEIVE_NOTIFICATION", request);
+        verify(notificationAuditService)
+                .markSuccess(eq(42L), eq("I000000"), eq("Subscription auto-approved"), eq(null));
         verify(approvalPublisher)
                 .publishApprovalDecision(
                         eq(SubscriptionApprovalAction.APPROVED),
@@ -324,25 +324,16 @@ class MarketplaceCallbackOrchestratorTest {
                 subscriptionInfo,
                 List.of());
 
-        InboundNotificationAudit audit = new InboundNotificationAudit();
-        audit.setProcessed(Boolean.TRUE);
-        when(auditRepo.findByRqUidAndEndpoint(rqUid, "RECEIVE_NOTIFICATION")).thenReturn(Optional.of(audit));
-
-        Subscription subscription = new Subscription();
-        subscription.setSubscriptionId(321L);
-        subscription.setExtSubscriptionId(123L);
-        subscription.setExtCustomerId(456L);
-        when(subscriptionRepo.findByExtSubscriptionIdAndExtCustomerId(123L, 456L))
-                .thenReturn(Optional.of(subscription));
-        when(envIdRepo.findBySubscriptionSubscriptionId(321L)).thenReturn(List.of());
-        when(envIdMapper.toDtoList(List.of())).thenReturn(List.of());
+        ServiceResult<ReceiveSubscriptionNotificationRs> cached =
+                ServiceResult.ok(new ReceiveSubscriptionNotificationRs(Boolean.TRUE, List.of()));
+        when(notificationReplayService.replayNotificationIfProcessed(rqUid, request)).thenReturn(cached);
 
         ServiceResult<ReceiveSubscriptionNotificationRs> result =
                 orchestrator.processNotification(rqUid, "token", request);
 
-        assertThat(result.statusCode()).isEqualTo("I000000");
-        verify(auditRepo, never()).save(any());
-        verify(outboxRepo, never()).save(any());
+        assertThat(result).isEqualTo(cached);
+        verify(notificationReplayService).replayNotificationIfProcessed(rqUid, request);
+        verifyNoInteractions(notificationAuditService);
     }
 
     @Test
@@ -355,8 +346,8 @@ class MarketplaceCallbackOrchestratorTest {
 
         InboundNotificationAudit savedAudit = new InboundNotificationAudit();
         savedAudit.setInboundNotificationAuditId(10L);
-        when(auditRepo.save(any())).thenReturn(savedAudit);
-        when(auditRepo.markProcessed(any(), any(), any(), any())).thenReturn(1);
+        when(notificationAuditService.recordInboundAudit(rqUid, "token", request, "RECEIVE_UPDATE"))
+                .thenReturn(savedAudit);
 
         SubscriptionUpdateEvent updateEvent = new SubscriptionUpdateEvent();
         when(updateEventMapper.toEvent(eq(request), eq(rqUid))).thenReturn(updateEvent);
@@ -370,32 +361,20 @@ class MarketplaceCallbackOrchestratorTest {
         when(subscriptionRepo.findByExtSubscriptionId(123L)).thenReturn(Optional.of(subscription));
         when(subscriptionRepo.save(subscription)).thenReturn(subscription);
 
-        doThrow(new RuntimeException("outbox down")).when(outboxRepo).save(any());
-        when(idemRepo.existsByIdempotencyKey(rqUid)).thenReturn(false);
+        doThrow(new RuntimeException("outbox down"))
+                .when(subscriptionOutboxService)
+                .emit(eq("SUBSCRIPTION"), eq("200"), eq("STATUS_CHANGED"), any(Map.class));
 
         ServiceResult<Void> result = orchestrator.processUpdate(rqUid, "token", request);
 
         assertThat(result.statusCode()).isEqualTo("I000000");
         assertThat(subscription.getSubscriptionSttsCd()).isEqualTo("CANCELED");
         assertThat(subscription.getIsDeleted()).isTrue();
-        verify(auditRepo).markProcessed(eq(10L), eq("I000000"), eq("Successful Operation"), eq(null));
-        verify(outboxRepo).save(any());
+        verify(idempotentRequestService).record(rqUid, "RECEIVE_UPDATE", request);
+        verify(notificationAuditService)
+                .markSuccess(eq(10L), eq("I000000"), eq("Successful Operation"), eq(null));
+        verify(subscriptionOutboxService)
+                .emit(eq("SUBSCRIPTION"), eq("200"), eq("STATUS_CHANGED"), any(Map.class));
     }
 
-    private static final class NoOpTransactionManager implements PlatformTransactionManager {
-        @Override
-        public TransactionStatus getTransaction(TransactionDefinition definition) {
-            return new SimpleTransactionStatus();
-        }
-
-        @Override
-        public void commit(TransactionStatus status) {
-            // no-op
-        }
-
-        @Override
-        public void rollback(TransactionStatus status) {
-            // no-op
-        }
-    }
 }
