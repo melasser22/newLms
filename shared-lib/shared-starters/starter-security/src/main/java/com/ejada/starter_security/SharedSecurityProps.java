@@ -26,38 +26,43 @@ import org.springframework.validation.annotation.Validated;
  *   shared.security.resource-server.stateless
  */
 @Getter
-@Setter
 @Validated
 @ConfigurationProperties(prefix = "shared.security")
 public class SharedSecurityProps implements BaseStarterProperties {
 
   // --------- JWT (back-compat root) ---------
   /** hs256 | jwks | issuer */
-  private String mode = "hs256";
+  @Setter private String mode = "hs256";
 
   private Hs256 hs256 = new Hs256();
   private Jwks jwks = new Jwks();
 
-  private String issuer;                // when mode = issuer
-  private String audience;              // optional audience check
+  /**
+   * Legacy block kept for backward compatibility with the previous
+   * {@code shared.security.jwt.*} properties.
+   */
+  private LegacyJwt jwt = new LegacyJwt();
+
+  @Setter private String issuer;                // when mode = issuer
+  @Setter private String audience;              // optional audience check
 
   /** Claim that carries roles (e.g., "roles", "realm_access.roles", "authorities"). */
-  private String rolesClaim = "roles";
+  @Setter private String rolesClaim = "roles";
 
   /** Additional standard scope claim (space-delimited) if you map scopes to authorities. */
-  private String scopeClaim = "scope";
+  @Setter private String scopeClaim = "scope";
 
   /** Claim that carries the tenant id (if you wish to resolve tenant from JWT). */
-  private String tenantClaim = "tenant";
+  @Setter private String tenantClaim = "tenant";
 
   /** Prefix for scope authorities mapped from scope/scopeClaim. */
-  private String authorityPrefix = "SCOPE_";
+  @Setter private String authorityPrefix = "SCOPE_";
 
   /** Prefix for role authorities mapped from rolesClaim. */
-  private String rolePrefix = "ROLE_";
+  @Setter private String rolePrefix = "ROLE_";
 
   /** Master switch to enable or disable role checks in services. */
-  private boolean enableRoleCheck = true;
+  @Setter private boolean enableRoleCheck = true;
 
   // --------- Resource Server defaults ---------
   private ResourceServer resourceServer = new ResourceServer();
@@ -111,5 +116,44 @@ public class SharedSecurityProps implements BaseStarterProperties {
 
     /** Allowed CORS origins. */
     private List<String> allowedOrigins = List.of();
+  }
+
+  @Getter
+  @Setter
+  public static class LegacyJwt {
+    /** Legacy secret property from shared.security.jwt.secret. */
+    private String secret;
+
+    /** Legacy token-period property retained for downstream usage. */
+    private String tokenPeriod;
+  }
+
+  public void setHs256(Hs256 hs256) {
+    this.hs256 = hs256 != null ? hs256 : new Hs256();
+    applyLegacySecretFallback();
+  }
+
+  public void setJwks(Jwks jwks) {
+    this.jwks = jwks != null ? jwks : new Jwks();
+  }
+
+  public void setResourceServer(ResourceServer resourceServer) {
+    this.resourceServer = resourceServer != null ? resourceServer : new ResourceServer();
+  }
+
+  public void setJwt(LegacyJwt jwt) {
+    this.jwt = jwt != null ? jwt : new LegacyJwt();
+    applyLegacySecretFallback();
+  }
+
+  private void applyLegacySecretFallback() {
+    if (this.hs256 == null) {
+      this.hs256 = new Hs256();
+    }
+    String hsSecret = this.hs256.getSecret();
+    String legacySecret = this.jwt != null ? this.jwt.getSecret() : null;
+    if ((hsSecret == null || hsSecret.isBlank()) && legacySecret != null && !legacySecret.isBlank()) {
+      this.hs256.setSecret(legacySecret);
+    }
   }
 }
