@@ -35,7 +35,11 @@ import org.testcontainers.utility.DockerImageName;
 @Testcontainers
 @ActiveProfiles("test")
 @EmbeddedKafka(topics = SubscriptionApprovalConsumerIT.APPROVAL_TOPIC)
-@TestPropertySource(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
+@TestPropertySource(
+        properties = {
+            "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
+            "shared.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}"
+        })
 class SubscriptionApprovalConsumerIT {
 
     static final String APPROVAL_TOPIC = "subscription-approvals-it";
