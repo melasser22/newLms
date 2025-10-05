@@ -63,6 +63,7 @@ class SubscriptionApprovalConsumerIT {
                 () -> "classpath:db/migration/postgresql,classpath:db/testdata/subscription");
         registry.add("spring.flyway.schemas", () -> "subscription");
         registry.add("spring.flyway.default-schema", () -> "subscription");
+        registry.add("spring.flyway.create-schemas", () -> "true");
         registry.add("spring.kafka.consumer.auto-offset-reset", () -> "earliest");
         registry.add(
                 "spring.kafka.producer.value-serializer",
