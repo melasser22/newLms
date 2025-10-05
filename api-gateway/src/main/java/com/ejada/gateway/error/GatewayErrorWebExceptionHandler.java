@@ -5,6 +5,7 @@ import com.ejada.common.exception.BusinessException;
 import com.ejada.common.exception.BusinessRuleException;
 import com.ejada.common.exception.DuplicateResourceException;
 import com.ejada.common.exception.NotFoundException;
+import com.ejada.common.exception.SharedException;
 import com.ejada.common.exception.ValidationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -142,6 +143,12 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
   }
 
   private String determineMessage(Throwable ex, HttpStatus status) {
+    if (ex instanceof SharedException sharedException) {
+      String details = sharedException.getDetails();
+      if (StringUtils.hasText(details)) {
+        return details;
+      }
+    }
     if (ex instanceof WebExchangeBindException bindException) {
       return extractBindingMessage(bindException);
     }

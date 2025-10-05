@@ -21,6 +21,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.UUID;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
@@ -65,6 +66,8 @@ local capacity = tonumber(ARGV[4])
 local burstCapacity = tonumber(ARGV[5])
 local burstTtl = tonumber(ARGV[6])
 local extraBurst = math.max(0, burstCapacity - capacity)
+local eventId = ARGV[7]
+local member = tostring(now) .. ':' .. eventId
 local baseCount = 0
 local allowed = 0
 local burstUsed = 0
@@ -93,7 +96,7 @@ burstRemaining = math.max(0, extraBurst - burstUsage)
 if baseCount < capacity then
   allowed = 1
   if algorithm == 'sliding' then
-    redis.call('ZADD', KEYS[1], now, now)
+    redis.call('ZADD', KEYS[1], now, member)
     redis.call('PEXPIRE', KEYS[1], windowMillis)
     baseCount = redis.call('ZCOUNT', KEYS[1], now - windowMillis, now)
     local oldest = redis.call('ZRANGE', KEYS[1], 0, 0, 'WITHSCORES')
@@ -116,7 +119,7 @@ elseif extraBurst > 0 and burstUsage < extraBurst then
   end
   burstRemaining = math.max(0, extraBurst - burstUsage)
   if algorithm == 'sliding' then
-    redis.call('ZADD', KEYS[1], now, now)
+    redis.call('ZADD', KEYS[1], now, member)
     redis.call('PEXPIRE', KEYS[1], windowMillis)
     baseCount = redis.call('ZCOUNT', KEYS[1], now - windowMillis, now)
     local oldest = redis.call('ZRANGE', KEYS[1], 0, 0, 'WITHSCORES')
@@ -238,13 +241,15 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
     String algorithm = resolveAlgorithm();
     Instant now = Instant.now();
     List<String> keys = List.of(rateKey(key, algorithm), burstKey(key));
+    String eventId = UUID.randomUUID().toString();
     List<String> args = List.of(
         algorithm,
         String.valueOf(now.toEpochMilli()),
         String.valueOf(window.toMillis()),
         String.valueOf(limit.capacity()),
         String.valueOf(limit.burstCapacity()),
-        String.valueOf(window.toMillis()));
+        String.valueOf(window.toMillis()),
+        eventId);
 
     return redisTemplate.execute(RATE_LIMIT_SCRIPT, keys, args)
         .next()
