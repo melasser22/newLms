@@ -337,6 +337,23 @@ gateway:
       billing-service-uri: lb://billing-service
       default-period: MONTHLY
   defaults:
+    routes:
+      tenant-service: &tenant-route-base
+        uri: lb://tenant-service
+        paths:
+          - /api/v1/tenants/**
+          - /api/tenants/**
+          - /api/tenant/**
+        strip-prefix: 1
+        versioning: &tenant-versioning-base
+          enabled: true
+          default-version: v1
+          supported-versions:
+            - v1
+        session-affinity:
+          enabled: true
+          cookie-name: LMS-TENANT-AFFINITY
+          header-name: X-Tenant-Affinity
     resilience:
       enabled: true
       fallback-uri: forward:/fallback/default
@@ -405,24 +422,12 @@ jasypt:
         fallback-uri: forward:/fallback/setup-service
         priority: NON_CRITICAL
     tenant:
+      <<: *tenant-route-base
       id: tenant-service
-      uri: lb://tenant-service
-      paths:
-        - /api/v1/tenants/**
-        - /api/tenants/**
-        - /api/tenant/**
-      strip-prefix: 1
       versioning:
-        enabled: true
-        default-version: v1
-        supported-versions:
-          - v1
+        <<: *tenant-versioning-base
         fallback-to-default: true
         propagate-header: true
-      session-affinity:
-        enabled: true
-        cookie-name: LMS-TENANT-AFFINITY
-        header-name: X-Tenant-Affinity
       weight:
         enabled: true
         group: tenant-service
@@ -435,22 +440,8 @@ jasypt:
         fallback-uri: forward:/fallback/tenant-service
         priority: CRITICAL
     tenant-canary:
+      <<: *tenant-route-base
       id: tenant-service-canary
-      uri: lb://tenant-service
-      paths:
-        - /api/v1/tenants/**
-        - /api/tenants/**
-        - /api/tenant/**
-      strip-prefix: 1
-      versioning:
-        enabled: true
-        default-version: v1
-        supported-versions:
-          - v1
-      session-affinity:
-        enabled: true
-        cookie-name: LMS-TENANT-AFFINITY
-        header-name: X-Tenant-Affinity
       weight:
         enabled: true
         group: tenant-service
