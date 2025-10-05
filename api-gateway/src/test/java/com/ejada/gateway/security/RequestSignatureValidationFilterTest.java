@@ -73,7 +73,7 @@ class RequestSignatureValidationFilterTest {
     MockServerHttpRequest request = MockServerHttpRequest.post("/secure")
         .header(HeaderNames.X_TENANT_ID, "tenant-a")
         .header("X-Signature", hmac("POST\n/secure\n\n" + body))
-        .body(body.getBytes(StandardCharsets.UTF_8));
+        .bodyValue(body);
     MockServerWebExchange exchange = MockServerWebExchange.from(request);
 
     java.util.concurrent.atomic.AtomicReference<String> captured = new java.util.concurrent.atomic.AtomicReference<>();
@@ -94,7 +94,7 @@ class RequestSignatureValidationFilterTest {
   void rejectsWhenSignatureMissing() {
     MockServerHttpRequest request = MockServerHttpRequest.post("/secure")
         .header(HeaderNames.X_TENANT_ID, "tenant-a")
-        .body(new byte[0]);
+        .bodyValue("");
     MockServerWebExchange exchange = MockServerWebExchange.from(request);
 
     WebFilterChain chain = webExchange -> Mono.empty();
@@ -110,7 +110,7 @@ class RequestSignatureValidationFilterTest {
     MockServerHttpRequest request = MockServerHttpRequest.post("/secure")
         .header(HeaderNames.X_TENANT_ID, "tenant-a")
         .header("X-Signature", "deadbeef")
-        .body(new byte[0]);
+        .bodyValue("");
     MockServerWebExchange exchange = MockServerWebExchange.from(request);
 
     WebFilterChain chain = webExchange -> Mono.empty();

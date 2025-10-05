@@ -4,6 +4,9 @@ import com.ejada.gateway.config.TestGatewayConfiguration.NoOpReactiveCircuitBrea
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.function.Function;
+import org.springframework.cloud.client.circuitbreaker.ConfigBuilder;
+import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreaker;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
@@ -13,6 +16,7 @@ import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -65,20 +69,40 @@ public class TestGatewayConfiguration {
   /**
    * Simplified circuit breaker factory used by integration tests.
    */
-  static class NoOpReactiveCircuitBreakerFactory extends org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreakerFactory<Object, Object> {
+  static class NoOpReactiveCircuitBreakerFactory
+      extends org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreakerFactory<Object, NoOpReactiveCircuitBreakerFactory.NoOpConfigBuilder> {
 
     @Override
-    protected org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreaker create(String id, Object config) {
-      return reactiveCircuitBreaker(id);
+    protected NoOpConfigBuilder configBuilder(String id) {
+      return new NoOpConfigBuilder();
     }
 
     @Override
-    public org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreaker create(String id) {
-      return reactiveCircuitBreaker(id);
+    public void configureDefault(Function<String, Object> defaultConfiguration) {
+      getConfigurations().computeIfAbsent("default", defaultConfiguration);
     }
 
-    private org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreaker reactiveCircuitBreaker(String id) {
-      return (toRun, fallback) -> toRun;
+    @Override
+    public ReactiveCircuitBreaker create(String id) {
+      return new ReactiveCircuitBreaker() {
+        @Override
+        public <T> Mono<T> run(Mono<T> toRun, Function<Throwable, Mono<T>> fallback) {
+          return toRun;
+        }
+
+        @Override
+        public <T> Flux<T> run(Flux<T> toRun, Function<Throwable, Flux<T>> fallback) {
+          return toRun;
+        }
+      };
+    }
+
+    static class NoOpConfigBuilder implements ConfigBuilder<Object> {
+
+      @Override
+      public Object build() {
+        return new Object();
+      }
     }
   }
 }

@@ -2,6 +2,7 @@ package com.ejada.gateway.chaos;
 
 import com.ejada.gateway.config.TestGatewayConfiguration;
 import de.codecentric.spring.boot.chaos.monkey.component.ChaosMonkeyRequestScope;
+import de.codecentric.spring.boot.chaos.monkey.component.ChaosTarget;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,7 @@ class ChaosEngineeringTests {
   @DisplayName("Chaos Monkey can inject latency into downstream calls")
   void chaosMonkeyLatencyInjection() {
     if (chaosMonkeyRequestScope != null) {
-      chaosMonkeyRequestScope.callChaosMonkey("latency");
+      chaosMonkeyRequestScope.callChaosMonkey(ChaosTarget.SERVICE, "latency");
     }
   }
 
@@ -36,7 +37,7 @@ class ChaosEngineeringTests {
   @DisplayName("Chaos Monkey can simulate random request failures")
   void chaosMonkeyRandomFailures() {
     if (chaosMonkeyRequestScope != null) {
-      chaosMonkeyRequestScope.callChaosMonkey("exceptions");
+      chaosMonkeyRequestScope.callChaosMonkey(ChaosTarget.SERVICE, "exceptions");
     }
   }
 }
