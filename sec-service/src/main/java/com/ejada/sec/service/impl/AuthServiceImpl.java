@@ -2,11 +2,15 @@ package com.ejada.sec.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.crypto.password.PasswordHasher;
+import com.ejada.sec.domain.EventSeverity;
+import com.ejada.sec.domain.SecurityEvent;
+import com.ejada.sec.domain.SecurityEventType;
 import com.ejada.sec.domain.User;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.repository.UserRepository;
 import com.ejada.sec.service.AuthService;
 import com.ejada.sec.service.RefreshTokenService;
+import com.ejada.sec.service.SecurityEventService;
 import com.ejada.sec.service.TokenIssuer;
 import com.ejada.sec.service.UserService;
 import jakarta.transaction.Transactional;
@@ -28,6 +32,7 @@ public class AuthServiceImpl implements AuthService {
   private final UserService userService;
   private final RefreshTokenService refreshTokenService;
   private final TokenIssuer tokenIssuer; // see below
+  private final SecurityEventService securityEventService;
 
   @Transactional
   @Override
@@ -69,6 +74,8 @@ public class AuthServiceImpl implements AuthService {
 
     if (userOpt.isEmpty()) {
       log.warn("Invalid credentials for identifier '{}' in tenant {}", req.getIdentifier(), tenantId);
+      securityEventService.logLoginFailure(
+          tenantId, req.getIdentifier(), req.getIpAddress(), req.getUserAgent());
       return BaseResponse.error(CODE_AUTH_INVALID, "Invalid credentials");
     }
 
@@ -76,14 +83,29 @@ public class AuthServiceImpl implements AuthService {
 
     if (!user.isEnabled() || user.isLocked()) {
       log.warn("Login denied for user '{}' in tenant {}: disabled or locked", user.getUsername(), tenantId);
+      securityEventService.logEvent(
+          SecurityEvent.builder()
+              .tenantId(tenantId)
+              .userId(user.getId())
+              .username(user.getUsername())
+              .eventType(SecurityEventType.LOGIN_FAILURE)
+              .severity(EventSeverity.MEDIUM)
+              .ipAddress(req.getIpAddress())
+              .status("BLOCKED")
+              .details("Account disabled or locked")
+              .build());
       return BaseResponse.error(CODE_AUTH_LOCKED, "Account disabled or locked");
     }
     if (!PasswordHasher.matchesBcrypt(req.getPassword(), user.getPasswordHash())) {
       log.warn("Invalid credentials for user '{}' in tenant {}", req.getIdentifier(), tenantId);
+      securityEventService.logLoginFailure(
+          tenantId, req.getIdentifier(), req.getIpAddress(), req.getUserAgent());
       return BaseResponse.error(CODE_AUTH_INVALID, "Invalid credentials");
     }
     var tokens = issueTokens(user.getTenantId(), user.getUsername(), user.getId(), true, null);
     log.info("User '{}' logged in for tenant {}", user.getUsername(), tenantId);
+    securityEventService.logLoginSuccess(
+        user, req.getIpAddress(), req.getUserAgent(), req.getLocation());
     return BaseResponse.success("Login successful", tokens);
   }
 
