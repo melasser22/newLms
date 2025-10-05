@@ -164,9 +164,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>redis</artifactId>
-      <version>1.19.3</version>
+      <groupId>com.redis</groupId>
+      <artifactId>testcontainers-redis</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -220,7 +219,7 @@
       <plugin>
         <groupId>org.springframework.cloud</groupId>
         <artifactId>spring-cloud-contract-maven-plugin</artifactId>
-        <version>4.0.4</version>
+        <version>${spring.cloud.contract.version}</version>
         <extensions>true</extensions>
         <configuration>
           <baseClassForTests>com.ejada.gateway.contract.ContractBaseTest</baseClassForTests>
