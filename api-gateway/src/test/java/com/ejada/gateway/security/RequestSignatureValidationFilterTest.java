@@ -19,6 +19,7 @@ import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -73,7 +74,7 @@ class RequestSignatureValidationFilterTest {
     MockServerHttpRequest request = MockServerHttpRequest.post("/secure")
         .header(HeaderNames.X_TENANT_ID, "tenant-a")
         .header("X-Signature", hmac("POST\n/secure\n\n" + body))
-        .bodyValue(body);
+        .body(BodyInserters.fromValue(body));
     MockServerWebExchange exchange = MockServerWebExchange.from(request);
 
     java.util.concurrent.atomic.AtomicReference<String> captured = new java.util.concurrent.atomic.AtomicReference<>();
@@ -94,7 +95,7 @@ class RequestSignatureValidationFilterTest {
   void rejectsWhenSignatureMissing() {
     MockServerHttpRequest request = MockServerHttpRequest.post("/secure")
         .header(HeaderNames.X_TENANT_ID, "tenant-a")
-        .bodyValue("");
+        .body(BodyInserters.fromValue(""));
     MockServerWebExchange exchange = MockServerWebExchange.from(request);
 
     WebFilterChain chain = webExchange -> Mono.empty();
@@ -110,7 +111,7 @@ class RequestSignatureValidationFilterTest {
     MockServerHttpRequest request = MockServerHttpRequest.post("/secure")
         .header(HeaderNames.X_TENANT_ID, "tenant-a")
         .header("X-Signature", "deadbeef")
-        .bodyValue("");
+        .body(BodyInserters.fromValue(""));
     MockServerWebExchange exchange = MockServerWebExchange.from(request);
 
     WebFilterChain chain = webExchange -> Mono.empty();
