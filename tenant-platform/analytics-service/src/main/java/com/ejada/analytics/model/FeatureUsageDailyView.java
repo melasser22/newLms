@@ -25,7 +25,10 @@ public class FeatureUsageDailyView {
   private BigDecimal planLimit;
 
   public FeatureUsageDailyViewId getId() {
-    return id;
+    if (id == null) {
+      return null;
+    }
+    return new FeatureUsageDailyViewId(id.getTenantId(), id.getFeatureKey(), id.getUsageDay());
   }
 
   public Long getEventCount() {

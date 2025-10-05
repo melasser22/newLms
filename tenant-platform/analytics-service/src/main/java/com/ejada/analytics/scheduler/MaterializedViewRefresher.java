@@ -1,5 +1,6 @@
 package com.ejada.analytics.scheduler;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 
@@ -25,6 +26,9 @@ public class MaterializedViewRefresher {
   private final JdbcTemplate jdbcTemplate;
   private final String cronExpression;
 
+  @SuppressFBWarnings(
+      value = "EI_EXPOSE_REP2",
+      justification = "JdbcTemplate is a managed Spring bean and is safe to retain")
   public MaterializedViewRefresher(
       JdbcTemplate jdbcTemplate, @Value("${app.analytics.refresh-cron}") String cronExpression) {
     this.jdbcTemplate = jdbcTemplate;

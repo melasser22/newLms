@@ -9,6 +9,8 @@ import java.util.Objects;
 @Embeddable
 public class FeatureUsageDailyViewId implements Serializable {
 
+  private static final long serialVersionUID = 1L;
+
   @Column(name = "tenant_id")
   private Long tenantId;
 

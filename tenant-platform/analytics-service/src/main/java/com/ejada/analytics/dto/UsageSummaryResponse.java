@@ -8,4 +8,18 @@ public record UsageSummaryResponse(
     AnalyticsPeriod period,
     OffsetDateTime periodStart,
     OffsetDateTime periodEnd,
-    List<FeatureUsageSummaryDto> features) {}
+    List<FeatureUsageSummaryDto> features) {
+
+  public UsageSummaryResponse(
+      Long tenantId,
+      AnalyticsPeriod period,
+      OffsetDateTime periodStart,
+      OffsetDateTime periodEnd,
+      List<FeatureUsageSummaryDto> features) {
+    this.tenantId = tenantId;
+    this.period = period;
+    this.periodStart = periodStart;
+    this.periodEnd = periodEnd;
+    this.features = features == null ? List.of() : List.copyOf(features);
+  }
+}
