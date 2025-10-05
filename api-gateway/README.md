@@ -44,7 +44,9 @@ Enable debug logging by exporting `LOGGING_LEVEL_COM_EJADA_GATEWAY=DEBUG`.
 
 Encrypted values retrieved from Spring Cloud Config (or environment-specific YAML files) rely on
 Jasypt. Provide the encryption password through the `JASYPT_ENCRYPTOR_PASSWORD` environment variable
-before starting the gateway:
+before starting the gateway. Avoid assigning another placeholder expression to this variable (for
+example `JASYPT_ENCRYPTOR_PASSWORD="${JASYPT_ENCRYPTOR_PASSWORD:...}"`), as container runtimes will
+attempt to resolve it recursively and Spring Boot will fail fast with a circular placeholder error:
 
 ```bash
 export JASYPT_ENCRYPTOR_PASSWORD="local-dev-secret"

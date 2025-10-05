@@ -411,7 +411,10 @@ app:
 # Encryption support for secrets served by the Config Server (ENC(...) syntax).
 jasypt:
   encryptor:
-    password: ${JASYPT_ENCRYPTOR_PASSWORD:}
+    # Always resolve the encryptor password from the environment to avoid
+    # accidentally creating a circular placeholder when default values are
+    # expanded by the shell or the container runtime.
+    password: ${JASYPT_ENCRYPTOR_PASSWORD}
     algorithm: PBEWITHHMACSHA512ANDAES_256
     key-obtention-iterations: 1000
     pool-size: 1
