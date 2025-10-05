@@ -5,7 +5,7 @@ server:
 spring:
   # Import remote configuration first, allowing local overrides via active profiles.
   config:
-    import: optional:configserver:${spring.cloud.config.uri:${SPRING_CLOUD_CONFIG_URI:http://localhost:8888}}
+    import: optional:configserver:${spring.cloud.config.uri:${SPRING_CLOUD_CONFIG_URI:http://config-server:8888}}
   application:
     name: api-gateway
   main:
@@ -21,7 +21,7 @@ spring:
           issuer-uri: ${GATEWAY_ISSUER_URI:}
   cloud:
     config:
-      uri: ${SPRING_CLOUD_CONFIG_URI:http://localhost:8888}
+      uri: ${SPRING_CLOUD_CONFIG_URI:http://config-server:8888}
       profile: ${SPRING_CLOUD_CONFIG_PROFILE:${SPRING_PROFILES_ACTIVE:local}}
       label: ${SPRING_CLOUD_CONFIG_LABEL:main}
       username: ${SPRING_CLOUD_CONFIG_USERNAME:}

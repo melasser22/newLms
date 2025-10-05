@@ -10,6 +10,7 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -31,6 +32,7 @@ public class BillingFallbackQueue {
   private final ObjectMapper objectMapper;
   private final String queueKey;
 
+  @Autowired
   public BillingFallbackQueue(ReactiveStringRedisTemplate redisTemplate,
       @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> primaryObjectMapper,
       ObjectProvider<ObjectMapper> fallbackObjectMapper) {
