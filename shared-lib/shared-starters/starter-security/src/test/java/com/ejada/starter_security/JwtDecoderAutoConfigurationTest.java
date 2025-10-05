@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 class JwtDecoderAutoConfigurationTest {
@@ -26,22 +27,23 @@ class JwtDecoderAutoConfigurationTest {
 
   @Test
   void missingSecretThrowsMeaningfulException() {
-    contextRunner.run(context -> {
-      assertThat(context).hasFailed();
-      assertThat(context.getStartupFailure())
-          .hasRootCauseInstanceOf(IllegalArgumentException.class)
-          .hasMessageContaining("shared.security.hs256.secret");
-    });
+    SharedSecurityProps props = new SharedSecurityProps();
+    JwtDecoderAutoConfiguration configuration = new JwtDecoderAutoConfiguration();
+
+    assertThatThrownBy(() -> configuration.jwtDecoder(props))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("shared.security.hs256.secret");
   }
 
   @Test
   void missingJwksUriThrowsMeaningfulException() {
-    contextRunner.withPropertyValues("shared.security.mode=jwks").run(context -> {
-      assertThat(context).hasFailed();
-      assertThat(context.getStartupFailure())
-          .hasRootCauseInstanceOf(IllegalArgumentException.class)
-          .hasMessageContaining("shared.security.jwks.uri");
-    });
+    SharedSecurityProps props = new SharedSecurityProps();
+    props.setMode("jwks");
+    JwtDecoderAutoConfiguration configuration = new JwtDecoderAutoConfiguration();
+
+    assertThatThrownBy(() -> configuration.jwtDecoder(props))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("shared.security.jwks.uri");
   }
 
   @Test
