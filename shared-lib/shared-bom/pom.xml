@@ -33,7 +33,7 @@
     <!-- Messaging / schema -->
     <avro.version>1.11.3</avro.version>
     <confluent.version>7.6.1</confluent.version>
-    <kafka.clients.version>3.7.1</kafka.clients.version>
+    <kafka.clients.version>3.9.0</kafka.clients.version>
 
     <!-- Serialization -->
     <jackson.version>2.19.2</jackson.version>
