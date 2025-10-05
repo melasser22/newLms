@@ -3,10 +3,14 @@ package com.ejada.subscription.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.ejada.subscription.acl.MarketplaceCallbackOrchestrator;
+import com.ejada.subscription.acl.service.IdempotentRequestService;
+import com.ejada.subscription.acl.service.NotificationAuditService;
+import com.ejada.subscription.acl.service.NotificationReplayService;
+import com.ejada.subscription.acl.service.SubscriptionOutboxService;
 import com.ejada.subscription.kafka.SubscriptionApprovalPublisher;
 import com.ejada.subscription.repository.OutboxEventRepository;
-import com.ejada.subscription.tenant.TenantLinkFactory;
 import com.ejada.subscription.service.approval.ApprovalWorkflowService;
+import com.ejada.subscription.tenant.TenantLinkFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.flywaydb.core.Flyway;
 import java.util.List;
@@ -24,7 +28,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -60,9 +63,6 @@ class SubscriptionOutboxPersistenceIT {
     private OutboxEventRepository outboxRepo;
 
     @Autowired
-    private PlatformTransactionManager txManager;
-
-    @Autowired
     private Flyway flyway;
 
     @BeforeEach
@@ -75,21 +75,20 @@ class SubscriptionOutboxPersistenceIT {
                 Mockito.mock(com.ejada.subscription.repository.SubscriptionAdditionalServiceRepository.class),
                 Mockito.mock(com.ejada.subscription.repository.SubscriptionProductPropertyRepository.class),
                 Mockito.mock(com.ejada.subscription.repository.SubscriptionEnvironmentIdentifierRepository.class),
-                Mockito.mock(com.ejada.subscription.repository.InboundNotificationAuditRepository.class),
                 Mockito.mock(com.ejada.subscription.repository.SubscriptionUpdateEventRepository.class),
-                outboxRepo,
-                Mockito.mock(com.ejada.subscription.repository.IdempotentRequestRepository.class),
                 Mappers.getMapper(com.ejada.subscription.mapper.SubscriptionMapper.class),
                 Mappers.getMapper(com.ejada.subscription.mapper.SubscriptionFeatureMapper.class),
                 Mappers.getMapper(com.ejada.subscription.mapper.SubscriptionAdditionalServiceMapper.class),
                 Mappers.getMapper(com.ejada.subscription.mapper.SubscriptionProductPropertyMapper.class),
                 Mappers.getMapper(com.ejada.subscription.mapper.SubscriptionEnvironmentIdentifierMapper.class),
                 Mappers.getMapper(com.ejada.subscription.mapper.SubscriptionUpdateEventMapper.class),
-                new ObjectMapper(),
-                txManager,
                 Mockito.mock(SubscriptionApprovalPublisher.class),
                 new TenantLinkFactory(),
-                Mockito.mock(ApprovalWorkflowService.class));
+                Mockito.mock(ApprovalWorkflowService.class),
+                Mockito.mock(NotificationReplayService.class),
+                Mockito.mock(NotificationAuditService.class),
+                new SubscriptionOutboxService(outboxRepo, new ObjectMapper()),
+                Mockito.mock(IdempotentRequestService.class));
         outboxRepo.deleteAll();
     }
 
