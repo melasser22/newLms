@@ -118,7 +118,14 @@ class SubscriptionApprovalConsumerIT {
                 OffsetDateTime.now(),
                 null);
 
-        kafkaTemplate.send(APPROVAL_TOPIC, message.requestId().toString(), message).get(10, TimeUnit.SECONDS);
+        kafkaTemplate
+                .executeInTransaction(operations -> {
+                    operations
+                            .send(APPROVAL_TOPIC, message.requestId().toString(), message)
+                            .completable()
+                            .get(10, TimeUnit.SECONDS);
+                    return null;
+                });
 
         assertThat(latch.await(15, TimeUnit.SECONDS)).as("listener should publish provisioning payload").isTrue();
 
