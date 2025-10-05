@@ -17,6 +17,9 @@
     <spring.boot.version>3.5.5</spring.boot.version>
     <spring.cloud.version>2024.0.2</spring.cloud.version> <!-- 2024.0.3 is not on Central -->
     <spring.cloud.contract.version>4.2.2</spring.cloud.contract.version>
+    <!-- Override Kotlin coroutines BOM version to avoid fetching the
+         corrupted 1.6.4 descriptor that some mirrors serve as HTML -->
+    <kotlinx-coroutines.version>1.8.1</kotlinx-coroutines.version>
 
     <!-- Observability & testing infrastructure -->
     <otel.version>1.45.0</otel.version>
