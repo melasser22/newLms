@@ -16,6 +16,7 @@ import org.springframework.test.context.TestPropertySource;
     "gateway.routes.test.id=test-route",
     "gateway.routes.test.uri=http://example.org",
     "gateway.routes.test.paths[0]=/test/**",
+    "gateway.cache.kafka.enabled=false",
     "shared.ratelimit.enabled=false",
     "spring.autoconfigure.exclude=com.ejada.shared_starter_ratelimit.RateLimitAutoConfiguration"
 })

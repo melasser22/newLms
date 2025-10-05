@@ -144,6 +144,8 @@ public class GatewayCacheProperties {
 
     private String groupId = "gateway-cache";
 
+    private boolean enabled = true;
+
     public String getGroupId() {
       return groupId;
     }
@@ -152,6 +154,14 @@ public class GatewayCacheProperties {
       if (StringUtils.hasText(groupId)) {
         this.groupId = groupId.trim();
       }
+    }
+
+    public boolean isEnabled() {
+      return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+      this.enabled = enabled;
     }
   }
 
