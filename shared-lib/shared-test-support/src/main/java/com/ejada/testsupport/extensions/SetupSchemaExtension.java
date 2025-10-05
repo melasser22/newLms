@@ -18,7 +18,7 @@ public class SetupSchemaExtension implements BeforeAllCallback, AfterAllCallback
         properties.put("spring.jpa.properties.hibernate.hbm2ddl.create_namespaces", "true");
         properties.put("spring.jpa.properties.hibernate.format_sql", "true");
         properties.put("spring.flyway.enabled", "true");
-        properties.put("spring.flyway.schemas", "public," + DEFAULT_SCHEMA);
+        properties.put("spring.flyway.schemas", DEFAULT_SCHEMA);
         properties.put("spring.flyway.default-schema", DEFAULT_SCHEMA);
         properties.put("spring.flyway.locations", "classpath:db/migration/common,classpath:db/migration/{vendor}");
 
