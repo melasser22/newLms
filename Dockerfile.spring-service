@@ -54,8 +54,8 @@ fi
 exec java $JAVA_OPTS -jar /app/app.jar
 EOF
 
-RUN chmod +x /entrypoint.sh \
-    && chown -R ${APP_USER}:${APP_GROUP} /app
+RUN chmod +x /entrypoint.sh
+RUN chown -R ${APP_USER}:${APP_GROUP} /app
 
 USER ${APP_USER}
 
