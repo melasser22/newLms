@@ -16,7 +16,7 @@ RUN set -eux; \
     [ -n "$BOOT_JAR" ]; \
     mv "$BOOT_JAR" app.jar; \
     find . -maxdepth 1 -name 'analytics-service-*-plain.jar' -delete; \
-    cat <<'EOF' > /entrypoint.sh; \
+    cat <<'EOF' > /entrypoint.sh
 #!/bin/sh
 set -e
 
@@ -44,8 +44,9 @@ fi
 
 exec java $JAVA_OPTS -jar /app/app.jar
 EOF
-    chmod +x /entrypoint.sh; \
-    chown -R appuser:appgroup /app
+
+RUN chmod +x /entrypoint.sh
+RUN chown -R appuser:appgroup /app
 
 USER appuser
 
