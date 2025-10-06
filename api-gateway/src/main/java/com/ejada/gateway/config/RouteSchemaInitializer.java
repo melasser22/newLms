@@ -6,11 +6,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -24,14 +24,15 @@ import reactor.core.publisher.Mono;
  * the gateway relies solely on an R2DBC connection and does not benefit from Spring's traditional
  * JDBC schema initialisation.
  */
-@Component
-public class RouteSchemaInitializer implements ApplicationRunner {
+@Component("gatewayRouteSchemaInitializer")
+public class RouteSchemaInitializer implements InitializingBean {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RouteSchemaInitializer.class);
   private static final Duration INITIALISATION_TIMEOUT = Duration.ofSeconds(30);
 
   private final DatabaseClient databaseClient;
   private final ResourceLoader resourceLoader;
+  private final AtomicBoolean initialised = new AtomicBoolean();
 
   public RouteSchemaInitializer(DatabaseClient databaseClient, ResourceLoader resourceLoader) {
     this.databaseClient = databaseClient;
@@ -39,7 +40,10 @@ public class RouteSchemaInitializer implements ApplicationRunner {
   }
 
   @Override
-  public void run(ApplicationArguments args) throws Exception {
+  public void afterPropertiesSet() throws Exception {
+    if (!initialised.compareAndSet(false, true)) {
+      return;
+    }
     Resource schema = resourceLoader.getResource("classpath:schema.sql");
     if (!schema.exists()) {
       LOGGER.warn(
