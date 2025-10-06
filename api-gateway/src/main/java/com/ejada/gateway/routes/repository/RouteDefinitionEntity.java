@@ -6,7 +6,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("route_definitions")
+@Table(value = "route_definitions", schema = "public")
 public class RouteDefinitionEntity {
 
   @Id
