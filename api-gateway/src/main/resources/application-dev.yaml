@@ -1,4 +1,6 @@
 spring:
+  main:
+    lazy-initialization: true
   config:
     activate:
       on-profile: dev
@@ -6,6 +8,8 @@ spring:
     config:
       profile: dev
       label: develop
+  jpa:
+    open-in-view: false
   sql:
     init:
       mode: always
@@ -39,3 +43,9 @@ app:
 jasypt:
   encryptor:
     fail-on-missing-password: false
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
