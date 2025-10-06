@@ -134,7 +134,11 @@ public class RouteDefinitionRepository {
     return routeStore.findAllByEnabledTrue()
         .map(mapper::toDomain)
         .collectList()
-        .flatMapMany(list -> cacheActiveRoutes(list).thenMany(Flux.fromIterable(list)));
+        .flatMapMany(list -> cacheActiveRoutes(list).thenMany(Flux.fromIterable(list)))
+        .onErrorResume(ex -> {
+          LOGGER.warn("Failed to load active routes from database", ex);
+          return Flux.empty();
+        });
   }
 
   private Mono<Void> cacheActiveRoutes(List<RouteDefinition> routes) {
