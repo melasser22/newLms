@@ -1,0 +1,57 @@
+app:
+  environment: ${APP_ENVIRONMENT:dev}
+  schema: ${APP_SCHEMA:${spring.application.name}}
+  cache-prefix: ${APP_CACHE_PREFIX:${spring.application.name}}
+  kafka:
+    client-id: ${APP_KAFKA_CLIENT_ID:ejada-${spring.application.name}-${app.environment}}
+  jpa:
+    show-sql: ${APP_JPA_SHOW_SQL:false}
+    format-sql: ${APP_JPA_FORMAT_SQL:true}
+  flyway:
+    locations: ${APP_FLYWAY_LOCATIONS:classpath:db/migration/common,classpath:db/migration/{vendor}}
+
+spring:
+  datasource:
+    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=${app.schema}}"
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: ${DB_POOL_NAME:HikariPool-ejada}
+      maximum-pool-size: ${DB_MAX_POOL_SIZE:10}
+      minimum-idle: ${DB_MIN_IDLE:2}
+      idle-timeout: ${DB_IDLE_TIMEOUT:30000}
+      connection-timeout: ${DB_CONNECTION_TIMEOUT:300000}
+      max-lifetime: ${DB_MAX_LIFETIME:1800000}
+  jpa:
+    open-in-view: false
+    show-sql: ${app.jpa.show-sql:false}
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        default_schema: ${app.schema}
+        hbm2ddl.create_namespaces: true
+        format_sql: ${app.jpa.format-sql:true}
+        jdbc.time_zone: UTC
+  flyway:
+    enabled: ${app.flyway.enabled:true}
+    baseline-on-migrate: true
+    locations: ${app.flyway.locations}
+    schemas: ${app.flyway.schema:${app.schema}}
+    default-schema: ${app.flyway.schema:${app.schema}}
+  kafka:
+    client-id: ${app.kafka.client-id}
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+shared:
+  redis:
+    host: ${REDIS_HOST:redis}
+    port: ${REDIS_PORT:6379}
+    timeout: ${REDIS_TIMEOUT:2s}
+    key-prefix: ${app.cache-prefix}
+    default-ttl: ${REDIS_DEFAULT_TTL:600s}
+    reactive: false

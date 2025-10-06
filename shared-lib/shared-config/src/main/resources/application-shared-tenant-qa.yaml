@@ -1,63 +1,16 @@
+spring:
+  config:
+    import: optional:classpath:application-shared-service.yaml
+
 app:
   environment: qa
   service-code: tenant
   schema: tenant
-
-spring:
-  main:
-    lazy-initialization: ${SPRING_MAIN_LAZY_INITIALIZATION:true}
-    application-startup: buffering
-  datasource:
-    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ejada}?currentSchema=${app.schema}}"
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      pool-name: HikariPool-Ejada
-      maximum-pool-size: 10
-      minimum-idle: 2
-      idle-timeout: 30000        # 30s
-      connection-timeout: 300000 # 300s
-      max-lifetime: 1800000      # 30m
-  jpa:
-    open-in-view: false
-    show-sql: true
-    hibernate:
-      ddl-auto: none
-    properties:
-      hibernate:
-        ddl-auto: none
-        default_schema: ${app.schema}
-        hbm2ddl.create_namespaces: true
-        format_sql: true
-        jdbc.time_zone: UTC
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
-    schemas: ${app.schema}
-    default-schema: ${app.schema}
+  cache-prefix: ejada
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     client-id: ${app.kafka-client-id:ejada-${app.service-code}-${app.environment}}
-    consumer:
-      group-id: ${KAFKA_CONSUMER_GROUP:ejada-backend-${app.environment}}
-      auto-offset-reset: earliest
-      enable-auto-commit: false
-      properties:
-        max.poll.interval.ms: 300000
-        max.poll.records: 500
-    producer:
-      acks: all
-      retries: 3
-      batch-size: 16384
-      compression-type: gzip
-      properties:
-        linger.ms: 5
-  data:
-    redis:
-      repositories:
-        enabled: false
+  jpa:
+    show-sql: true
 
 shared:
   core:
