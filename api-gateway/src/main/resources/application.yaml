@@ -130,6 +130,12 @@ shared:
         - /actuator/health/**
         - /actuator/info
         - /actuator/prometheus
+        - /api/**/v3/api-docs/**
+        - /api/**/swagger-ui/**
+        - /api/**/swagger-ui.html
+        - /v3/api-docs/**
+        - /swagger-ui/**
+        - /swagger-ui.html
       disable-csrf: true
       jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}
       issuer-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}
@@ -149,6 +155,12 @@ shared:
       skip-patterns:
         - /actuator/.*
         - /favicon.ico
+        - /api/**/v3/api-docs/**
+        - /api/**/swagger-ui/**
+        - /api/**/swagger-ui.html
+        - /v3/api-docs/**
+        - /swagger-ui/**
+        - /swagger-ui.html
     correlation:
       enabled: true
       header-name: X-Correlation-Id
