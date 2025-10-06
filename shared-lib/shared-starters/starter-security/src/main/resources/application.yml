@@ -1,0 +1,14 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+
+shared:
+  security:
+    mode: ${SHARED_SECURITY_MODE:hs256}
+    hs256:
+      secret: ${SHARED_SECURITY_HS256_SECRET:change-me}
+    resource-server:
+      enabled: ${SHARED_SECURITY_RESOURCE_SERVER_ENABLED:true}
+    roles-claim: ${SHARED_SECURITY_ROLES_CLAIM:roles}
+    scope-claim: ${SHARED_SECURITY_SCOPE_CLAIM:scope}
