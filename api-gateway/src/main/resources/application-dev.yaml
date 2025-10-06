@@ -6,6 +6,9 @@ spring:
     config:
       profile: dev
       label: develop
+  sql:
+    init:
+      mode: always
 
 gateway:
   webclient:
