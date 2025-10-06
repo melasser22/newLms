@@ -95,7 +95,9 @@ public class SharedSecurityProps implements BaseStarterProperties {
     private String[] permitAll = new String[]{
         "/actuator/health",
         "/v3/api-docs/**",
+        "/**/v3/api-docs/**",
         "/swagger-ui/**",
+        "/**/swagger-ui/**",
         // common public endpoints (with and without /api version prefix):
         "/auth/**", "/api/*/auth/**",
         "/login", "/register",
