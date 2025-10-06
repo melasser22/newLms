@@ -40,6 +40,19 @@ mvn -pl api-gateway test
 
 Enable debug logging by exporting `LOGGING_LEVEL_COM_EJADA_GATEWAY=DEBUG`.
 
+### External dependencies
+
+- **Spring Cloud Config** – Disabled by default in `docker-compose.yml` via
+  `SPRING_CLOUD_CONFIG_ENABLED=false`. Override the variable (or provide
+  `SPRING_CLOUD_CONFIG_URI`) when the central Config Server is reachable.
+- **PostgreSQL** – The gateway now defaults to the `postgres` service exposed by
+  the compose file (`r2dbc:postgresql://postgres:5432/lms`). Customise the
+  connection via `SPRING_R2DBC_URL`, `SPRING_R2DBC_USERNAME`, and
+  `SPRING_R2DBC_PASSWORD`.
+- **Redis** – Required for rate limiting and subscription caching. Update
+  `SPRING_DATA_REDIS_*` variables if your deployment uses a managed Redis
+  endpoint.
+
 ### Decrypting Secure Configuration
 
 Encrypted values retrieved from Spring Cloud Config (or environment-specific YAML files) rely on

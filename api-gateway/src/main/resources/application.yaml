@@ -21,6 +21,7 @@ spring:
           issuer-uri: ${GATEWAY_ISSUER_URI:}
   cloud:
     config:
+      enabled: ${SPRING_CLOUD_CONFIG_ENABLED:true}
       uri: ${SPRING_CLOUD_CONFIG_URI:http://config-server:8888}
       profile: ${SPRING_CLOUD_CONFIG_PROFILE:${SPRING_PROFILES_ACTIVE:local}}
       label: ${SPRING_CLOUD_CONFIG_LABEL:main}
@@ -28,9 +29,9 @@ spring:
       password: ${SPRING_CLOUD_CONFIG_PASSWORD:}
       fail-fast: ${SPRING_CLOUD_CONFIG_FAIL_FAST:false}
   r2dbc:
-    url: ${SPRING_R2DBC_URL:}
-    username: ${SPRING_R2DBC_USERNAME:}
-    password: ${SPRING_R2DBC_PASSWORD:}
+    url: ${SPRING_R2DBC_URL:${GATEWAY_R2DBC_URL:r2dbc:postgresql://postgres:5432/lms}}
+    username: ${SPRING_R2DBC_USERNAME:${GATEWAY_R2DBC_USERNAME:postgres}}
+    password: ${SPRING_R2DBC_PASSWORD:${GATEWAY_R2DBC_PASSWORD:postgres}}
   sql:
     init:
       mode: ${SPRING_SQL_INIT_MODE:never}
