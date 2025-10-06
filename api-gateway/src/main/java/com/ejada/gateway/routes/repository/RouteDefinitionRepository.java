@@ -123,6 +123,10 @@ public class RouteDefinitionRepository {
             LOGGER.warn("Failed to decode route cache", ex);
             return Flux.empty();
           }
+        })
+        .onErrorResume(ex -> {
+          LOGGER.warn("Failed to read route cache", ex);
+          return Flux.empty();
         });
   }
 
