@@ -178,6 +178,10 @@ public class RequestSignatureValidationFilter implements WebFilter, Ordered {
 
   private Mono<Void> reject(ServerWebExchange exchange, HttpStatus status, String code, String message) {
     var response = exchange.getResponse();
+    if (response.isCommitted()) {
+      LOGGER.debug("Response already committed, skipping request signature rejection for {}", exchange.getRequest().getPath());
+      return Mono.empty();
+    }
     response.setStatusCode(status);
     response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
     BaseResponse<Void> body = BaseResponse.error(code, message);
