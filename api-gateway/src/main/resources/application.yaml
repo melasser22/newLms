@@ -128,6 +128,14 @@ management:
       region: ${GCP_REGION:unknown}
 
 shared:
+  patterns:
+    docs:
+      api-v3-wildcard: &pattern-docs-api-v3 /api/**/v3/api-docs/**
+      api-swagger-wildcard: &pattern-docs-api-swagger /api/**/swagger-ui/**
+      api-swagger-html: &pattern-docs-api-swagger-html /api/**/swagger-ui.html
+      root-v3: &pattern-docs-root-v3 /v3/api-docs/**
+      root-swagger: &pattern-docs-root-swagger /swagger-ui/**
+      root-swagger-html: &pattern-docs-root-swagger-html /swagger-ui.html
   security:
     resource-server:
       enabled: false
@@ -138,12 +146,12 @@ shared:
         - /actuator/health/**
         - /actuator/info
         - /actuator/prometheus
-        - /api/**/v3/api-docs/**
-        - /api/**/swagger-ui/**
-        - /api/**/swagger-ui.html
-        - /v3/api-docs/**
-        - /swagger-ui/**
-        - /swagger-ui.html
+        - *pattern-docs-api-v3
+        - *pattern-docs-api-swagger
+        - *pattern-docs-api-swagger-html
+        - *pattern-docs-root-v3
+        - *pattern-docs-root-swagger
+        - *pattern-docs-root-swagger-html
       disable-csrf: true
       jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}
       issuer-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}
@@ -163,12 +171,12 @@ shared:
       skip-patterns:
         - /actuator/.*
         - /favicon.ico
-        - /api/**/v3/api-docs/**
-        - /api/**/swagger-ui/**
-        - /api/**/swagger-ui.html
-        - /v3/api-docs/**
-        - /swagger-ui/**
-        - /swagger-ui.html
+        - *pattern-docs-api-v3
+        - *pattern-docs-api-swagger
+        - *pattern-docs-api-swagger-html
+        - *pattern-docs-root-v3
+        - *pattern-docs-root-swagger
+        - *pattern-docs-root-swagger-html
     correlation:
       enabled: true
       header-name: X-Correlation-Id
