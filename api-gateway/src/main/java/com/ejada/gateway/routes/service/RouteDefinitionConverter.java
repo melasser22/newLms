@@ -154,10 +154,24 @@ public class RouteDefinitionConverter {
     List<String> result = new ArrayList<>();
     for (String token : tokens) {
       if (StringUtils.hasText(token)) {
-        result.add(token.trim());
+        String candidate = token.trim();
+        if (!isExcluded(candidate)) {
+          result.add(candidate);
+        }
       }
     }
     return result;
+  }
+
+  private boolean isExcluded(String pattern) {
+    if (!StringUtils.hasText(pattern)) {
+      return true;
+    }
+    String candidate = pattern.trim();
+    if (candidate.startsWith("/actuator")) {
+      return true;
+    }
+    return "/health".equals(candidate) || candidate.startsWith("/health/");
   }
 
   private String normaliseVariant(String value) {

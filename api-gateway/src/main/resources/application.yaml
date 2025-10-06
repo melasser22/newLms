@@ -8,9 +8,13 @@ spring:
     import: optional:configserver:${spring.cloud.config.uri:${SPRING_CLOUD_CONFIG_URI:http://config-server:8888}}
   application:
     name: api-gateway
+    admin:
+      enabled: true
   main:
-    lazy-initialization: ${SPRING_MAIN_LAZY_INITIALIZATION:true}
+    lazy-initialization: true
     web-application-type: reactive
+  boot:
+    startup: info
   data:
     redis:
       repositories:
@@ -24,6 +28,10 @@ spring:
         jwt:
           jwk-set-uri: ${GATEWAY_JWK_SET_URI:}
           issuer-uri: ${GATEWAY_ISSUER_URI:}
+  kafka:
+    listener:
+      concurrency: 2
+      auto-startup: false
   cloud:
     config:
       enabled: ${SPRING_CLOUD_CONFIG_ENABLED:true}
