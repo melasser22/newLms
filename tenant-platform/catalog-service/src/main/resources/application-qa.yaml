@@ -4,7 +4,6 @@ spring:
 
 app:
   service-code: catalog
-  schema: catalog
   tenant-provisioning:
     topic: tenant.provisioning
     consumer-group: catalog-tenant-provisioning

@@ -3,8 +3,6 @@ spring:
     import: optional:classpath:application-shared-platform-dev.yaml
 
 app:
-  schema: subscription
-  cache-prefix: subscription
   kafka:
     client-id: ejada-subscription-dev
   subscription-approval:

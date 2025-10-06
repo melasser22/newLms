@@ -177,8 +177,6 @@ shared:
     jwt-security: false
 
 app:
-  schema: security
-  cache-prefix: security
   kafka:
     client-id: ejada-security-dev
   subscription-approval:

@@ -17,8 +17,6 @@ shared:
     jwt-security: false
 
 app:
-  schema: catalog
-  cache-prefix: catalog
   kafka:
     client-id: ejada-catalog-dev
   jpa:
