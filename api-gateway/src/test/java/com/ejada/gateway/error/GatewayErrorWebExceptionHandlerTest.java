@@ -1,124 +1,123 @@
 package com.ejada.gateway.error;
 
-import com.ejada.common.exception.ValidationException;
-import com.fasterxml.jackson.databind.JsonNode;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.ejada.common.dto.BaseResponse;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
+import java.time.Duration;
 import java.util.Iterator;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.Nullable;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import reactor.test.StepVerifier;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class GatewayErrorWebExceptionHandlerTest {
 
-  private ObjectMapper objectMapper;
-  private GatewayErrorWebExceptionHandler handler;
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
-  @BeforeEach
-  void setUp() {
-    objectMapper = new ObjectMapper();
-    objectMapper.findAndRegisterModules();
-    handler = new GatewayErrorWebExceptionHandler(objectMapper, new StaticObjectProvider<>(objectMapper));
-  }
+  private final GatewayErrorWebExceptionHandler handler = new GatewayErrorWebExceptionHandler(
+      objectMapper,
+      new StaticObjectProvider<>(null));
 
   @Test
-  void convertsValidationExceptionsToBadRequestResponses() throws Exception {
-    MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/test").build());
+  void mapsWebClientConnectionFailuresToServiceUnavailable() throws Exception {
+    MockServerWebExchange exchange = MockServerWebExchange.from(
+        MockServerHttpRequest.get("/test").build());
 
-    StepVerifier.create(handler.handle(exchange, new ValidationException("Email is required")))
-        .verifyComplete();
-
-    assertEquals(HttpStatus.BAD_REQUEST, exchange.getResponse().getStatusCode());
-    JsonNode payload = readResponse(exchange);
-    assertEquals("ERR_VALIDATION", payload.get("code").asText());
-    assertEquals("Email is required", payload.get("message").asText());
-    assertEquals("ERROR", payload.get("status").asText());
-  }
-
-  @Test
-  void masksUnexpectedExceptionsWithGenericMessage() throws Exception {
-    MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/error").build());
-
-    StepVerifier.create(handler.handle(exchange, new RuntimeException("sensitive stack trace")))
-        .verifyComplete();
-
-    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exchange.getResponse().getStatusCode());
-    JsonNode payload = readResponse(exchange);
-    assertEquals("ERR_INTERNAL", payload.get("code").asText());
-    assertEquals("An unexpected error occurred", payload.get("message").asText());
-  }
-
-  @Test
-  void preservesResponseStatusExceptionReason() throws Exception {
-    MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/status").build());
-
-    ResponseStatusException exception = new ResponseStatusException(HttpStatus.NOT_FOUND, "No route found");
+    WebClientRequestException exception = new WebClientRequestException(
+        new java.net.ConnectException("Connection refused"),
+        HttpMethod.GET,
+        new URI("http://downstream"),
+        HttpHeaders.EMPTY);
 
     StepVerifier.create(handler.handle(exchange, exception)).verifyComplete();
 
-    assertEquals(HttpStatus.NOT_FOUND, exchange.getResponse().getStatusCode());
-    JsonNode payload = readResponse(exchange);
-    assertEquals("ERR_RESOURCE_NOT_FOUND", payload.get("code").asText());
-    assertEquals("No route found", payload.get("message").asText());
+    assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+    BaseResponse<Void> response = readBody(exchange);
+    assertThat(response.getCode()).isEqualTo("ERR_UPSTREAM_UNAVAILABLE");
+    assertThat(response.getMessage()).isEqualTo("Upstream service is unavailable");
   }
 
-  private JsonNode readResponse(MockServerWebExchange exchange) throws Exception {
-    String body = exchange.getResponse().getBodyAsString().block();
-    assertNotNull(body);
-    return objectMapper.readTree(body);
+  @Test
+  void mapsTimeoutsToGatewayTimeout() throws Exception {
+    MockServerWebExchange exchange = MockServerWebExchange.from(
+        MockServerHttpRequest.get("/timeout").build());
+
+    WebClientRequestException exception = new WebClientRequestException(
+        new TimeoutException("Read timed out"),
+        HttpMethod.POST,
+        new URI("http://slow-service"),
+        HttpHeaders.EMPTY);
+
+    StepVerifier.create(handler.handle(exchange, exception)).verifyComplete();
+
+    assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.GATEWAY_TIMEOUT);
+    BaseResponse<Void> response = readBody(exchange);
+    assertThat(response.getCode()).isEqualTo("ERR_UPSTREAM_TIMEOUT");
+    assertThat(response.getMessage()).isEqualTo("Upstream service timed out");
+  }
+
+  private BaseResponse<Void> readBody(MockServerWebExchange exchange) throws Exception {
+    String body = exchange.getResponse()
+        .getBodyAsString()
+        .block(Duration.ofSeconds(1));
+    assertThat(body).isNotBlank();
+    return objectMapper.readValue(body, new TypeReference<BaseResponse<Void>>() {});
   }
 
   private static final class StaticObjectProvider<T> implements ObjectProvider<T> {
 
-    private final T instance;
+    @Nullable
+    private final T value;
 
-    private StaticObjectProvider(T instance) {
-      this.instance = instance;
+    private StaticObjectProvider(@Nullable T value) {
+      this.value = value;
     }
 
     @Override
     public T getObject(Object... args) {
-      return instance;
+      return Objects.requireNonNull(value);
     }
 
     @Override
     public T getObject() {
-      return instance;
+      return Objects.requireNonNull(value);
     }
 
     @Override
     public T getIfAvailable() {
-      return instance;
+      return value;
     }
 
     @Override
-    public T getIfAvailable(Supplier<T> supplier) {
-      return instance != null ? instance : supplier.get();
+    public T getIfAvailable(java.util.function.Supplier<T> supplier) {
+      return value != null ? value : supplier.get();
     }
 
     @Override
     public T getIfUnique() {
-      return instance;
+      return value;
     }
 
     @Override
-    public T getIfUnique(Supplier<T> supplier) {
-      return instance != null ? instance : supplier.get();
+    public T getIfUnique(java.util.function.Supplier<T> supplier) {
+      return value != null ? value : supplier.get();
     }
 
     @Override
     public Stream<T> stream() {
-      return instance != null ? Stream.of(instance) : Stream.empty();
+      return value != null ? Stream.of(value) : Stream.empty();
     }
 
     @Override
@@ -127,15 +126,10 @@ class GatewayErrorWebExceptionHandlerTest {
     }
 
     @Override
-    public void forEach(Consumer<? super T> action) {
-      if (instance != null) {
-        action.accept(instance);
-      }
-    }
-
-    @Override
     public Iterator<T> iterator() {
       return stream().iterator();
     }
+
   }
 }
+

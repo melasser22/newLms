@@ -11,6 +11,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import io.netty.channel.ConnectTimeoutException;
+import io.netty.handler.timeout.ReadTimeoutException;
+import java.net.ConnectException;
+import java.net.UnknownHostException;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.ObjectProvider;
@@ -29,6 +34,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -102,6 +108,14 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     if (ex instanceof org.springframework.security.access.AccessDeniedException) {
       return HttpStatus.FORBIDDEN;
     }
+
+    WebClientRequestException webClientException = resolveWebClientRequestException(ex);
+    if (webClientException != null) {
+      if (isTimeoutException(webClientException)) {
+        return HttpStatus.GATEWAY_TIMEOUT;
+      }
+      return HttpStatus.SERVICE_UNAVAILABLE;
+    }
     LOGGER.error("Unexpected gateway error", ex);
     return HttpStatus.INTERNAL_SERVER_ERROR;
   }
@@ -139,6 +153,12 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     if (ex instanceof org.springframework.security.access.AccessDeniedException) {
       return "ERR_ACCESS_DENIED";
     }
+    if (status == HttpStatus.SERVICE_UNAVAILABLE) {
+      return "ERR_UPSTREAM_UNAVAILABLE";
+    }
+    if (status == HttpStatus.GATEWAY_TIMEOUT) {
+      return "ERR_UPSTREAM_TIMEOUT";
+    }
     return "ERR_INTERNAL";
   }
 
@@ -170,6 +190,12 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     }
     if (ex instanceof org.springframework.security.access.AccessDeniedException) {
       return "Access denied";
+    }
+    if (status == HttpStatus.SERVICE_UNAVAILABLE) {
+      return "Upstream service is unavailable";
+    }
+    if (status == HttpStatus.GATEWAY_TIMEOUT) {
+      return "Upstream service timed out";
     }
     if (status.is5xxServerError()) {
       return "An unexpected error occurred";
@@ -216,5 +242,37 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
         })
         .filter(StringUtils::hasText)
         .collect(Collectors.joining("; "));
+  }
+
+  private WebClientRequestException resolveWebClientRequestException(Throwable ex) {
+    if (ex instanceof WebClientRequestException requestException) {
+      return requestException;
+    }
+    Set<Throwable> visited = new HashSet<>();
+    Throwable current = ex.getCause();
+    while (current != null && visited.add(current)) {
+      if (current instanceof WebClientRequestException requestException) {
+        return requestException;
+      }
+      current = current.getCause();
+    }
+    return null;
+  }
+
+  private boolean isTimeoutException(WebClientRequestException ex) {
+    Set<Throwable> visited = new HashSet<>();
+    Throwable current = ex;
+    while (current != null && visited.add(current)) {
+      if (current instanceof java.util.concurrent.TimeoutException
+          || current instanceof ReadTimeoutException
+          || current instanceof ConnectTimeoutException) {
+        return true;
+      }
+      if (current instanceof ConnectException || current instanceof UnknownHostException) {
+        return false;
+      }
+      current = current.getCause();
+    }
+    return false;
   }
 }
