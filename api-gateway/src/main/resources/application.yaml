@@ -11,6 +11,10 @@ spring:
   main:
     lazy-initialization: ${SPRING_MAIN_LAZY_INITIALIZATION:true}
     web-application-type: reactive
+  data:
+    redis:
+      repositories:
+        enabled: false
   autoconfigure:
     exclude:
       - com.ejada.shared_starter_ratelimit.RateLimitAutoConfiguration
