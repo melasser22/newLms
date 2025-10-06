@@ -24,15 +24,14 @@ public class R2dbcFallbackConfiguration {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(R2dbcFallbackConfiguration.class);
 
-  private static final String FALLBACK_URL =
-      "r2dbc:h2:mem:///gateway-routes?options=DB_CLOSE_DELAY=-1;MODE=PostgreSQL";
+  private static final String FALLBACK_URL = "r2dbc:postgresql://postgres:5432/lms";
 
   @Bean
   @ConditionalOnMissingBean(ConnectionFactory.class)
   public ConnectionFactory inMemoryGatewayConnectionFactory() {
     LOGGER.warn(
-        "spring.r2dbc.url is not configured; falling back to an in-memory H2 database at {}. "
-            + "Provide SPRING_R2DBC_URL (or spring.r2dbc.url) to connect to a persistent store.",
+        "spring.r2dbc.url is not configured; falling back to default PostgreSQL connection {}. "
+            + "Provide SPRING_R2DBC_URL (or spring.r2dbc.url) to target the correct database.",
         FALLBACK_URL);
     return ConnectionFactories.get(FALLBACK_URL);
   }

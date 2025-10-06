@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -17,6 +18,7 @@ import org.springframework.util.StringUtils;
  * catalog or tenant data changes.
  */
 @Component
+@Lazy(false)
 @ConditionalOnExpression("${gateway.cache.enabled:true} && ${gateway.cache.kafka.enabled:true}")
 public class CacheInvalidationListener {
 
