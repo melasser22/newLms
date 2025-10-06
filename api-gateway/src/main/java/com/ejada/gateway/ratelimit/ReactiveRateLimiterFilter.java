@@ -471,6 +471,10 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
   private Mono<Void> reject(ServerWebExchange exchange) {
     LOGGER.debug("Rate limit exceeded for request to {}", exchange.getRequest().getPath());
     var response = exchange.getResponse();
+    if (response.isCommitted()) {
+      LOGGER.debug("Response already committed, skipping rate limit rejection for {}", exchange.getRequest().getPath());
+      return Mono.empty();
+    }
     response.setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
     response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
     BaseResponse<Void> body = BaseResponse.error("ERR_RATE_LIMIT", "Rate limit exceeded");

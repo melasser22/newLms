@@ -226,6 +226,10 @@ public class ReactiveRequestContextFilter implements WebFilter {
       LOGGER.warn("Tenant resolution error [{}]", code);
     }
     ServerHttpResponse response = exchange.getResponse();
+    if (response.isCommitted()) {
+      LOGGER.debug("Response already committed, skipping tenant rejection for {}", exchange.getRequest().getPath());
+      return Mono.empty();
+    }
     response.setStatusCode(HttpStatus.valueOf(status));
     response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
     BaseResponse<Void> body = BaseResponse.error(code, message);

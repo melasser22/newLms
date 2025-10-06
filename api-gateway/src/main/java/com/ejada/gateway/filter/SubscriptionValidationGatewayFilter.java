@@ -301,6 +301,10 @@ public class SubscriptionValidationGatewayFilter implements GlobalFilter, Ordere
   }
 
   private Mono<Void> reject(ServerWebExchange exchange, SubscriptionDecision decision) {
+    if (exchange.getResponse().isCommitted()) {
+      LOGGER.debug("Response already committed, skipping subscription rejection for {}", exchange.getRequest().getPath());
+      return Mono.empty();
+    }
     exchange.getResponse().setStatusCode(decision.status());
     exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
     BaseResponse<Object> body = BaseResponse.<Object>builder()

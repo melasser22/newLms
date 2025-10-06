@@ -177,6 +177,10 @@ public class TenantExtractionGatewayFilter implements WebFilter {
   private Mono<Void> reject(ServerWebExchange exchange, String rawValue) {
     LOGGER.warn("Rejecting request due to invalid tenant identifier: {}", rawValue);
     var response = exchange.getResponse();
+    if (response.isCommitted()) {
+      LOGGER.debug("Response already committed, skipping tenant rejection for {}", exchange.getRequest().getPath());
+      return Mono.empty();
+    }
     response.setStatusCode(HttpStatus.BAD_REQUEST);
     response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
     BaseResponse<Void> body = BaseResponse.error("ERR_INVALID_TENANT", "Invalid " + HeaderNames.X_TENANT_ID);
