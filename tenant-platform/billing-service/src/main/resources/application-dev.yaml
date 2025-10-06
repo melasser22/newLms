@@ -20,8 +20,6 @@ shared:
     enable-role-check: false
 
 app:
-  schema: billing
-  cache-prefix: billing
   kafka:
     client-id: ejada-billing-dev
   billing:

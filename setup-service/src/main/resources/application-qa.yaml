@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ejada}?currentSchema=setup}"
+    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ejada}?currentSchema=${app.schema}}"
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
@@ -20,7 +20,7 @@ spring:
     properties:
       hibernate:
         ddl-auto: none
-        default_schema: setup
+        default_schema: ${app.schema}
         hbm2ddl.create_namespaces: true
         format_sql: true
       jdbc:
@@ -29,8 +29,8 @@ spring:
     enabled: true
     baseline-on-migrate: true
     locations: classpath:db/migration/common,classpath:db/migration/{vendor}
-    schemas: setup
-    default-schema: setup
+    schemas: ${app.schema}
+    default-schema: ${app.schema}
   kafka:
     bootstrap-servers: kafka:9092
     client-id: ejada-setup-qa
@@ -157,7 +157,7 @@ shared:
     sinks:
       db:
         enabled: true
-        schema: setup
+        schema: ${app.schema}
         table: audit_logs
       kafka:
         enabled: true

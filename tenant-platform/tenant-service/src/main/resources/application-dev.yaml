@@ -17,8 +17,6 @@ shared:
     jwt-security: false
 
 app:
-  schema: tenant
-  cache-prefix: tenant
   kafka:
     client-id: ejada-tenant-dev
   subscription-approval:

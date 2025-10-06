@@ -4,7 +4,6 @@ spring:
 
 app:
   service-code: tenant
-  schema: tenant
   subscription-approval:
     topic: tenant.subscription-approvals
     approval-role: ejada-officer

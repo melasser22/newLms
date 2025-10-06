@@ -5,7 +5,6 @@ spring:
 app:
   environment: qa
   service-code: tenant
-  schema: tenant
   cache-prefix: ejada
   kafka:
     client-id: ${app.kafka-client-id:ejada-${app.service-code}-${app.environment}}

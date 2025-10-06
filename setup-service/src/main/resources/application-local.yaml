@@ -4,8 +4,6 @@ spring:
       - optional:classpath:application-shared-platform-dev.yaml
 
 app:
-  schema: setup
-  cache-prefix: setup
   kafka:
     client-id: ejada-setup-dev
   jpa:

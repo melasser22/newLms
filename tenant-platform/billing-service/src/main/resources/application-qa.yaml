@@ -4,7 +4,6 @@ spring:
 
 app:
   service-code: billing
-  schema: billing
 
 management:
   endpoints:
