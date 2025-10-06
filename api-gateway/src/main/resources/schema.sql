@@ -22,3 +22,106 @@ CREATE TABLE IF NOT EXISTS route_definition_audit (
     CONSTRAINT fk_route_definition
       FOREIGN KEY(route_id) REFERENCES route_definitions(id)
 );
+
+-- Seed a couple of baseline routes so the gateway can boot with usable traffic
+-- definitions even before the management APIs are exercised. Each INSERT uses a
+-- deterministic UUID and ON CONFLICT safeguards to remain idempotent when the
+-- schema initialiser executes on every start-up.
+INSERT INTO route_definitions (
+    id,
+    path_pattern,
+    service_uri,
+    predicates,
+    filters,
+    metadata,
+    enabled,
+    version,
+    created_at,
+    updated_at
+)
+VALUES
+    (
+        '11111111-1111-1111-1111-111111111111',
+        '/api/v1/tenants/**',
+        'lb://tenant-service',
+        '[{"name":"Path","args":{"pattern":"/api/v1/tenants/**"}}]'::jsonb,
+        '[{"name":"StripPrefix","args":{"parts":"1"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+        '{"methods":["GET","POST"],"stripPrefix":1,"requestHeaders":{"X-Route-Seed":"true"}}'::jsonb,
+        TRUE,
+        1,
+        NOW(),
+        NOW()
+    ),
+    (
+        '22222222-2222-2222-2222-222222222222',
+        '/api/v1/catalog/**',
+        'lb://catalog-service',
+        '[{"name":"Path","args":{"pattern":"/api/v1/catalog/**"}}]'::jsonb,
+        '[{"name":"StripPrefix","args":{"parts":"1"}}]'::jsonb,
+        '{"methods":["GET"],"stripPrefix":1,"requestHeaders":{"X-Route-Seed":"true"}}'::jsonb,
+        TRUE,
+        1,
+        NOW(),
+        NOW()
+    )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO route_definition_audit (
+    audit_id,
+    route_id,
+    change_type,
+    payload,
+    changed_by,
+    changed_at,
+    version
+)
+VALUES
+    (
+        'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+        '11111111-1111-1111-1111-111111111111',
+        'SEED',
+        jsonb_build_object(
+            'id', '11111111-1111-1111-1111-111111111111',
+            'pathPattern', '/api/v1/tenants/**',
+            'serviceUri', 'lb://tenant-service',
+            'predicates', '[{"name":"Path","args":{"pattern":"/api/v1/tenants/**"}}]'::jsonb,
+            'filters', '[{"name":"StripPrefix","args":{"parts":"1"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+            'metadata', jsonb_build_object(
+                'methods', jsonb_build_array('GET', 'POST'),
+                'stripPrefix', 1,
+                'requestHeaders', jsonb_build_object('X-Route-Seed', 'true')
+            ),
+            'enabled', TRUE,
+            'version', 1,
+            'createdAt', NOW(),
+            'updatedAt', NOW()
+        ),
+        'seed-data',
+        NOW(),
+        1
+    ),
+    (
+        'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+        '22222222-2222-2222-2222-222222222222',
+        'SEED',
+        jsonb_build_object(
+            'id', '22222222-2222-2222-2222-222222222222',
+            'pathPattern', '/api/v1/catalog/**',
+            'serviceUri', 'lb://catalog-service',
+            'predicates', '[{"name":"Path","args":{"pattern":"/api/v1/catalog/**"}}]'::jsonb,
+            'filters', '[{"name":"StripPrefix","args":{"parts":"1"}}]'::jsonb,
+            'metadata', jsonb_build_object(
+                'methods', jsonb_build_array('GET'),
+                'stripPrefix', 1,
+                'requestHeaders', jsonb_build_object('X-Route-Seed', 'true')
+            ),
+            'enabled', TRUE,
+            'version', 1,
+            'createdAt', NOW(),
+            'updatedAt', NOW()
+        ),
+        'seed-data',
+        NOW(),
+        1
+    )
+ON CONFLICT (audit_id) DO NOTHING;
