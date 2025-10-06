@@ -170,6 +170,9 @@ public class AuditWebMvcFilter implements Filter {
     String path = req.getRequestURI();
 
     // Exclude has priority
+    if (isActuatorRequest(path)) {
+      return false;
+    }
     for (String ex : excludePaths) {
       if (matches(path, ex)) return false;
     }
@@ -179,6 +182,13 @@ public class AuditWebMvcFilter implements Filter {
       if (matches(path, inc)) return true;
     }
     return false;
+  }
+
+  private boolean isActuatorRequest(String path) {
+    if (path == null) {
+      return false;
+    }
+    return path.equals("/actuator") || path.contains("/actuator/");
   }
 
   // Simple matcher: exact, prefix (ends with '*'), or contains '**' meaning substring
