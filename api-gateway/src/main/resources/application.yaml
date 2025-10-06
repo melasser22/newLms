@@ -10,6 +10,10 @@ spring:
     name: api-gateway
   main:
     web-application-type: reactive
+  data:
+    redis:
+      repositories:
+        enabled: false
   autoconfigure:
     exclude:
       - com.ejada.shared_starter_ratelimit.RateLimitAutoConfiguration
