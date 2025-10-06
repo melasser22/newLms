@@ -16,155 +16,16 @@ spring:
     aws:
       secretsmanager:
         enabled: ${AWS_SECRETS_MANAGER_ENABLED:false}
-  datasource:
-    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=setup}"
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      pool-name: HikariPool-ejada
-      maximum-pool-size: 10
-      minimum-idle: 2
-      idle-timeout: 30000        # 30s
-      connection-timeout: 300000 # 300s
-      max-lifetime: 1800000      # 30m
-  jpa:
-    open-in-view: false
-    show-sql: true
-    hibernate:
-      ddl-auto: none
-    properties:
-      hibernate:
-        default_schema: setup
-        hbm2ddl.create_namespaces: true
-        format_sql: true
-      jdbc:
-        time_zone: UTC
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
-    schemas: setup
-    default-schema: setup
 
+app:
+  schema: setup
+  cache-prefix: setup
   kafka:
     client-id: ejada-setup-dev
-
-  data:
-    redis:
-      repositories:
-        enabled: false
-
-management:
-  endpoints:
-    web:
-      base-path: /actuator
-      exposure:
-        include: health,info,metrics,prometheus,beans,conditions,configprops,loggers,threaddump
-  endpoint:
-    health:
-      show-details: always
-  tracing:
-    sampling:
-      probability: 1.0
-
-springdoc:
-  api-docs:
-    enabled: true
-    path: /v3/api-docs
-  swagger-ui:
-    enabled: true
-    display-request-duration: true
-    filter: true
-    operationsSorter: method
-    tagsSorter: alpha
+  jpa:
+    show-sql: true
 
 shared:
-  core:
-    correlation:
-      header-name: X-Correlation-Id
-      generate-if-missing: true
-      echo-response-header: true
-    tenant:
-      enabled: true
-      header-name: X-Tenant-Id
-      query-param: tenantId
-      default-policy: OPTIONAL
-      echo-response-header: true
-    cors:
-      enabled: true
-      allowed-origins: http://localhost:3000
-      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
-      allowed-headers: "*"
-  headers:
-    enabled: true
-    correlation:
-      header: X-Correlation-Id
-      auto-generate: true
-      mandatory: true
-    request:
-      header: X-Request-ID
-      auto-generate: true
-      mandatory: true
-    tenant:
-      header: X-Tenant-Id
-      auto-generate: false
-      mandatory: false
-    user:
-      header: X-User-Id
-      auto-generate: false
-      mandatory: false
-    mdc:
-      enabled: true
-    security:
-      enabled: true
-      hsts:
-        enabled: true
-        max-age: 31536000
-        include-subdomains: true
-      frame-options: SAMEORIGIN
-      content-type-options: nosniff
-      referrer-policy: no-referrer
-      xss-protection: "0"
-    propagation:
-      enabled: true
-      include:
-        - X-Correlation-Id
-        - X-Request-ID
-        - X-Tenant-Id
-        - X-User-Id
-  audit:
-    enabled: true
-    web:
-      enabled: true
-      include-headers: true
-      track-bodies: true
-    aop:
-      enabled: true
-    dispatcher:
-      async: true
-    retention:
-      enabled: true
-      days: 90
-    masking:
-      enabled: true
-      fields-by-key:
-        - password
-        - secret
-        - token
-        - ssn
-    sinks:
-      db:
-        enabled: true
-        schema: setup
-        table: audit_logs
-      kafka:
-        enabled: true
-        topic: audit_logs
-      otlp:
-        enabled: false
-      outbox:
-        enabled: true
   openapi:
     enabled: true
     title: " Setup Service API"
@@ -177,13 +38,6 @@ shared:
       packages-to-scan:
         - com.ejada.setup
     jwt-security: false
-  redis:
-    host: redis
-    port: 6379
-    timeout: 2s
-    key-prefix: setup
-    default-ttl: 600s
-    reactive: false
   crypto:
     algorithm: AES_GCM
     key-provider: ${CRYPTO_KEY_PROVIDER:in-memory}
@@ -198,18 +52,3 @@ shared:
     aws-kms:
       region: ${AWS_KMS_REGION:}
       key-id: ${AWS_KMS_KEY_ID:}
-
-logging:
-  level:
-    root: ERROR
-    com.ejada: ERROR
-    com.ejada.audit.starter: ERROR
-    com.ejada.audit.starter.core.dispatch: ERROR
-    com.ejada.audit.starter.core.dispatch.sinks: ERROR
-    org.hibernate.tool.schema: ERROR
-    org.hibernate.SQL: ERROR
-    org.hibernate.orm.jdbc.bind: ERROR
-    org.springframework.cache: ERROR
-    org.springframework.cache.interceptor.CacheAspectSupport: ERROR
-
-debug: false

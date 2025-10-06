@@ -1,39 +1,6 @@
 spring:
   config:
     import: optional:classpath:application-shared-platform-dev.yaml
-  datasource:
-    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=billing}"
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      pool-name: HikariPool-ejada
-      maximum-pool-size: 10
-      minimum-idle: 2
-      idle-timeout: 30000        # 30s
-      connection-timeout: 300000 # 300s
-      max-lifetime: 1800000      # 30m
-
-  jpa:
-    open-in-view: false
-    show-sql: false
-    hibernate:
-      ddl-auto: none
-    properties:
-      hibernate:
-        default_schema: billing
-        hbm2ddl.create_namespaces: true
-        format_sql: true
-        jdbc.time_zone: UTC
-
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
-
-  kafka:
-    client-id: ejada-billing-dev
-
 
 shared:
   openapi:
@@ -55,6 +22,8 @@ shared:
 app:
   schema: billing
   cache-prefix: billing
+  kafka:
+    client-id: ejada-billing-dev
   billing:
     approval:
       topic: tenant.subscription-approvals

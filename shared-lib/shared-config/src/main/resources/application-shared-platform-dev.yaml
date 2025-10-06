@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: optional:classpath:application-shared-service.yaml
   main:
     lazy-initialization: ${SPRING_MAIN_LAZY_INITIALIZATION:true}
     application-startup: buffering
