@@ -4,6 +4,7 @@ import com.ejada.common.constants.HeaderNames;
 import com.ejada.gateway.config.GatewayCacheProperties.RouteCacheProperties;
 import com.ejada.gateway.transformation.ResponseCacheService;
 import com.ejada.gateway.transformation.ResponseCacheService.CacheMetadata;
+import java.net.URI;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,20 +29,25 @@ public class CacheRefreshService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CacheRefreshService.class);
 
+  private static final String NO_QUERY_PLACEHOLDER = "-";
+
   private final ResponseCacheService cacheService;
 
   private final ServerProperties serverProperties;
 
   private final AtomicReference<WebClient> clientReference = new AtomicReference<>();
 
+  private final String baseUrl;
+
   public CacheRefreshService(ResponseCacheService cacheService,
       ServerProperties serverProperties,
       ObjectProvider<WebClient.Builder> builderProvider) {
     this.cacheService = cacheService;
     this.serverProperties = serverProperties;
+    this.baseUrl = localBaseUrl();
     WebClient.Builder builder = Optional.ofNullable(builderProvider.getIfAvailable())
         .orElseGet(WebClient::builder);
-    this.clientReference.set(builder.baseUrl(localBaseUrl()).build());
+    this.clientReference.set(builder.baseUrl(baseUrl).build());
   }
 
   public void scheduleRevalidation(CacheMetadata metadata) {
@@ -64,7 +70,7 @@ public class CacheRefreshService {
     }
     HttpMethod method = route.getMethod() != null ? route.getMethod() : HttpMethod.GET;
     String path = candidatePath;
-    String query = "-";
+    String query = NO_QUERY_PLACEHOLDER;
     int queryIndex = candidatePath.indexOf('?');
     if (queryIndex >= 0) {
       path = candidatePath.substring(0, queryIndex);
@@ -84,12 +90,9 @@ public class CacheRefreshService {
       return Mono.empty();
     }
     HttpMethod verb = method != null ? method : HttpMethod.GET;
-    UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromPath(path);
-    if (StringUtils.hasText(query) && !"-".equals(query)) {
-      uriBuilder.query(query);
-    }
+    URI requestUri = resolveRequestUri(path, query);
     return client.method(verb)
-        .uri(uriBuilder.build(true).toUri())
+        .uri(requestUri)
         .headers(headers -> {
           if (tenantScoped && StringUtils.hasText(tenantId)) {
             headers.add(HeaderNames.X_TENANT_ID, tenantId);
@@ -105,6 +108,19 @@ public class CacheRefreshService {
         .doOnError(ex -> LOGGER.debug("Background cache refresh failed for {} {}", verb, path, ex))
         .onErrorResume(ex -> Mono.empty())
         .then();
+  }
+
+  private URI resolveRequestUri(String path, String query) {
+    String sanitizedPath = StringUtils.hasText(path) ? path : "/";
+    if (!sanitizedPath.startsWith("/")) {
+      sanitizedPath = "/" + sanitizedPath;
+    }
+    UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
+        .path(sanitizedPath);
+    if (StringUtils.hasText(query) && !NO_QUERY_PLACEHOLDER.equals(query)) {
+      builder.query(query);
+    }
+    return builder.build(true).toUri();
   }
 
   private String localBaseUrl() {
