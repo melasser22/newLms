@@ -81,6 +81,8 @@ curl http://localhost:8000/actuator/health
 ## Configuration Notes
 
 - The gateway port is configurable with the `SERVER_PORT` environment variable (defaults to `8000`).
+- Spring Boot lazy initialization is enabled by default across services to reduce container warm-up times; set
+  `SPRING_MAIN_LAZY_INITIALIZATION=false` when eager bean creation is preferred (for example, in production load tests).
 - Each microservice disables its own resource server and trusts authentication performed by the
   gateway (`shared.security.resource-server.enabled=false`).
 - Redis is required for rate limiting and subscription cache validation. Configure `REDIS_HOST`

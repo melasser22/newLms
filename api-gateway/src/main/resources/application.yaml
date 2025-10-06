@@ -9,6 +9,7 @@ spring:
   application:
     name: api-gateway
   main:
+    lazy-initialization: ${SPRING_MAIN_LAZY_INITIALIZATION:true}
     web-application-type: reactive
   autoconfigure:
     exclude:
