@@ -1,17 +1,25 @@
 package com.ejada.gateway.config;
 
+import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
+import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
+
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.ConnectionFactoryOptions;
+import io.r2dbc.spi.Option;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.r2dbc.R2dbcProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer;
 import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Provides an in-memory R2DBC {@link ConnectionFactory} when no external database configuration
@@ -29,7 +37,29 @@ public class R2dbcFallbackConfiguration {
 
   @Bean
   @ConditionalOnMissingBean(ConnectionFactory.class)
-  public ConnectionFactory inMemoryGatewayConnectionFactory() {
+  public ConnectionFactory gatewayConnectionFactory(R2dbcProperties properties) {
+    if (StringUtils.hasText(properties.getUrl())) {
+      LOGGER.info(
+          "spring.r2dbc.url detected ({}); configuring persistent route store connection.",
+          properties.getUrl());
+      ConnectionFactoryOptions.Builder builder =
+          ConnectionFactoryOptions.builder().from(ConnectionFactoryOptions.parse(properties.getUrl()));
+      if (StringUtils.hasText(properties.getUsername())) {
+        builder.option(USER, properties.getUsername());
+      }
+      if (properties.getPassword() != null) {
+        builder.option(PASSWORD, properties.getPassword());
+      }
+      if (StringUtils.hasText(properties.getName())) {
+        builder.option(ConnectionFactoryOptions.DATABASE, properties.getName());
+      }
+      if (!CollectionUtils.isEmpty(properties.getProperties())) {
+        properties.getProperties()
+            .forEach((key, value) -> builder.option(Option.valueOf(key), value));
+      }
+      return ConnectionFactories.get(builder.build());
+    }
+
     LOGGER.warn(
         "spring.r2dbc.url is not configured; falling back to an in-memory H2 database at {}. "
             + "Provide SPRING_R2DBC_URL (or spring.r2dbc.url) to connect to a persistent store.",
@@ -40,10 +70,10 @@ public class R2dbcFallbackConfiguration {
   @Bean
   @ConditionalOnMissingBean(name = "gatewayRouteSchemaInitializer")
   public ConnectionFactoryInitializer gatewayRouteSchemaInitializer(
-      ConnectionFactory inMemoryGatewayConnectionFactory,
+      ConnectionFactory connectionFactory,
       ResourceLoader resourceLoader) {
     ConnectionFactoryInitializer initializer = new ConnectionFactoryInitializer();
-    initializer.setConnectionFactory(inMemoryGatewayConnectionFactory);
+    initializer.setConnectionFactory(connectionFactory);
 
     Resource schema = resourceLoader.getResource("classpath:schema.sql");
     if (schema.exists()) {
