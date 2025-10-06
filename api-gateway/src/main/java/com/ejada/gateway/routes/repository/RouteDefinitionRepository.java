@@ -1,5 +1,6 @@
 package com.ejada.gateway.routes.repository;
 
+import com.ejada.gateway.config.RouteSchemaInitializer;
 import com.ejada.gateway.routes.model.RouteDefinition;
 import java.time.Instant;
 import java.util.List;
@@ -24,16 +25,19 @@ public class RouteDefinitionRepository {
   private final RouteDefinitionAuditR2dbcRepository auditStore;
   private final RouteDefinitionMapper mapper;
   private final ReactiveStringRedisTemplate redisTemplate;
+  private final RouteSchemaInitializer schemaInitializer;
 
   public RouteDefinitionRepository(
       RouteDefinitionR2dbcRepository routeStore,
       RouteDefinitionAuditR2dbcRepository auditStore,
       RouteDefinitionMapper mapper,
-      ReactiveStringRedisTemplate redisTemplate) {
+      ReactiveStringRedisTemplate redisTemplate,
+      RouteSchemaInitializer schemaInitializer) {
     this.routeStore = routeStore;
     this.auditStore = auditStore;
     this.mapper = mapper;
     this.redisTemplate = redisTemplate;
+    this.schemaInitializer = schemaInitializer;
   }
 
   public Flux<RouteDefinition> findAll() {
@@ -131,7 +135,8 @@ public class RouteDefinitionRepository {
   }
 
   private Flux<RouteDefinition> loadAndCacheActiveRoutes() {
-    return routeStore.findAllByEnabledTrue()
+    return schemaInitializer.ensureSchema()
+        .thenMany(routeStore.findAllByEnabledTrue())
         .map(mapper::toDomain)
         .collectList()
         .flatMapMany(list -> cacheActiveRoutes(list).thenMany(Flux.fromIterable(list)))

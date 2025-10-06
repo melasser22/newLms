@@ -32,32 +32,49 @@ public class RouteSchemaInitializer implements ApplicationRunner {
 
   private final DatabaseClient databaseClient;
   private final ResourceLoader resourceLoader;
+  private final Mono<Void> schemaInitialisation;
 
   public RouteSchemaInitializer(DatabaseClient databaseClient, ResourceLoader resourceLoader) {
     this.databaseClient = databaseClient;
     this.resourceLoader = resourceLoader;
+    this.schemaInitialisation = Mono.defer(this::initialiseSchema).cache();
+  }
+
+  /** Ensures the gateway route schema exists, executing the scripts at most once. */
+  public Mono<Void> ensureSchema() {
+    return schemaInitialisation;
   }
 
   @Override
   public void run(ApplicationArguments args) throws Exception {
+    ensureSchema().block(INITIALISATION_TIMEOUT);
+  }
+
+  private Mono<Void> initialiseSchema() {
     Resource schema = resourceLoader.getResource("classpath:schema.sql");
     if (!schema.exists()) {
       LOGGER.warn(
           "No schema.sql found on the classpath; gateway route tables will not be initialised automatically");
-      return;
+      return Mono.empty();
     }
 
-    List<String> statements = loadStatements(schema);
+    List<String> statements;
+    try {
+      statements = loadStatements(schema);
+    } catch (IOException ex) {
+      LOGGER.error("Failed to read route schema resource {}", schema, ex);
+      return Mono.error(ex);
+    }
+
     if (statements.isEmpty()) {
       LOGGER.debug("Route schema resource {} did not contain executable statements", schema);
-      return;
+      return Mono.empty();
     }
 
     LOGGER.info("Ensuring gateway route schema is present using {}", schema);
-    Flux.fromIterable(statements)
+    return Flux.fromIterable(statements)
         .concatMap(this::executeStatement)
-        .then()
-        .block(INITIALISATION_TIMEOUT);
+        .then();
   }
 
   private Mono<Void> executeStatement(String sql) {
