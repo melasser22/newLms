@@ -1,4 +1,7 @@
 spring:
+  config:
+    import:
+      - classpath:application-shared-api-gateway.yaml
   datasource:
     url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=catalog}"
     username: ${DB_USERNAME:postgres}
@@ -11,7 +14,6 @@ spring:
       idle-timeout: 30000        # 30s
       connection-timeout: 300000 # 300s
       max-lifetime: 1800000      # 30m
-
   jpa:
     open-in-view: false
     show-sql: true
@@ -22,146 +24,41 @@ spring:
         default_schema: catalog
         hbm2ddl.create_namespaces: true
         format_sql: true
-        jdbc.time_zone: UTC
-
+      jdbc.time_zone: UTC
   flyway:
     enabled: true
     baseline-on-migrate: true
     locations: classpath:db/migration/common,classpath:db/migration/{vendor}
     schemas: public,catalog
     default-schema: catalog
-
   kafka:
-    bootstrap-servers: kafka:9092
     client-id: ejada-catalog-dev
     consumer:
       group-id: ejada-backend-dev
-      auto-offset-reset: earliest
-      enable-auto-commit: false
-      properties:
-        max.poll.interval.ms: 300000
-        max.poll.records: 500
-    producer:
-      acks: all
-      retries: 3
-      batch-size: 16384
-      compression-type: gzip
-      properties:
-        linger.ms: 5
-
-  data:
-    redis:
-      repositories:
-        enabled: false
-
-management:
-  endpoints:
-    web:
-      base-path: /actuator
-      exposure:
-        include: health,info,metrics,prometheus,beans,conditions,configprops,loggers,threaddump
-  endpoint:
-    health:
-      show-details: always
-  tracing:
-    sampling:
-      probability: 1.0
-
-springdoc:
-  api-docs:
-    enabled: true
-    path: /v3/api-docs
-  swagger-ui:
-    enabled: true
-    display-request-duration: true
-    filter: true
-    operationsSorter: method
-    tagsSorter: alpha
 
 shared:
   core:
-    correlation:
-      header-name: X-Correlation-Id
-      generate-if-missing: true
-      echo-response-header: true
     tenant:
       enabled: true
       header-name: x_tenant_id
       query-param: tenantId
       default-policy: OPTIONAL
       echo-response-header: true
-    cors:
-      enabled: true
-      allowed-origins: http://localhost:3000
-      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
-      allowed-headers: "*"
   headers:
-    enabled: true
-    correlation:
-      header: X-Correlation-Id
-      auto-generate: true
-      mandatory: true
-    request:
-      header: X-Request-ID
-      auto-generate: true
-      mandatory: true
     tenant:
       header: x_tenant_id
       auto-generate: false
       mandatory: false
-    user:
-      header: X-User-Id
-      auto-generate: false
-      mandatory: false
-    mdc:
-      enabled: true
-    security:
-      enabled: true
-      hsts:
-        enabled: true
-        max-age: 31536000
-        include-subdomains: true
-      frame-options: SAMEORIGIN
-      content-type-options: nosniff
-      referrer-policy: no-referrer
-      xss-protection: "0"
     propagation:
-      enabled: true
       include:
         - X-Correlation-Id
         - X-Request-ID
         - x_tenant_id
         - X-User-Id
   audit:
-    enabled: true
-    web:
-      enabled: true
-      include-headers: true
-      track-bodies: true
-    aop:
-      enabled: true
-    dispatcher:
-      async: true
-    retention:
-      enabled: true
-      days: 90
-    masking:
-      enabled: true
-      fields-by-key:
-        - password
-        - secret
-        - token
-        - ssn
     sinks:
       db:
-        enabled: true
         schema: catalog
-        table: audit_logs
-      kafka:
-        enabled: true
-        topic: audit_logs
-      otlp:
-        enabled: false
       outbox:
         enabled: true
   openapi:
@@ -177,12 +74,7 @@ shared:
         - com.ejada.catalog
     jwt-security: false
   redis:
-    host: localhost
-    port: 6379
-    timeout: 2s
     key-prefix: catalog
-    default-ttl: 600s
-    reactive: false
   crypto:
     algorithm: AES_GCM
     in-memory:
@@ -190,21 +82,13 @@ shared:
       keys:
         local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
   security:
-    mode: hs256
     jwt:
       secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
-      token-period: 15m
     hs256:
       secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
     resource-server:
-      enabled: true
       permit-all:
         - "/**"
-      disable-csrf: false
-    stateless: true
-    roles-claim: roles
-    tenant-claim: tenant
-    enable-role-check: false
 
 logging:
   level:
