@@ -34,7 +34,14 @@ public class AuditProperties {
     private boolean includeHeaders = false;
     private boolean trackBodies = false;
     private List<String> includePaths = new ArrayList<>();
-    private List<String> excludePaths = new ArrayList<>();
+    private List<String> excludePaths = new ArrayList<>(List.of(
+        "/actuator/**",
+        "**/actuator/**",
+        "/health",
+        "/health/**",
+        "**/health",
+        "**/health/**"
+    ));
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
     public boolean isIncludeHeaders() { return includeHeaders; }

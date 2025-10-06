@@ -28,3 +28,9 @@ Annotate methods:
 @Audited(action = AuditAction.CREATE, entity = "Customer", entityIdExpr = "#result.id")
 public Customer createCustomer(CreateCustomerReq req) { ... }
 ```
+
+### HTTP request auditing
+
+The servlet filter ships with sensible defaults so that liveness endpoints (for example
+`/actuator/health`) are not persisted to the audit store. Use `shared.audit.web.exclude-paths`
+to override or extend the default list when integrating in your service configuration.
