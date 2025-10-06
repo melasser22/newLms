@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS route_definitions (
+CREATE TABLE IF NOT EXISTS public.route_definitions (
     id UUID PRIMARY KEY,
     path_pattern TEXT NOT NULL,
     service_uri TEXT NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS route_definitions (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS route_definition_audit (
+CREATE TABLE IF NOT EXISTS public.route_definition_audit (
     audit_id UUID PRIMARY KEY,
     route_id UUID NOT NULL,
     change_type TEXT NOT NULL,
@@ -20,14 +20,14 @@ CREATE TABLE IF NOT EXISTS route_definition_audit (
     changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     version INTEGER NOT NULL,
     CONSTRAINT fk_route_definition
-      FOREIGN KEY(route_id) REFERENCES route_definitions(id)
+      FOREIGN KEY(route_id) REFERENCES public.route_definitions(id)
 );
 
 -- Seed a couple of baseline routes so the gateway can boot with usable traffic
 -- definitions even before the management APIs are exercised. Each INSERT uses a
 -- deterministic UUID and ON CONFLICT safeguards to remain idempotent when the
 -- schema initialiser executes on every start-up.
-INSERT INTO route_definitions (
+INSERT INTO public.route_definitions (
     id,
     path_pattern,
     service_uri,
@@ -66,7 +66,7 @@ VALUES
     )
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO route_definition_audit (
+INSERT INTO public.route_definition_audit (
     audit_id,
     route_id,
     change_type,
