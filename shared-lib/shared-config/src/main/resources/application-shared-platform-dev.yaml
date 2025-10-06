@@ -58,6 +58,10 @@ shared:
       enabled: true
       permit-all:
         - "/actuator/health"
+        - "/v3/api-docs/**"
+        - "/swagger-ui/**"
+        - "/api/*/v3/api-docs/**"
+        - "/api/*/swagger-ui/**"
       disable-csrf: false
     stateless: true
     roles-claim: roles

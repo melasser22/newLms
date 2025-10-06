@@ -197,7 +197,12 @@ shared:
       secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
     resource-server:
       enabled: true
-      permit-all: []
+      permit-all:
+        - "/actuator/health"
+        - "/v3/api-docs/**"
+        - "/swagger-ui/**"
+        - "/api/*/v3/api-docs/**"
+        - "/api/*/swagger-ui/**"
       disable-csrf: false
     stateless: true
     roles-claim: roles
