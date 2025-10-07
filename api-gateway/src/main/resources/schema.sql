@@ -1,3 +1,5 @@
+CREATE SCHEMA IF NOT EXISTS public;
+
 CREATE TABLE IF NOT EXISTS public.route_definitions (
     id UUID PRIMARY KEY,
     path_pattern TEXT NOT NULL,
