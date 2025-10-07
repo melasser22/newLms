@@ -1,123 +1,10 @@
 version: "3.8"
 
 services:
-  postgres:
-    image: postgres:16
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: lms
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      TZ: Asia/Riyadh
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d lms"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 15s
-    networks:
-      - backend
-
-  redis:
-    image: redis:7
-    restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD-SHELL", "redis-cli -h localhost ping | grep -q PONG"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 15s
-    networks:
-      - backend
-
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    restart: unless-stopped
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 3000
-      ZOOKEEPER_SYNC_LIMIT: 2
-    ports:
-      - "2181:2181"
-    volumes:
-      - zkdata:/var/lib/zookeeper/data
-      - zklog:/var/lib/zookeeper/log
-    healthcheck:
-      test: ["CMD-SHELL", "echo srvr | nc -w 2 localhost 2181 | grep -q 'Mode:'"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 15s
-    networks:
-      - backend
-
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    restart: unless-stopped
-    depends_on:
-      - zookeeper
-    environment:
-      TZ: Asia/Riyadh
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_BROKER_ID: 1
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_LOG_RETENTION_HOURS: 168
-      KAFKA_LOG_SEGMENT_BYTES: 1073741824
-      KAFKA_MESSAGE_MAX_BYTES: 20971520
-      KAFKA_REPLICA_FETCH_MAX_BYTES: 20971520
-      KAFKA_HEAP_OPTS: "-Xms512m -Xmx1024m"
-    ports:
-      - "9092:9092"
-      - "29092:29092"
-    volumes:
-      - kafkadata:/var/lib/kafka/data
-    healthcheck:
-      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:29092 --list >/dev/null 2>&1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 15s
-    networks:
-      - backend
-
-  otel-collector:
-    image: otel/opentelemetry-collector:latest
-    restart: unless-stopped
-    command: ["--config=/etc/otelcol/otel-collector-config.yaml"]
-    volumes:
-      - "./shared-lib/shared-starters/starter-observability/src/main/resources:/etc/otelcol:ro"
-    ports:
-      - "4317:4317"
-      - "4318:4318"
-    healthcheck:
-      test: ["CMD", "/otelcol", "--version"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 15s
-    networks:
-      - backend
-
   tenant-service:
     build:
-      context: ./tenant-platform/tenant-service
+      context: ../../tenant-platform/tenant-service
     restart: unless-stopped
-    depends_on:
-      - postgres
-      - otel-collector
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
@@ -132,9 +19,6 @@ services:
       TZ: Asia/Riyadh
     expose:
       - "8080"
-    # Uncomment the mapping below for troubleshooting individual services outside the gateway.
-    # ports:
-    #   - "8080:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -146,11 +30,8 @@ services:
 
   setup-service:
     build:
-      context: ./setup-service
+      context: ../../setup-service
     restart: unless-stopped
-    depends_on:
-      - postgres
-      - otel-collector
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
@@ -165,8 +46,6 @@ services:
       TZ: Asia/Riyadh
     expose:
       - "8080"
-    # ports:
-    #   - "8081:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -178,11 +57,8 @@ services:
 
   billing-service:
     build:
-      context: ./tenant-platform/billing-service
+      context: ../../tenant-platform/billing-service
     restart: unless-stopped
-    depends_on:
-      - postgres
-      - otel-collector
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
@@ -197,8 +73,6 @@ services:
       TZ: Asia/Riyadh
     expose:
       - "8080"
-    # ports:
-    #   - "8082:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -210,12 +84,8 @@ services:
 
   analytics-service:
     build:
-      context: ./tenant-platform/analytics-service
+      context: ../../tenant-platform/analytics-service
     restart: unless-stopped
-    depends_on:
-      - postgres
-      - redis
-      - otel-collector
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
@@ -230,8 +100,6 @@ services:
       TZ: Asia/Riyadh
     expose:
       - "8080"
-    # ports:
-    #   - "8089:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
@@ -243,11 +111,8 @@ services:
 
   catalog-service:
     build:
-      context: ./tenant-platform/catalog-service
+      context: ../../tenant-platform/catalog-service
     restart: unless-stopped
-    depends_on:
-      - postgres
-      - otel-collector
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
@@ -262,8 +127,6 @@ services:
       TZ: Asia/Riyadh
     expose:
       - "8080"
-    # ports:
-    #   - "8083:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -275,11 +138,8 @@ services:
 
   subscription-service:
     build:
-      context: ./tenant-platform/subscription-service
+      context: ../../tenant-platform/subscription-service
     restart: unless-stopped
-    depends_on:
-      - postgres
-      - otel-collector
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
@@ -294,8 +154,6 @@ services:
       TZ: Asia/Riyadh
     expose:
       - "8080"
-    # ports:
-    #   - "8084:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -307,12 +165,8 @@ services:
 
   security-service:
     build:
-      context: ./sec-service
+      context: ../../sec-service
     restart: unless-stopped
-    depends_on:
-      - postgres
-      - redis
-      - otel-collector
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
@@ -332,8 +186,6 @@ services:
       TZ: Asia/Riyadh
     expose:
       - "8080"
-    # ports:
-    #   - "8085:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
       interval: 10s
@@ -345,13 +197,9 @@ services:
 
   api-gateway:
     build:
-      context: ./api-gateway
+      context: ../../api-gateway
     restart: unless-stopped
     depends_on:
-      redis:
-        condition: service_healthy
-      otel-collector:
-        condition: service_started
       setup-service:
         condition: service_started
       tenant-service:
@@ -404,10 +252,5 @@ services:
 
 networks:
   backend:
-    driver: bridge
-
-volumes:
-  pgdata:
-  zkdata:
-  zklog:
-  kafkadata:
+    external: true
+    name: lms-backend

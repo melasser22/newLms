@@ -31,8 +31,8 @@ private container ports and are no longer exposed outside the Docker network.
 | Analytics Service | 8080 | ❌ |
 | Security Service | 8080 | ❌ |
 
-> **Tip:** Uncomment the commented `ports` entries in `docker-compose.yml` when you need to
-debug a service directly.
+> **Tip:** Uncomment the commented `ports` entries in
+> `docker/services/docker-compose.yml` when you need to debug a service directly.
 
 ## Getting Started
 
@@ -55,13 +55,24 @@ mvn clean package
 
 ### 3. Start the Local Stack
 
-The provided `docker-compose.yml` orchestrates PostgreSQL, Redis, Kafka, the microservices, and the
-gateway. Before starting export a shared JWT secret:
+The stack is now split across two compose files to give you finer control over tool dependencies
+and application services.
 
-```bash
-export JWT_SECRET=local-dev-secret
-docker compose up --build
-```
+1. Start the shared tooling (PostgreSQL, Redis, Kafka, and the OpenTelemetry collector):
+
+   ```bash
+   export JWT_SECRET=local-dev-secret
+   docker compose -f docker/tools/docker-compose.yml up -d
+   ```
+
+2. Build and start the LMS microservices and gateway:
+
+   ```bash
+   docker compose -f docker/services/docker-compose.yml up --build
+   ```
+
+   > **Note:** The service compose file attaches to the `lms-backend` network created by the tools
+   > compose stack. Make sure the tooling stack is running before starting the services.
 
 Once healthy, invoke the platform via the gateway:
 
@@ -88,7 +99,7 @@ curl http://localhost:8000/actuator/health
 - Redis is required for rate limiting and subscription cache validation. Configure `REDIS_HOST`
   and `REDIS_PORT` for non-Docker deployments.
 - To roll back quickly, stop the `api-gateway` service and (optionally) re-enable direct ports in
-the compose file.
+  the service compose file.
 
 ## Updating Client Integrations
 

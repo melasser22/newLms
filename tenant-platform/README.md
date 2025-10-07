@@ -26,6 +26,7 @@ mvn -T4 clean verify
 ## Run locally
 From the project root, run:
 ```bash
-docker-compose up --build
+docker compose -f docker/tools/docker-compose.yml up -d
+docker compose -f docker/services/docker-compose.yml up --build
 ```
-Services listen on `localhost:8081`..`8084`.
+Services listen on `localhost:8081`..`8084` via the shared gateway.

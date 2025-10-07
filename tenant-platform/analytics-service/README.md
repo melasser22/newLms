@@ -14,4 +14,5 @@ The Analytics Service provides tenant-level usage insights powered by materializ
 mvn spring-boot:run
 ```
 
-The service expects PostgreSQL and Redis to be available (see `docker-compose.yml`).
+The service expects PostgreSQL and Redis to be available (see
+`docker/tools/docker-compose.yml`).
