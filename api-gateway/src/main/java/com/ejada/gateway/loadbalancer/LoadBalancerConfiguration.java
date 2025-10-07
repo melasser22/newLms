@@ -3,6 +3,7 @@ package com.ejada.gateway.loadbalancer;
 import com.ejada.gateway.config.GatewayKubernetesDiscoveryProperties;
 import com.ejada.gateway.config.GatewayRoutesProperties;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import java.util.List;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -23,7 +24,7 @@ import org.springframework.util.StringUtils;
 
 /**
  * Central configuration that replaces the default round-robin load balancer with the
- * {@link TenantAffinityLoadBalancer} and ensures service instances are enriched with dynamic
+ * {@link CompositeLoadBalancer} and ensures service instances are enriched with dynamic
  * weighting metadata.
  */
 @Configuration(proxyBeanMethods = false)
@@ -40,6 +41,11 @@ public class LoadBalancerConfiguration {
   public WebSocketStickTable webSocketStickTable(
       @Value("${gateway.loadbalancer.websocket-stickiness-ttl:PT15M}") java.time.Duration ttl) {
     return new WebSocketStickTable(ttl);
+  }
+
+  @Bean
+  public TenantContext tenantContext() {
+    return new ContextManagerTenantContext();
   }
 
   @Configuration(proxyBeanMethods = false)
@@ -64,13 +70,14 @@ public class LoadBalancerConfiguration {
 
     @Bean
     @ConditionalOnProperty(name = LoadBalancerClientFactory.PROPERTY_NAME)
-    public ReactorServiceInstanceLoadBalancer reactorServiceInstanceLoadBalancer(
+    public ReactorServiceInstanceLoadBalancer tenantAndHealthAwareLoadBalancer(
         LoadBalancerClientFactory clientFactory,
         LoadBalancerHealthCheckAggregator aggregator,
         GatewayRoutesProperties routesProperties,
         WebSocketStickTable stickTable,
         @Value("${spring.cloud.loadbalancer.zone:}") String localZone,
-        Environment environment) {
+        Environment environment,
+        TenantContext tenantContext) {
       String serviceId = LoadBalancerClientFactory.getName(environment);
       if (!StringUtils.hasText(serviceId)) {
         throw new IllegalStateException(
@@ -78,7 +85,13 @@ public class LoadBalancerConfiguration {
       }
       ObjectProvider<ServiceInstanceListSupplier> provider = clientFactory
           .getLazyProvider(serviceId, ServiceInstanceListSupplier.class);
-      return new TenantAffinityLoadBalancer(serviceId, provider, aggregator, routesProperties, stickTable, localZone);
+      return new CompositeLoadBalancer(serviceId, provider, aggregator, routesProperties,
+          List.of(
+              new HealthAwareFilter(),
+              new ZonePreferenceFilter(localZone)),
+          List.of(
+              new TenantAffinitySelector(tenantContext, stickTable),
+              new WeightedRoundRobinSelector()));
     }
   }
 
