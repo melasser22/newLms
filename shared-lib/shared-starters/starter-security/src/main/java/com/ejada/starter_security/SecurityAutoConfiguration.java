@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -38,6 +39,7 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
@@ -136,7 +138,8 @@ public class SecurityAutoConfiguration {
    * --------------------------------------------------- */
   @Bean
   @ConditionalOnMissingBean(JwtDecoder.class)
-  public JwtDecoder jwtDecoder(SharedSecurityProps props) {
+  public JwtDecoder jwtDecoder(SharedSecurityProps props,
+                               TenantAwareJwtValidator tenantAwareJwtValidator) {
     String mode = Optional.ofNullable(props.getMode()).orElse("hs256").toLowerCase(Locale.ROOT);
     NimbusJwtDecoder decoder;
 
@@ -169,8 +172,17 @@ public class SecurityAutoConfiguration {
       validators.add(new JwtClaimValidator<List<String>>(OAuth2ParameterNames.AUDIENCE,
           aud -> aud != null && aud.contains(props.getAudience())));
     }
+    validators.add(tenantAwareJwtValidator);
     decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(validators));
     return decoder;
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public TenantAwareJwtValidator tenantAwareJwtValidator(
+      SharedSecurityProps props,
+      ObjectProvider<StringRedisTemplate> redisTemplateProvider) {
+    return new TenantAwareJwtValidator(props, redisTemplateProvider.getIfAvailable());
   }
 
   /* ---------------------------------------------------
