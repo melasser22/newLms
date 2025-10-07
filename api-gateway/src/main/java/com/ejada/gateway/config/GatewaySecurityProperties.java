@@ -189,6 +189,10 @@ public class GatewaySecurityProperties {
 
     private boolean enabled = true;
     private String keyPrefix = "gateway:api-key:";
+    private final Encryption encryption = new Encryption();
+    private final Rotation rotation = new Rotation();
+    private final ScopeEnforcement scopeEnforcement = new ScopeEnforcement();
+    private final Audit audit = new Audit();
 
     public boolean isEnabled() {
       return enabled;
@@ -210,6 +214,175 @@ public class GatewaySecurityProperties {
 
     public String redisKey(String apiKey) {
       return keyPrefix + apiKey;
+    }
+
+    public Encryption getEncryption() {
+      return encryption;
+    }
+
+    public Rotation getRotation() {
+      return rotation;
+    }
+
+    public ScopeEnforcement getScopeEnforcement() {
+      return scopeEnforcement;
+    }
+
+    public Audit getAudit() {
+      return audit;
+    }
+  }
+
+  public enum EncryptionAlgorithm {
+    AES_256_GCM("AES-256-GCM", "AES/GCM/NoPadding");
+
+    private final String id;
+    private final String transformation;
+
+    EncryptionAlgorithm(String id, String transformation) {
+      this.id = id;
+      this.transformation = transformation;
+    }
+
+    public String getId() {
+      return id;
+    }
+
+    public String getTransformation() {
+      return transformation;
+    }
+
+    public static EncryptionAlgorithm from(String value) {
+      if (!StringUtils.hasText(value)) {
+        return null;
+      }
+      for (EncryptionAlgorithm candidate : values()) {
+        if (candidate.id.equalsIgnoreCase(value) || candidate.name().equalsIgnoreCase(value)) {
+          return candidate;
+        }
+      }
+      return null;
+    }
+  }
+
+  public static class Encryption {
+
+    private boolean enabled = false;
+    private EncryptionAlgorithm algorithm = EncryptionAlgorithm.AES_256_GCM;
+    private String keyId = "default";
+    private String keyValue;
+
+    public boolean isEnabled() {
+      return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+      this.enabled = enabled;
+    }
+
+    public EncryptionAlgorithm getAlgorithm() {
+      return algorithm;
+    }
+
+    public void setAlgorithm(EncryptionAlgorithm algorithm) {
+      this.algorithm = (algorithm == null) ? EncryptionAlgorithm.AES_256_GCM : algorithm;
+    }
+
+    public void setAlgorithm(String algorithm) {
+      EncryptionAlgorithm resolved = EncryptionAlgorithm.from(algorithm);
+      if (resolved != null) {
+        this.algorithm = resolved;
+      }
+    }
+
+    public String getKeyId() {
+      return keyId;
+    }
+
+    public void setKeyId(String keyId) {
+      if (StringUtils.hasText(keyId)) {
+        this.keyId = keyId.trim();
+      }
+    }
+
+    public String getKeyValue() {
+      return keyValue;
+    }
+
+    public void setKeyValue(String keyValue) {
+      if (!StringUtils.hasText(keyValue)) {
+        this.keyValue = null;
+        return;
+      }
+      this.keyValue = keyValue.trim();
+    }
+  }
+
+  public static class Rotation {
+
+    private boolean enabled = false;
+    private long maxAgeDays = 90;
+
+    public boolean isEnabled() {
+      return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+      this.enabled = enabled;
+    }
+
+    public long getMaxAgeDays() {
+      return maxAgeDays;
+    }
+
+    public void setMaxAgeDays(long maxAgeDays) {
+      if (maxAgeDays > 0) {
+        this.maxAgeDays = maxAgeDays;
+      }
+    }
+  }
+
+  public static class ScopeEnforcement {
+
+    private boolean enabled = false;
+    private boolean requireExactMatch = false;
+
+    public boolean isEnabled() {
+      return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+      this.enabled = enabled;
+    }
+
+    public boolean isRequireExactMatch() {
+      return requireExactMatch;
+    }
+
+    public void setRequireExactMatch(boolean requireExactMatch) {
+      this.requireExactMatch = requireExactMatch;
+    }
+  }
+
+  public static class Audit {
+
+    private boolean logUsage = false;
+    private boolean trackLastUsed = false;
+
+    public boolean isLogUsage() {
+      return logUsage;
+    }
+
+    public void setLogUsage(boolean logUsage) {
+      this.logUsage = logUsage;
+    }
+
+    public boolean isTrackLastUsed() {
+      return trackLastUsed;
+    }
+
+    public void setTrackLastUsed(boolean trackLastUsed) {
+      this.trackLastUsed = trackLastUsed;
     }
   }
 }

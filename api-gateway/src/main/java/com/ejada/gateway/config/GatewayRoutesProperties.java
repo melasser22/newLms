@@ -5,6 +5,7 @@ import java.time.Duration;
 import com.ejada.gateway.versioning.VersionNumber;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.http.HttpMethod;
@@ -116,6 +118,9 @@ public class GatewayRoutesProperties {
 
     /** Load balancing strategy to apply when forwarding traffic to this route. */
     private LoadBalancingStrategy lbStrategy = LoadBalancingStrategy.DEFAULT;
+
+    /** Required scopes that must be present on API keys accessing this route. */
+    private Set<String> requiredScopes = new LinkedHashSet<>();
 
     public String getId() {
       return id;
@@ -247,6 +252,29 @@ public class GatewayRoutesProperties {
       this.lbStrategy = LoadBalancingStrategy.from(lbStrategy);
     }
 
+    public Set<String> getRequiredScopes() {
+      return requiredScopes;
+    }
+
+    public void setRequiredScopes(Collection<String> scopes) {
+      if (scopes == null || scopes.isEmpty()) {
+        this.requiredScopes = new LinkedHashSet<>();
+        return;
+      }
+      this.requiredScopes = scopes.stream()
+          .filter(StringUtils::hasText)
+          .map(String::trim)
+          .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    public void setRequiredScopes(String... scopes) {
+      if (scopes == null) {
+        setRequiredScopes((Collection<String>) null);
+        return;
+      }
+      setRequiredScopes(Arrays.asList(scopes));
+    }
+
     public void applyDefaults(RouteDefaults defaults) {
       if (defaults == null) {
         return;
@@ -284,6 +312,11 @@ public class GatewayRoutesProperties {
         if (!StringUtils.hasText(entry.getValue())) {
           throw new IllegalStateException(
               "gateway.routes." + key + ".request-headers." + headerName + " must have a value");
+        }
+      }
+      for (String scope : requiredScopes) {
+        if (!StringUtils.hasText(scope)) {
+          throw new IllegalStateException("gateway.routes." + key + ".required-scopes contains a blank scope entry");
         }
       }
     }

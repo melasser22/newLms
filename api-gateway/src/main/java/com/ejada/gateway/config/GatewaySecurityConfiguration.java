@@ -2,6 +2,7 @@ package com.ejada.gateway.config;
 
 import com.ejada.gateway.authorization.TenantAuthorizationManager;
 import com.ejada.gateway.config.GatewayRateLimitProperties;
+import com.ejada.gateway.config.GatewayRoutesProperties;
 import com.ejada.gateway.security.ApiKeyAuthenticationFilter;
 import com.ejada.gateway.security.GatewaySecurityMetrics;
 import com.ejada.gateway.security.GatewayTokenIntrospectionService;
@@ -136,9 +137,10 @@ public class GatewaySecurityConfiguration {
       ReactiveStringRedisTemplate redisTemplate,
       GatewaySecurityMetrics metrics,
       GatewaySecurityProperties properties,
+      GatewayRoutesProperties routesProperties,
       @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> primaryObjectMapper,
       ObjectProvider<ObjectMapper> fallbackObjectMapper) {
-    return new ApiKeyAuthenticationFilter(redisTemplate, metrics, properties, primaryObjectMapper, fallbackObjectMapper);
+    return new ApiKeyAuthenticationFilter(redisTemplate, metrics, properties, routesProperties, primaryObjectMapper, fallbackObjectMapper);
   }
 
   @Bean
