@@ -12,6 +12,8 @@ import java.util.Date;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,7 +23,8 @@ import static org.assertj.core.api.Assertions.fail;
 class JwtDecoderAutoConfigurationTest {
 
   private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-      .withConfiguration(AutoConfigurations.of(JwtDecoderAutoConfiguration.class));
+      .withConfiguration(AutoConfigurations.of(JwtDecoderAutoConfiguration.class))
+      .withUserConfiguration(TestTenantAwareValidatorConfiguration.class);
 
   private static final String BASE64_SECRET = "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=";
 
@@ -30,7 +33,9 @@ class JwtDecoderAutoConfigurationTest {
     SharedSecurityProps props = new SharedSecurityProps();
     JwtDecoderAutoConfiguration configuration = new JwtDecoderAutoConfiguration();
 
-    assertThatThrownBy(() -> configuration.jwtDecoder(props))
+    TenantAwareJwtValidator tenantAwareJwtValidator = new TenantAwareJwtValidator(props, null);
+
+    assertThatThrownBy(() -> configuration.jwtDecoder(props, tenantAwareJwtValidator))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("shared.security.hs256.secret");
   }
@@ -41,7 +46,9 @@ class JwtDecoderAutoConfigurationTest {
     props.setMode("jwks");
     JwtDecoderAutoConfiguration configuration = new JwtDecoderAutoConfiguration();
 
-    assertThatThrownBy(() -> configuration.jwtDecoder(props))
+    TenantAwareJwtValidator tenantAwareJwtValidator = new TenantAwareJwtValidator(props, null);
+
+    assertThatThrownBy(() -> configuration.jwtDecoder(props, tenantAwareJwtValidator))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("shared.security.jwks.uri");
   }
@@ -89,5 +96,14 @@ class JwtDecoderAutoConfigurationTest {
     SignedJWT signed = new SignedJWT(new com.nimbusds.jose.JWSHeader(JWSAlgorithm.HS256), claims);
     signed.sign(signer);
     return signed.serialize();
+  }
+
+  @Configuration
+  static class TestTenantAwareValidatorConfiguration {
+
+    @Bean
+    TenantAwareJwtValidator tenantAwareJwtValidator(SharedSecurityProps props) {
+      return new TenantAwareJwtValidator(props, null);
+    }
   }
 }
