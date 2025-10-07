@@ -335,6 +335,12 @@ gateway:
         stale-ttl: 30m
         warm: true
         tenant-scoped: true
+        client:
+          authorization: ${GATEWAY_CACHE_CATALOG_AUTHORIZATION:}
+          api-key: ${GATEWAY_CACHE_CATALOG_API_KEY:}
+          timeout: ${GATEWAY_CACHE_CLIENT_TIMEOUT:10s}
+          headers:
+            X-Internal-Request: "true"
       - id: catalog-features
         route-id: catalog-service
         method: GET
@@ -343,6 +349,12 @@ gateway:
         stale-ttl: 15m
         warm: true
         tenant-scoped: true
+        client:
+          authorization: ${GATEWAY_CACHE_CATALOG_AUTHORIZATION:}
+          api-key: ${GATEWAY_CACHE_CATALOG_API_KEY:}
+          timeout: ${GATEWAY_CACHE_CLIENT_TIMEOUT:10s}
+          headers:
+            X-Internal-Request: "true"
       - id: tenant-by-id
         route-id: tenant-service
         method: GET

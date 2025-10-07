@@ -3,8 +3,10 @@ package com.ejada.gateway.config;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -185,6 +187,8 @@ public class GatewayCacheProperties {
 
     private String warmPath;
 
+    private final ClientProperties client = new ClientProperties();
+
     private transient PathPattern pathPattern;
 
     RouteCacheProperties initialise() {
@@ -325,6 +329,10 @@ public class GatewayCacheProperties {
       this.warmPath = StringUtils.hasText(warmPath) ? warmPath.trim() : null;
     }
 
+    public ClientProperties getClient() {
+      return client;
+    }
+
     public PathPattern getPathPattern() {
       return pathPattern;
     }
@@ -341,6 +349,69 @@ public class GatewayCacheProperties {
           ", warm=" + warm +
           ", tenantScoped=" + tenantScoped +
           '}';
+    }
+  }
+
+  public static class ClientProperties {
+
+    private String authorization;
+
+    private String apiKey;
+
+    private Duration timeout = Duration.ofSeconds(10);
+
+    private final Map<String, String> headers = new LinkedHashMap<>();
+
+    public String getAuthorization() {
+      return authorization;
+    }
+
+    public void setAuthorization(String authorization) {
+      this.authorization = StringUtils.hasText(authorization) ? authorization.trim() : null;
+    }
+
+    public String getApiKey() {
+      return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+      this.apiKey = StringUtils.hasText(apiKey) ? apiKey.trim() : null;
+    }
+
+    public Duration getTimeout() {
+      return timeout;
+    }
+
+    public void setTimeout(Duration timeout) {
+      if (timeout == null || timeout.isZero() || timeout.isNegative()) {
+        this.timeout = Duration.ofSeconds(10);
+        return;
+      }
+      this.timeout = timeout;
+    }
+
+    public Map<String, String> getHeaders() {
+      return Collections.unmodifiableMap(headers);
+    }
+
+    public void setHeaders(Map<String, String> headers) {
+      this.headers.clear();
+      if (headers == null || headers.isEmpty()) {
+        return;
+      }
+      headers.forEach((key, value) -> {
+        if (!StringUtils.hasText(key) || !StringUtils.hasText(value)) {
+          return;
+        }
+        this.headers.put(key.trim(), value.trim());
+      });
+    }
+
+    public Duration resolvedTimeout() {
+      if (timeout == null || timeout.isZero() || timeout.isNegative()) {
+        return Duration.ofSeconds(10);
+      }
+      return timeout;
     }
   }
 
