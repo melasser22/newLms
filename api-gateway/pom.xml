@@ -12,7 +12,7 @@
 
   <artifactId>api-gateway</artifactId>
   <name>api-gateway</name>
-  <description>Spring Cloud Gateway for LMS platform reusing shared starters</description>
+  <description>Spring Cloud Gateway for the Ejada SaaS Products Framework reusing shared starters</description>
 
   <dependencyManagement>
     <dependencies>

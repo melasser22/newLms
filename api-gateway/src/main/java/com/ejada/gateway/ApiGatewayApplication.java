@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.metrics.buffering.BufferingApplicationStartup;
 
 /**
- * Entry point for the LMS API Gateway.
+ * Entry point for the Ejada SaaS Products Framework API Gateway.
  */
 @SpringBootApplication
 public class ApiGatewayApplication {
