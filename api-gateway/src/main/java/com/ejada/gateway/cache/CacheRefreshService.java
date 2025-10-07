@@ -6,6 +6,7 @@ import com.ejada.gateway.config.GatewayCacheProperties.RouteCacheProperties;
 import com.ejada.gateway.transformation.ResponseCacheService;
 import com.ejada.gateway.transformation.ResponseCacheService.CacheMetadata;
 import java.net.URI;
+import java.net.InetAddress;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -13,9 +14,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
+import org.springframework.boot.web.context.WebServerInitializedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -38,17 +42,19 @@ public class CacheRefreshService {
 
   private final AtomicReference<WebClient> clientReference = new AtomicReference<>();
 
-  private final String baseUrl;
+  private final AtomicReference<java.net.URI> baseUriReference = new AtomicReference<>();
+
+  private final ObjectProvider<WebClient.Builder> builderProvider;
 
   public CacheRefreshService(ResponseCacheService cacheService,
       ServerProperties serverProperties,
       ObjectProvider<WebClient.Builder> builderProvider) {
     this.cacheService = cacheService;
     this.serverProperties = serverProperties;
-    this.baseUrl = localBaseUrl();
-    WebClient.Builder builder = Optional.ofNullable(builderProvider.getIfAvailable())
-        .orElseGet(WebClient::builder);
-    this.clientReference.set(builder.baseUrl(baseUrl).build());
+    this.builderProvider = builderProvider;
+    java.net.URI initialBase = resolveLocalBaseUri(null);
+    this.baseUriReference.set(initialBase);
+    this.clientReference.set(newClient(initialBase));
   }
 
   public void scheduleRevalidation(CacheMetadata metadata) {
@@ -130,7 +136,9 @@ public class CacheRefreshService {
     if (!sanitizedPath.startsWith("/")) {
       sanitizedPath = "/" + sanitizedPath;
     }
-    UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
+    java.net.URI baseUri = baseUriReference.get();
+    Assert.notNull(baseUri, "Base URI must be available");
+    UriComponentsBuilder builder = UriComponentsBuilder.fromUri(baseUri)
         .path(sanitizedPath);
     if (StringUtils.hasText(query) && !NO_QUERY_PLACEHOLDER.equals(query)) {
       builder.query(query);
@@ -138,9 +146,64 @@ public class CacheRefreshService {
     return builder.build(true).toUri();
   }
 
-  private String localBaseUrl() {
-    Integer configuredPort = serverProperties.getPort();
+  @EventListener(WebServerInitializedEvent.class)
+  public void onWebServerInitialized(WebServerInitializedEvent event) {
+    int actualPort = (event != null && event.getWebServer() != null) ? event.getWebServer().getPort() : -1;
+    java.net.URI updated = resolveLocalBaseUri(actualPort > 0 ? actualPort : null);
+    updateBaseUri(updated);
+  }
+
+  private void updateBaseUri(java.net.URI newBaseUri) {
+    if (newBaseUri == null) {
+      return;
+    }
+    java.net.URI current = baseUriReference.get();
+    if (newBaseUri.equals(current)) {
+      return;
+    }
+    baseUriReference.set(newBaseUri);
+    clientReference.set(newClient(newBaseUri));
+  }
+
+  private WebClient newClient(java.net.URI baseUri) {
+    WebClient.Builder builder = Optional.ofNullable(builderProvider.getIfAvailable())
+        .orElseGet(WebClient::builder);
+    return builder.baseUrl(baseUri.toString()).build();
+  }
+
+  private java.net.URI resolveLocalBaseUri(Integer overridePort) {
+    String scheme = (serverProperties.getSsl() != null && serverProperties.getSsl().isEnabled())
+        ? "https"
+        : "http";
+    InetAddress address = serverProperties.getAddress();
+    String host = (address != null) ? address.getHostAddress() : "127.0.0.1";
+    if (!StringUtils.hasText(host) || "0.0.0.0".equals(host) || "::".equals(host)) {
+      host = "127.0.0.1";
+    }
+    Integer configuredPort = overridePort != null ? overridePort : serverProperties.getPort();
     int port = (configuredPort == null || configuredPort == 0) ? 8000 : configuredPort;
-    return "http://127.0.0.1:" + port;
+    String contextPath = serverProperties.getServlet() != null ? serverProperties.getServlet().getContextPath() : null;
+    String sanitizedContextPath = sanitizeContextPath(contextPath);
+    return UriComponentsBuilder.newInstance()
+        .scheme(scheme)
+        .host(host)
+        .port(port)
+        .path(sanitizedContextPath)
+        .build()
+        .toUri();
+  }
+
+  private String sanitizeContextPath(String contextPath) {
+    if (!StringUtils.hasText(contextPath)) {
+      return "";
+    }
+    String trimmed = contextPath.trim();
+    if (!trimmed.startsWith("/")) {
+      trimmed = "/" + trimmed;
+    }
+    if (trimmed.endsWith("/")) {
+      trimmed = trimmed.substring(0, trimmed.length() - 1);
+    }
+    return trimmed;
   }
 }
