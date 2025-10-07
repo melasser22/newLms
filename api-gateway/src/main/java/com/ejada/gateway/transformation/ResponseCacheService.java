@@ -275,10 +275,47 @@ public class ResponseCacheService {
     CacheState state = fresh ? CacheState.FRESH : CacheState.STALE;
     metrics.recordCacheHit(metadata.route().cacheKeyPrefix(), metadata.canonicalPath(), state);
     List<String> noneMatch = exchange.getRequest().getHeaders().getIfNoneMatch();
-    if (fresh && !CollectionUtils.isEmpty(noneMatch) && noneMatch.contains(cached.etag())) {
+    if (fresh && matchesIfNoneMatch(noneMatch, cached.etag())) {
       return CacheResult.notModified(metadata, cached);
     }
     return CacheResult.hit(metadata, cached, state);
+  }
+
+  private boolean matchesIfNoneMatch(List<String> candidates, String etag) {
+    if (CollectionUtils.isEmpty(candidates) || !StringUtils.hasText(etag)) {
+      return false;
+    }
+    String normalizedEtag = normalizeEtag(etag);
+    for (String candidate : candidates) {
+      if (!StringUtils.hasText(candidate)) {
+        continue;
+      }
+      String[] tokens = candidate.split(",");
+      for (String token : tokens) {
+        String trimmed = token.trim();
+        if (!StringUtils.hasText(trimmed)) {
+          continue;
+        }
+        if ("*".equals(trimmed)) {
+          return true;
+        }
+        if (normalizeEtag(trimmed).equals(normalizedEtag)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private String normalizeEtag(String value) {
+    String normalized = value.trim();
+    if (normalized.regionMatches(true, 0, "W/", 0, 2)) {
+      normalized = normalized.substring(2).trim();
+    }
+    if (normalized.length() >= 2 && normalized.startsWith("\"") && normalized.endsWith("\"")) {
+      normalized = normalized.substring(1, normalized.length() - 1);
+    }
+    return normalized;
   }
 
   private Optional<CachedResponse> deserialize(String serialized) {

@@ -7,6 +7,8 @@ import java.util.Locale;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -58,6 +60,11 @@ public class CacheWarmupScheduler {
                 .subscribe());
       }
     }
+  }
+
+  @EventListener(ApplicationReadyEvent.class)
+  public void warmOnStartup() {
+    warm();
   }
 
   private Optional<String> resolveWarmPath(RouteCacheProperties route, String tenant) {
