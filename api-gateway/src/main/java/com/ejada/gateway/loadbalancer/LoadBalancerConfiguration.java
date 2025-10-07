@@ -1,9 +1,15 @@
 package com.ejada.gateway.loadbalancer;
 
+import com.ejada.gateway.config.GatewayKubernetesDiscoveryProperties;
 import com.ejada.gateway.config.GatewayRoutesProperties;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClients;
 import org.springframework.cloud.loadbalancer.core.ReactorServiceInstanceLoadBalancer;
 import org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
@@ -21,6 +27,7 @@ import org.springframework.util.StringUtils;
  * weighting metadata.
  */
 @Configuration(proxyBeanMethods = false)
+@EnableConfigurationProperties(GatewayKubernetesDiscoveryProperties.class)
 @LoadBalancerClients(defaultConfiguration = LoadBalancerConfiguration.TenantAffinityLoadBalancerClientConfiguration.class)
 public class LoadBalancerConfiguration {
 
@@ -41,11 +48,17 @@ public class LoadBalancerConfiguration {
     @Bean
     @Primary
     public ServiceInstanceListSupplier serviceInstanceListSupplier(ConfigurableApplicationContext context,
-        LoadBalancerHealthCheckAggregator aggregator) {
+        LoadBalancerHealthCheckAggregator aggregator,
+        GatewayKubernetesDiscoveryProperties kubernetesDiscoveryProperties,
+        ObjectProvider<KubernetesPodMetadataProvider> metadataProvider) {
       ServiceInstanceListSupplier delegate = ServiceInstanceListSupplier.builder()
           .withDiscoveryClient()
           .withCaching()
           .build(context);
+      KubernetesPodMetadataProvider provider = metadataProvider.getIfAvailable();
+      if (provider != null && kubernetesDiscoveryProperties.isEnabled()) {
+        delegate = new KubernetesServiceInstanceMetadataSupplier(delegate, provider, kubernetesDiscoveryProperties);
+      }
       return new WeightedServiceInstanceListSupplier(delegate, aggregator);
     }
 
@@ -66,6 +79,19 @@ public class LoadBalancerConfiguration {
       ObjectProvider<ServiceInstanceListSupplier> provider = clientFactory
           .getLazyProvider(serviceId, ServiceInstanceListSupplier.class);
       return new TenantAffinityLoadBalancer(serviceId, provider, aggregator, routesProperties, stickTable, localZone);
+    }
+  }
+
+  @Configuration(proxyBeanMethods = false)
+  @ConditionalOnClass(KubernetesClient.class)
+  static class KubernetesLoadBalancerMetadataConfiguration {
+
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnBean(KubernetesClient.class)
+    public KubernetesPodMetadataProvider kubernetesPodMetadataProvider(KubernetesClient client,
+        GatewayKubernetesDiscoveryProperties properties) {
+      return new Fabric8KubernetesPodMetadataProvider(client, properties);
     }
   }
 }
