@@ -2,6 +2,10 @@ server:
   port: ${SERVER_PORT:8000}
   shutdown: graceful
 
+gateway:
+  internal:
+    api-key: ${GATEWAY_INTERNAL_API_KEY:${SHARED_SECURITY_INTERNAL_CLIENT_API_KEY:local-dev-internal-key}}
+
 spring:
   # Import remote configuration first, allowing local overrides via active profiles.
   config:
