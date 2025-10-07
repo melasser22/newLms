@@ -45,3 +45,10 @@ shared:
       require-tenant-header: true
     jwt:
       token-period: 15m
+
+springdoc:
+  swagger-ui:
+    disable-swagger-default-url: true
+    urls:
+      - name: Setup Service API
+        url: ../v3/api-docs
