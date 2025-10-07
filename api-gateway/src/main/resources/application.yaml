@@ -13,6 +13,8 @@ spring:
   main:
     lazy-initialization: true
     web-application-type: reactive
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   output:
     ansi:
       enabled: ALWAYS
@@ -35,6 +37,11 @@ spring:
     listener:
       concurrency: 2
       auto-startup: false
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
   cloud:
     config:
       enabled: ${SPRING_CLOUD_CONFIG_ENABLED:true}
@@ -48,6 +55,17 @@ spring:
     url: ${SPRING_R2DBC_URL:${GATEWAY_R2DBC_URL:r2dbc:postgresql://postgres:5432/lms}}
     username: ${SPRING_R2DBC_USERNAME:${GATEWAY_R2DBC_USERNAME:postgres}}
     password: ${SPRING_R2DBC_PASSWORD:${GATEWAY_R2DBC_PASSWORD:postgres}}
+    pool:
+      enabled: true
+      initial-size: 0
+      max-size: 40
+      max-idle-time: 45s
+      max-life-time: 15m
+      max-create-connection-time: 5s
+      validation-query: SELECT 1
+      validation-depth: remote
+      acquire-retry: 2
+      max-pending-requests: 256
   sql:
     init:
       mode: ${SPRING_SQL_INIT_MODE:never}
@@ -122,28 +140,35 @@ spring:
 
 management:
   endpoints:
+    enabled-by-default: false
     web:
       exposure:
-        include: health,info,metrics,prometheus,env,configprops,gateway,refresh
+        include:
+          - health
+          - info
   endpoint:
     health:
-      show-details: always
+      show-details: never
       probes:
         enabled: true
-    metrics:
-      enabled: true
-    gateway:
-      enabled: true
-  tracing:
-    sampling:
-      probability: 1.0
-  otlp:
-    tracing:
-      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://otel-collector:4317}
   metrics:
+    export:
+      simple:
+        enabled: false
+      prometheus:
+        enabled: false
     tags:
       application: ${spring.application.name}
       region: ${GCP_REGION:unknown}
+  tracing:
+    enabled: false
+
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    org.springframework.cloud.gateway: INFO
+    reactor.netty: WARN
 
 shared:
   patterns:

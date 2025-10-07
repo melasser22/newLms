@@ -23,7 +23,11 @@ public class DatabaseRouteDefinitionProvider implements GatewayRouteDefinitionPr
   @Override
   public Flux<GatewayRoutesProperties.ServiceRoute> loadRoutes() {
     return repository.findActiveRoutes()
-        .flatMapIterable(converter::toServiceRoutes);
+        .flatMapIterable(converter::toServiceRoutes)
+        .onErrorResume(ex -> {
+          // The database may not be ready when the provider is invoked during startup.
+          return Flux.empty();
+        });
   }
 
   @Override

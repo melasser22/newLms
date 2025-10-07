@@ -12,7 +12,7 @@ spring:
     open-in-view: false
   sql:
     init:
-      mode: always
+      mode: never
 
 gateway:
   webclient:
@@ -52,7 +52,7 @@ springdoc:
 
 logging:
   level:
-    com.ejada.gateway: DEBUG
-    org.springframework.cloud.gateway: DEBUG
-    org.springframework.web.server: DEBUG
-    reactor.netty: DEBUG
+    com.ejada.gateway: INFO
+    org.springframework.cloud.gateway: INFO
+    org.springframework.web.server: INFO
+    reactor.netty: WARN

@@ -3,6 +3,8 @@ spring:
     name: analytics-service
   main:
     lazy-initialization: ${SPRING_MAIN_LAZY_INITIALIZATION:true}
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   datasource:
@@ -31,6 +33,9 @@ spring:
     locations: classpath:db/migration/common,classpath:db/migration/{vendor}
     schemas: ${app.schema}
     default-schema: ${app.schema}
+  sql:
+    init:
+      mode: never
   cache:
     type: redis
   data:
@@ -46,17 +51,33 @@ app:
 
 management:
   endpoints:
+    enabled-by-default: false
     web:
       exposure:
-        include: health,info,prometheus
+        include:
+          - health
+          - info
   endpoint:
     health:
+      show-details: never
       probes:
         enabled: true
+  metrics:
+    export:
+      simple:
+        enabled: false
+      prometheus:
+        enabled: false
 
   health:
     redis:
       enabled: ${shared.redis.enabled:true}
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
 
 shared:
   redis:
@@ -74,3 +95,8 @@ shared:
     jwt:
       secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
       token-period: 15m
+
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO

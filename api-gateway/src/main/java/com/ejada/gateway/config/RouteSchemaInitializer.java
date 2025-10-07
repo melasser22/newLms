@@ -10,7 +10,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.FileCopyUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * Ensures the gateway route schema exists when the application starts. This is necessary because
@@ -25,7 +27,7 @@ import reactor.core.publisher.Mono;
  * JDBC schema initialisation.
  */
 @Component("gatewayRouteSchemaInitializer")
-public class RouteSchemaInitializer implements InitializingBean {
+public class RouteSchemaInitializer implements ApplicationListener<ApplicationReadyEvent> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RouteSchemaInitializer.class);
   private static final Duration INITIALISATION_TIMEOUT = Duration.ofSeconds(30);
@@ -40,28 +42,39 @@ public class RouteSchemaInitializer implements InitializingBean {
   }
 
   @Override
-  public void afterPropertiesSet() throws Exception {
+  public void onApplicationEvent(ApplicationReadyEvent event) {
     if (!initialised.compareAndSet(false, true)) {
       return;
     }
+
+    ensureSchema()
+        .timeout(INITIALISATION_TIMEOUT)
+        .subscribeOn(Schedulers.boundedElastic())
+        .doOnError(ex -> LOGGER.warn("Deferred schema initialisation failed", ex))
+        .onErrorResume(ex -> Mono.empty())
+        .subscribe();
+  }
+
+  private Mono<Void> ensureSchema() {
     Resource schema = resourceLoader.getResource("classpath:schema.sql");
     if (!schema.exists()) {
       LOGGER.warn(
           "No schema.sql found on the classpath; gateway route tables will not be initialised automatically");
-      return;
+      return Mono.empty();
     }
 
-    List<String> statements = loadStatements(schema);
-    if (statements.isEmpty()) {
-      LOGGER.debug("Route schema resource {} did not contain executable statements", schema);
-      return;
-    }
-
-    LOGGER.info("Ensuring gateway route schema is present using {}", schema);
-    Flux.fromIterable(statements)
+    return Mono.fromCallable(() -> loadStatements(schema))
+        .subscribeOn(Schedulers.boundedElastic())
+        .flatMapMany(statements -> {
+          if (statements.isEmpty()) {
+            LOGGER.debug("Route schema resource {} did not contain executable statements", schema);
+            return Flux.empty();
+          }
+          LOGGER.info("Ensuring gateway route schema is present using {}", schema);
+          return Flux.fromIterable(statements);
+        })
         .concatMap(this::executeStatement)
-        .then()
-        .block(INITIALISATION_TIMEOUT);
+        .then();
   }
 
   private Mono<Void> executeStatement(String sql) {

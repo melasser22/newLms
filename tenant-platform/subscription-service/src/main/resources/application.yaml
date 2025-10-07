@@ -3,13 +3,24 @@ spring:
     name: subscription-service
   main:
     lazy-initialization: ${SPRING_MAIN_LAZY_INITIALIZATION:true}
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  sql:
+    init:
+      mode: never
   flyway:
     baseline-on-migrate: true
     baseline-version: 0
     default-schema: ${app.schema}
     schemas: ${app.schema}
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
 
 app:
   schema: subscription
@@ -46,3 +57,28 @@ shared:
       require-tenant-header: true
     jwt:
       token-period: 15m
+
+management:
+  endpoints:
+    enabled-by-default: false
+    web:
+      exposure:
+        include:
+          - health
+          - info
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+  metrics:
+    export:
+      simple:
+        enabled: false
+      prometheus:
+        enabled: false
+
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO

@@ -1,6 +1,7 @@
 package com.ejada.gateway.config;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,12 +27,14 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.util.StringUtils;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Programmatic route configuration so we can reuse the shared properties and
  * enforce consistent filters across environments.
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(GatewayRoutesProperties.class)
 public class GatewayRoutesConfiguration {
 
@@ -61,32 +64,10 @@ public class GatewayRoutesConfiguration {
       }
     });
 
-    dynamicProviders.orderedStream().forEach(provider -> {
-      try {
-        List<GatewayRoutesProperties.ServiceRoute> loaded = provider.loadRoutes()
-            .map(route -> {
-              route.applyDefaults(properties.getDefaults());
-              return route;
-            })
-            .collectList()
-            .block(PROVIDER_TIMEOUT);
-        if (loaded == null || loaded.isEmpty()) {
-          LOGGER.info("Dynamic route provider {} returned no routes", provider.getProviderName());
-          return;
-        }
-        for (GatewayRoutesProperties.ServiceRoute route : loaded) {
-          if (route == null) {
-            continue;
-          }
-          route.validate(route.getId());
-          GatewayRoutesProperties.ServiceRoute previous = aggregated.put(route.getId(), route);
-          if (previous != null) {
-            LOGGER.warn("Route {} from provider {} replaced an existing definition", route.getId(), provider.getProviderName());
-          }
-        }
-        LOGGER.info("Loaded {} dynamic routes from {}", loaded.size(), provider.getProviderName());
-      } catch (Exception ex) {
-        LOGGER.warn("Failed to load dynamic routes from {}", provider.getProviderName(), ex);
+    loadDynamicRoutes(dynamicProviders, properties).forEach(route -> {
+      GatewayRoutesProperties.ServiceRoute previous = aggregated.put(route.getId(), route);
+      if (previous != null) {
+        LOGGER.warn("Route {} from dynamic provider replaced an existing definition", route.getId());
       }
     });
 
@@ -193,6 +174,53 @@ public class GatewayRoutesConfiguration {
     }
 
     return routes.build();
+  }
+
+  private List<GatewayRoutesProperties.ServiceRoute> loadDynamicRoutes(
+      ObjectProvider<GatewayRouteDefinitionProvider> dynamicProviders,
+      GatewayRoutesProperties properties) {
+    List<GatewayRouteDefinitionProvider> providers = dynamicProviders.orderedStream().toList();
+    if (providers.isEmpty()) {
+      return List.of();
+    }
+
+    Duration timeout = PROVIDER_TIMEOUT.multipliedBy(Math.max(1, providers.size()));
+    return Flux.fromIterable(providers)
+        .flatMap(provider -> loadRoutesForProvider(provider, properties))
+        .collectList()
+        .blockOptional(timeout)
+        .orElseGet(List::of);
+  }
+
+  private Flux<GatewayRoutesProperties.ServiceRoute> loadRoutesForProvider(
+      GatewayRouteDefinitionProvider provider,
+      GatewayRoutesProperties properties) {
+    return provider.loadRoutes()
+        .timeout(PROVIDER_TIMEOUT)
+        .collectList()
+        .doOnError(ex -> LOGGER.warn("Failed to load dynamic routes from {}", provider.getProviderName(), ex))
+        .onErrorResume(ex -> Mono.empty())
+        .flatMapMany(loaded -> {
+          if (loaded.isEmpty()) {
+            LOGGER.info("Dynamic route provider {} returned no routes", provider.getProviderName());
+            return Flux.empty();
+          }
+          List<GatewayRoutesProperties.ServiceRoute> sanitised = new ArrayList<>();
+          for (GatewayRoutesProperties.ServiceRoute route : loaded) {
+            if (route == null) {
+              continue;
+            }
+            route.applyDefaults(properties.getDefaults());
+            try {
+              route.validate(route.getId());
+              sanitised.add(route);
+            } catch (IllegalArgumentException ex) {
+              LOGGER.warn("Discarding invalid route {} from provider {}", route.getId(), provider.getProviderName(), ex);
+            }
+          }
+          LOGGER.info("Loaded {} dynamic routes from {}", sanitised.size(), provider.getProviderName());
+          return Flux.fromIterable(sanitised);
+        });
   }
 
   private GatewayFilter deduplicatePrefixedPathFilter(String prefixPath) {
