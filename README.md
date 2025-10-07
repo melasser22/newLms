@@ -71,8 +71,10 @@ and application services.
    docker compose -f docker/services/docker-compose.yml up --build
    ```
 
-   > **Note:** The service compose file attaches to the `lms-backend` network created by the tools
-   > compose stack. Make sure the tooling stack is running before starting the services.
+   > **Note:** Both compose stacks share the `lms-backend` network. The services compose file now
+   > creates the network automatically when it is missing, but you should still start the tooling
+   > stack first so PostgreSQL, Redis, Kafka, and the OpenTelemetry collector are ready when the
+   > services boot.
 
 Once healthy, invoke the platform via the gateway:
 
