@@ -5,6 +5,7 @@ spring:
 
 shared:
   redis:
+    enabled: ${SHARED_REDIS_ENABLED:true}
     url: ${SHARED_REDIS_URL:${REDIS_URL:}}
     host: ${SHARED_REDIS_HOST:${REDIS_HOST:redis}}
     port: ${SHARED_REDIS_PORT:${REDIS_PORT:6379}}

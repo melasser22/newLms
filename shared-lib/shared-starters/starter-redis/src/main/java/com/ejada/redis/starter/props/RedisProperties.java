@@ -34,6 +34,8 @@ public class RedisProperties {
   private Duration defaultTtl = Duration.ofMinutes(10);
   @Builder.Default
   private Boolean reactive = false;
+  @Builder.Default
+  private boolean enabled = true;
 
   private Map<String, CacheSpec> caches;
 

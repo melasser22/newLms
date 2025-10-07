@@ -54,7 +54,13 @@ management:
       probes:
         enabled: true
 
+  health:
+    redis:
+      enabled: ${shared.redis.enabled:true}
+
 shared:
+  redis:
+    enabled: ${SHARED_REDIS_ENABLED:true}
   security:
     mode: ${SHARED_SECURITY_MODE:hs256}
     hs256:
