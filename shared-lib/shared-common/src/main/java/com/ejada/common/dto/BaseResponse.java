@@ -71,6 +71,19 @@ public class BaseResponse<T> {
         return build(ApiStatus.ERROR, code, message, null);
     }
 
+    /**
+     * Create an error response with additional diagnostic payload.
+     *
+     * @param code    business or technical error code
+     * @param message human-readable description of the error
+     * @param data    optional payload containing structured diagnostic details
+     * @param <T>     type of the diagnostic payload
+     * @return a new BaseResponse with status ERROR
+     */
+    public static <T> BaseResponse<T> error(String code, String message, T data) {
+        return build(ApiStatus.ERROR, code, message, data);
+    }
+
     public static <T> BaseResponse<T> warning(String code, String message, T data) {
         return build(ApiStatus.WARNING, code, message, data);
     }

@@ -1,5 +1,7 @@
 package com.ejada.gateway.error;
 
+import com.ejada.common.constants.HeaderNames;
+import com.ejada.common.context.ContextManager;
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.common.exception.BusinessException;
 import com.ejada.common.exception.BusinessRuleException;
@@ -9,13 +11,17 @@ import com.ejada.common.exception.SharedException;
 import com.ejada.common.exception.ValidationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ejada.gateway.context.GatewayRequestAttributes;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
+import java.time.Instant;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.ObjectProvider;
@@ -67,13 +73,16 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
 
     HttpStatus status = determineStatus(ex);
     String errorCode = determineErrorCode(ex, status);
-    String message = determineMessage(ex, status);
+    String correlationId = resolveCorrelationId(exchange);
+    String tenantId = resolveTenantId(exchange);
+    String message = enhanceMessage(determineMessage(ex, status), status, correlationId);
+    Map<String, Object> diagnostics = buildDiagnostics(exchange, status, errorCode, message, correlationId, tenantId);
 
     response.setStatusCode(status);
     response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
     try {
-      BaseResponse<Void> errorResponse = BaseResponse.error(errorCode, message);
+      BaseResponse<Map<String, Object>> errorResponse = BaseResponse.error(errorCode, message, diagnostics);
       byte[] bytes = objectMapper.writeValueAsBytes(errorResponse);
       DataBuffer buffer = response.bufferFactory().wrap(bytes);
       return response.writeWith(Mono.just(buffer));
@@ -205,6 +214,59 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
       return status.getReasonPhrase();
     }
     return message;
+  }
+
+  private String enhanceMessage(String message, HttpStatus status, String correlationId) {
+    if (status.is5xxServerError() && "An unexpected error occurred".equals(message)) {
+      String reference = StringUtils.hasText(correlationId) ? correlationId : "unknown";
+      return "An unexpected error occurred. Please contact support with correlation ID " + reference + ".";
+    }
+    return message;
+  }
+
+  private Map<String, Object> buildDiagnostics(ServerWebExchange exchange, HttpStatus status,
+      String errorCode, String message, String correlationId, String tenantId) {
+    Map<String, Object> diagnostics = new LinkedHashMap<>();
+    diagnostics.put("timestamp", Instant.now());
+    diagnostics.put("path", exchange.getRequest().getPath().value());
+    diagnostics.put("method", exchange.getRequest().getMethodValue());
+    diagnostics.put("status", status.value());
+    diagnostics.put("errorCode", errorCode);
+    diagnostics.put("message", message);
+    diagnostics.put("correlationId", StringUtils.hasText(correlationId) ? correlationId : "unknown");
+    diagnostics.put("tenantId", StringUtils.hasText(tenantId) ? tenantId : "unknown");
+    diagnostics.put("supportUrl", "https://support.example.com/error/" + status.value());
+    return diagnostics;
+  }
+
+  private String resolveCorrelationId(ServerWebExchange exchange) {
+    String correlationId = exchange.getAttribute(GatewayRequestAttributes.CORRELATION_ID);
+    if (!StringUtils.hasText(correlationId)) {
+      correlationId = trimToNull(exchange.getRequest().getHeaders().getFirst(HeaderNames.CORRELATION_ID));
+    }
+    if (!StringUtils.hasText(correlationId)) {
+      correlationId = trimToNull(ContextManager.getCorrelationId());
+    }
+    return correlationId;
+  }
+
+  private String resolveTenantId(ServerWebExchange exchange) {
+    String tenantId = exchange.getAttribute(GatewayRequestAttributes.TENANT_ID);
+    if (!StringUtils.hasText(tenantId)) {
+      tenantId = trimToNull(exchange.getRequest().getHeaders().getFirst(HeaderNames.X_TENANT_ID));
+    }
+    if (!StringUtils.hasText(tenantId)) {
+      tenantId = trimToNull(ContextManager.Tenant.get());
+    }
+    return tenantId;
+  }
+
+  private String trimToNull(String value) {
+    if (value == null) {
+      return null;
+    }
+    String trimmed = value.trim();
+    return trimmed.isEmpty() ? null : trimmed;
   }
 
   private String extractBindingMessage(WebExchangeBindException ex) {
