@@ -7,10 +7,12 @@ import com.ejada.gateway.routes.model.RouteMetadata;
 import com.ejada.gateway.routes.model.RouteMetadata.TrafficSplit;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -75,6 +77,12 @@ public class RouteDefinitionConverter {
     }
     if (!metadata.getRequestHeaders().isEmpty()) {
       route.setRequestHeaders(metadata.getRequestHeaders());
+    }
+    Object attribute = metadata.getAttributes().getOrDefault("requiredScopes",
+        metadata.getAttributes().get("required-scopes"));
+    List<String> requiredScopes = flatten(attribute);
+    if (!requiredScopes.isEmpty()) {
+      route.setRequiredScopes(requiredScopes);
     }
   }
 
@@ -179,5 +187,33 @@ public class RouteDefinitionConverter {
       return "variant";
     }
     return value.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-");
+  }
+
+  private List<String> flatten(Object value) {
+    if (value instanceof Collection<?> collection) {
+      return collection.stream()
+          .map(element -> Objects.toString(element, null))
+          .filter(StringUtils::hasText)
+          .map(String::trim)
+          .toList();
+    }
+    if (value instanceof String str) {
+      return splitSimple(str);
+    }
+    return List.of();
+  }
+
+  private List<String> splitSimple(String value) {
+    if (!StringUtils.hasText(value)) {
+      return List.of();
+    }
+    String[] tokens = value.split(",");
+    List<String> result = new ArrayList<>();
+    for (String token : tokens) {
+      if (StringUtils.hasText(token)) {
+        result.add(token.trim());
+      }
+    }
+    return result;
   }
 }

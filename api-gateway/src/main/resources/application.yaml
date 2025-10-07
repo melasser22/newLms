@@ -376,6 +376,22 @@ gateway:
         - /public/**
         - /actuator/**
         - /auth/**
+    api-key:
+      enabled: true
+      encryption:
+        enabled: true
+        algorithm: AES-256-GCM
+        key-id: default
+        key-value: ${GATEWAY_API_KEY_ENCRYPTION_KEY:}
+      rotation:
+        enabled: true
+        max-age-days: 90
+      scope-enforcement:
+        enabled: true
+        require-exact-match: false
+      audit:
+        log-usage: true
+        track-last-used: true
     token-cache:
       enabled: false
       ttl: 15m
