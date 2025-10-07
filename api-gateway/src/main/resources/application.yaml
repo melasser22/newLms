@@ -184,21 +184,21 @@ shared:
         - tid
       prefer-header-over-jwt: true
       skip-patterns:
-        - /actuator/.*
+        - /actuator/**
         - /favicon.ico
-        - *pattern-docs-api-v3
-        - *pattern-docs-api-swagger
-        - *pattern-docs-api-swagger-html
-        - *pattern-docs-root-v3
-        - *pattern-docs-root-swagger
-        - *pattern-docs-root-swagger-html
+        - /api/**/v3/api-docs/**
+        - /api/**/swagger-ui/**
+        - /api/**/swagger-ui.html
+        - /v3/api-docs/**
+        - /swagger-ui/**
+        - /swagger-ui.html
     correlation:
       enabled: true
       header-name: X-Correlation-Id
       echo-response-header: true
       generate-if-missing: true
       skip-patterns:
-        - /actuator/.*
+        - /actuator/**
   observability:
     application-name: ${spring.application.name}
   ratelimit:
@@ -463,6 +463,10 @@ gateway:
     skip-patterns:
       - /actuator/**
       - /fallback/**
+      - /api/**/swagger-ui/**
+      - /api/**/v3/api-docs/**
+      - /swagger-ui/**
+      - /v3/api-docs/**
     required-features:
       catalog-service: catalog.read
       billing-service: billing.manage
