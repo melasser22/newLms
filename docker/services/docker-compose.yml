@@ -6,6 +6,7 @@ services:
       context: ../../tenant-platform/tenant-service
     restart: unless-stopped
     environment:
+      APP_SCHEMA: tenant
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -33,6 +34,7 @@ services:
       context: ../../setup-service
     restart: unless-stopped
     environment:
+      APP_SCHEMA: setup
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -60,6 +62,7 @@ services:
       context: ../../tenant-platform/billing-service
     restart: unless-stopped
     environment:
+      APP_SCHEMA: billing
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -87,6 +90,7 @@ services:
       context: ../../tenant-platform/analytics-service
     restart: unless-stopped
     environment:
+      APP_SCHEMA: tenant_usage
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -114,6 +118,7 @@ services:
       context: ../../tenant-platform/catalog-service
     restart: unless-stopped
     environment:
+      APP_SCHEMA: catalog
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -141,6 +146,7 @@ services:
       context: ../../tenant-platform/subscription-service
     restart: unless-stopped
     environment:
+      APP_SCHEMA: subscription
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -168,6 +174,7 @@ services:
       context: ../../sec-service
     restart: unless-stopped
     environment:
+      APP_SCHEMA: security
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
