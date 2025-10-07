@@ -148,12 +148,16 @@ shared:
       secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
     resource-server:
       enabled: true
+      verify-tenant-claim: true
       permit-all:
         - "/actuator/health"
         - "/api/v1/auth/**"
       disable-csrf: false
       csrf-ignore:
         - "/api/v1/auth/**"
+    tenant-verification:
+      strict-mode: true
+      require-tenant-header: true
     stateless: true
     roles-claim: roles
     tenant-claim: tenant
