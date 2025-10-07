@@ -27,6 +27,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class IpFilteringGatewayFilterTest {
 
   @Container
+  @SuppressWarnings("resource")
   static final GenericContainer<?> REDIS = new GenericContainer<>("redis:7").withExposedPorts(6379);
 
   private ReactiveStringRedisTemplate redisTemplate;

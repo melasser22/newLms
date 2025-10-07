@@ -1,6 +1,5 @@
 package com.ejada.gateway.metrics;
 
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.micrometer.core.instrument.Counter;

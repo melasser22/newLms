@@ -78,6 +78,7 @@ public class VersionMappingResolver {
     if (definitions == null) {
       return List.of();
     }
+    @SuppressWarnings("deprecation")
     PathPatternParser parser = new PathPatternParser();
     parser.setMatchOptionalTrailingSeparator(true);
     List<CompiledMapping> compiled = new ArrayList<>(definitions.size());

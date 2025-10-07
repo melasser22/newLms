@@ -99,6 +99,7 @@ class KubernetesServiceInstanceMetadataSupplierTest {
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     public Flux<List<ServiceInstance>> get(Request request) {
       return get();
     }

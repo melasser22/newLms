@@ -137,7 +137,7 @@ public class SubscriptionApprovalPublisher {
                 safeTrim(customerNameAr, TENANT_NAME_MAX),
                 resolvedAdminEmail,
                 resolvedAdminMobile,
-                tenantCode,
+                safeTrim(tenantCode, TENANT_CODE_MAX),
                 tenantName,
                 safeTrim(contactEmail, EMAIL_MAX),
                 safeTrim(contactPhone, PHONE_MAX),

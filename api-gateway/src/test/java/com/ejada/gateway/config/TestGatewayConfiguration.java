@@ -1,6 +1,5 @@
 package com.ejada.gateway.config;
 
-import com.ejada.gateway.config.TestGatewayConfiguration.NoOpReactiveCircuitBreakerFactory;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;

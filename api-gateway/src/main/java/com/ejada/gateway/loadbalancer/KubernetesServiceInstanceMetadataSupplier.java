@@ -44,6 +44,7 @@ public class KubernetesServiceInstanceMetadataSupplier implements ServiceInstanc
   }
 
   @Override
+  @SuppressWarnings("rawtypes")
   public Flux<List<ServiceInstance>> get(Request request) {
     return delegate.get(request).map(this::enrichInstances);
   }

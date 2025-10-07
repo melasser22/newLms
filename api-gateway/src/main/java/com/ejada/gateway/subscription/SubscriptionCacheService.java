@@ -213,8 +213,6 @@ public class SubscriptionCacheService {
     private Map<String, FeatureAllocationPayload> featureAllocations = new HashMap<>();
     private String upgradeUrl;
 
-    SubscriptionPayload() {
-    }
   }
 
   private static final class FeatureAllocationPayload {
@@ -222,7 +220,5 @@ public class SubscriptionCacheService {
     private Boolean enabled;
     private Long limit;
 
-    FeatureAllocationPayload() {
-    }
   }
 }

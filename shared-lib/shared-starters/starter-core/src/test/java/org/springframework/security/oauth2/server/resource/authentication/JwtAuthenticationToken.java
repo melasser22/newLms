@@ -13,6 +13,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
  */
 public class JwtAuthenticationToken implements Authentication {
 
+    private static final long serialVersionUID = 1L;
+
     private final Jwt token;
     private final Collection<? extends GrantedAuthority> authorities;
     private boolean authenticated = true;

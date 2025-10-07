@@ -37,6 +37,7 @@ public class WeightedServiceInstanceListSupplier implements ServiceInstanceListS
     return delegate.get().map(this::enrichInstances);
   }
 
+  @SuppressWarnings("rawtypes")
   public Flux<List<ServiceInstance>> get(Request request) {
     return delegate.get(request).map(this::enrichInstances);
   }

@@ -174,6 +174,7 @@ class CompositeLoadBalancerTest {
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     public reactor.core.publisher.Flux<List<ServiceInstance>> get(Request request) {
       return get();
     }

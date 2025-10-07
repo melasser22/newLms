@@ -9,6 +9,8 @@ import org.springframework.security.core.GrantedAuthority;
  */
 public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
 
+  private static final long serialVersionUID = 1L;
+
   private final String apiKey;
   private final String tenantId;
 

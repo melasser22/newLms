@@ -61,6 +61,7 @@ public class CompositeLoadBalancer implements ReactorServiceInstanceLoadBalancer
   }
 
   @Override
+  @SuppressWarnings("rawtypes")
   public Mono<Response<ServiceInstance>> choose(Request request) {
     ServiceInstanceListSupplier supplier = supplierProvider.getIfAvailable();
     if (supplier == null) {

@@ -8,6 +8,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Map;
+
 import com.ejada.common.dto.ServiceResult;
 import com.ejada.common.marketplace.subscription.dto.AdminUserInfoDto;
 import com.ejada.common.marketplace.subscription.dto.CustomerInfoDto;
@@ -50,6 +52,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -272,7 +275,7 @@ class MarketplaceCallbackOrchestratorTest {
 
         assertThat(result.statusCode()).isEqualTo("I000000");
         verify(subscriptionOutboxService)
-                .emit(eq("SUBSCRIPTION"), eq("300"), eq("CREATED_OR_UPDATED"), any(Map.class));
+                .emit(eq("SUBSCRIPTION"), eq("300"), eq("CREATED_OR_UPDATED"), ArgumentMatchers.<Map<String, ?>>any());
         verify(idempotentRequestService).record(rqUid, "RECEIVE_NOTIFICATION", request);
         verify(notificationAuditService)
                 .markSuccess(eq(42L), eq("I000000"), eq("Subscription auto-approved"), eq(null));
@@ -363,7 +366,7 @@ class MarketplaceCallbackOrchestratorTest {
 
         doThrow(new RuntimeException("outbox down"))
                 .when(subscriptionOutboxService)
-                .emit(eq("SUBSCRIPTION"), eq("200"), eq("STATUS_CHANGED"), any(Map.class));
+                .emit(eq("SUBSCRIPTION"), eq("200"), eq("STATUS_CHANGED"), ArgumentMatchers.<Map<String, ?>>any());
 
         ServiceResult<Void> result = orchestrator.processUpdate(rqUid, "token", request);
 
@@ -374,7 +377,7 @@ class MarketplaceCallbackOrchestratorTest {
         verify(notificationAuditService)
                 .markSuccess(eq(10L), eq("I000000"), eq("Successful Operation"), eq(null));
         verify(subscriptionOutboxService)
-                .emit(eq("SUBSCRIPTION"), eq("200"), eq("STATUS_CHANGED"), any(Map.class));
+                .emit(eq("SUBSCRIPTION"), eq("200"), eq("STATUS_CHANGED"), ArgumentMatchers.<Map<String, ?>>any());
     }
 
 }
