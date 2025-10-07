@@ -32,6 +32,7 @@ import org.springframework.boot.web.reactive.error.ErrorWebExceptionHandler;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -229,7 +230,8 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     Map<String, Object> diagnostics = new LinkedHashMap<>();
     diagnostics.put("timestamp", Instant.now());
     diagnostics.put("path", exchange.getRequest().getPath().value());
-    diagnostics.put("method", exchange.getRequest().getMethodValue());
+    HttpMethod requestMethod = exchange.getRequest().getMethod();
+    diagnostics.put("method", requestMethod != null ? requestMethod.name() : "UNKNOWN");
     diagnostics.put("status", status.value());
     diagnostics.put("errorCode", errorCode);
     diagnostics.put("message", message);

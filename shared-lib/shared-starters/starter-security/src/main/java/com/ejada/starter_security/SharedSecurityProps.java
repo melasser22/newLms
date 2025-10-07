@@ -1,6 +1,7 @@
 package com.ejada.starter_security;
 
 import com.ejada.common.BaseStarterProperties;
+import com.ejada.common.constants.HeaderNames;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,6 +25,11 @@ import org.springframework.validation.annotation.Validated;
  *   shared.security.resource-server.permit-all[...]
  *   shared.security.resource-server.disable-csrf
  *   shared.security.resource-server.stateless
+ *   shared.security.resource-server.verify-tenant-claim
+ *
+ * Tenant verification block:
+ *   shared.security.tenant-verification.strict-mode
+ *   shared.security.tenant-verification.require-tenant-header
  */
 @Getter
 @Validated
@@ -66,6 +72,10 @@ public class SharedSecurityProps implements BaseStarterProperties {
 
   // --------- Resource Server defaults ---------
   private ResourceServer resourceServer = new ResourceServer();
+  private InternalClient internalClient = new InternalClient();
+
+  /** Tenant context verification defaults. */
+  private TenantVerification tenantVerification = new TenantVerification();
 
   // ===========================================
   //            Nested types
@@ -90,6 +100,9 @@ public class SharedSecurityProps implements BaseStarterProperties {
   public static class ResourceServer {
     /** Master enable switch for the SecurityFilterChain */
     private boolean enabled = true;
+
+    /** Enforce tenant claim validation against inbound headers. */
+    private boolean verifyTenantClaim = false;
 
     /** Permit-all endpoints (ant matchers). */
     private String[] permitAll = new String[]{
@@ -122,12 +135,41 @@ public class SharedSecurityProps implements BaseStarterProperties {
 
   @Getter
   @Setter
+  public static class InternalClient {
+    /** Enable internal service authentication via shared secret. */
+    private boolean enabled = false;
+
+    /** Header carrying the internal authentication secret. */
+    private String headerName = HeaderNames.INTERNAL_AUTH;
+
+    /** Shared API key expected from internal callers. */
+    private String apiKey;
+
+    /** Logical principal applied to the authenticated request. */
+    private String principal = "internal-service";
+  }
+
+  @Getter
+  @Setter
   public static class LegacyJwt {
     /** Legacy secret property from shared.security.jwt.secret. */
     private String secret;
 
     /** Legacy token-period property retained for downstream usage. */
     private String tokenPeriod;
+  }
+
+  @Getter
+  @Setter
+  public static class TenantVerification {
+    /**
+     * Strict mode enforces tenant equality between JWT claims, headers and the
+     * current tenant context.
+     */
+    private boolean strictMode = false;
+
+    /** Require presence of X-Tenant-Id header on authenticated requests. */
+    private boolean requireTenantHeader = false;
   }
 
   public void setHs256(Hs256 hs256) {
@@ -141,6 +183,14 @@ public class SharedSecurityProps implements BaseStarterProperties {
 
   public void setResourceServer(ResourceServer resourceServer) {
     this.resourceServer = resourceServer != null ? resourceServer : new ResourceServer();
+  }
+
+  public void setInternalClient(InternalClient internalClient) {
+    this.internalClient = internalClient != null ? internalClient : new InternalClient();
+  }
+  public void setTenantVerification(TenantVerification tenantVerification) {
+    this.tenantVerification =
+        tenantVerification != null ? tenantVerification : new TenantVerification();
   }
 
   public void setJwt(LegacyJwt jwt) {

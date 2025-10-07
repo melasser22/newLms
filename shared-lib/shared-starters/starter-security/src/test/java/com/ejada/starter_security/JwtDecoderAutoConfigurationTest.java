@@ -24,7 +24,7 @@ class JwtDecoderAutoConfigurationTest {
 
   private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
       .withConfiguration(AutoConfigurations.of(JwtDecoderAutoConfiguration.class))
-      .withUserConfiguration(TestTenantAwareValidatorConfiguration.class);
+      .withUserConfiguration(TestTenantValidatorConfig.class);
 
   private static final String BASE64_SECRET = "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=";
 
@@ -32,10 +32,9 @@ class JwtDecoderAutoConfigurationTest {
   void missingSecretThrowsMeaningfulException() {
     SharedSecurityProps props = new SharedSecurityProps();
     JwtDecoderAutoConfiguration configuration = new JwtDecoderAutoConfiguration();
+    TenantAwareJwtValidator validator = new TenantAwareJwtValidator(props, null);
 
-    TenantAwareJwtValidator tenantAwareJwtValidator = new TenantAwareJwtValidator(props, null);
-
-    assertThatThrownBy(() -> configuration.jwtDecoder(props, tenantAwareJwtValidator))
+    assertThatThrownBy(() -> configuration.jwtDecoder(props, validator))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("shared.security.hs256.secret");
   }
@@ -45,10 +44,9 @@ class JwtDecoderAutoConfigurationTest {
     SharedSecurityProps props = new SharedSecurityProps();
     props.setMode("jwks");
     JwtDecoderAutoConfiguration configuration = new JwtDecoderAutoConfiguration();
+    TenantAwareJwtValidator validator = new TenantAwareJwtValidator(props, null);
 
-    TenantAwareJwtValidator tenantAwareJwtValidator = new TenantAwareJwtValidator(props, null);
-
-    assertThatThrownBy(() -> configuration.jwtDecoder(props, tenantAwareJwtValidator))
+    assertThatThrownBy(() -> configuration.jwtDecoder(props, validator))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("shared.security.jwks.uri");
   }
@@ -99,8 +97,7 @@ class JwtDecoderAutoConfigurationTest {
   }
 
   @Configuration
-  static class TestTenantAwareValidatorConfiguration {
-
+  static class TestTenantValidatorConfig {
     @Bean
     TenantAwareJwtValidator tenantAwareJwtValidator(SharedSecurityProps props) {
       return new TenantAwareJwtValidator(props, null);

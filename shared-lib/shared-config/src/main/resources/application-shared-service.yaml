@@ -55,3 +55,9 @@ shared:
     key-prefix: ${app.cache-prefix}
     default-ttl: ${REDIS_DEFAULT_TTL:600s}
     reactive: false
+  security:
+    internal-client:
+      enabled: ${SHARED_SECURITY_INTERNAL_CLIENT_ENABLED:true}
+      api-key: ${SHARED_SECURITY_INTERNAL_CLIENT_API_KEY:local-dev-internal-key}
+      header-name: ${SHARED_SECURITY_INTERNAL_CLIENT_HEADER:X-Internal-Auth}
+      principal: ${SHARED_SECURITY_INTERNAL_CLIENT_PRINCIPAL:api-gateway}

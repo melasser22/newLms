@@ -10,6 +10,7 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
@@ -78,6 +79,15 @@ public class WebClientConfig {
 
     customFilters.orderedStream().forEach(builder::filter);
     return builder;
+  }
+
+  @Bean
+  public WebClient internalServiceClient(
+      @Value("${gateway.internal.api-key}") String apiKey) {
+    return WebClient.builder()
+        .defaultHeader(HeaderNames.INTERNAL_AUTH, apiKey)
+        .defaultHeader(HeaderNames.GATEWAY_ORIGIN, "api-gateway")
+        .build();
   }
 
   private ExchangeFilterFunction contextPropagationFilter() {
