@@ -113,9 +113,11 @@ public class ReactiveRequestContextFilter implements WebFilter {
     Context updated = context;
     if (state.getCorrelationId() != null) {
       updated = updated.put(HeaderNames.CORRELATION_ID, state.getCorrelationId());
+      updated = updated.put(GatewayRequestAttributes.CORRELATION_ID, state.getCorrelationId());
     }
     if (state.getTenant() != null) {
       updated = updated.put(HeaderNames.X_TENANT_ID, state.getTenant());
+      updated = updated.put(GatewayRequestAttributes.TENANT_ID, state.getTenant());
     }
     if (state.getUserId() != null) {
       updated = updated.put(HeaderNames.USER_ID, state.getUserId());

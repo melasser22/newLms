@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.context.ContextManager;
+import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
@@ -59,6 +60,8 @@ class ReactiveRequestContextFilterTest {
         assertThat(contextRef.get()).isNotNull();
         assertThat((String) contextRef.get().get(HeaderNames.CORRELATION_ID)).isEqualTo("corr-123");
         assertThat((String) contextRef.get().get(HeaderNames.X_TENANT_ID)).isEqualTo("tenant-1");
+        assertThat((String) contextRef.get().get(GatewayRequestAttributes.CORRELATION_ID)).isEqualTo("corr-123");
+        assertThat((String) contextRef.get().get(GatewayRequestAttributes.TENANT_ID)).isEqualTo("tenant-1");
     }
 
     @Test
