@@ -4,12 +4,12 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.springframework.beans.factory.ObjectProvider;
 
-final class TestObjectProviders {
+public final class TestObjectProviders {
   private TestObjectProviders() {
   }
 
   static <T> ObjectProvider<T> of(T instance) {
-    return new ObjectProvider<>() {
+    return new ObjectProvider<T>() {
       @Override
       public T getObject(Object... args) {
         return instance;
