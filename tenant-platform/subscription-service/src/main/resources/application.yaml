@@ -39,6 +39,10 @@ shared:
   security:
     enable-role-check: true
     resource-server:
-      enabled: false
+      enabled: true
+      verify-tenant-claim: true
+    tenant-verification:
+      strict-mode: true
+      require-tenant-header: true
     jwt:
       token-period: 15m

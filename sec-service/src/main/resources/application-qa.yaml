@@ -222,6 +222,7 @@ app:
       secret: ${JWT_SECRET}
     resource-server:
       enabled: true
+      verify-tenant-claim: true
       permit-all:
         - "/api/auth/**"
         - "/v3/api-docs/**"
@@ -232,7 +233,10 @@ app:
         - "/api/auth/**"
         - "/v3/api-docs/**"
         - "/swagger-ui/**"
-      stateless: true
+    tenant-verification:
+      strict-mode: true
+      require-tenant-header: true
+    stateless: true
     roles-claim: roles
     tenant-claim: tenant
     enable-role-check: true
