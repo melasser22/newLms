@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.BooleanSpec;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
@@ -23,6 +24,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.util.StringUtils;
 
 /**
@@ -130,6 +132,10 @@ public class GatewayRoutesConfiguration {
               }
               if (StringUtils.hasText(route.getPrefixPath())) {
                 filters.prefixPath(route.getPrefixPath());
+                GatewayFilter dedupeFilter = deduplicatePrefixedPathFilter(route.getPrefixPath());
+                if (dedupeFilter != null) {
+                  filters.filter(dedupeFilter);
+                }
               }
               versionNormalizationFilter.ifAvailable(filters::filter);
               if (route.getVersioning().isEnabled()) {
@@ -187,6 +193,39 @@ public class GatewayRoutesConfiguration {
     }
 
     return routes.build();
+  }
+
+  private GatewayFilter deduplicatePrefixedPathFilter(String prefixPath) {
+    if (!StringUtils.hasText(prefixPath)) {
+      return null;
+    }
+
+    String normalized = prefixPath.trim();
+    if (!normalized.startsWith("/")) {
+      normalized = '/' + normalized;
+    }
+
+    final String prefix = normalized;
+    final String doublePrefix = prefix + prefix;
+
+    return (exchange, chain) -> {
+      String path = exchange.getRequest().getURI().getRawPath();
+      if (!path.startsWith(doublePrefix)) {
+        return chain.filter(exchange);
+      }
+
+      int index = doublePrefix.length();
+      if (path.length() > index && path.charAt(index) != '/') {
+        return chain.filter(exchange);
+      }
+
+      String adjusted = prefix + path.substring(doublePrefix.length());
+      ServerHttpRequest mutatedRequest = exchange.getRequest()
+          .mutate()
+          .path(adjusted)
+          .build();
+      return chain.filter(exchange.mutate().request(mutatedRequest).build());
+    };
   }
 
   private void logRouteRegistration(GatewayRoutesProperties.ServiceRoute route,

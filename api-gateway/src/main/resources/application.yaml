@@ -13,6 +13,9 @@ spring:
   main:
     lazy-initialization: true
     web-application-type: reactive
+  output:
+    ansi:
+      enabled: ALWAYS
   boot:
     startup: info
   data:
@@ -336,6 +339,7 @@ gateway:
   cache:
     enabled: true
     warm-interval: 10m
+    warm-on-startup: false
     warm-tenants:
       - demo
     topics:

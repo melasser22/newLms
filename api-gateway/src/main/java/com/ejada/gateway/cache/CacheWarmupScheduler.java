@@ -5,8 +5,11 @@ import com.ejada.gateway.config.GatewayCacheProperties.RouteCacheProperties;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.availability.AvailabilityChangeEvent;
+import org.springframework.boot.availability.ReadinessState;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,6 +30,10 @@ public class CacheWarmupScheduler {
 
   private final CacheRefreshService cacheRefreshService;
 
+  private final AtomicBoolean readinessAccepted = new AtomicBoolean(false);
+
+  private final AtomicBoolean postReadinessWarmTriggered = new AtomicBoolean(false);
+
   public CacheWarmupScheduler(GatewayCacheProperties properties,
       CacheRefreshService cacheRefreshService) {
     this.properties = properties;
@@ -36,6 +43,10 @@ public class CacheWarmupScheduler {
   @Scheduled(fixedDelayString = "${gateway.cache.warm-interval:PT15M}")
   public void warm() {
     if (!properties.isEnabled()) {
+      return;
+    }
+    if (!properties.isWarmOnStartup() && !readinessAccepted.get()) {
+      LOGGER.trace("Skipping cache warmup until readiness state is ACCEPTING_TRAFFIC");
       return;
     }
     List<RouteCacheProperties> warmable = properties.getRoutes().stream()
@@ -64,7 +75,25 @@ public class CacheWarmupScheduler {
 
   @EventListener(ApplicationReadyEvent.class)
   public void warmOnStartup() {
+    if (!properties.isWarmOnStartup()) {
+      LOGGER.debug("Cache warmup on startup disabled; waiting for readiness signal");
+      return;
+    }
     warm();
+  }
+
+  @EventListener
+  public void onReadinessChange(AvailabilityChangeEvent<ReadinessState> event) {
+    boolean acceptingTraffic = event.getState() == ReadinessState.ACCEPTING_TRAFFIC;
+    readinessAccepted.set(acceptingTraffic);
+    if (!properties.isWarmOnStartup() && acceptingTraffic
+        && postReadinessWarmTriggered.compareAndSet(false, true)) {
+      LOGGER.debug("Readiness state ACCEPTING_TRAFFIC received; triggering cache warmup");
+      warm();
+    }
+    if (!acceptingTraffic) {
+      postReadinessWarmTriggered.set(false);
+    }
   }
 
   private Optional<String> resolveWarmPath(RouteCacheProperties route, String tenant) {

@@ -31,6 +31,8 @@ public class GatewayCacheProperties {
 
   private Duration warmInterval = Duration.ofMinutes(15);
 
+  private boolean warmOnStartup;
+
   private List<String> warmTenants = new ArrayList<>();
 
   private final List<RouteCacheProperties> routes = new ArrayList<>();
@@ -57,6 +59,14 @@ public class GatewayCacheProperties {
       return;
     }
     this.warmInterval = warmInterval;
+  }
+
+  public boolean isWarmOnStartup() {
+    return warmOnStartup;
+  }
+
+  public void setWarmOnStartup(boolean warmOnStartup) {
+    this.warmOnStartup = warmOnStartup;
   }
 
   public List<String> getWarmTenants() {
