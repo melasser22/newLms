@@ -30,6 +30,7 @@ import java.util.Map;
 @AutoConfiguration
 @EnableConfigurationProperties(RedisProperties.class)
 @ConditionalOnClass({RedisTemplate.class, LettuceConnectionFactory.class})
+@ConditionalOnProperty(prefix = "shared.redis", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class RedisAutoConfiguration {
 
   @Bean

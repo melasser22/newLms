@@ -2,13 +2,14 @@ package com.ejada.analytics.config;
 
 import java.time.Duration;
 import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
-import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 
 @Configuration
-@EnableCaching
+@ConditionalOnBean(RedisConnectionFactory.class)
 public class CacheConfig {
 
   private static final Duration CACHE_TTL = Duration.ofHours(1);
