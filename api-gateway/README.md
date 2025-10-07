@@ -21,6 +21,8 @@ All configuration lives in [`src/main/resources/application.yaml`](src/main/reso
 - `gateway.routes` – declarative downstream routes with resilience settings.
 - `gateway.subscription` – subscription validation endpoint, caching, and feature mapping per route.
 - `gateway.webclient` – connection and response timeout settings for the shared `WebClient` builder.
+- `gateway.cache.routes[].client` – optional authentication headers (API key/Bearer) and timeout tuning used by the
+  background cache refresher when revalidating entries.
 - `shared.security` – JWT/OIDC configuration and CORS policy.
 - `resilience4j.*` – circuit breaker/retry/bulkhead defaults.
 - `spring.cloud.gateway.*` – HTTP client tuning, rate limiting, metrics.

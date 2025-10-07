@@ -1,6 +1,7 @@
 package com.ejada.gateway.cache;
 
 import com.ejada.common.constants.HeaderNames;
+import com.ejada.gateway.config.GatewayCacheProperties.ClientProperties;
 import com.ejada.gateway.config.GatewayCacheProperties.RouteCacheProperties;
 import com.ejada.gateway.transformation.ResponseCacheService;
 import com.ejada.gateway.transformation.ResponseCacheService.CacheMetadata;
@@ -58,8 +59,10 @@ public class CacheRefreshService {
       return;
     }
     cacheService.trackRefreshStart(metadata);
-    dispatch(metadata.method(), metadata.canonicalPath(), metadata.canonicalQuery(), metadata.tenantId(),
-        metadata.route() != null && metadata.route().isTenantScoped(), true)
+    RouteCacheProperties route = metadata.route();
+    boolean tenantScoped = route != null && route.isTenantScoped();
+    dispatch(route, metadata.method(), metadata.canonicalPath(), metadata.canonicalQuery(), metadata.tenantId(),
+        tenantScoped, true)
         .doFinally(signal -> cacheService.trackRefreshComplete(metadata))
         .subscribe();
   }
@@ -76,10 +79,11 @@ public class CacheRefreshService {
       path = candidatePath.substring(0, queryIndex);
       query = candidatePath.substring(queryIndex + 1);
     }
-    return dispatch(method, path, query, tenantId, route.isTenantScoped(), true);
+    return dispatch(route, method, path, query, tenantId, route.isTenantScoped(), true);
   }
 
-  private Mono<Void> dispatch(HttpMethod method,
+  private Mono<Void> dispatch(RouteCacheProperties route,
+      HttpMethod method,
       String path,
       String query,
       String tenantId,
@@ -91,6 +95,8 @@ public class CacheRefreshService {
     }
     HttpMethod verb = method != null ? method : HttpMethod.GET;
     URI requestUri = resolveRequestUri(path, query);
+    ClientProperties clientProperties = route != null ? route.getClient() : null;
+    Duration timeout = (clientProperties != null) ? clientProperties.resolvedTimeout() : Duration.ofSeconds(10);
     return client.method(verb)
         .uri(requestUri)
         .headers(headers -> {
@@ -101,10 +107,19 @@ public class CacheRefreshService {
             headers.add(HttpHeaders.CACHE_CONTROL, "max-age=0, no-cache");
           }
           headers.add(HttpHeaders.ACCEPT, "application/json");
+          if (clientProperties != null) {
+            if (StringUtils.hasText(clientProperties.getAuthorization())) {
+              headers.set(HttpHeaders.AUTHORIZATION, clientProperties.getAuthorization());
+            }
+            if (StringUtils.hasText(clientProperties.getApiKey())) {
+              headers.set(HeaderNames.API_KEY, clientProperties.getApiKey());
+            }
+            clientProperties.getHeaders().forEach(headers::add);
+          }
         })
         .retrieve()
         .toBodilessEntity()
-        .timeout(Duration.ofSeconds(10))
+        .timeout(timeout)
         .doOnError(ex -> LOGGER.debug("Background cache refresh failed for {} {}", verb, path, ex))
         .onErrorResume(ex -> Mono.empty())
         .then();
