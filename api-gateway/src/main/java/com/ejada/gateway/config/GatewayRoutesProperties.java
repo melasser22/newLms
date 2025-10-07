@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -711,6 +712,8 @@ public class GatewayRoutesProperties {
       /** Optional retry configuration when invoking the downstream service. */
       private Retry retry = new Retry();
 
+      private Set<HttpMethod> fallbackOnMethods = EnumSet.noneOf(HttpMethod.class);
+
       private Priority priority = Priority.NON_CRITICAL;
 
       public boolean isEnabled() {
@@ -769,6 +772,20 @@ public class GatewayRoutesProperties {
         this.priority = (priority == null) ? Priority.NON_CRITICAL : priority;
       }
 
+      public Set<HttpMethod> getFallbackOnMethods() {
+        return Collections.unmodifiableSet(fallbackOnMethods);
+      }
+
+      public void setFallbackOnMethods(Collection<HttpMethod> fallbackOnMethods) {
+        EnumSet<HttpMethod> methods = EnumSet.noneOf(HttpMethod.class);
+        if (fallbackOnMethods != null) {
+          fallbackOnMethods.stream()
+              .filter(Objects::nonNull)
+              .forEach(methods::add);
+        }
+        this.fallbackOnMethods = methods;
+      }
+
       public void applyDefaults(Resilience defaults) {
         if (defaults == null) {
           return;
@@ -794,6 +811,11 @@ public class GatewayRoutesProperties {
         this.retry.applyDefaults(defaults.retry);
         if (this.priority == null) {
           this.priority = defaults.priority;
+        }
+        if (this.fallbackOnMethods.isEmpty()
+            && defaults.fallbackOnMethods != null
+            && !defaults.fallbackOnMethods.isEmpty()) {
+          this.fallbackOnMethods = EnumSet.copyOf(defaults.fallbackOnMethods);
         }
       }
 
@@ -824,6 +846,13 @@ public class GatewayRoutesProperties {
         return Optional.ofNullable(StringUtils.hasText(fallbackMessage) ? fallbackMessage.trim() : null);
       }
 
+      public boolean isFallbackMethodAllowed(HttpMethod method) {
+        if (fallbackOnMethods == null || fallbackOnMethods.isEmpty()) {
+          return true;
+        }
+        return method != null && fallbackOnMethods.contains(method);
+      }
+
       @Override
       public boolean equals(Object o) {
         if (this == o) {
@@ -838,13 +867,14 @@ public class GatewayRoutesProperties {
             && fallbackStatus == that.fallbackStatus
             && Objects.equals(fallbackMessage, that.fallbackMessage)
             && Objects.equals(retry, that.retry)
-            && priority == that.priority;
+            && priority == that.priority
+            && Objects.equals(fallbackOnMethods, that.fallbackOnMethods);
       }
 
       @Override
       public int hashCode() {
         return Objects.hash(enabled, circuitBreakerName, fallbackUri, fallbackStatus, fallbackMessage, retry,
-            priority);
+            priority, fallbackOnMethods);
       }
 
       @Override
@@ -856,6 +886,7 @@ public class GatewayRoutesProperties {
             + ", fallbackStatus=" + fallbackStatus
             + ", retry=" + retry
             + ", priority=" + priority
+            + ", fallbackOnMethods=" + fallbackOnMethods
             + '}';
       }
 
