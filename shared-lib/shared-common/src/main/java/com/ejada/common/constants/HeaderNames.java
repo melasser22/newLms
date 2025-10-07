@@ -63,4 +63,6 @@ public final class HeaderNames {
     // 🛡️ Custom Security Headers
     public static final String CSRF_TOKEN = "X-CSRF-Token";
     public static final String API_KEY = "X-API-Key";
+    public static final String INTERNAL_AUTH = "X-Internal-Auth";
+    public static final String GATEWAY_ORIGIN = "X-Gateway-Origin";
 }

@@ -3,6 +3,7 @@ package com.ejada.starter_security;
 import com.ejada.common.constants.HeaderNames;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ejada.starter_security.authorization.AuthorizationExpressions;
+import com.ejada.starter_security.internal.InternalClientAuthenticationFilter;
 import com.ejada.starter_security.web.JsonAccessDeniedHandler;
 import com.ejada.starter_security.web.JsonAuthEntryPoint;
 import jakarta.servlet.http.HttpServletRequest;
@@ -195,7 +196,9 @@ public class SecurityAutoConfiguration {
                                              SharedSecurityProps props,
                                              JwtAuthenticationConverter jwtAuthConverter,
                                              ObjectMapper objectMapper,
-                                             CorsConfigurationSource corsConfigurationSource) throws Exception {
+                                             CorsConfigurationSource corsConfigurationSource,
+                                             ObjectProvider<InternalClientAuthenticationFilter> internalClientFilterProvider)
+      throws Exception {
 
     var rs = props.getResourceServer();
 
@@ -257,12 +260,21 @@ public class SecurityAutoConfiguration {
             headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN));
         });
 
+    internalClientFilterProvider.ifAvailable(filter ->
+        http.addFilterBefore(filter, BearerTokenAuthenticationFilter.class));
+
     // Propagate tenant from JWT claim (after JWT auth), if configured
     if (StringUtils.hasText(props.getTenantClaim())) {
       http.addFilterAfter(new JwtTenantFilter(props.getTenantClaim()), BearerTokenAuthenticationFilter.class);
     }
 
     return http.build();
+  }
+
+  @Bean
+  @ConditionalOnProperty(prefix = "shared.security.internal-client", name = "enabled", havingValue = "true")
+  public InternalClientAuthenticationFilter internalClientAuthenticationFilter(SharedSecurityProps props) {
+    return new InternalClientAuthenticationFilter(props.getInternalClient());
   }
 
   @Bean

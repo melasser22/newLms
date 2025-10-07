@@ -1,6 +1,7 @@
 package com.ejada.starter_security;
 
 import com.ejada.common.BaseStarterProperties;
+import com.ejada.common.constants.HeaderNames;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -66,6 +67,7 @@ public class SharedSecurityProps implements BaseStarterProperties {
 
   // --------- Resource Server defaults ---------
   private ResourceServer resourceServer = new ResourceServer();
+  private InternalClient internalClient = new InternalClient();
 
   // ===========================================
   //            Nested types
@@ -122,6 +124,22 @@ public class SharedSecurityProps implements BaseStarterProperties {
 
   @Getter
   @Setter
+  public static class InternalClient {
+    /** Enable internal service authentication via shared secret. */
+    private boolean enabled = false;
+
+    /** Header carrying the internal authentication secret. */
+    private String headerName = HeaderNames.INTERNAL_AUTH;
+
+    /** Shared API key expected from internal callers. */
+    private String apiKey;
+
+    /** Logical principal applied to the authenticated request. */
+    private String principal = "internal-service";
+  }
+
+  @Getter
+  @Setter
   public static class LegacyJwt {
     /** Legacy secret property from shared.security.jwt.secret. */
     private String secret;
@@ -141,6 +159,10 @@ public class SharedSecurityProps implements BaseStarterProperties {
 
   public void setResourceServer(ResourceServer resourceServer) {
     this.resourceServer = resourceServer != null ? resourceServer : new ResourceServer();
+  }
+
+  public void setInternalClient(InternalClient internalClient) {
+    this.internalClient = internalClient != null ? internalClient : new InternalClient();
   }
 
   public void setJwt(LegacyJwt jwt) {
