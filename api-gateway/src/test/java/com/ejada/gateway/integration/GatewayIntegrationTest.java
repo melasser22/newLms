@@ -41,6 +41,7 @@ public abstract class GatewayIntegrationTest {
   protected WebTestClient webTestClient;
 
   @BeforeAll
+  @SuppressWarnings("resource")
   static void startWireMock() {
     wireMockServer = new WireMockServer(WireMockConfiguration.options().dynamicPort());
     wireMockServer.start();

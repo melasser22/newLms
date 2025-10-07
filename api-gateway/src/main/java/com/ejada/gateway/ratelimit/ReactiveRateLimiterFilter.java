@@ -149,7 +149,7 @@ totalRemaining = baseRemaining + burstRemaining
 return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), tostring(windowSeconds), tostring(burstUsed), tostring(baseRemaining), tostring(burstRemaining)}
 """;
 
-  private static final RedisScript<List> RATE_LIMIT_SCRIPT = new DefaultRedisScript<>(
+  private static final RedisScript<List<String>> RATE_LIMIT_SCRIPT = new DefaultRedisScript<>(
       LUA_RATE_LIMIT_SCRIPT, List.class);
 
   private final ReactiveStringRedisTemplate redisTemplate;

@@ -58,6 +58,8 @@ public class RouteDefinitionValidator {
 
   public static class RouteValidationException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     public RouteValidationException(String message) {
       super(message);
     }

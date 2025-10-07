@@ -30,6 +30,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class ReactiveRateLimiterFilterTest {
 
     @Container
+    @SuppressWarnings("resource")
     static final GenericContainer<?> REDIS = new GenericContainer<>("redis:7").withExposedPorts(6379);
 
     private ReactiveRateLimiterFilter filter;

@@ -12,6 +12,8 @@ import org.springframework.util.StringUtils;
  */
 public class InternalServiceAuthenticationToken extends AbstractAuthenticationToken {
 
+  private static final long serialVersionUID = 1L;
+
   private final String principal;
   private final String headerName;
 
