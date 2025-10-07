@@ -1,29 +1,13 @@
 package com.ejada.starter_security;
 
-import com.ejada.common.constants.HeaderNames;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ejada.starter_security.authorization.AuthorizationExpressions;
-import com.ejada.starter_security.internal.InternalClientAuthenticationFilter;
-import com.ejada.starter_security.web.JsonAccessDeniedHandler;
-import com.ejada.starter_security.web.JsonAuthEntryPoint;
-import jakarta.servlet.http.HttpServletRequest;
-import java.nio.charset.StandardCharsets;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.Ordered;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
@@ -36,33 +20,50 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.util.StringUtils;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import com.ejada.common.constants.HeaderNames;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ejada.starter_security.internal.InternalClientAuthenticationFilter;
+import com.ejada.starter_security.web.JsonAccessDeniedHandler;
+import com.ejada.starter_security.web.JsonAuthEntryPoint;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.util.matcher.RequestMatcher;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.AntPathMatcher;
-import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.util.UrlPathHelper;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.nio.charset.StandardCharsets;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Default Resource Server security:
@@ -190,165 +191,6 @@ public class SecurityAutoConfiguration {
     return new TenantAwareJwtValidator(props, redisTemplateProvider.getIfAvailable());
   }
 
-  @Bean
-  @ConditionalOnMissingBean
-  public TenantContextValidatorInterceptor tenantContextValidatorInterceptor(SharedSecurityProps props) {
-    return new TenantContextValidatorInterceptor(props);
-  }
-
-  @Bean
-  @ConditionalOnBean(TenantContextValidatorInterceptor.class)
-  public WebMvcConfigurer tenantContextValidatorWebMvcConfigurer(
-      TenantContextValidatorInterceptor interceptor) {
-    return new WebMvcConfigurer() {
-      @Override
-      public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(interceptor).order(Ordered.HIGHEST_PRECEDENCE + 100);
-      }
-    };
-  }
-
-  /* ---------------------------------------------------
-   * SecurityFilterChain : permitAll + JWT for others
-   * --------------------------------------------------- */
-  @Bean(name = "defaultSecurity")
-  @ConditionalOnProperty(prefix = "shared.security.resource-server", name = "enabled", havingValue = "true", matchIfMissing = true)
-  @ConditionalOnMissingBean(name = "defaultSecurity")
-  public SecurityFilterChain defaultSecurity(HttpSecurity http,
-                                             SharedSecurityProps props,
-                                             JwtAuthenticationConverter jwtAuthConverter,
-                                             ObjectMapper objectMapper,
-                                             CorsConfigurationSource corsConfigurationSource,
-                                             ObjectProvider<InternalClientAuthenticationFilter> internalClientFilterProvider)
-      throws Exception {
-
-    var rs = props.getResourceServer();
-
-    if (rs.isDisableCsrf()) {
-      http.csrf(AbstractHttpConfigurer::disable);
-    } else {
-      http.csrf(csrf -> {
-        CookieCsrfTokenRepository tokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-        tokenRepository.setHeaderName(HeaderNames.CSRF_TOKEN);
-        csrf.csrfTokenRepository(tokenRepository);
-        String[] ignorePatterns = Optional.ofNullable(rs.getCsrfIgnore()).orElseGet(() -> new String[0]);
-        List<RequestMatcher> ignoreMatchers = Arrays.stream(ignorePatterns)
-            .filter(StringUtils::hasText)
-            .map(String::trim)
-            .filter(s -> !s.isEmpty())
-            .map(SecurityAutoConfiguration::createRequestMatcher)
-            .collect(Collectors.toCollection(ArrayList::new));
-        if (!ignoreMatchers.isEmpty()) {
-          csrf.ignoringRequestMatchers(ignoreMatchers.toArray(new RequestMatcher[0]));
-        }
-      });
-      http.addFilterAfter(new CsrfHeaderFilter(), CsrfFilter.class);
-    }
-    if (rs.isStateless()) {
-      http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-    }
-
-    // Build a final, de-duplicated list of permitAll patterns
-    final List<String> permitAllFinal = buildPermitAll(rs);
-
-    JsonAuthEntryPoint jsonEntryPoint = new JsonAuthEntryPoint(objectMapper);
-    http.cors(cors -> cors.configurationSource(corsConfigurationSource))
-        .authorizeHttpRequests(auth -> {
-          auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
-          for (String p : permitAllFinal) {
-            auth.requestMatchers(p).permitAll();
-          }
-          auth.anyRequest().authenticated();
-        })
-        .oauth2ResourceServer(oauth -> oauth
-            .authenticationEntryPoint(jsonEntryPoint)
-            .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
-        )
-        .exceptionHandling(eh -> eh
-            .authenticationEntryPoint(jsonEntryPoint)
-            .accessDeniedHandler(new JsonAccessDeniedHandler(objectMapper))
-        )
-        .formLogin(AbstractHttpConfigurer::disable)
-        .httpBasic(AbstractHttpConfigurer::disable)
-        .logout(AbstractHttpConfigurer::disable)
-        .headers(headers -> {
-            headers.frameOptions(frame -> frame.deny());
-            headers.contentTypeOptions(org.springframework.security.config.Customizer.withDefaults());
-            headers.httpStrictTransportSecurity(hsts -> hsts
-                .maxAgeInSeconds(31536000)
-                .includeSubDomains(true)
-                .preload(true)
-            );
-            headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN));
-        });
-
-    internalClientFilterProvider.ifAvailable(filter ->
-        http.addFilterBefore(filter, BearerTokenAuthenticationFilter.class));
-
-    // Propagate tenant from JWT claim (after JWT auth), if configured
-    if (StringUtils.hasText(props.getTenantClaim())) {
-      http.addFilterAfter(new JwtTenantFilter(props.getTenantClaim()), BearerTokenAuthenticationFilter.class);
-    }
-
-    return http.build();
-  }
-
-  @Bean
-  @ConditionalOnProperty(prefix = "shared.security.internal-client", name = "enabled", havingValue = "true")
-  public InternalClientAuthenticationFilter internalClientAuthenticationFilter(SharedSecurityProps props) {
-    return new InternalClientAuthenticationFilter(props.getInternalClient());
-  }
-
-  @Bean
-  @ConditionalOnMissingBean
-  public CorsConfigurationSource corsConfigurationSource(SharedSecurityProps props) {
-    CorsConfiguration configuration = new CorsConfiguration();
-    List<String> origins = props.getResourceServer().getAllowedOrigins();
-    if (origins != null && !origins.isEmpty()) {
-      configuration.setAllowedOrigins(origins);
-    }
-    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(Arrays.asList(
-        HeaderNames.AUTHORIZATION,
-        HeaderNames.CONTENT_TYPE,
-        "X-Requested-With",
-        HeaderNames.CORRELATION_ID,
-        HeaderNames.X_TENANT_ID,
-        HeaderNames.CSRF_TOKEN));
-    configuration.setExposedHeaders(Arrays.asList(
-        HeaderNames.CORRELATION_ID,
-        HeaderNames.X_TENANT_ID,
-        HeaderNames.CSRF_TOKEN));
-    boolean csrfEnabled = !props.getResourceServer().isDisableCsrf();
-    configuration.setAllowCredentials(csrfEnabled);
-    configuration.setMaxAge(3600L);
-
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
-    return source;
-  }
-
-  /* ---------------------------------------------------
-   * helpers
-   * --------------------------------------------------- */
-
-  private static List<String> buildPermitAll(SharedSecurityProps.ResourceServer rs) {
-    // maintain order & remove duplicates
-    LinkedHashSet<String> set = new LinkedHashSet<>();
-    set.add("/actuator/health");
-    set.add("/v3/api-docs/**");
-    set.add("/swagger-ui/**");
-    set.add("/swagger-ui.html");
-    if (rs.getPermitAll() != null) {
-      Collections.addAll(set, rs.getPermitAll());
-    }
-    return List.copyOf(set);
-  }
-
-  private static RequestMatcher createRequestMatcher(String pattern) {
-    return new SimpleAntPatternRequestMatcher(pattern);
-  }
-
   private static void require(boolean condition, String message) {
     if (!condition) throw new IllegalStateException(message);
   }
@@ -384,21 +226,176 @@ public class SecurityAutoConfiguration {
     return cur;
   }
 
-  private static final class SimpleAntPatternRequestMatcher implements RequestMatcher {
+  @Configuration(proxyBeanMethods = false)
+  @ConditionalOnClass(HttpServletRequest.class)
+  static class ServletSecurityConfiguration {
 
-    private static final AntPathMatcher ANT_PATH_MATCHER = new AntPathMatcher();
-    private static final UrlPathHelper URL_PATH_HELPER = new UrlPathHelper();
-
-    private final String pattern;
-
-    private SimpleAntPatternRequestMatcher(String pattern) {
-      this.pattern = pattern;
+    @Bean
+    @ConditionalOnMissingBean
+    TenantContextValidatorInterceptor tenantContextValidatorInterceptor(SharedSecurityProps props) {
+      return new TenantContextValidatorInterceptor(props);
     }
 
-    @Override
-    public boolean matches(HttpServletRequest request) {
-      String path = URL_PATH_HELPER.getPathWithinApplication(request);
-      return ANT_PATH_MATCHER.match(pattern, path);
+    @Bean
+    @ConditionalOnBean(TenantContextValidatorInterceptor.class)
+    WebMvcConfigurer tenantContextValidatorWebMvcConfigurer(
+        TenantContextValidatorInterceptor interceptor) {
+      return new WebMvcConfigurer() {
+        @Override
+        public void addInterceptors(InterceptorRegistry registry) {
+          registry.addInterceptor(interceptor).order(Ordered.HIGHEST_PRECEDENCE + 100);
+        }
+      };
+    }
+
+    @Bean(name = "defaultSecurity")
+    @ConditionalOnProperty(prefix = "shared.security.resource-server", name = "enabled", havingValue = "true", matchIfMissing = true)
+    @ConditionalOnMissingBean(name = "defaultSecurity")
+    SecurityFilterChain defaultSecurity(HttpSecurity http,
+                                        SharedSecurityProps props,
+                                        JwtAuthenticationConverter jwtAuthConverter,
+                                        ObjectMapper objectMapper,
+                                        CorsConfigurationSource corsConfigurationSource,
+                                        ObjectProvider<InternalClientAuthenticationFilter> internalClientFilterProvider)
+        throws Exception {
+
+      var rs = props.getResourceServer();
+
+      if (rs.isDisableCsrf()) {
+        http.csrf(AbstractHttpConfigurer::disable);
+      } else {
+        http.csrf(csrf -> {
+          CookieCsrfTokenRepository tokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+          tokenRepository.setHeaderName(HeaderNames.CSRF_TOKEN);
+          csrf.csrfTokenRepository(tokenRepository);
+          String[] ignorePatterns = Optional.ofNullable(rs.getCsrfIgnore()).orElseGet(() -> new String[0]);
+          List<RequestMatcher> ignoreMatchers = Arrays.stream(ignorePatterns)
+              .filter(StringUtils::hasText)
+              .map(String::trim)
+              .filter(s -> !s.isEmpty())
+              .map(ServletSecurityConfiguration::createRequestMatcher)
+              .collect(Collectors.toCollection(ArrayList::new));
+          if (!ignoreMatchers.isEmpty()) {
+            csrf.ignoringRequestMatchers(ignoreMatchers.toArray(new RequestMatcher[0]));
+          }
+        });
+        http.addFilterAfter(new CsrfHeaderFilter(), CsrfFilter.class);
+      }
+      if (rs.isStateless()) {
+        http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+      }
+
+      final List<String> permitAllFinal = buildPermitAll(rs);
+
+      JsonAuthEntryPoint jsonEntryPoint = new JsonAuthEntryPoint(objectMapper);
+      http.cors(cors -> cors.configurationSource(corsConfigurationSource))
+          .authorizeHttpRequests(auth -> {
+            auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+            for (String p : permitAllFinal) {
+              auth.requestMatchers(p).permitAll();
+            }
+            auth.anyRequest().authenticated();
+          })
+          .oauth2ResourceServer(oauth -> oauth
+              .authenticationEntryPoint(jsonEntryPoint)
+              .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
+          )
+          .exceptionHandling(eh -> eh
+              .authenticationEntryPoint(jsonEntryPoint)
+              .accessDeniedHandler(new JsonAccessDeniedHandler(objectMapper))
+          )
+          .formLogin(AbstractHttpConfigurer::disable)
+          .httpBasic(AbstractHttpConfigurer::disable)
+          .logout(AbstractHttpConfigurer::disable)
+          .headers(headers -> {
+              headers.frameOptions(frame -> frame.deny());
+              headers.contentTypeOptions(org.springframework.security.config.Customizer.withDefaults());
+              headers.httpStrictTransportSecurity(hsts -> hsts
+                  .maxAgeInSeconds(31536000)
+                  .includeSubDomains(true)
+                  .preload(true)
+              );
+              headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN));
+          });
+
+      internalClientFilterProvider.ifAvailable(filter ->
+          http.addFilterBefore(filter, BearerTokenAuthenticationFilter.class));
+
+      if (StringUtils.hasText(props.getTenantClaim())) {
+        http.addFilterAfter(new JwtTenantFilter(props.getTenantClaim()), BearerTokenAuthenticationFilter.class);
+      }
+
+      return http.build();
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "shared.security.internal-client", name = "enabled", havingValue = "true")
+    InternalClientAuthenticationFilter internalClientAuthenticationFilter(SharedSecurityProps props) {
+      return new InternalClientAuthenticationFilter(props.getInternalClient());
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    CorsConfigurationSource corsConfigurationSource(SharedSecurityProps props) {
+      CorsConfiguration configuration = new CorsConfiguration();
+      List<String> origins = props.getResourceServer().getAllowedOrigins();
+      if (origins != null && !origins.isEmpty()) {
+        configuration.setAllowedOrigins(origins);
+      }
+      configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+      configuration.setAllowedHeaders(Arrays.asList(
+          HeaderNames.AUTHORIZATION,
+          HeaderNames.CONTENT_TYPE,
+          "X-Requested-With",
+          HeaderNames.CORRELATION_ID,
+          HeaderNames.X_TENANT_ID,
+          HeaderNames.CSRF_TOKEN));
+      configuration.setExposedHeaders(Arrays.asList(
+          HeaderNames.CORRELATION_ID,
+          HeaderNames.X_TENANT_ID,
+          HeaderNames.CSRF_TOKEN));
+      boolean csrfEnabled = !props.getResourceServer().isDisableCsrf();
+      configuration.setAllowCredentials(csrfEnabled);
+      configuration.setMaxAge(3600L);
+
+      UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+      source.registerCorsConfiguration("/**", configuration);
+      return source;
+    }
+
+    private static List<String> buildPermitAll(SharedSecurityProps.ResourceServer rs) {
+      LinkedHashSet<String> set = new LinkedHashSet<>();
+      set.add("/actuator/health");
+      set.add("/v3/api-docs/**");
+      set.add("/swagger-ui/**");
+      set.add("/swagger-ui.html");
+      if (rs.getPermitAll() != null) {
+        Collections.addAll(set, rs.getPermitAll());
+      }
+      return List.copyOf(set);
+    }
+
+    private static RequestMatcher createRequestMatcher(String pattern) {
+      return new SimpleAntPatternRequestMatcher(pattern);
+    }
+
+    private static final class SimpleAntPatternRequestMatcher implements RequestMatcher {
+
+      private static final AntPathMatcher ANT_PATH_MATCHER = new AntPathMatcher();
+      private static final UrlPathHelper URL_PATH_HELPER = new UrlPathHelper();
+
+      private final String pattern;
+
+      private SimpleAntPatternRequestMatcher(String pattern) {
+        this.pattern = pattern;
+      }
+
+      @Override
+      public boolean matches(HttpServletRequest request) {
+        String path = URL_PATH_HELPER.getPathWithinApplication(request);
+        return ANT_PATH_MATCHER.match(pattern, path);
+      }
     }
   }
+
 }
