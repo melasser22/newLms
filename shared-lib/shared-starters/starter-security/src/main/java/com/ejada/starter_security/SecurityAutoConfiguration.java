@@ -12,11 +12,13 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -46,6 +48,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.util.UrlPathHelper;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -184,6 +188,24 @@ public class SecurityAutoConfiguration {
       SharedSecurityProps props,
       ObjectProvider<StringRedisTemplate> redisTemplateProvider) {
     return new TenantAwareJwtValidator(props, redisTemplateProvider.getIfAvailable());
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public TenantContextValidatorInterceptor tenantContextValidatorInterceptor(SharedSecurityProps props) {
+    return new TenantContextValidatorInterceptor(props);
+  }
+
+  @Bean
+  @ConditionalOnBean(TenantContextValidatorInterceptor.class)
+  public WebMvcConfigurer tenantContextValidatorWebMvcConfigurer(
+      TenantContextValidatorInterceptor interceptor) {
+    return new WebMvcConfigurer() {
+      @Override
+      public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(interceptor).order(Ordered.HIGHEST_PRECEDENCE + 100);
+      }
+    };
   }
 
   /* ---------------------------------------------------

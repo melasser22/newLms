@@ -1,6 +1,7 @@
 package com.ejada.gateway.context;
 
 import com.ejada.common.constants.HeaderNames;
+import com.ejada.common.context.ReactiveContextHolder;
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
 import com.ejada.starter_core.web.FilterSkipUtils;
@@ -95,20 +96,35 @@ public class TenantExtractionGatewayFilter implements WebFilter {
       ServerWebExchange mutated = mutateRequest(exchange, tenantProps.getHeaderName(), sanitized, fromHeader);
       mutated.getAttributes().put(GatewayRequestAttributes.TENANT_ID, sanitized);
       mutated.getAttributes().putIfAbsent(HeaderNames.X_TENANT_ID, sanitized);
+      String correlationId = extractCorrelationId(mutated);
       return chain.filter(mutated)
-          .contextWrite(context -> {
-            Context updated = context
-                .put(GatewayRequestAttributes.TENANT_ID, sanitized)
-                .put(HeaderNames.X_TENANT_ID, sanitized);
-            String correlationId = mutated.getAttribute(GatewayRequestAttributes.CORRELATION_ID);
-            if (StringUtils.hasText(correlationId)) {
-              updated = updated
-                  .put(GatewayRequestAttributes.CORRELATION_ID, correlationId)
-                  .put(HeaderNames.CORRELATION_ID, correlationId);
-            }
-            return updated;
-          });
+          .contextWrite(context -> populateReactiveContext(context, sanitized, correlationId));
     });
+  }
+
+  private Context populateReactiveContext(Context context, String tenantId, @Nullable String correlationId) {
+    Context updated = context;
+    if (StringUtils.hasText(tenantId)) {
+      updated = updated
+          .put(GatewayRequestAttributes.TENANT_ID, tenantId)
+          .put(HeaderNames.X_TENANT_ID, tenantId)
+          .put(ReactiveContextHolder.TENANT_CONTEXT_KEY, tenantId);
+    }
+    if (StringUtils.hasText(correlationId)) {
+      updated = updated
+          .put(GatewayRequestAttributes.CORRELATION_ID, correlationId)
+          .put(HeaderNames.CORRELATION_ID, correlationId);
+    }
+    return updated;
+  }
+
+  @Nullable
+  private String extractCorrelationId(ServerWebExchange exchange) {
+    String correlationId = exchange.getAttribute(GatewayRequestAttributes.CORRELATION_ID);
+    if (!StringUtils.hasText(correlationId)) {
+      correlationId = exchange.getRequest().getHeaders().getFirst(HeaderNames.CORRELATION_ID);
+    }
+    return trimToNull(correlationId);
   }
 
   private ServerWebExchange mutateRequest(ServerWebExchange exchange, String headerName, String tenant, @Nullable String originalHeader) {

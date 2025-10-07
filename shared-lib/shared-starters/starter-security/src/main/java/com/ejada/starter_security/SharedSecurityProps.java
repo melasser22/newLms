@@ -25,6 +25,11 @@ import org.springframework.validation.annotation.Validated;
  *   shared.security.resource-server.permit-all[...]
  *   shared.security.resource-server.disable-csrf
  *   shared.security.resource-server.stateless
+ *   shared.security.resource-server.verify-tenant-claim
+ *
+ * Tenant verification block:
+ *   shared.security.tenant-verification.strict-mode
+ *   shared.security.tenant-verification.require-tenant-header
  */
 @Getter
 @Validated
@@ -69,6 +74,9 @@ public class SharedSecurityProps implements BaseStarterProperties {
   private ResourceServer resourceServer = new ResourceServer();
   private InternalClient internalClient = new InternalClient();
 
+  /** Tenant context verification defaults. */
+  private TenantVerification tenantVerification = new TenantVerification();
+
   // ===========================================
   //            Nested types
   // ===========================================
@@ -92,6 +100,9 @@ public class SharedSecurityProps implements BaseStarterProperties {
   public static class ResourceServer {
     /** Master enable switch for the SecurityFilterChain */
     private boolean enabled = true;
+
+    /** Enforce tenant claim validation against inbound headers. */
+    private boolean verifyTenantClaim = false;
 
     /** Permit-all endpoints (ant matchers). */
     private String[] permitAll = new String[]{
@@ -148,6 +159,19 @@ public class SharedSecurityProps implements BaseStarterProperties {
     private String tokenPeriod;
   }
 
+  @Getter
+  @Setter
+  public static class TenantVerification {
+    /**
+     * Strict mode enforces tenant equality between JWT claims, headers and the
+     * current tenant context.
+     */
+    private boolean strictMode = false;
+
+    /** Require presence of X-Tenant-Id header on authenticated requests. */
+    private boolean requireTenantHeader = false;
+  }
+
   public void setHs256(Hs256 hs256) {
     this.hs256 = hs256 != null ? hs256 : new Hs256();
     applyLegacySecretFallback();
@@ -163,6 +187,10 @@ public class SharedSecurityProps implements BaseStarterProperties {
 
   public void setInternalClient(InternalClient internalClient) {
     this.internalClient = internalClient != null ? internalClient : new InternalClient();
+  }
+  public void setTenantVerification(TenantVerification tenantVerification) {
+    this.tenantVerification =
+        tenantVerification != null ? tenantVerification : new TenantVerification();
   }
 
   public void setJwt(LegacyJwt jwt) {

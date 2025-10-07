@@ -205,7 +205,11 @@ shared:
         - "/api/*/v3/api-docs/**"
         - "/api/*/swagger-ui/**"
       disable-csrf: false
+      verify-tenant-claim: true
     stateless: true
+    tenant-verification:
+      strict-mode: true
+      require-tenant-header: true
     roles-claim: roles
     tenant-claim: tenant
     enable-role-check: true
