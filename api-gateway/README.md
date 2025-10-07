@@ -84,14 +84,20 @@ The image exposes port `8080` and includes a health check that probes `/actuator
 ## Kubernetes Deployment
 
 1. Provision Redis (rate limiting) and the OTEL collector.
-2. Install/update the Helm release:
+2. Enable the Kubernetes discovery profile by setting the following environment variables
+   on the deployment (values typically injected via Helm):
+   - `SPRING_CLOUD_KUBERNETES_ENABLED=true`
+   - `SPRING_CLOUD_KUBERNETES_DISCOVERY_NAMESPACE=$(POD_NAMESPACE)`
+   These flags activate the Kubernetes service discovery client and the tenant-aware
+   metadata enricher.
+3. Install/update the Helm release:
    ```bash
    helm upgrade --install api-gateway charts/api-gateway \
      --set image.repository=lms/api-gateway \
      --set image.tag=latest \
      --set redis.host=redis-master.lms.svc.cluster.local
    ```
-3. Verify rollout:
+4. Verify rollout:
    ```bash
    kubectl get pods -l app=api-gateway
    kubectl logs deployment/api-gateway -c api-gateway
@@ -104,7 +110,8 @@ Horizontal Pod Autoscaler (HPA) targets CPU and the custom metric `gateway.reque
 - **Diagnostics**: `GET /actuator/health`, `GET /actuator/gateway/routes`, `GET /actuator/metrics/gateway.requests`.
 - **Force route refresh**: `kubectl exec` into the pod and run `curl -X POST localhost:8080/actuator/refresh`.
 - **Tenant onboarding**: publish a new route via a `GatewayRouteDefinitionProvider` implementation backed by the onboarding DB; the refresher reloads automatically.
-- **Blue/green deployment**: add weighted routes in config (e.g., `weight: 90` vs `10`) or leverage service mesh rules.
+- **Blue/green deployment**: add weighted routes in config (e.g., `weight: 90` vs `10`) or leverage service mesh rules. Pods can
+  also advertise rollout phases via the `gateway.lb/rollout-phase` annotation to influence tenant-aware balancing.
 - **Subscription cache**: subscription lookups are cached for five minutes in Redis using the `gateway.subscription.cache-ttl` setting. Evict by deleting keys with the prefix `gateway:subscription:`.
 
 ## Testing & Quality Gates

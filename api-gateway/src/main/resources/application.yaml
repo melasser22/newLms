@@ -96,6 +96,21 @@ spring:
         add-service-instance-cookie: true
         cookie-name: LMS-AFFINITY
     kubernetes:
+      enabled: ${SPRING_CLOUD_KUBERNETES_ENABLED:false}
+      discovery:
+        enabled: ${SPRING_CLOUD_KUBERNETES_DISCOVERY_ENABLED:${spring.cloud.kubernetes.enabled}}
+        all-namespaces: false
+        include-not-ready-addresses: false
+        wait-cache-ready: true
+        cache-loading-timeout-seconds: 30
+        namespaces:
+          - ${SPRING_CLOUD_KUBERNETES_DISCOVERY_NAMESPACE:${KUBERNETES_NAMESPACE:}}
+        metadata:
+          add-pod-labels: true
+          add-pod-annotations: true
+      loadbalancer:
+        enabled: ${SPRING_CLOUD_KUBERNETES_LOADBALANCER_ENABLED:${spring.cloud.kubernetes.enabled}}
+        mode: POD
       reload:
         enabled: true
         mode: event
