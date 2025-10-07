@@ -21,8 +21,13 @@ RUN set -eux; \
 set -e
 
 if [ -z "${SPRING_PROFILES_ACTIVE:-}" ]; then
-  export SPRING_PROFILES_ACTIVE=dev
-  echo "SPRING_PROFILES_ACTIVE not set. Defaulting to 'dev'."
+  if [ -n "${APP_ENV:-}" ]; then
+    export SPRING_PROFILES_ACTIVE="${APP_ENV}"
+    echo "SPRING_PROFILES_ACTIVE not set. Using APP_ENV='${APP_ENV}'."
+  else
+    export SPRING_PROFILES_ACTIVE=dev
+    echo "SPRING_PROFILES_ACTIVE not set. Defaulting to 'dev'."
+  fi
 else
   echo "SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}"
 fi
