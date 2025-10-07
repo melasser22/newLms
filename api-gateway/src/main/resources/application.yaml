@@ -447,7 +447,7 @@ gateway:
       uri: lb://setup-service
       paths:
         - /api/setup/**
-      strip-prefix: 1
+      strip-prefix: 2
       prefix-path: /core
 
 # Application metadata that surfaces through /actuator/info and diagnostics endpoints.
