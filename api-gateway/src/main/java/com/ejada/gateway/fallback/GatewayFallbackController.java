@@ -37,6 +37,8 @@ import reactor.core.publisher.Mono;
 public class GatewayFallbackController {
 
   private static final String DEFAULT_MESSAGE = "Downstream service is unavailable. Please retry shortly.";
+  private static final String FALLBACK_METHOD_BLOCKED_MESSAGE =
+      "Fallback is disabled for %s requests. Please retry once the service is healthy.";
 
   private final GatewayRoutesProperties properties;
   private final SubscriptionCacheService subscriptionCacheService;
@@ -66,6 +68,10 @@ public class GatewayFallbackController {
         .flatMap(res -> res.resolvedFallbackMessage())
         .filter(StringUtils::hasText)
         .orElse(DEFAULT_MESSAGE);
+    HttpMethod method = exchange.getRequest().getMethod();
+    if (resilience != null && !resilience.isFallbackMethodAllowed(method)) {
+      return Mono.just(fallbackNotAllowedResponse(method));
+    }
     String tenantId = exchange.getAttribute(GatewayRequestAttributes.TENANT_ID);
     String circuitBreakerName = Optional.ofNullable(resilience)
         .map(res -> res.resolvedCircuitBreakerName(routeId))
@@ -246,5 +252,15 @@ public class GatewayFallbackController {
       String fallbackType,
       Map<String, Object> metadata) {
     circuitBreakerMetrics.recordFallback(circuitBreakerName, tenantId, fallbackType, metadata);
+  }
+
+  private ResponseEntity<BaseResponse<FallbackResponse>> fallbackNotAllowedResponse(HttpMethod method) {
+    String resolvedMethod = method != null ? method.name() : "UNKNOWN";
+    BaseResponse<FallbackResponse> envelope = BaseResponse.<FallbackResponse>builder()
+        .status(ApiStatus.ERROR)
+        .code("ERR_FALLBACK_NOT_ALLOWED")
+        .message(String.format(FALLBACK_METHOD_BLOCKED_MESSAGE, resolvedMethod))
+        .build();
+    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(envelope);
   }
 }

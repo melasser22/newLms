@@ -222,25 +222,25 @@ resilience4j:
       critical:
         sliding-window-size: 30
         minimum-number-of-calls: 15
-        failure-rate-threshold: 25
-        slow-call-rate-threshold: 30
-        slow-call-duration-threshold: 1500ms
-        wait-duration-in-open-state: 20s
+        failure-rate-threshold: 30
+        slow-call-rate-threshold: 50
+        slow-call-duration-threshold: 3s
+        wait-duration-in-open-state: 10s
         permitted-number-of-calls-in-half-open-state: 3
         automatic-transition-from-open-to-half-open-enabled: true
       non-critical:
         sliding-window-size: 60
         minimum-number-of-calls: 25
-        failure-rate-threshold: 60
-        slow-call-rate-threshold: 60
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 70
         slow-call-duration-threshold: 3s
-        wait-duration-in-open-state: 45s
+        wait-duration-in-open-state: 30s
         permitted-number-of-calls-in-half-open-state: 6
         automatic-transition-from-open-to-half-open-enabled: true
     instances:
-      tenant-service:
+      tenant-service-cb:
         base-config: critical
-      catalog-service:
+      catalog-service-cb:
         base-config: non-critical
       subscription-service:
         base-config: critical
@@ -525,8 +525,10 @@ jasypt:
         X-Gateway-Track: primary
       resilience:
         enabled: true
-        circuit-breaker-name: tenant-service
+        circuit-breaker-name: tenant-service-cb
         fallback-uri: forward:/fallback/tenant-service
+        fallback-on-methods:
+          - GET
         priority: CRITICAL
     tenant-canary:
       <<: *tenant-route-base
@@ -541,6 +543,8 @@ jasypt:
         enabled: true
         circuit-breaker-name: tenant-service-canary
         fallback-uri: forward:/fallback/tenant-service
+        fallback-on-methods:
+          - GET
         priority: NON_CRITICAL
     catalog:
       id: catalog-service
@@ -556,7 +560,7 @@ jasypt:
           - v1
       resilience:
         enabled: true
-        circuit-breaker-name: catalog-service
+        circuit-breaker-name: catalog-service-cb
         fallback-uri: forward:/fallback/catalog-service
         fallback-status: OK
         fallback-message: Catalog service is currently unavailable. Please retry shortly.
