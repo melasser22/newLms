@@ -8,6 +8,50 @@ spring:
     config:
       profile: dev
       label: develop
+    loadbalancer:
+      configurations: health-check
+      health-check:
+        refetch-instances: true
+        interval: 5s
+    discovery:
+      client:
+        simple:
+          instances:
+            setup-service:
+              - uri: http://setup-service:8080
+                instance-id: setup-service-dev
+                metadata:
+                  management.context-path: /core
+            tenant-service:
+              - uri: http://tenant-service:8080
+                instance-id: tenant-service-dev
+                metadata:
+                  management.context-path: /tenant
+            catalog-service:
+              - uri: http://catalog-service:8080
+                instance-id: catalog-service-dev
+                metadata:
+                  management.context-path: /catalog
+            subscription-service:
+              - uri: http://subscription-service:8080
+                instance-id: subscription-service-dev
+                metadata:
+                  management.context-path: /subscription
+            billing-service:
+              - uri: http://billing-service:8080
+                instance-id: billing-service-dev
+                metadata:
+                  management.context-path: /billing
+            analytics-service:
+              - uri: http://analytics-service:8080
+                instance-id: analytics-service-dev
+                metadata:
+                  management.context-path: /
+            security-service:
+              - uri: http://security-service:8080
+                instance-id: security-service-dev
+                metadata:
+                  management.context-path: /sec
   jpa:
     open-in-view: false
   sql:
@@ -21,8 +65,15 @@ gateway:
     read-timeout: 12s
     write-timeout: 12s
   subscription:
-    enabled: true
+    enabled: false
     cache-ttl: 2m
+    validate-all-routes: false
+    fail-open: true
+  cache:
+    enabled: false
+    warm-on-startup: false
+    warm-tenants: []
+    routes: []
   defaults:
     resilience:
       retry:

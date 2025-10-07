@@ -21,7 +21,7 @@ services:
     expose:
       - "8080"
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/tenant/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -77,7 +77,7 @@ services:
     expose:
       - "8080"
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/billing/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -133,7 +133,7 @@ services:
     expose:
       - "8080"
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/catalog/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -161,7 +161,7 @@ services:
     expose:
       - "8080"
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/subscription/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -194,7 +194,7 @@ services:
     expose:
       - "8080"
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/core/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/sec/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -208,19 +208,19 @@ services:
     restart: unless-stopped
     depends_on:
       setup-service:
-        condition: service_started
+        condition: service_healthy
       tenant-service:
-        condition: service_started
+        condition: service_healthy
       catalog-service:
-        condition: service_started
+        condition: service_healthy
       subscription-service:
-        condition: service_started
+        condition: service_healthy
       billing-service:
-        condition: service_started
+        condition: service_healthy
       analytics-service:
-        condition: service_started
+        condition: service_healthy
       security-service:
-        condition: service_started
+        condition: service_healthy
     environment:
       TZ: Asia/Riyadh
       SERVER_PORT: 8000
@@ -249,7 +249,7 @@ services:
     ports:
       - "8000:8000"
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8000/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
