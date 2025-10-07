@@ -149,8 +149,9 @@ totalRemaining = baseRemaining + burstRemaining
 return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), tostring(windowSeconds), tostring(burstUsed), tostring(baseRemaining), tostring(burstRemaining)}
 """;
 
+  @SuppressWarnings("unchecked")
   private static final RedisScript<List<String>> RATE_LIMIT_SCRIPT = new DefaultRedisScript<>(
-      LUA_RATE_LIMIT_SCRIPT, List.class);
+      LUA_RATE_LIMIT_SCRIPT, (Class<List<String>>) (Class<?>) List.class);
 
   private final ReactiveStringRedisTemplate redisTemplate;
   private final RateLimitProps props;
@@ -251,7 +252,7 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
         String.valueOf(window.toMillis()),
         eventId);
 
-    return redisTemplate.execute(RATE_LIMIT_SCRIPT, keys, args)
+    return redisTemplate.execute(RATE_LIMIT_SCRIPT, keys, args.toArray())
         .next()
         .map(result -> decodeResult(result, limit, window, now))
         .defaultIfEmpty(defaultDecision(limit, window, now));
