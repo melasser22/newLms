@@ -29,8 +29,6 @@ spring:
     enabled: true
     baseline-on-migrate: true
     locations: classpath:db/migration/common,classpath:db/migration/{vendor}
-    schemas: public,subscription
-    default-schema: subscription
   kafka:
     client-id: ejada-subscription-dev
     consumer:
