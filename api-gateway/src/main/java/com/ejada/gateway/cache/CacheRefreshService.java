@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,7 @@ import reactor.core.publisher.Mono;
  * without blocking live requests and performs scheduled warmups.
  */
 @Component
+@Lazy
 public class CacheRefreshService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CacheRefreshService.class);
