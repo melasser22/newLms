@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -712,7 +711,7 @@ public class GatewayRoutesProperties {
       /** Optional retry configuration when invoking the downstream service. */
       private Retry retry = new Retry();
 
-      private Set<HttpMethod> fallbackOnMethods = EnumSet.noneOf(HttpMethod.class);
+      private Set<HttpMethod> fallbackOnMethods = new LinkedHashSet<>();
 
       private Priority priority = Priority.NON_CRITICAL;
 
@@ -777,7 +776,7 @@ public class GatewayRoutesProperties {
       }
 
       public void setFallbackOnMethods(Collection<HttpMethod> fallbackOnMethods) {
-        EnumSet<HttpMethod> methods = EnumSet.noneOf(HttpMethod.class);
+        Set<HttpMethod> methods = new LinkedHashSet<>();
         if (fallbackOnMethods != null) {
           fallbackOnMethods.stream()
               .filter(Objects::nonNull)
@@ -815,7 +814,7 @@ public class GatewayRoutesProperties {
         if (this.fallbackOnMethods.isEmpty()
             && defaults.fallbackOnMethods != null
             && !defaults.fallbackOnMethods.isEmpty()) {
-          this.fallbackOnMethods = EnumSet.copyOf(defaults.fallbackOnMethods);
+          this.fallbackOnMethods = new LinkedHashSet<>(defaults.fallbackOnMethods);
         }
       }
 
