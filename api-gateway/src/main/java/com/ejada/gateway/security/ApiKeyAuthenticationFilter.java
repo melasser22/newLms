@@ -8,9 +8,10 @@ import com.ejada.gateway.config.GatewaySecurityProperties;
 import com.ejada.gateway.config.GatewaySecurityProperties.EncryptionAlgorithm;
 import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.gateway.security.GatewaySecurityMetrics;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
@@ -109,13 +110,14 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
             .onErrorResume(ex -> {
               LOGGER.warn("Failed to decode API key payload for key {}", redisKey, ex);
               metrics.incrementBlocked("api_key_decode", null);
-              return reject(exchange, HttpStatus.UNAUTHORIZED, "ERR_API_KEY_INVALID", "Invalid API key");
+              return reject(exchange, HttpStatus.UNAUTHORIZED, "ERR_API_KEY_INVALID", "Invalid API key")
+                  .then(Mono.<DecodedApiKeyRecord>empty());
             }))
         .switchIfEmpty(Mono.defer(() -> {
           LOGGER.debug("API key not found for redis key {}", redisKey);
           metrics.incrementBlocked("api_key", null);
           return reject(exchange, HttpStatus.UNAUTHORIZED, "ERR_API_KEY_INVALID", "Invalid API key")
-              .then(Mono.empty());
+              .then(Mono.<DecodedApiKeyRecord>empty());
         }))
         .flatMap(decoded -> validateAndAuthenticate(decoded, apiKey, redisKey, exchange, chain));
   }
@@ -230,7 +232,7 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
     return Mono.fromCallable(() -> serializeRecord(record, decoded.encrypted()))
         .flatMap(serialized -> {
           if (!StringUtils.hasText(serialized)) {
-            return Mono.empty();
+            return Mono.<Void>empty();
           }
           return redisTemplate.opsForValue().set(redisKey, serialized).then();
         });
@@ -339,7 +341,7 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
         .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
-  private ApiKeyRecord decrypt(EncryptedPayload payload) throws GeneralSecurityException, JsonProcessingException {
+  private ApiKeyRecord decrypt(EncryptedPayload payload) throws GeneralSecurityException, IOException {
     if (!StringUtils.hasText(payload.ciphertext()) || !StringUtils.hasText(payload.iv())) {
       throw new IllegalArgumentException("Encrypted payload missing ciphertext or IV");
     }

@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.cloud.client.ServiceInstance;
@@ -85,7 +84,7 @@ public class Fabric8KubernetesPodMetadataProvider implements KubernetesPodMetada
       }
       PodList podList = client.pods().inNamespace(namespace)
           .withField("status.podIP", ip)
-          .list(1, TimeUnit.SECONDS);
+          .list();
       if (podList == null || CollectionUtils.isEmpty(podList.getItems())) {
         return null;
       }
