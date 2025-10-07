@@ -1,6 +1,6 @@
 app:
   environment: ${APP_ENVIRONMENT:dev}
-  schema: ${APP_SCHEMA:${spring.flyway.default-schema:${spring.application.name}}}
+  schema: ${APP_SCHEMA:${spring.application.name:public}}
   cache-prefix: ${APP_CACHE_PREFIX:${spring.application.name}}
   kafka:
     client-id: ${APP_KAFKA_CLIENT_ID:ejada-${spring.application.name}-${app.environment}}
