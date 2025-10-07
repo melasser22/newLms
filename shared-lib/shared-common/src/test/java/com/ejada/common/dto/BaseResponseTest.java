@@ -72,6 +72,20 @@ class BaseResponseTest {
     }
 
     @Test
+    void errorFactoryIncludesDiagnosticPayload() {
+        BaseResponse<java.util.Map<String, Object>> response = BaseResponse.error(
+                "ERR_TEST",
+                "Something went wrong",
+                java.util.Map.of("correlationId", "corr-1"));
+
+        assertEquals(ApiStatus.ERROR, response.getStatus());
+        assertEquals("ERR_TEST", response.getCode());
+        assertEquals("Something went wrong", response.getMessage());
+        assertNotNull(response.getData());
+        assertEquals("corr-1", response.getData().get("correlationId"));
+    }
+
+    @Test
     void tenantIdDefaultsFromContext() {
         try (ContextManager.Tenant.Scope ignore = ContextManager.Tenant.openScope("tenantA")) {
             BaseResponse<Void> r = new BaseResponse<>();
