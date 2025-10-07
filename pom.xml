@@ -9,7 +9,7 @@
   <packaging>pom</packaging>
 
   <name>newLms platform</name>
-  <description>Aggregator project to build the LMS platform modules together.</description>
+  <description>Aggregator project to build the Ejada SaaS Products Framework modules together.</description>
 
   <modules>
     <module>shared-lib</module>

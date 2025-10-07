@@ -1,6 +1,6 @@
 # API Gateway Enhancement Plan
 
-This document describes the incremental steps required to harden, scale, and operationalize the Learning Management System (LMS) API Gateway. The plan assumes a Spring Boot 3.5.x / Spring Cloud Gateway 2024.x stack running on Kubernetes (GKE) and reuses the shared LMS starters (security, observability, core, redis, kafka).
+This document describes the incremental steps required to harden, scale, and operationalize the Ejada SaaS Products Framework API Gateway. The plan assumes a Spring Boot 3.5.x / Spring Cloud Gateway 2024.x stack running on Kubernetes (GKE) and reuses the shared framework starters (security, observability, core, redis, kafka).
 
 > **Goal**: deliver a production-grade edge service with security, resilience, observability, and dynamic multi-tenant routing baked in.
 
@@ -68,7 +68,7 @@ graph LR
 ### 2.1 JWT & OIDC Strategy
 1. **Rotate to asymmetric signing** – configure shared security starter to prefer RS256/ES256 keys sourced from the IdP JWK set.
 2. **Support multiple issuers** – load trusted issuers (internal IAM + external partners) through configuration; fallback to OIDC discovery when a token issuer is unknown.
-3. **Tenant-aware claims** – map `tenant_id`, `sub`, `scope`, and custom LMS roles into the `Authentication` object via a custom converter.
+3. **Tenant-aware claims** – map `tenant_id`, `sub`, `scope`, and custom framework roles into the `Authentication` object via a custom converter.
 4. **mTLS for partner channels** – optionally enforce client certificates for partner route groups.
 
 #### Key Snippet – `GatewaySecurityConfiguration`

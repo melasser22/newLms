@@ -1,6 +1,6 @@
 # Tenant Platform
 
-Combined platform containing shared tenant components and Ejada microservices.
+Combined platform containing shared tenant components and Ejada SaaS Products Framework microservices.
 
 ## Structure
 

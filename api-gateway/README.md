@@ -1,6 +1,6 @@
-# LMS API Gateway
+# Ejada SaaS Products Framework API Gateway
 
-Enterprise-ready Spring Cloud Gateway that fronts the LMS microservices. It reuses the shared LMS starters (security, observability, redis, kafka) and enforces multi-tenant policies at the edge.
+Enterprise-ready Spring Cloud Gateway that fronts the Ejada SaaS Products Framework microservices. It reuses the shared framework starters (security, observability, redis, kafka) and enforces multi-tenant policies at the edge.
 
 ## Key Capabilities
 

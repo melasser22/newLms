@@ -1,6 +1,6 @@
-# Learning Management System Platform
+# Ejada SaaS Products Framework
 
-The **newLms** repository hosts the multi-tenant Learning Management System. It is built from
+The **newLms** repository hosts the multi-tenant Ejada SaaS Products Framework. It is built from
 Spring Boot microservices that share a common set of starters for security, observability,
 resilience, and Redis integration. An API Gateway fronts every service to provide a single edge
 entry point with authentication, tenant enforcement, subscription validation, and rate limiting.
@@ -9,7 +9,7 @@ entry point with authentication, tenant enforcement, subscription validation, an
 
 | Module | Description |
 | ------ | ----------- |
-| `shared-lib` | Reusable LMS starters (security, core, observability, rate limiting, config) shared by all services. |
+| `shared-lib` | Reusable framework starters (security, core, observability, rate limiting, config) shared by all services. |
 | `tenant-platform` | Aggregator Maven project for the domain services (`tenant`, `catalog`, `subscription`, `billing`, `analytics`). |
 | `setup-service` | Platform bootstrap service for tenant provisioning, catalog metadata, and reference data. |
 | `sec-service` | Security service responsible for IAM, audit, and policy management. |
@@ -65,7 +65,7 @@ and application services.
    docker compose -f docker/tools/docker-compose.yml up -d
    ```
 
-2. Build and start the LMS microservices and gateway:
+2. Build and start the framework microservices and gateway:
 
    ```bash
    docker compose -f docker/services/docker-compose.yml up --build
