@@ -39,6 +39,8 @@ public class SubscriptionCacheService {
       new ParameterizedTypeReference<>() {
       };
 
+  private static final Duration DEFAULT_CACHE_TTL = Duration.ofMinutes(5);
+
   private final SubscriptionValidationProperties properties;
   private final ReactiveStringRedisTemplate redisTemplate;
   private final ObjectMapper objectMapper;
@@ -132,10 +134,17 @@ public class SubscriptionCacheService {
   private Mono<Void> cacheByKey(String cacheKey, SubscriptionRecord record) {
     try {
       String value = objectMapper.writeValueAsString(record);
-      Duration ttl = Optional.ofNullable(properties.getCacheTtl())
-          .filter(d -> !d.isZero() && !d.isNegative())
-          .orElse(Duration.ofMinutes(5));
-      return redisTemplate.opsForValue().set(cacheKey, value, ttl).then();
+      Duration configuredTtl = properties.getCacheTtl();
+      Duration ttl = (configuredTtl == null || configuredTtl.isNegative())
+          ? DEFAULT_CACHE_TTL
+          : configuredTtl;
+      Mono<Boolean> writeOperation;
+      if (ttl.isZero()) {
+        writeOperation = redisTemplate.opsForValue().set(cacheKey, value);
+      } else {
+        writeOperation = redisTemplate.opsForValue().set(cacheKey, value, ttl);
+      }
+      return writeOperation.then();
     } catch (JsonProcessingException e) {
       LOGGER.debug("Failed to serialise subscription record for cache", e);
       return Mono.empty();
