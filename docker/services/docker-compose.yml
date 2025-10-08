@@ -27,7 +27,9 @@ services:
       retries: 10
       start_period: 15s
     networks:
-      - backend
+      backend:
+        aliases:
+          - tenant-service
 
   setup-service:
     build:
@@ -55,7 +57,9 @@ services:
       retries: 10
       start_period: 15s
     networks:
-      - backend
+      backend:
+        aliases:
+          - setup-service
 
   billing-service:
     build:
@@ -83,7 +87,9 @@ services:
       retries: 10
       start_period: 15s
     networks:
-      - backend
+      backend:
+        aliases:
+          - billing-service
 
   analytics-service:
     build:
@@ -111,7 +117,9 @@ services:
       retries: 10
       start_period: 15s
     networks:
-      - backend
+      backend:
+        aliases:
+          - analytics-service
 
   catalog-service:
     build:
@@ -139,7 +147,9 @@ services:
       retries: 10
       start_period: 15s
     networks:
-      - backend
+      backend:
+        aliases:
+          - catalog-service
 
   subscription-service:
     build:
@@ -167,7 +177,9 @@ services:
       retries: 10
       start_period: 15s
     networks:
-      - backend
+      backend:
+        aliases:
+          - subscription-service
 
   security-service:
     build:
@@ -200,7 +212,9 @@ services:
       retries: 10
       start_period: 15s
     networks:
-      - backend
+      backend:
+        aliases:
+          - security-service
 
   api-gateway:
     build:
@@ -255,7 +269,9 @@ services:
       retries: 10
       start_period: 15s
     networks:
-      - backend
+      backend:
+        aliases:
+          - api-gateway
 
 networks:
   backend:
