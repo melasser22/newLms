@@ -132,7 +132,9 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
       HttpStatus status = HttpStatus.resolve(rse.getStatusCode().value());
       return status != null ? status : HttpStatus.INTERNAL_SERVER_ERROR;
     }
-    if (ex instanceof NotFoundException || ex instanceof java.util.NoSuchElementException) {
+    if (ex instanceof NotFoundException
+        || ex instanceof java.util.NoSuchElementException
+        || ex instanceof org.springframework.cloud.gateway.support.NotFoundException) {
       return HttpStatus.NOT_FOUND;
     }
     if (ex instanceof DuplicateResourceException || ex instanceof IllegalStateException) {
@@ -171,7 +173,9 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
       }
       return status.is5xxServerError() ? "ERR_INTERNAL" : "ERR_STATUS";
     }
-    if (ex instanceof NotFoundException || ex instanceof java.util.NoSuchElementException) {
+    if (ex instanceof NotFoundException
+        || ex instanceof java.util.NoSuchElementException
+        || ex instanceof org.springframework.cloud.gateway.support.NotFoundException) {
       return "ERR_RESOURCE_NOT_FOUND";
     }
     if (ex instanceof DuplicateResourceException || ex instanceof DataIntegrityViolationException) {
@@ -228,6 +232,12 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     if (ex instanceof ResponseStatusException rse) {
       String reason = rse.getReason();
       return StringUtils.hasText(reason) ? reason : status.getReasonPhrase();
+    }
+    if (ex instanceof org.springframework.cloud.gateway.support.NotFoundException gatewayNotFound) {
+      String reason = gatewayNotFound.getMessage();
+      if (StringUtils.hasText(reason)) {
+        return reason;
+      }
     }
     if (ex instanceof DataIntegrityViolationException) {
       return "Data conflict occurred";
