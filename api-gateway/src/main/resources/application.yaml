@@ -490,31 +490,6 @@ gateway:
         - /api/setup/**
       strip-prefix: 2
       prefix-path: /core
-
-# Application metadata that surfaces through /actuator/info and diagnostics endpoints.
-app:
-  env: ${APP_ENV:${SPRING_PROFILES_ACTIVE:local}}
-  version: ${APP_VERSION:1.0.0}
-  configuration-version: ${APP_CONFIGURATION_VERSION:${app.configuration-version:1}}
-
-# Encryption support for secrets served by the Config Server (ENC(...) syntax).
-jasypt:
-  encryptor:
-    # Always resolve the encryptor password from the environment to avoid
-    # accidentally creating a circular placeholder when default values are
-    # expanded by the shell or the container runtime.
-    password: ${JASYPT_ENCRYPTOR_PASSWORD}
-    algorithm: PBEWITHHMACSHA512ANDAES_256
-    key-obtention-iterations: 1000
-    pool-size: 1
-    provider-name: SunJCE
-    salt-generator-classname: org.jasypt.salt.RandomSaltGenerator
-    iv-generator-classname: org.jasypt.iv.RandomIvGenerator
-    string-output-type: base64
-    fail-on-missing-password: ${JASYPT_ENCRYPTOR_FAIL_ON_MISSING_PASSWORD:true}
-    property:
-      prefix: ENC(
-      suffix: )
       resilience:
         enabled: true
         circuit-breaker-name: setup-service
@@ -683,6 +658,31 @@ jasypt:
           health-path: /actuator/health
           required: true
           deployment: primary
+
+# Application metadata that surfaces through /actuator/info and diagnostics endpoints.
+app:
+  env: ${APP_ENV:${SPRING_PROFILES_ACTIVE:local}}
+  version: ${APP_VERSION:1.0.0}
+  configuration-version: ${APP_CONFIGURATION_VERSION:${app.configuration-version:1}}
+
+# Encryption support for secrets served by the Config Server (ENC(...) syntax).
+jasypt:
+  encryptor:
+    # Always resolve the encryptor password from the environment to avoid
+    # accidentally creating a circular placeholder when default values are
+    # expanded by the shell or the container runtime.
+    password: ${JASYPT_ENCRYPTOR_PASSWORD}
+    algorithm: PBEWITHHMACSHA512ANDAES_256
+    key-obtention-iterations: 1000
+    pool-size: 1
+    provider-name: SunJCE
+    salt-generator-classname: org.jasypt.salt.RandomSaltGenerator
+    iv-generator-classname: org.jasypt.iv.RandomIvGenerator
+    string-output-type: base64
+    fail-on-missing-password: ${JASYPT_ENCRYPTOR_FAIL_ON_MISSING_PASSWORD:true}
+    property:
+      prefix: ENC(
+      suffix: )
 
 logging:
   level:

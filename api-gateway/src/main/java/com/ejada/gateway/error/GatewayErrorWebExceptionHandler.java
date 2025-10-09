@@ -58,10 +58,13 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
 
   private final ObjectMapper objectMapper;
   public GatewayErrorWebExceptionHandler(
-      @Qualifier("jacksonObjectMapper") ObjectMapper jacksonObjectMapper,
+      @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> jacksonObjectMapperProvider,
       ObjectProvider<ObjectMapper> objectMapperProvider) {
+    ObjectMapper jacksonObjectMapper = jacksonObjectMapperProvider.getIfAvailable();
     this.objectMapper = (jacksonObjectMapper != null) ? jacksonObjectMapper
         : objectMapperProvider.getIfAvailable(ObjectMapper::new);
+    LOGGER.info("GatewayErrorWebExceptionHandler initialized with ObjectMapper: {}",
+        this.objectMapper.getClass().getName());
   }
 
   @Override
@@ -79,6 +82,15 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     String message = enhanceMessage(determineMessage(ex, status), status, correlationId);
     Map<String, Object> diagnostics = buildDiagnostics(exchange, status, errorCode, message, correlationId, tenantId);
 
+    // Log the exception details for troubleshooting
+    if (status.is5xxServerError()) {
+      LOGGER.error("Gateway error [correlationId={}, tenantId={}, path={}, status={}]: {}",
+          correlationId, tenantId, exchange.getRequest().getPath().value(), status.value(), message, ex);
+    } else {
+      LOGGER.debug("Gateway client error [correlationId={}, path={}, status={}]: {}",
+          correlationId, exchange.getRequest().getPath().value(), status.value(), message);
+    }
+
     response.setStatusCode(status);
     response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
@@ -88,7 +100,29 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
       DataBuffer buffer = response.bufferFactory().wrap(bytes);
       return response.writeWith(Mono.just(buffer));
     } catch (JsonProcessingException e) {
-      LOGGER.error("Failed to serialize error response", e);
+      LOGGER.error("Failed to serialize error response [correlationId={}]: {}", correlationId, e.getMessage(), e);
+      // Fallback to plain text error response
+      return writeFallbackErrorResponse(response, status, errorCode, message, correlationId);
+    } catch (Exception e) {
+      LOGGER.error("Unexpected error in error handler [correlationId={}]: {}", correlationId, e.getMessage(), e);
+      return writeFallbackErrorResponse(response, status, errorCode, message, correlationId);
+    }
+  }
+
+  /**
+   * Writes a plain text fallback error response when JSON serialization fails.
+   */
+  private Mono<Void> writeFallbackErrorResponse(ServerHttpResponse response, HttpStatus status,
+      String errorCode, String message, String correlationId) {
+    try {
+      response.getHeaders().setContentType(MediaType.TEXT_PLAIN);
+      String plainTextError = String.format(
+          "Error Code: %s%nStatus: %d%nMessage: %s%nCorrelation ID: %s",
+          errorCode, status.value(), message, correlationId != null ? correlationId : "unknown");
+      DataBuffer buffer = response.bufferFactory().wrap(plainTextError.getBytes());
+      return response.writeWith(Mono.just(buffer));
+    } catch (Exception fallbackException) {
+      LOGGER.error("Failed to write fallback error response", fallbackException);
       return response.setComplete();
     }
   }

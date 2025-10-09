@@ -69,8 +69,16 @@ public class RouteSchemaInitializer implements InitializingBean {
         .sql(sql)
         .fetch()
         .rowsUpdated()
-        .doOnError(error -> LOGGER.error("Failed to execute route schema statement: {}", sql, error))
-        .onErrorResume(error -> Mono.empty())
+        .doOnNext(count -> LOGGER.debug("Successfully executed schema statement, rows affected: {}", count))
+        .doOnError(error -> {
+          LOGGER.error("Failed to execute route schema statement", error);
+          LOGGER.debug("Failed SQL statement: {}", sql);
+        })
+        .onErrorResume(error -> {
+          // Continue even if statement fails (e.g., table already exists)
+          LOGGER.debug("Continuing despite schema statement error: {}", error.getMessage());
+          return Mono.empty();
+        })
         .then();
   }
 

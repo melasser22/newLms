@@ -3,6 +3,8 @@ package com.ejada.gateway.admin;
 import com.ejada.gateway.admin.model.AdminServiceSnapshot;
 import com.ejada.gateway.admin.model.AdminServiceState;
 import com.ejada.gateway.admin.model.DetailedHealthStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.ReactiveHealthIndicator;
 import org.springframework.stereotype.Component;
@@ -14,6 +16,8 @@ import reactor.core.publisher.Mono;
 @Component
 public class GatewayReadinessIndicator implements ReactiveHealthIndicator {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(GatewayReadinessIndicator.class);
+
   private final AdminAggregationService adminAggregationService;
 
   public GatewayReadinessIndicator(AdminAggregationService adminAggregationService) {
@@ -24,6 +28,7 @@ public class GatewayReadinessIndicator implements ReactiveHealthIndicator {
   public Mono<Health> health() {
     return adminAggregationService.fetchDetailedHealth()
         .map(this::mapToHealth)
+        .doOnError(ex -> LOGGER.error("Health check failed: {}", ex.getMessage(), ex))
         .onErrorResume(ex -> Mono.just(Health.down(ex).build()));
   }
 

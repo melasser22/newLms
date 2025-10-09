@@ -38,8 +38,8 @@ spring:
     enabled: ${app.flyway.enabled:true}
     baseline-on-migrate: true
     locations: ${app.flyway.locations}
-    schemas: ${app.flyway.schema:${app.schema}}
-    default-schema: ${app.flyway.schema:${app.schema}}
+    schemas: ${app.schema}
+    default-schema: ${app.schema}
   kafka:
     client-id: ${app.kafka.client-id}
   data:
