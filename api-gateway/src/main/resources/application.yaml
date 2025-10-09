@@ -605,6 +605,21 @@ gateway:
         fallback-status: ACCEPTED
         fallback-message: Billing service is unavailable. Usage event queued for later processing.
         priority: CRITICAL
+    security-auth:
+      id: security-service
+      uri: lb://security-service
+      paths:
+        - /api/auth/**
+      strip-prefix: 1
+      prefix-path: /sec/api/v1
+      request-headers:
+        X-Route-Source: static
+      resilience:
+        enabled: true
+        circuit-breaker-name: security-service
+        fallback-uri: forward:/fallback/security-service
+        fallback-message: Authentication service is temporarily unavailable. Please retry shortly.
+        priority: CRITICAL
     policy:
       id: policy-service
       uri: lb://policy-service
