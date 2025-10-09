@@ -63,6 +63,30 @@ VALUES
         1,
         NOW(),
         NOW()
+    ),
+    (
+        '33333333-3333-3333-3333-333333333333',
+        '/api/setup/**',
+        'lb://setup-service',
+        '[{"name":"Path","args":{"pattern":"/api/setup/**"}}]'::jsonb,
+        '[{"name":"StripPrefix","args":{"parts":"2"}},{"name":"PrefixPath","args":{"prefix":"/core"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+        '{"methods":["GET","POST","PUT","PATCH","DELETE"],"stripPrefix":2,"prefixPath":"/core","requestHeaders":{"X-Route-Seed":"true"}}'::jsonb,
+        TRUE,
+        1,
+        NOW(),
+        NOW()
+    ),
+    (
+        '44444444-4444-4444-4444-444444444444',
+        '/api/auth/**',
+        'lb://security-service',
+        '[{"name":"Path","args":{"pattern":"/api/auth/**"}}]'::jsonb,
+        '[{"name":"StripPrefix","args":{"parts":"1"}},{"name":"PrefixPath","args":{"prefix":"/sec/api/v1"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+        '{"methods":["GET","POST","PUT","PATCH","DELETE"],"stripPrefix":1,"prefixPath":"/sec/api/v1","requestHeaders":{"X-Route-Seed":"true"}}'::jsonb,
+        TRUE,
+        1,
+        NOW(),
+        NOW()
     )
 ON CONFLICT (id) DO NOTHING;
 
@@ -115,6 +139,56 @@ VALUES
                 'methods', jsonb_build_array('GET'),
                 'stripPrefix', 1,
                 'prefixPath', '/catalog',
+                'requestHeaders', jsonb_build_object('X-Route-Seed', 'true')
+            ),
+            'enabled', TRUE,
+            'version', 1,
+            'createdAt', NOW(),
+            'updatedAt', NOW()
+        ),
+        'seed-data',
+        NOW(),
+        1
+    ),
+    (
+        'cccccccc-cccc-cccc-cccc-cccccccccccc',
+        '33333333-3333-3333-3333-333333333333',
+        'SEED',
+        jsonb_build_object(
+            'id', '33333333-3333-3333-3333-333333333333',
+            'pathPattern', '/api/setup/**',
+            'serviceUri', 'lb://setup-service',
+            'predicates', '[{"name":"Path","args":{"pattern":"/api/setup/**"}}]'::jsonb,
+            'filters', '[{"name":"StripPrefix","args":{"parts":"2"}},{"name":"PrefixPath","args":{"prefix":"/core"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+            'metadata', jsonb_build_object(
+                'methods', jsonb_build_array('GET', 'POST', 'PUT', 'PATCH', 'DELETE'),
+                'stripPrefix', 2,
+                'prefixPath', '/core',
+                'requestHeaders', jsonb_build_object('X-Route-Seed', 'true')
+            ),
+            'enabled', TRUE,
+            'version', 1,
+            'createdAt', NOW(),
+            'updatedAt', NOW()
+        ),
+        'seed-data',
+        NOW(),
+        1
+    ),
+    (
+        'dddddddd-dddd-dddd-dddd-dddddddddddd',
+        '44444444-4444-4444-4444-444444444444',
+        'SEED',
+        jsonb_build_object(
+            'id', '44444444-4444-4444-4444-444444444444',
+            'pathPattern', '/api/auth/**',
+            'serviceUri', 'lb://security-service',
+            'predicates', '[{"name":"Path","args":{"pattern":"/api/auth/**"}}]'::jsonb,
+            'filters', '[{"name":"StripPrefix","args":{"parts":"1"}},{"name":"PrefixPath","args":{"prefix":"/sec/api/v1"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+            'metadata', jsonb_build_object(
+                'methods', jsonb_build_array('GET', 'POST', 'PUT', 'PATCH', 'DELETE'),
+                'stripPrefix', 1,
+                'prefixPath', '/sec/api/v1',
                 'requestHeaders', jsonb_build_object('X-Route-Seed', 'true')
             ),
             'enabled', TRUE,
