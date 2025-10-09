@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.ejada.gateway.filter.ApiVersioningGatewayFilter;
 import com.ejada.gateway.filter.RequestBodyTransformationGatewayFilterFactory;
@@ -51,6 +52,8 @@ public class GatewayRoutesConfiguration {
     RouteLocatorBuilder.Builder routes = builder.routes();
 
     Map<String, GatewayRoutesProperties.ServiceRoute> aggregated = new LinkedHashMap<>();
+    AtomicInteger staticRouteCount = new AtomicInteger();
+    AtomicInteger dynamicRouteCount = new AtomicInteger();
 
     properties.getRoutes().forEach((key, route) -> {
       route.applyDefaults(properties.getDefaults());
@@ -59,6 +62,7 @@ public class GatewayRoutesConfiguration {
       if (previous != null) {
         LOGGER.warn("Route {} from static configuration replaced an existing definition", route.getId());
       }
+      staticRouteCount.incrementAndGet();
     });
 
     dynamicProviders.orderedStream().forEach(provider -> {
@@ -84,11 +88,20 @@ public class GatewayRoutesConfiguration {
             LOGGER.warn("Route {} from provider {} replaced an existing definition", route.getId(), provider.getProviderName());
           }
         }
+        dynamicRouteCount.addAndGet(loaded.size());
         LOGGER.info("Loaded {} dynamic routes from {}", loaded.size(), provider.getProviderName());
       } catch (Exception ex) {
         LOGGER.warn("Failed to load dynamic routes from {}", provider.getProviderName(), ex);
       }
     });
+
+    if (aggregated.isEmpty()) {
+      throw new IllegalStateException(
+          "No gateway routes were configured. Verify gateway.routes entries in application.yaml or the Config Server response.");
+    }
+
+    LOGGER.info("Registering {} gateway routes ({} static, {} dynamic)",
+        aggregated.size(), staticRouteCount.get(), dynamicRouteCount.get());
 
     for (GatewayRoutesProperties.ServiceRoute route : aggregated.values()) {
       GatewayRoutesProperties.ServiceRoute.Resilience resilience = route.getResilience();
