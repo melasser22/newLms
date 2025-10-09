@@ -15,6 +15,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.cloud.gateway.support.NotFoundException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -98,6 +99,21 @@ class GatewayErrorWebExceptionHandlerTest {
         .containsEntry("supportUrl", "https://support.example.com/error/500")
         .containsEntry("path", "/internal-error")
         .containsEntry("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+  }
+
+  @Test
+  void mapsSpringCloudNotFoundToNotFound() throws Exception {
+    MockServerWebExchange exchange = MockServerWebExchange.from(
+        MockServerHttpRequest.get("/missing").build());
+
+    StepVerifier.create(handler.handle(exchange, new NotFoundException("No route defined"))).verifyComplete();
+
+    assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    BaseResponse<Map<String, Object>> response = readBody(exchange);
+    assertThat(response.getCode()).isEqualTo("ERR_RESOURCE_NOT_FOUND");
+    assertThat(response.getData())
+        .containsEntry("status", HttpStatus.NOT_FOUND.value())
+        .containsEntry("path", "/missing");
   }
 
   private BaseResponse<Map<String, Object>> readBody(MockServerWebExchange exchange) throws Exception {
