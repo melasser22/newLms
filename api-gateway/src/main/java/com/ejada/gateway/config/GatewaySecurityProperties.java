@@ -16,6 +16,9 @@ public class GatewaySecurityProperties {
   private final TokenCache tokenCache = new TokenCache();
   private final IpFiltering ipFiltering = new IpFiltering();
   private final ApiKey apiKey = new ApiKey();
+  private final TokenRefresh tokenRefresh = new TokenRefresh();
+  private final SecurityHeaders securityHeaders = new SecurityHeaders();
+  private final MutualTls mutualTls = new MutualTls();
 
   public SignatureValidation getSignatureValidation() {
     return signatureValidation;
@@ -31,6 +34,18 @@ public class GatewaySecurityProperties {
 
   public ApiKey getApiKey() {
     return apiKey;
+  }
+
+  public TokenRefresh getTokenRefresh() {
+    return tokenRefresh;
+  }
+
+  public SecurityHeaders getSecurityHeaders() {
+    return securityHeaders;
+  }
+
+  public MutualTls getMutualTls() {
+    return mutualTls;
   }
 
   public static class SignatureValidation {
@@ -189,10 +204,13 @@ public class GatewaySecurityProperties {
 
     private boolean enabled = true;
     private String keyPrefix = "gateway:api-key:";
+    private String tenantIndexPrefix = "gateway:tenant:";
+    private String tenantIndexSuffix = ":api-keys";
     private final Encryption encryption = new Encryption();
     private final Rotation rotation = new Rotation();
     private final ScopeEnforcement scopeEnforcement = new ScopeEnforcement();
     private final Audit audit = new Audit();
+    private final RateLimit rateLimit = new RateLimit();
 
     public boolean isEnabled() {
       return enabled;
@@ -216,6 +234,30 @@ public class GatewaySecurityProperties {
       return keyPrefix + apiKey;
     }
 
+    public String getTenantIndexPrefix() {
+      return tenantIndexPrefix;
+    }
+
+    public void setTenantIndexPrefix(String tenantIndexPrefix) {
+      if (StringUtils.hasText(tenantIndexPrefix)) {
+        this.tenantIndexPrefix = tenantIndexPrefix;
+      }
+    }
+
+    public String getTenantIndexSuffix() {
+      return tenantIndexSuffix;
+    }
+
+    public void setTenantIndexSuffix(String tenantIndexSuffix) {
+      if (StringUtils.hasText(tenantIndexSuffix)) {
+        this.tenantIndexSuffix = tenantIndexSuffix;
+      }
+    }
+
+    public String tenantIndexKey(String tenantId) {
+      return tenantIndexPrefix + tenantId + tenantIndexSuffix;
+    }
+
     public Encryption getEncryption() {
       return encryption;
     }
@@ -230,6 +272,10 @@ public class GatewaySecurityProperties {
 
     public Audit getAudit() {
       return audit;
+    }
+
+    public RateLimit getRateLimit() {
+      return rateLimit;
     }
 
     public static class Encryption {
@@ -350,6 +396,275 @@ public class GatewaySecurityProperties {
 
       public void setTrackLastUsed(boolean trackLastUsed) {
         this.trackLastUsed = trackLastUsed;
+      }
+    }
+
+    public static class RateLimit {
+
+      private boolean enabled = false;
+      private String keyPrefix = "gateway:api-key-rate:";
+      private long defaultPerMinute = 0;
+
+      public boolean isEnabled() {
+        return enabled;
+      }
+
+      public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+      }
+
+      public String getKeyPrefix() {
+        return keyPrefix;
+      }
+
+      public void setKeyPrefix(String keyPrefix) {
+        if (StringUtils.hasText(keyPrefix)) {
+          this.keyPrefix = keyPrefix;
+        }
+      }
+
+      public long getDefaultPerMinute() {
+        return defaultPerMinute;
+      }
+
+      public void setDefaultPerMinute(long defaultPerMinute) {
+        if (defaultPerMinute >= 0) {
+          this.defaultPerMinute = defaultPerMinute;
+        }
+      }
+
+      public String redisKey(String apiKey) {
+        return keyPrefix + apiKey;
+      }
+    }
+  }
+
+  public static class TokenRefresh {
+
+    private boolean enabled = false;
+    private Duration refreshWindow = Duration.ofMinutes(5);
+    private String refreshUri = "lb://auth-service/internal/tokens/{tenantId}/refresh";
+    private String responseHeader = "X-Refreshed-Token";
+    private boolean includeBearerPrefix = false;
+    private boolean propagateTenantHeader = true;
+
+    public boolean isEnabled() {
+      return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+      this.enabled = enabled;
+    }
+
+    public Duration getRefreshWindow() {
+      return refreshWindow;
+    }
+
+    public void setRefreshWindow(Duration refreshWindow) {
+      if (refreshWindow != null) {
+        this.refreshWindow = refreshWindow;
+      }
+    }
+
+    public String getRefreshUri() {
+      return refreshUri;
+    }
+
+    public void setRefreshUri(String refreshUri) {
+      if (StringUtils.hasText(refreshUri)) {
+        this.refreshUri = refreshUri;
+      }
+    }
+
+    public String getResponseHeader() {
+      return responseHeader;
+    }
+
+    public void setResponseHeader(String responseHeader) {
+      if (StringUtils.hasText(responseHeader)) {
+        this.responseHeader = responseHeader;
+      }
+    }
+
+    public boolean isIncludeBearerPrefix() {
+      return includeBearerPrefix;
+    }
+
+    public void setIncludeBearerPrefix(boolean includeBearerPrefix) {
+      this.includeBearerPrefix = includeBearerPrefix;
+    }
+
+    public boolean isPropagateTenantHeader() {
+      return propagateTenantHeader;
+    }
+
+    public void setPropagateTenantHeader(boolean propagateTenantHeader) {
+      this.propagateTenantHeader = propagateTenantHeader;
+    }
+
+    public String resolveUri(String tenantId) {
+      if (!StringUtils.hasText(refreshUri)) {
+        return null;
+      }
+      return refreshUri.replace("{tenantId}", tenantId != null ? tenantId : "");
+    }
+  }
+
+  public static class SecurityHeaders {
+
+    private boolean enabled = true;
+    private String contentSecurityPolicy = "default-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'";
+    private boolean hstsEnabled = true;
+    private long hstsMaxAgeSeconds = 63072000L;
+    private boolean hstsIncludeSubdomains = true;
+    private boolean hstsPreload = true;
+    private String frameOptions = "DENY";
+    private String referrerPolicy = "no-referrer";
+    private String permissionsPolicy = "geolocation=(), microphone=(), camera=()";
+    private boolean removeServerHeader = true;
+
+    public boolean isEnabled() {
+      return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+      this.enabled = enabled;
+    }
+
+    public String getContentSecurityPolicy() {
+      return contentSecurityPolicy;
+    }
+
+    public void setContentSecurityPolicy(String contentSecurityPolicy) {
+      if (StringUtils.hasText(contentSecurityPolicy)) {
+        this.contentSecurityPolicy = contentSecurityPolicy;
+      }
+    }
+
+    public boolean isHstsEnabled() {
+      return hstsEnabled;
+    }
+
+    public void setHstsEnabled(boolean hstsEnabled) {
+      this.hstsEnabled = hstsEnabled;
+    }
+
+    public long getHstsMaxAgeSeconds() {
+      return hstsMaxAgeSeconds;
+    }
+
+    public void setHstsMaxAgeSeconds(long hstsMaxAgeSeconds) {
+      if (hstsMaxAgeSeconds >= 0) {
+        this.hstsMaxAgeSeconds = hstsMaxAgeSeconds;
+      }
+    }
+
+    public boolean isHstsIncludeSubdomains() {
+      return hstsIncludeSubdomains;
+    }
+
+    public void setHstsIncludeSubdomains(boolean hstsIncludeSubdomains) {
+      this.hstsIncludeSubdomains = hstsIncludeSubdomains;
+    }
+
+    public boolean isHstsPreload() {
+      return hstsPreload;
+    }
+
+    public void setHstsPreload(boolean hstsPreload) {
+      this.hstsPreload = hstsPreload;
+    }
+
+    public String getFrameOptions() {
+      return frameOptions;
+    }
+
+    public void setFrameOptions(String frameOptions) {
+      if (StringUtils.hasText(frameOptions)) {
+        this.frameOptions = frameOptions;
+      }
+    }
+
+    public String getReferrerPolicy() {
+      return referrerPolicy;
+    }
+
+    public void setReferrerPolicy(String referrerPolicy) {
+      if (StringUtils.hasText(referrerPolicy)) {
+        this.referrerPolicy = referrerPolicy;
+      }
+    }
+
+    public String getPermissionsPolicy() {
+      return permissionsPolicy;
+    }
+
+    public void setPermissionsPolicy(String permissionsPolicy) {
+      if (StringUtils.hasText(permissionsPolicy)) {
+        this.permissionsPolicy = permissionsPolicy;
+      }
+    }
+
+    public boolean isRemoveServerHeader() {
+      return removeServerHeader;
+    }
+
+    public void setRemoveServerHeader(boolean removeServerHeader) {
+      this.removeServerHeader = removeServerHeader;
+    }
+  }
+
+  public static class MutualTls {
+
+    private boolean enabled = false;
+    private String[] partnerRoutePatterns = new String[] {"/api/v1/partner/**"};
+    private Duration cacheTtl = Duration.ofMinutes(5);
+    private Duration clockSkew = Duration.ofMinutes(2);
+    private String tenantHeaderName = "X-Tenant-Id";
+
+    public boolean isEnabled() {
+      return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+      this.enabled = enabled;
+    }
+
+    public String[] getPartnerRoutePatterns() {
+      return partnerRoutePatterns;
+    }
+
+    public void setPartnerRoutePatterns(String[] partnerRoutePatterns) {
+      this.partnerRoutePatterns = (partnerRoutePatterns != null) ? partnerRoutePatterns : new String[0];
+    }
+
+    public Duration getCacheTtl() {
+      return cacheTtl;
+    }
+
+    public void setCacheTtl(Duration cacheTtl) {
+      if (cacheTtl != null) {
+        this.cacheTtl = cacheTtl;
+      }
+    }
+
+    public Duration getClockSkew() {
+      return clockSkew;
+    }
+
+    public void setClockSkew(Duration clockSkew) {
+      if (clockSkew != null) {
+        this.clockSkew = clockSkew;
+      }
+    }
+
+    public String getTenantHeaderName() {
+      return tenantHeaderName;
+    }
+
+    public void setTenantHeaderName(String tenantHeaderName) {
+      if (StringUtils.hasText(tenantHeaderName)) {
+        this.tenantHeaderName = tenantHeaderName;
       }
     }
   }

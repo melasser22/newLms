@@ -117,6 +117,23 @@ class IpFilteringGatewayFilterTest {
     assertThat(exchange.getResponse().getStatusCode()).isNull();
   }
 
+  @Test
+  void allowsCidrMatches() {
+    redisTemplate.opsForSet().add("gateway:tenant:tenant-a:ip-whitelist", "10.0.0.0/24").block();
+
+    MockServerHttpRequest request = MockServerHttpRequest.get("/secure")
+        .remoteAddress(new InetSocketAddress("10.0.0.42", 0))
+        .header(HeaderNames.X_TENANT_ID, "tenant-a")
+        .build();
+    MockServerWebExchange exchange = MockServerWebExchange.from(request);
+
+    GatewayFilterChain chain = webExchange -> Mono.empty();
+
+    StepVerifier.create(filter.filter(exchange, chain)).verifyComplete();
+
+    assertThat(exchange.getResponse().getStatusCode()).isNull();
+  }
+
   private void flushRedis() {
     try (var connection = connectionFactory.getReactiveConnection()) {
       connection.serverCommands().flushAll().block();

@@ -5,6 +5,7 @@ import com.ejada.common.dto.BaseResponse;
 import com.ejada.gateway.config.GatewaySecurityProperties;
 import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -103,12 +104,68 @@ public class IpFilteringGatewayFilter implements GlobalFilter, Ordered {
         .filter(StringUtils::hasText)
         .map(String::trim)
         .collect(Collectors.toUnmodifiableSet());
-    if (whitelist.contains(clientIp)) {
+    if (isAllowed(whitelist, clientIp)) {
       return chain.filter(exchange);
     }
     LOGGER.debug("Blocking request from {} for tenant {} due to whitelist", clientIp, tenantId);
     metrics.incrementBlocked("ip_whitelist", tenantId);
     return reject(exchange, "ERR_IP_BLOCKED", "IP address blocked", HttpStatus.FORBIDDEN);
+  }
+
+  private boolean isAllowed(Set<String> whitelist, String clientIp) {
+    try {
+      InetAddress candidate = InetAddress.getByName(clientIp);
+      for (String entry : whitelist) {
+        if (!StringUtils.hasText(entry)) {
+          continue;
+        }
+        if (matchesEntry(entry, candidate)) {
+          return true;
+        }
+      }
+    } catch (Exception ex) {
+      LOGGER.debug("Failed to evaluate whitelist for IP {}", clientIp, ex);
+    }
+    return false;
+  }
+
+  private boolean matchesEntry(String entry, InetAddress candidate) {
+    String value = entry.trim();
+    try {
+      int slash = value.indexOf('/');
+      if (slash > 0) {
+        String networkPart = value.substring(0, slash);
+        int prefix = Integer.parseInt(value.substring(slash + 1));
+        InetAddress network = InetAddress.getByName(networkPart);
+        if (network.getAddress().length != candidate.getAddress().length) {
+          return false;
+        }
+        return matchesCidr(network.getAddress(), candidate.getAddress(), prefix);
+      }
+      InetAddress network = InetAddress.getByName(value);
+      return Objects.equals(network.getHostAddress(), candidate.getHostAddress());
+    } catch (Exception ex) {
+      LOGGER.debug("Invalid whitelist entry {}", entry, ex);
+      return false;
+    }
+  }
+
+  private boolean matchesCidr(byte[] network, byte[] address, int prefixLength) {
+    if (prefixLength < 0 || prefixLength > network.length * 8) {
+      return false;
+    }
+    int fullBytes = prefixLength / 8;
+    int remainingBits = prefixLength % 8;
+    for (int i = 0; i < fullBytes; i++) {
+      if (network[i] != address[i]) {
+        return false;
+      }
+    }
+    if (remainingBits == 0) {
+      return true;
+    }
+    int mask = 0xFF << (8 - remainingBits);
+    return (network[fullBytes] & mask) == (address[fullBytes] & mask);
   }
 
   private Mono<Void> reject(ServerWebExchange exchange, String code, String message, HttpStatus status) {
