@@ -43,10 +43,31 @@
       <optional>true</optional>
     </dependency>
 
+    <!-- Security context access for bypass evaluation -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <!-- Redis backing (Boot starter brings Lettuce + connection factory) -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-redis</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- JSON parsing for pub/sub update payloads -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- Audit service contracts -->
+    <dependency>
+      <groupId>com.ejada</groupId>
+      <artifactId>starter-audit</artifactId>
       <optional>true</optional>
     </dependency>
 
