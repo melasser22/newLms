@@ -14,5 +14,6 @@ public record RouteManagementView(
     Instant updatedAt,
     RouteMetadata.BlueGreenDeployment blueGreen,
     List<RouteMetadata.TrafficSplit> trafficSplits,
-    URI effectiveUri) {
+    URI effectiveUri,
+    List<RouteVariantMetricsView> variantMetrics) {
 }

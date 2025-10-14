@@ -86,6 +86,9 @@ public class GatewayRoutesProperties {
     /** Identifier used for RouteLocator registration. */
     private String id;
 
+    /** Optional logical variant identifier when route participates in traffic splits. */
+    private String variantId;
+
     /** Downstream service URI (e.g. http://tenant-service:8080). */
     private URI uri;
 
@@ -106,6 +109,9 @@ public class GatewayRoutesProperties {
 
     /** Optional request headers to automatically append before forwarding. */
     private Map<String, String> requestHeaders = new LinkedHashMap<>();
+
+    /** Optional tenant specific routing directives. */
+    private Map<String, TenantRoutingRule> tenantRouting = new LinkedHashMap<>();
 
     /** Optional API version handling configuration. */
     private Versioning versioning = new Versioning();
@@ -128,6 +134,14 @@ public class GatewayRoutesProperties {
 
     public void setId(String id) {
       this.id = id;
+    }
+
+    public String getVariantId() {
+      return variantId;
+    }
+
+    public void setVariantId(String variantId) {
+      this.variantId = (variantId == null) ? null : variantId.trim();
     }
 
     public URI getUri() {
@@ -216,6 +230,21 @@ public class GatewayRoutesProperties {
       this.requestHeaders = sanitiseHeaders(requestHeaders);
     }
 
+    public Map<String, TenantRoutingRule> getTenantRouting() {
+      return tenantRouting;
+    }
+
+    public void setTenantRouting(Map<String, TenantRoutingRule> tenantRouting) {
+      this.tenantRouting = (tenantRouting == null)
+          ? new LinkedHashMap<>()
+          : tenantRouting.entrySet().stream()
+              .filter(entry -> StringUtils.hasText(entry.getKey()) && entry.getValue() != null)
+              .collect(Collectors.toMap(entry -> entry.getKey().trim(),
+                  entry -> entry.getValue().copy(),
+                  (left, right) -> right,
+                  LinkedHashMap::new));
+    }
+
     public Versioning getVersioning() {
       return versioning;
     }
@@ -285,6 +314,103 @@ public class GatewayRoutesProperties {
       this.resilience.applyDefaults(defaults.getResilience());
     }
 
+    /**
+     * Tenant-specific routing directives that can steer certain tenants to dedicated instances or
+     * adjust relative weights.
+     */
+    public static class TenantRoutingRule {
+
+      private List<String> dedicatedInstances = new ArrayList<>();
+      private Map<String, Integer> instanceWeights = new LinkedHashMap<>();
+
+      public List<String> getDedicatedInstances() {
+        return dedicatedInstances;
+      }
+
+      public void setDedicatedInstances(List<String> dedicatedInstances) {
+        if (dedicatedInstances == null) {
+          this.dedicatedInstances = new ArrayList<>();
+          return;
+        }
+        this.dedicatedInstances = dedicatedInstances.stream()
+            .filter(StringUtils::hasText)
+            .map(value -> value.trim().toLowerCase(Locale.ROOT))
+            .collect(Collectors.toCollection(ArrayList::new));
+      }
+
+      public Map<String, Integer> getInstanceWeights() {
+        return instanceWeights;
+      }
+
+      public void setInstanceWeights(Map<String, Integer> instanceWeights) {
+        if (instanceWeights == null) {
+          this.instanceWeights = new LinkedHashMap<>();
+          return;
+        }
+        LinkedHashMap<String, Integer> sanitized = new LinkedHashMap<>();
+        instanceWeights.forEach((instanceId, weight) -> {
+          if (!StringUtils.hasText(instanceId) || weight == null) {
+            return;
+          }
+          sanitized.put(instanceId.trim(), weight);
+        });
+        this.instanceWeights = sanitized;
+      }
+
+      void validate(String key, String tenantId) {
+        for (String instance : dedicatedInstances) {
+          if (!StringUtils.hasText(instance)) {
+            throw new IllegalStateException("gateway.routes." + key + ".tenant-routing." + tenantId
+                + ".dedicated-instances contains a blank entry");
+          }
+        }
+        for (Map.Entry<String, Integer> entry : instanceWeights.entrySet()) {
+          String instance = entry.getKey();
+          Integer weight = entry.getValue();
+          if (!StringUtils.hasText(instance)) {
+            throw new IllegalStateException("gateway.routes." + key + ".tenant-routing." + tenantId
+                + ".instance-weights contains a blank instance id");
+          }
+          if (weight == null || weight <= 0) {
+            throw new IllegalStateException("gateway.routes." + key + ".tenant-routing." + tenantId
+                + ".instance-weights." + instance + " must be positive");
+          }
+        }
+      }
+
+      TenantRoutingRule copy() {
+        TenantRoutingRule copy = new TenantRoutingRule();
+        copy.setDedicatedInstances(dedicatedInstances);
+        copy.setInstanceWeights(instanceWeights);
+        return copy;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) {
+          return true;
+        }
+        if (!(o instanceof TenantRoutingRule that)) {
+          return false;
+        }
+        return Objects.equals(dedicatedInstances, that.dedicatedInstances)
+            && Objects.equals(instanceWeights, that.instanceWeights);
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hash(dedicatedInstances, instanceWeights);
+      }
+
+      @Override
+      public String toString() {
+        return "TenantRoutingRule{" +
+            "dedicatedInstances=" + dedicatedInstances +
+            ", instanceWeights=" + instanceWeights +
+            '}';
+      }
+    }
+
     private Map<String, String> sanitiseHeaders(Map<String, String> headers) {
       if (headers == null || headers.isEmpty()) {
         return new LinkedHashMap<>();
@@ -321,6 +447,20 @@ public class GatewayRoutesProperties {
       }
     }
 
+    private void validateTenantRouting(String key) {
+      for (Map.Entry<String, TenantRoutingRule> entry : tenantRouting.entrySet()) {
+        String tenantId = entry.getKey();
+        if (!StringUtils.hasText(tenantId)) {
+          throw new IllegalStateException("gateway.routes." + key + ".tenant-routing contains a blank tenant id");
+        }
+        TenantRoutingRule rule = entry.getValue();
+        if (rule == null) {
+          continue;
+        }
+        rule.validate(key, tenantId.trim());
+      }
+    }
+
     public void validate(String key) {
       if (!StringUtils.hasText(id)) {
         throw new IllegalStateException("gateway.routes." + key + ".id must not be blank");
@@ -352,18 +492,21 @@ public class GatewayRoutesProperties {
       weight.validate(key);
       sessionAffinity.validate(key);
       validateHeaders(key);
+      validateTenantRouting(key);
     }
 
     @Override
     public String toString() {
       return "ServiceRoute{"
           + "id='" + id + '\''
+          + ", variantId='" + variantId + '\''
           + ", uri=" + uri
           + ", paths=" + paths
           + ", methods=" + methods
           + ", stripPrefix=" + stripPrefix
           + ", prefixPath='" + prefixPath + '\''
           + ", requestHeaders=" + requestHeaders
+          + ", tenantRouting=" + tenantRouting
           + ", versioning=" + versioning
           + ", weight=" + weight
           + ", sessionAffinity=" + sessionAffinity
@@ -381,12 +524,14 @@ public class GatewayRoutesProperties {
       }
       return stripPrefix == that.stripPrefix
           && Objects.equals(id, that.id)
+          && Objects.equals(variantId, that.variantId)
           && Objects.equals(uri, that.uri)
           && Objects.equals(paths, that.paths)
           && Objects.equals(methods, that.methods)
           && Objects.equals(prefixPath, that.prefixPath)
           && Objects.equals(resilience, that.resilience)
           && Objects.equals(requestHeaders, that.requestHeaders)
+          && Objects.equals(tenantRouting, that.tenantRouting)
           && Objects.equals(versioning, that.versioning)
           && Objects.equals(weight, that.weight)
           && Objects.equals(sessionAffinity, that.sessionAffinity)
@@ -395,8 +540,8 @@ public class GatewayRoutesProperties {
 
     @Override
     public int hashCode() {
-      return Objects.hash(id, uri, paths, methods, stripPrefix, prefixPath, resilience, requestHeaders,
-          versioning, weight, sessionAffinity, lbStrategy);
+      return Objects.hash(id, variantId, uri, paths, methods, stripPrefix, prefixPath, resilience,
+          requestHeaders, tenantRouting, versioning, weight, sessionAffinity, lbStrategy);
     }
 
     /**
