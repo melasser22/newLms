@@ -841,6 +841,10 @@ public class GatewayRoutesProperties {
         return "forward:/fallback/" + routeId;
       }
 
+      public String resolvedBulkheadName(String routeId) {
+        return resolvedCircuitBreakerName(routeId) + "-bulkhead";
+      }
+
       public Optional<String> resolvedFallbackMessage() {
         return Optional.ofNullable(StringUtils.hasText(fallbackMessage) ? fallbackMessage.trim() : null);
       }

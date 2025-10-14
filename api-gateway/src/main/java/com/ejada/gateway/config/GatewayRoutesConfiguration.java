@@ -12,6 +12,7 @@ import com.ejada.gateway.filter.ResponseBodyTransformationGatewayFilterFactory;
 import com.ejada.gateway.filter.SessionAffinityGatewayFilter;
 import com.ejada.gateway.resilience.TenantCircuitBreakerMetrics;
 import com.ejada.gateway.versioning.VersionNormalizationFilter;
+import io.github.resilience4j.bulkhead.Bulkhead;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -164,6 +165,12 @@ public class GatewayRoutesConfiguration {
                 filters.circuitBreaker(config -> {
                   config.setName(resilience.resolvedCircuitBreakerName(route.getId()));
                   config.setFallbackUri(resilience.resolvedFallbackUri(route.getId()));
+                });
+
+                filters.bulkhead(config -> {
+                  config.setName(resilience.resolvedBulkheadName(route.getId()));
+                  config.setFallbackUri(resilience.resolvedFallbackUri(route.getId()));
+                  config.setType(Bulkhead.Type.THREADPOOL);
                 });
 
                 GatewayRoutesProperties.ServiceRoute.Resilience.Retry retry = resilience.getRetry();

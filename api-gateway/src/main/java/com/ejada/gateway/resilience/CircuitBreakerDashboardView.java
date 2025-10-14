@@ -2,6 +2,7 @@ package com.ejada.gateway.resilience;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -12,8 +13,13 @@ public record CircuitBreakerDashboardView(
     String name,
     TenantCircuitBreakerMetrics.Priority priority,
     CircuitBreaker.State state,
+    CircuitBreaker.State previousState,
     double failureRate,
     Instant lastUpdated,
+    Instant lastStateTransitionAt,
+    Instant lastOpenedAt,
+    Instant lastHalfOpenedAt,
+    Instant lastClosedAt,
     long fallbackCount,
     String lastTenant,
     Instant lastFallbackAt,
@@ -23,5 +29,9 @@ public record CircuitBreakerDashboardView(
     Instant lastRecoveryProbeFailure,
     boolean recoveryScheduled,
     Instant recoveryScheduledAt,
-    Map<String, Long> tenantFallbackCounts) {
+    Map<String, Long> tenantImpact,
+    List<TenantImpactView> topTenantImpact,
+    long impactedTenantCount) {
+
+  public record TenantImpactView(String tenantId, long fallbacks) { }
 }

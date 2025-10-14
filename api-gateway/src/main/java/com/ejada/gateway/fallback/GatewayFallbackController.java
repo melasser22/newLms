@@ -10,6 +10,7 @@ import com.ejada.gateway.resilience.TenantCircuitBreakerMetrics;
 import com.ejada.gateway.resilience.TenantCircuitBreakerMetrics.Priority;
 import com.ejada.gateway.subscription.SubscriptionCacheService;
 import com.ejada.gateway.subscription.SubscriptionRecord;
+import com.ejada.gateway.fallback.CachedFallbackService.CachedFallbackContext;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -43,15 +44,18 @@ public class GatewayFallbackController {
   private final GatewayRoutesProperties properties;
   private final SubscriptionCacheService subscriptionCacheService;
   private final BillingFallbackQueue billingFallbackQueue;
+  private final CachedFallbackService cachedFallbackService;
   private final TenantCircuitBreakerMetrics circuitBreakerMetrics;
 
   public GatewayFallbackController(GatewayRoutesProperties properties,
       SubscriptionCacheService subscriptionCacheService,
       BillingFallbackQueue billingFallbackQueue,
+      CachedFallbackService cachedFallbackService,
       TenantCircuitBreakerMetrics circuitBreakerMetrics) {
     this.properties = properties;
     this.subscriptionCacheService = subscriptionCacheService;
     this.billingFallbackQueue = billingFallbackQueue;
+    this.cachedFallbackService = cachedFallbackService;
     this.circuitBreakerMetrics = circuitBreakerMetrics;
   }
 
@@ -81,15 +85,25 @@ public class GatewayFallbackController {
         .map(value -> Priority.valueOf(value.name()))
         .orElse(Priority.NON_CRITICAL);
 
-    return switch (routeId) {
+    Mono<ResponseEntity<BaseResponse<FallbackResponse>>> routeSpecific = switch (routeId) {
       case "catalog-service" -> catalogFallback(routeId, circuitBreakerName, tenantId, status, message,
           exchange, priority);
       case "billing-service" -> billingFallback(routeId, circuitBreakerName, tenantId, status, message,
           exchange, priority);
       case "subscription-service" -> subscriptionFallback(routeId, circuitBreakerName, tenantId, status,
           message, exchange, priority);
+      case "tenant-service" -> tenantServiceFallback(routeId, circuitBreakerName, tenantId, status, message,
+          exchange, priority);
       default -> Mono.just(defaultFallback(routeId, circuitBreakerName, tenantId, status, message, priority));
     };
+
+    if (priority == Priority.CRITICAL && !"tenant-service".equals(routeId)) {
+      return cachedFallbackService.resolve(routeId, exchange)
+          .map(context -> buildCachedFallbackResponse(routeId, circuitBreakerName, tenantId, status, message,
+              priority, context))
+          .switchIfEmpty(routeSpecific);
+    }
+    return routeSpecific;
   }
 
   private Mono<ResponseEntity<BaseResponse<FallbackResponse>>> catalogFallback(String routeId,
@@ -105,6 +119,22 @@ public class GatewayFallbackController {
                 message, exchange, record, priority)))
             .orElseGet(() -> Mono.just(defaultFallback(routeId, circuitBreakerName, tenantId,
                 HttpStatus.SERVICE_UNAVAILABLE, DEFAULT_MESSAGE, priority))));
+  }
+
+  private Mono<ResponseEntity<BaseResponse<FallbackResponse>>> tenantServiceFallback(String routeId,
+      String circuitBreakerName,
+      String tenantId,
+      HttpStatus status,
+      String message,
+      ServerWebExchange exchange,
+      Priority priority) {
+    if (priority != Priority.CRITICAL) {
+      return Mono.just(defaultFallback(routeId, circuitBreakerName, tenantId, status, message, priority));
+    }
+    return cachedFallbackService.resolve(routeId, exchange)
+        .map(context -> buildCachedFallbackResponse(routeId, circuitBreakerName, tenantId, status, message,
+            priority, context))
+        .switchIfEmpty(Mono.just(defaultFallback(routeId, circuitBreakerName, tenantId, status, message, priority)));
   }
 
   private ResponseEntity<BaseResponse<FallbackResponse>> buildCatalogFallbackResponse(String routeId,
@@ -207,6 +237,41 @@ public class GatewayFallbackController {
             Duration staleFor = Duration.between(payload.cachedAt(), Instant.now());
             headers.add("X-Subscription-Stale-For",
                 Long.toString(Math.max(0, staleFor.toSeconds())));
+          }
+        });
+  }
+
+  private ResponseEntity<BaseResponse<FallbackResponse>> buildCachedFallbackResponse(String routeId,
+      String circuitBreakerName,
+      String tenantId,
+      HttpStatus status,
+      String message,
+      Priority priority,
+      CachedFallbackContext context) {
+    Map<String, Object> metadata = new LinkedHashMap<>(context.metadata());
+    metadata.put("strategy", "redis-cache");
+    metadata.put("priority", priority.name());
+    metadata.put("tenantId", Optional.ofNullable(tenantId).orElse("unknown"));
+    metadata.put("cacheState", context.cacheState().name());
+    recordFallback(circuitBreakerName, tenantId, "REDIS_CACHE", metadata);
+    CachedFallbackPayload payload = context.payload();
+    Instant now = Instant.now();
+    return buildResponse(status, ApiStatus.WARNING, status.name(), message,
+        new FallbackResponse(routeId, message, now, payload, metadata), headers -> {
+          headers.add("X-Fallback-Source", "redis-cache");
+          headers.add("X-Fallback-Cache-Key", context.cacheKey());
+          headers.add("X-Fallback-Cache-State", context.cacheState().name());
+          headers.add("X-Fallback-Cache-Captured-At", payload.cachedAt().toString());
+          headers.add("X-Fallback-Cache-Expires-At", payload.expiresAt().toString());
+          headers.add("X-Fallback-Cache-Stale-At", payload.staleAt().toString());
+          Duration age = Duration.between(payload.cachedAt(), now);
+          headers.add("X-Fallback-Cache-Age", Long.toString(Math.max(0, age.toSeconds())));
+          if (payload.staleAt().isBefore(now)) {
+            headers.add("X-Fallback-Cache-Stale-For",
+                Long.toString(Math.max(0, Duration.between(payload.staleAt(), now).toSeconds())));
+          } else {
+            headers.add("X-Fallback-Cache-Stale-In",
+                Long.toString(Math.max(0, Duration.between(now, payload.staleAt()).toSeconds())));
           }
         });
   }

@@ -282,6 +282,30 @@ resilience4j:
         base-config: default
       policy-service:
         base-config: default
+  thread-pool-bulkhead:
+    configs:
+      default:
+        max-thread-pool-size: 30
+        core-thread-pool-size: 10
+        queue-capacity: 100
+        keep-alive-duration: 30s
+    instances:
+      setup-service-bulkhead:
+        base-config: default
+      tenant-service-cb-bulkhead:
+        base-config: default
+      tenant-service-canary-bulkhead:
+        base-config: default
+      catalog-service-cb-bulkhead:
+        base-config: default
+      subscription-service-bulkhead:
+        base-config: default
+      billing-service-bulkhead:
+        base-config: default
+      security-service-bulkhead:
+        base-config: default
+      policy-service-bulkhead:
+        base-config: default
 
 # Declarative downstream routes consumed by GatewayRoutesConfiguration
 gateway:
