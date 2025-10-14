@@ -36,9 +36,11 @@ import java.util.Objects;
 public class MockHttpServletRequest implements HttpServletRequest {
 
     private final Map<String, List<String>> headers = new LinkedHashMap<>();
+    private final Map<String, Object> attributes = new LinkedHashMap<>();
     private String method = "GET";
     private String serverName = "localhost";
     private String requestUri = "/";
+    private final Map<String, String[]> parameters = new LinkedHashMap<>();
 
     @Override
     public String getAuthType() {
@@ -60,6 +62,13 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
     public void setMethod(String method) {
         this.method = method;
+    }
+
+    public void setParameter(String name, String value) {
+        if (name == null) {
+            return;
+        }
+        parameters.put(name, value == null ? null : new String[]{value});
     }
 
     @Override
@@ -234,12 +243,12 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
     @Override
     public Object getAttribute(String name) {
-        return null;
+        return attributes.get(name);
     }
 
     @Override
     public Enumeration<String> getAttributeNames() {
-        return Collections.emptyEnumeration();
+        return Collections.enumeration(attributes.keySet());
     }
 
     @Override
@@ -274,22 +283,26 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String getParameter(String name) {
-        return null;
+        if (name == null) {
+            return null;
+        }
+        String[] values = parameters.get(name);
+        return (values == null || values.length == 0) ? null : values[0];
     }
 
     @Override
     public Enumeration<String> getParameterNames() {
-        return Collections.emptyEnumeration();
+        return Collections.enumeration(parameters.keySet());
     }
 
     @Override
     public String[] getParameterValues(String name) {
-        return null;
+        return parameters.get(name);
     }
 
     @Override
     public Map<String, String[]> getParameterMap() {
-        return Map.of();
+        return Collections.unmodifiableMap(parameters);
     }
 
     @Override
@@ -334,12 +347,19 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
     @Override
     public void setAttribute(String name, Object o) {
-        // no-op
+        if (name == null) {
+            return;
+        }
+        if (o == null) {
+            attributes.remove(name);
+        } else {
+            attributes.put(name, o);
+        }
     }
 
     @Override
     public void removeAttribute(String name) {
-        // no-op
+        attributes.remove(name);
     }
 
     @Override

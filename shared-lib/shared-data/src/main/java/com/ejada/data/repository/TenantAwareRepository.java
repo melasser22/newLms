@@ -1,5 +1,6 @@
 package com.ejada.data.repository;
 
+import com.ejada.common.tenant.TenantIsolationValidator;
 import com.ejada.starter_core.context.TenantContextResolver;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -66,7 +67,7 @@ public interface TenantAwareRepository<T, ID> extends JpaRepository<T, ID> {
      * @throws IllegalStateException if tenant context is not available
      */
     default Optional<T> findByIdSecure(ID id) {
-        UUID tenantId = TenantContextResolver.requireTenantId();
+        UUID tenantId = resolveTenant("findByIdSecure");
         return findByIdAndTenantId(id, tenantId);
     }
 
@@ -87,7 +88,7 @@ public interface TenantAwareRepository<T, ID> extends JpaRepository<T, ID> {
      * @throws IllegalStateException if tenant context is not available
      */
     default boolean existsByIdSecure(ID id) {
-        UUID tenantId = TenantContextResolver.requireTenantId();
+        UUID tenantId = resolveTenant("existsByIdSecure");
         return existsByIdAndTenantId(id, tenantId);
     }
 
@@ -111,7 +112,7 @@ public interface TenantAwareRepository<T, ID> extends JpaRepository<T, ID> {
      * @throws IllegalStateException if tenant context is not available
      */
     default List<T> findAllSecure() {
-        UUID tenantId = TenantContextResolver.requireTenantId();
+        UUID tenantId = resolveTenant("findAllSecure");
         return findAllByTenantId(tenantId);
     }
 
@@ -131,7 +132,7 @@ public interface TenantAwareRepository<T, ID> extends JpaRepository<T, ID> {
      * @throws IllegalStateException if tenant context is not available
      */
     default List<T> findAllSecure(Sort sort) {
-        UUID tenantId = TenantContextResolver.requireTenantId();
+        UUID tenantId = resolveTenant("findAllSecure(Sort)");
         return findAllByTenantId(tenantId, sort);
     }
 
@@ -152,7 +153,7 @@ public interface TenantAwareRepository<T, ID> extends JpaRepository<T, ID> {
      * @throws IllegalStateException if tenant context is not available
      */
     default Page<T> findAllSecure(Pageable pageable) {
-        UUID tenantId = TenantContextResolver.requireTenantId();
+        UUID tenantId = resolveTenant("findAllSecure(Pageable)");
         return findAllByTenantId(tenantId, pageable);
     }
 
@@ -172,7 +173,7 @@ public interface TenantAwareRepository<T, ID> extends JpaRepository<T, ID> {
      * @throws IllegalStateException if tenant context is not available
      */
     default long countSecure() {
-        UUID tenantId = TenantContextResolver.requireTenantId();
+        UUID tenantId = resolveTenant("countSecure");
         return countByTenantId(tenantId);
     }
 
@@ -195,7 +196,7 @@ public interface TenantAwareRepository<T, ID> extends JpaRepository<T, ID> {
      * @throws IllegalStateException if tenant context is not available
      */
     default void deleteByIdSecure(ID id) {
-        UUID tenantId = TenantContextResolver.requireTenantId();
+        UUID tenantId = resolveTenant("deleteByIdSecure");
         deleteByIdAndTenantId(id, tenantId);
     }
 
@@ -213,7 +214,7 @@ public interface TenantAwareRepository<T, ID> extends JpaRepository<T, ID> {
      * @throws IllegalStateException if tenant context is not available
      */
     default void deleteAllSecure() {
-        UUID tenantId = TenantContextResolver.requireTenantId();
+        UUID tenantId = resolveTenant("deleteAllSecure");
         deleteAllByTenantId(tenantId);
     }
 
@@ -223,6 +224,12 @@ public interface TenantAwareRepository<T, ID> extends JpaRepository<T, ID> {
      * @param tenantId the tenant UUID
      */
     void deleteAllByTenantId(UUID tenantId);
+
+    private static UUID resolveTenant(String operation) {
+        UUID tenantId = TenantContextResolver.requireTenantId();
+        TenantIsolationValidator.verifyDatabaseAccess(operation, tenantId);
+        return tenantId;
+    }
 
     // ============================================
     // TENANT-SAFE SAVE METHODS
@@ -238,7 +245,7 @@ public interface TenantAwareRepository<T, ID> extends JpaRepository<T, ID> {
      * @throws IllegalArgumentException if an existing entity's tenantId does not match the context
      */
     default <S extends T> S saveSecure(S entity) {
-        UUID currentTenantId = TenantContextResolver.requireTenantId();
+        UUID currentTenantId = resolveTenant("saveSecure");
         UUID entityTenantId = readTenantId(entity);
 
         if (entityTenantId == null) {

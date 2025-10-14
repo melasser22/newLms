@@ -170,6 +170,12 @@ public class SharedSecurityProps implements BaseStarterProperties {
 
     /** Require presence of X-Tenant-Id header on authenticated requests. */
     private boolean requireTenantHeader = false;
+
+    /** Enable request path/body validation to prevent cross-tenant access. */
+    private boolean preventCrossTenantAccess = false;
+
+    /** JSON field names inspected when validating request bodies. */
+    private String[] bodyTenantFields = new String[]{"tenantId", "tenant_id"};
   }
 
   public void setHs256(Hs256 hs256) {

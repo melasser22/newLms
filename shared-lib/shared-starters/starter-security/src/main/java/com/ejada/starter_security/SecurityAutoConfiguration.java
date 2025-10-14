@@ -263,7 +263,8 @@ public class SecurityAutoConfiguration {
                                         JwtAuthenticationConverter jwtAuthConverter,
                                         ObjectMapper objectMapper,
                                         CorsConfigurationSource corsConfigurationSource,
-                                        ObjectProvider<InternalClientAuthenticationFilter> internalClientFilterProvider)
+                                        ObjectProvider<InternalClientAuthenticationFilter> internalClientFilterProvider,
+                                        ObjectProvider<CrossTenantAccessFilter> crossTenantFilterProvider)
         throws Exception {
 
       var rs = props.getResourceServer();
@@ -332,7 +333,16 @@ public class SecurityAutoConfiguration {
         http.addFilterAfter(new JwtTenantFilter(props.getTenantClaim()), BearerTokenAuthenticationFilter.class);
       }
 
+      crossTenantFilterProvider.ifAvailable(filter ->
+          http.addFilterAfter(filter, JwtTenantFilter.class));
+
       return http.build();
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "shared.security.tenant-verification", name = "prevent-cross-tenant-access", havingValue = "true")
+    CrossTenantAccessFilter crossTenantAccessFilter(SharedSecurityProps props, ObjectMapper objectMapper) {
+      return new CrossTenantAccessFilter(props.getTenantVerification(), objectMapper);
     }
 
     @Bean

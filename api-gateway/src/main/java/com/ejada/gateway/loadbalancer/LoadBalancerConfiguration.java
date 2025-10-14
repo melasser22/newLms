@@ -2,6 +2,7 @@ package com.ejada.gateway.loadbalancer;
 
 import com.ejada.gateway.config.GatewayKubernetesDiscoveryProperties;
 import com.ejada.gateway.config.GatewayRoutesProperties;
+import com.ejada.gateway.config.TenantMigrationProperties;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import java.util.List;
 import org.springframework.beans.factory.ObjectProvider;
@@ -28,13 +29,20 @@ import org.springframework.util.StringUtils;
  * weighting metadata.
  */
 @Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties(GatewayKubernetesDiscoveryProperties.class)
+@EnableConfigurationProperties({GatewayKubernetesDiscoveryProperties.class, TenantMigrationProperties.class})
 @LoadBalancerClients(defaultConfiguration = LoadBalancerConfiguration.TenantAffinityLoadBalancerClientConfiguration.class)
 public class LoadBalancerConfiguration {
 
   @Bean
   public LoadBalancerHealthCheckAggregator loadBalancerHealthCheckAggregator() {
     return new LoadBalancerHealthCheckAggregator();
+  }
+
+  @Bean
+  public TenantMigrationService tenantMigrationService(TenantMigrationProperties migrationProperties,
+                                                       LoadBalancerClientFactory clientFactory,
+                                                       LoadBalancerHealthCheckAggregator aggregator) {
+    return new TenantMigrationService(migrationProperties, clientFactory, aggregator);
   }
 
   @Bean
@@ -74,6 +82,7 @@ public class LoadBalancerConfiguration {
         LoadBalancerClientFactory clientFactory,
         LoadBalancerHealthCheckAggregator aggregator,
         GatewayRoutesProperties routesProperties,
+        TenantMigrationService migrationService,
         WebSocketStickTable stickTable,
         @Value("${spring.cloud.loadbalancer.zone:}") String localZone,
         Environment environment,
@@ -86,6 +95,8 @@ public class LoadBalancerConfiguration {
       ObjectProvider<ServiceInstanceListSupplier> provider = clientFactory
           .getLazyProvider(serviceId, ServiceInstanceListSupplier.class);
       return new CompositeLoadBalancer(serviceId, provider, aggregator, routesProperties,
+          migrationService,
+          tenantContext,
           List.of(
               new HealthAwareFilter(),
               new ZonePreferenceFilter(localZone)),

@@ -16,10 +16,12 @@ public record EventEnvelope<T>(
    * thread context.
    */
   public static <T> EventEnvelope<T> from(String event, T data) {
+    String tenantId = com.ejada.common.tenant.TenantIsolationValidator.requireTenant("EventEnvelope.from");
+    com.ejada.common.tenant.TenantIsolationValidator.verifyKafkaOperation("EventEnvelope.from", tenantId);
     return new EventEnvelope<>(
         event,
         Instant.now(),
-        ContextManager.Tenant.get(),
+        tenantId,
         ContextManager.getCorrelationId(),
         "1.0",
         data);

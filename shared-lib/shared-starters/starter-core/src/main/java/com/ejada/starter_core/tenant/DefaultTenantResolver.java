@@ -62,14 +62,20 @@ public class DefaultTenantResolver implements TenantResolver {
             return TenantResolution.absent();
         }
 
-        TenantResolution[] attempts = new TenantResolution[] {
-                resolveFromJwt(),
-                resolveFromHeader(request),
-                resolveFromSubdomain(request),
-                resolveFromAdminPath(request)
-        };
+        java.util.List<java.util.function.Supplier<TenantResolution>> attempts = new java.util.ArrayList<>(5);
+        if (cfg.isPreferHeaderOverJwt()) {
+            attempts.add(() -> resolveFromHeader(request));
+            attempts.add(this::resolveFromJwt);
+        } else {
+            attempts.add(this::resolveFromJwt);
+            attempts.add(() -> resolveFromHeader(request));
+        }
+        attempts.add(() -> resolveFromQueryParam(request));
+        attempts.add(() -> resolveFromSubdomain(request));
+        attempts.add(() -> resolveFromAdminPath(request));
 
-        for (TenantResolution attempt : attempts) {
+        for (java.util.function.Supplier<TenantResolution> supplier : attempts) {
+            TenantResolution attempt = supplier.get();
             if (attempt == null || attempt.isAbsent()) {
                 continue;
             }
@@ -165,6 +171,23 @@ public class DefaultTenantResolver implements TenantResolver {
         }
 
         return resolveByIdCandidate(headerValue, TenantSource.HEADER);
+    }
+
+    private TenantResolution resolveFromQueryParam(HttpServletRequest request) {
+        if (request == null) {
+            return TenantResolution.absent();
+        }
+        String paramName = trimToNull(cfg.getQueryParam());
+        if (paramName == null) {
+            return TenantResolution.absent();
+        }
+
+        String value = trimToNull(request.getParameter(paramName));
+        if (value == null) {
+            return TenantResolution.absent();
+        }
+
+        return resolveByIdCandidate(value, TenantSource.QUERY_PARAM);
     }
 
     private TenantResolution resolveFromSubdomain(HttpServletRequest request) {
