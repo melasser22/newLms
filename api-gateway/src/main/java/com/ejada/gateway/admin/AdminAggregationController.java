@@ -7,6 +7,7 @@ import com.ejada.gateway.admin.model.DetailedHealthStatus;
 import com.ejada.gateway.loadbalancer.LoadBalancerHealthCheckAggregator;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,9 +22,12 @@ import reactor.core.publisher.Mono;
 public class AdminAggregationController {
 
   private final AdminAggregationService aggregationService;
+  private final AdminTenantAggregationService tenantAggregationService;
 
-  public AdminAggregationController(AdminAggregationService aggregationService) {
+  public AdminAggregationController(AdminAggregationService aggregationService,
+      AdminTenantAggregationService tenantAggregationService) {
     this.aggregationService = aggregationService;
+    this.tenantAggregationService = tenantAggregationService;
   }
 
   @GetMapping("/overview")
@@ -49,5 +53,11 @@ public class AdminAggregationController {
       @RequestParam(name = "serviceId", required = false) String serviceId) {
     return Mono.fromSupplier(() -> aggregationService.collectLoadBalancerHealth(serviceId))
         .map(data -> BaseResponse.success("Load balancer health", data));
+  }
+
+  @GetMapping("/tenants/{tenantId}/aggregate")
+  public Mono<BaseResponse<AdminTenantAggregateResponse>> tenantAggregate(@PathVariable Integer tenantId) {
+    return tenantAggregationService.aggregate(tenantId)
+        .map(data -> BaseResponse.success("Tenant aggregated overview", data));
   }
 }

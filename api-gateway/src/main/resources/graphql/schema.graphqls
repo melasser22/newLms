@@ -1,0 +1,36 @@
+type Query {
+  tenant(id: ID!): Tenant
+  tenants(ids: [ID!]!): [Tenant!]!
+}
+
+type Tenant {
+  id: ID
+  code: String
+  name: String
+  status: String
+  subscriptions: [Subscription!]!
+  catalog: [CatalogItem!]!
+  billing: BillingSummary
+}
+
+type Subscription {
+  id: ID
+  status: String
+  product: String
+  seats: Int
+  startedAt: String
+}
+
+type CatalogItem {
+  id: ID
+  name: String
+  category: String
+  description: String
+}
+
+type BillingSummary {
+  currency: String
+  totalDue: Float
+  usage: Float
+  nextInvoiceDate: String
+}
