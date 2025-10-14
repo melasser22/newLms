@@ -28,6 +28,8 @@ public class CircuitBreakerRecoveryTester {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CircuitBreakerRecoveryTester.class);
 
+  private static final Duration PROBE_INTERVAL = Duration.ofSeconds(15);
+
   private final AdminAggregationProperties adminProperties;
   private final WebClient.Builder webClientBuilder;
   private final TenantCircuitBreakerMetrics metrics;
@@ -56,33 +58,33 @@ public class CircuitBreakerRecoveryTester {
     CircuitBreaker.State toState = event.getStateTransition().getToState();
     String name = circuitBreaker.getName();
     switch (toState) {
-      case OPEN -> schedule(name, circuitBreaker);
+      case OPEN -> schedule(circuitBreaker);
       case CLOSED -> {
         cancel(name);
         metrics.markRecoveryIdle(name);
       }
-      case HALF_OPEN -> runProbe(name).subscribe();
+      case HALF_OPEN -> runProbe(circuitBreaker).subscribe();
       default -> {
         // no-op
       }
     }
   }
 
-  private void schedule(String circuitBreakerName, CircuitBreaker circuitBreaker) {
+  private void schedule(CircuitBreaker circuitBreaker) {
+    String circuitBreakerName = circuitBreaker.getName();
     cancel(circuitBreakerName);
-    Duration wait = Optional.ofNullable(circuitBreaker.getCircuitBreakerConfig().getWaitIntervalFunctionInOpenState())
-        .map(function -> Duration.ofMillis(Math.max(1, function.apply(1))))
-        .filter(d -> !d.isNegative() && !d.isZero())
-        .orElse(Duration.ofSeconds(30));
+    TenantCircuitBreakerMetrics.Priority priority = metrics.priorityOf(circuitBreakerName);
     metrics.markRecoveryScheduled(circuitBreakerName);
-    Disposable disposable = Flux.interval(wait, wait, Schedulers.boundedElastic())
-        .flatMap(ignore -> runProbe(circuitBreakerName))
+    Disposable disposable = Flux.interval(Duration.ZERO, PROBE_INTERVAL, Schedulers.boundedElastic())
+        .flatMap(ignore -> runProbe(circuitBreaker))
         .subscribe();
     scheduled.put(circuitBreakerName, disposable);
-    LOGGER.debug("Scheduled recovery probe for {} every {}", circuitBreakerName, wait);
+    LOGGER.info("Scheduled proactive recovery probe for {} (priority={}) every {}", circuitBreakerName,
+        priority, PROBE_INTERVAL);
   }
 
-  private Mono<Void> runProbe(String circuitBreakerName) {
+  private Mono<Void> runProbe(CircuitBreaker circuitBreaker) {
+    String circuitBreakerName = circuitBreaker.getName();
     Optional<AdminAggregationProperties.Service> serviceOptional = locateService(circuitBreakerName);
     if (serviceOptional.isEmpty()) {
       metrics.markRecoveryProbe(circuitBreakerName, false);
@@ -102,12 +104,25 @@ public class CircuitBreakerRecoveryTester {
           LOGGER.info("Recovery probe for {} succeeded", circuitBreakerName);
           metrics.markRecoveryProbe(circuitBreakerName, true);
           cancel(circuitBreakerName);
+          attemptHalfOpenTransition(circuitBreaker);
         })).then()
         .onErrorResume(ex -> {
           LOGGER.debug("Recovery probe for {} failed: {}", circuitBreakerName, ex.getMessage());
           metrics.markRecoveryProbe(circuitBreakerName, false);
           return Mono.<Void>empty();
         });
+  }
+
+  private void attemptHalfOpenTransition(CircuitBreaker circuitBreaker) {
+    if (circuitBreaker.getState() != CircuitBreaker.State.OPEN) {
+      return;
+    }
+    try {
+      circuitBreaker.transitionToHalfOpenState();
+      LOGGER.info("Transitioned circuit breaker {} to HALF_OPEN after successful probe", circuitBreaker.getName());
+    } catch (Exception ex) {
+      LOGGER.debug("Failed to transition circuit breaker {} to HALF_OPEN: {}", circuitBreaker.getName(), ex.getMessage());
+    }
   }
 
   private Optional<AdminAggregationProperties.Service> locateService(String circuitBreakerName) {

@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -116,6 +117,11 @@ public class TenantCircuitBreakerMetrics {
     return views;
   }
 
+  public Priority priorityOf(String circuitBreakerName) {
+    CircuitBreakerInsight snapshot = insights.get(circuitBreakerName);
+    return snapshot != null ? snapshot.priority() : Priority.NON_CRITICAL;
+  }
+
   double stateValue(String circuitBreakerName, CircuitBreaker.State state) {
     CircuitBreakerInsight snapshot = insights.get(circuitBreakerName);
     if (snapshot == null) {
@@ -166,8 +172,13 @@ public class TenantCircuitBreakerMetrics {
       String name,
       Priority priority,
       CircuitBreaker.State state,
+      @Nullable CircuitBreaker.State previousState,
       double failureRate,
       Instant lastUpdated,
+      @Nullable Instant lastStateTransitionAt,
+      @Nullable Instant lastOpenedAt,
+      @Nullable Instant lastHalfOpenedAt,
+      @Nullable Instant lastClosedAt,
       long fallbackCount,
       @Nullable String lastTenant,
       @Nullable Instant lastFallbackAt,
@@ -177,69 +188,101 @@ public class TenantCircuitBreakerMetrics {
       @Nullable Instant lastRecoveryProbeFailure,
       boolean recoveryScheduled,
       Instant recoveryScheduledAt,
-      Map<String, Long> tenantFallbackCounts) {
+      Map<String, Long> tenantImpact) {
 
     private static CircuitBreakerInsight initial(String name) {
-      return new CircuitBreakerInsight(name, Priority.NON_CRITICAL, CircuitBreaker.State.CLOSED, 0.0d,
-          Instant.now(), 0, null, null, null, Map.of(), null, null, false, null, Map.of());
+      Instant now = Instant.now();
+      return new CircuitBreakerInsight(name, Priority.NON_CRITICAL, CircuitBreaker.State.CLOSED, null, 0.0d,
+          now, now, null, null, now, 0, null, null, null, Map.of(), null, null, false, null, Map.of());
     }
 
     private CircuitBreakerInsight withPriority(Priority priority) {
       return new CircuitBreakerInsight(name, Optional.ofNullable(priority).orElse(this.priority), state,
-          failureRate, lastUpdated, fallbackCount, lastTenant, lastFallbackAt, lastFallbackType,
+          previousState, failureRate, lastUpdated, lastStateTransitionAt, lastOpenedAt, lastHalfOpenedAt,
+          lastClosedAt, fallbackCount, lastTenant, lastFallbackAt, lastFallbackType,
           lastFallbackMetadata, lastRecoveryProbeSuccess, lastRecoveryProbeFailure, recoveryScheduled,
-          recoveryScheduledAt, tenantFallbackCounts);
+          recoveryScheduledAt, tenantImpact);
     }
 
     private CircuitBreakerInsight update(CircuitBreaker.State newState, float newFailureRate, Instant timestamp) {
       double rate = Double.isFinite(newFailureRate) && newFailureRate >= 0 ? newFailureRate : 0.0d;
-      return new CircuitBreakerInsight(name, priority, newState, rate, timestamp, fallbackCount, lastTenant,
-          lastFallbackAt, lastFallbackType, lastFallbackMetadata, lastRecoveryProbeSuccess,
-          lastRecoveryProbeFailure, recoveryScheduled, recoveryScheduledAt, tenantFallbackCounts);
+      boolean changed = newState != state;
+      CircuitBreaker.State resolvedPrevious = changed ? state : previousState;
+      Instant transitionAt = changed ? timestamp : lastStateTransitionAt;
+      Instant openedAt = lastOpenedAt;
+      Instant halfOpenedAt = lastHalfOpenedAt;
+      Instant closedAt = lastClosedAt;
+      if (changed) {
+        switch (newState) {
+          case OPEN -> openedAt = timestamp;
+          case HALF_OPEN -> halfOpenedAt = timestamp;
+          case CLOSED -> closedAt = timestamp;
+          default -> {
+            // no-op
+          }
+        }
+      }
+      return new CircuitBreakerInsight(name, priority, newState, resolvedPrevious, rate, timestamp, transitionAt,
+          openedAt, halfOpenedAt, closedAt, fallbackCount, lastTenant, lastFallbackAt, lastFallbackType,
+          lastFallbackMetadata, lastRecoveryProbeSuccess, lastRecoveryProbeFailure, recoveryScheduled,
+          recoveryScheduledAt, tenantImpact);
     }
 
     private CircuitBreakerInsight recordFallback(String tenant, String type,
         Map<String, Object> metadata, Instant timestamp) {
       Map<String, Object> details = (metadata == null || metadata.isEmpty()) ? Map.of() : Map.copyOf(metadata);
       Map<String, Long> distribution;
-      if (tenantFallbackCounts == null || tenantFallbackCounts.isEmpty()) {
+      if (tenantImpact == null || tenantImpact.isEmpty()) {
         distribution = new LinkedHashMap<>();
       } else {
-        distribution = new LinkedHashMap<>(tenantFallbackCounts);
+        distribution = new LinkedHashMap<>(tenantImpact);
       }
       distribution.merge(tenant, 1L, Long::sum);
-      return new CircuitBreakerInsight(name, priority, state, failureRate, timestamp,
+      return new CircuitBreakerInsight(name, priority, state, previousState, failureRate, timestamp,
+          lastStateTransitionAt, lastOpenedAt, lastHalfOpenedAt, lastClosedAt,
           fallbackCount + 1, tenant, timestamp, type, details, lastRecoveryProbeSuccess,
           lastRecoveryProbeFailure, recoveryScheduled, recoveryScheduledAt, Map.copyOf(distribution));
     }
 
     private CircuitBreakerInsight markRecoveryScheduled(Instant timestamp) {
-      return new CircuitBreakerInsight(name, priority, state, failureRate, timestamp, fallbackCount, lastTenant,
+      return new CircuitBreakerInsight(name, priority, state, previousState, failureRate, timestamp, lastStateTransitionAt,
+          lastOpenedAt, lastHalfOpenedAt, lastClosedAt, fallbackCount, lastTenant,
           lastFallbackAt, lastFallbackType, lastFallbackMetadata, lastRecoveryProbeSuccess,
-          lastRecoveryProbeFailure, true, timestamp, tenantFallbackCounts);
+          lastRecoveryProbeFailure, true, timestamp, tenantImpact);
     }
 
     private CircuitBreakerInsight markRecoveryProbe(boolean success, Instant timestamp) {
       if (success) {
-        return new CircuitBreakerInsight(name, priority, state, failureRate, timestamp, fallbackCount,
+        return new CircuitBreakerInsight(name, priority, state, previousState, failureRate, timestamp, lastStateTransitionAt,
+            lastOpenedAt, lastHalfOpenedAt, lastClosedAt, fallbackCount,
             lastTenant, lastFallbackAt, lastFallbackType, lastFallbackMetadata, timestamp,
-            lastRecoveryProbeFailure, false, recoveryScheduledAt, tenantFallbackCounts);
+            lastRecoveryProbeFailure, false, recoveryScheduledAt, tenantImpact);
       }
-      return new CircuitBreakerInsight(name, priority, state, failureRate, timestamp, fallbackCount, lastTenant,
+      return new CircuitBreakerInsight(name, priority, state, previousState, failureRate, timestamp, lastStateTransitionAt,
+          lastOpenedAt, lastHalfOpenedAt, lastClosedAt, fallbackCount, lastTenant,
           lastFallbackAt, lastFallbackType, lastFallbackMetadata, lastRecoveryProbeSuccess, timestamp,
-          true, recoveryScheduledAt, tenantFallbackCounts);
+          true, recoveryScheduledAt, tenantImpact);
     }
 
     private CircuitBreakerInsight markRecoveryIdle(Instant timestamp) {
-      return new CircuitBreakerInsight(name, priority, state, failureRate, timestamp, fallbackCount, lastTenant,
+      return new CircuitBreakerInsight(name, priority, state, previousState, failureRate, timestamp, lastStateTransitionAt,
+          lastOpenedAt, lastHalfOpenedAt, lastClosedAt, fallbackCount, lastTenant,
           lastFallbackAt, lastFallbackType, lastFallbackMetadata, lastRecoveryProbeSuccess,
-          lastRecoveryProbeFailure, false, recoveryScheduledAt, tenantFallbackCounts);
+          lastRecoveryProbeFailure, false, recoveryScheduledAt, tenantImpact);
     }
 
     private CircuitBreakerDashboardView toView() {
-      return new CircuitBreakerDashboardView(name, priority, state, failureRate, lastUpdated, fallbackCount,
+      Map<String, Long> impact = tenantImpact != null ? Map.copyOf(tenantImpact) : Map.of();
+      List<CircuitBreakerDashboardView.TenantImpactView> topImpact = impact.entrySet().stream()
+          .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+          .limit(5)
+          .map(entry -> new CircuitBreakerDashboardView.TenantImpactView(entry.getKey(), entry.getValue()))
+          .collect(Collectors.toList());
+      return new CircuitBreakerDashboardView(name, priority, state, previousState, failureRate, lastUpdated,
+          lastStateTransitionAt, lastOpenedAt, lastHalfOpenedAt, lastClosedAt, fallbackCount,
           lastTenant, lastFallbackAt, lastFallbackType, lastFallbackMetadata, lastRecoveryProbeSuccess,
-          lastRecoveryProbeFailure, recoveryScheduled, recoveryScheduledAt, tenantFallbackCounts);
+          lastRecoveryProbeFailure, recoveryScheduled, recoveryScheduledAt, impact,
+          List.copyOf(topImpact), impact.size());
     }
   }
 }
