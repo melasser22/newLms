@@ -61,6 +61,8 @@ class CompositeLoadBalancerTest {
 
     ObjectProvider<ServiceInstanceListSupplier> provider = new StaticObjectProvider<>(weightedSupplier);
     loadBalancer = new CompositeLoadBalancer("tenant-service", provider, aggregator, routesProperties,
+        null,
+        tenantContext,
         List.of(new HealthAwareFilter(), new ZonePreferenceFilter("zone-a")),
         List.of(new TenantAffinitySelector(tenantContext, stickTable), new WeightedRoundRobinSelector()));
   }

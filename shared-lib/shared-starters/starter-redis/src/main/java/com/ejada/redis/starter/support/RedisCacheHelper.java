@@ -28,7 +28,17 @@ public class RedisCacheHelper {
      * Resolves the full key including the configured prefix for the provided suffix.
      */
     public String key(String suffix) {
-        return keyPrefixStrategy.resolvePrefix() + suffix;
+        String tenant = com.ejada.common.tenant.TenantIsolationValidator.currentTenantOrPublic();
+        com.ejada.common.tenant.TenantIsolationValidator.verifyRedisOperation("RedisCacheHelper.key", tenant);
+        String base = keyPrefixStrategy.resolvePrefix();
+        if (base == null) {
+            base = "";
+        }
+        String normalizedBase = base.endsWith(":") ? base : base + ':';
+        if (normalizedBase.endsWith("public:")) {
+            normalizedBase = normalizedBase.substring(0, normalizedBase.length() - "public:".length());
+        }
+        return normalizedBase + tenant + ':' + suffix;
     }
 
     /**

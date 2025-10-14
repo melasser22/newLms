@@ -3,6 +3,7 @@ package com.ejada.gateway.loadbalancer;
 import com.ejada.gateway.config.GatewayRoutesProperties;
 import com.ejada.gateway.config.GatewayRoutesProperties.ServiceRoute;
 import com.ejada.gateway.config.GatewayRoutesProperties.ServiceRoute.LoadBalancingStrategy;
+import com.ejada.gateway.loadbalancer.TenantMigrationService.ResponseWrapper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -33,14 +34,18 @@ public class CompositeLoadBalancer implements ReactorServiceInstanceLoadBalancer
   private final List<InstanceFilter> filters;
   private final List<InstanceSelector> selectors;
   private final ReactorServiceInstanceLoadBalancer fallback;
+  private final TenantMigrationService migrationService;
+  private final TenantContext tenantContext;
 
   public CompositeLoadBalancer(String serviceId,
       ObjectProvider<ServiceInstanceListSupplier> supplierProvider,
       LoadBalancerHealthCheckAggregator aggregator,
       GatewayRoutesProperties routesProperties,
+      TenantMigrationService migrationService,
+      TenantContext tenantContext,
       List<InstanceFilter> filters,
       List<InstanceSelector> selectors) {
-    this(serviceId, supplierProvider, aggregator, routesProperties, filters, selectors,
+    this(serviceId, supplierProvider, aggregator, routesProperties, migrationService, tenantContext, filters, selectors,
         new RoundRobinLoadBalancer(supplierProvider, serviceId));
   }
 
@@ -48,6 +53,8 @@ public class CompositeLoadBalancer implements ReactorServiceInstanceLoadBalancer
       ObjectProvider<ServiceInstanceListSupplier> supplierProvider,
       LoadBalancerHealthCheckAggregator aggregator,
       GatewayRoutesProperties routesProperties,
+      TenantMigrationService migrationService,
+      TenantContext tenantContext,
       List<InstanceFilter> filters,
       List<InstanceSelector> selectors,
       ReactorServiceInstanceLoadBalancer fallback) {
@@ -58,23 +65,38 @@ public class CompositeLoadBalancer implements ReactorServiceInstanceLoadBalancer
     this.filters = List.copyOf(filters);
     this.selectors = List.copyOf(selectors);
     this.fallback = Objects.requireNonNull(fallback, "fallback");
+    this.migrationService = migrationService;
+    this.tenantContext = tenantContext;
   }
 
   @Override
   @SuppressWarnings("rawtypes")
   public Mono<Response<ServiceInstance>> choose(Request request) {
+    if (!shouldUseCustomStrategy(request)) {
+      return fallback.choose(request);
+    }
+
     ServiceInstanceListSupplier supplier = supplierProvider.getIfAvailable();
     if (supplier == null) {
       return Mono.just(new EmptyResponse());
     }
 
-    if (!shouldUseCustomStrategy(request)) {
-      return fallback.choose(request);
+    Mono<Response<ServiceInstance>> baseSelection = chooseFromSupplier(serviceId, supplier, request)
+        .switchIfEmpty(fallback.choose(request));
+
+    if (migrationService == null) {
+      return baseSelection;
     }
 
-    return supplier.get(request)
-        .next()
-        .flatMap(instances -> selectInstance(request, instances));
+    String tenantId = LoadBalancerRequestAdapter.resolveTenantId(request, tenantContext);
+    Optional<String> targetService = migrationService.resolveTarget(serviceId, tenantId);
+    if (targetService.isEmpty() || serviceId.equals(targetService.get())) {
+      return baseSelection;
+    }
+
+    return migrationService.chooseFromTarget(targetService.get(), request, filters, selectors)
+        .map(wrapper -> new DefaultResponse(wrapper.instance()))
+        .switchIfEmpty(baseSelection);
   }
 
   private boolean shouldUseCustomStrategy(Request<?> request) {
@@ -88,9 +110,20 @@ public class CompositeLoadBalancer implements ReactorServiceInstanceLoadBalancer
         .orElse(false);
   }
 
-  private Mono<Response<ServiceInstance>> selectInstance(Request<?> request, List<ServiceInstance> instances) {
+  private Mono<Response<ServiceInstance>> chooseFromSupplier(String targetServiceId,
+                                                            ServiceInstanceListSupplier supplier,
+                                                            Request<?> request) {
+    return supplier.get(request)
+        .next()
+        .flatMap(instances -> selectInstance(targetServiceId, request, instances))
+        .switchIfEmpty(Mono.empty());
+  }
+
+  private Mono<Response<ServiceInstance>> selectInstance(String targetServiceId,
+                                                         Request<?> request,
+                                                         List<ServiceInstance> instances) {
     if (instances == null || instances.isEmpty()) {
-      return Mono.just(new EmptyResponse());
+      return Mono.empty();
     }
 
     List<InstanceCandidate> candidates = new ArrayList<>(instances.size());
@@ -100,19 +133,19 @@ public class CompositeLoadBalancer implements ReactorServiceInstanceLoadBalancer
 
     List<InstanceCandidate> filtered = candidates;
     for (InstanceFilter filter : filters) {
-      filtered = filter.filter(serviceId, request, filtered);
+      filtered = filter.filter(targetServiceId, request, filtered);
       if (filtered.isEmpty()) {
-        return fallback.choose(request);
+        return Mono.empty();
       }
     }
 
     for (InstanceSelector selector : selectors) {
-      Optional<ServiceInstance> selected = selector.select(serviceId, request, filtered);
+      Optional<ServiceInstance> selected = selector.select(targetServiceId, request, filtered);
       if (selected.isPresent()) {
         return Mono.just(new DefaultResponse(selected.get()));
       }
     }
 
-    return fallback.choose(request);
+    return Mono.empty();
   }
 }

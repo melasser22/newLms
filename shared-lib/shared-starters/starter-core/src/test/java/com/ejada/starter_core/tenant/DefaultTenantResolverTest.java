@@ -110,6 +110,60 @@ class DefaultTenantResolverTest {
         assertThat(resolution.source()).isEqualTo(TenantSource.SUBDOMAIN);
     }
 
+    @Test
+    void prefersHeaderOverJwtWhenConfigured() {
+        UUID headerTenant = UUID.randomUUID();
+        UUID jwtTenant = UUID.randomUUID();
+        directory.add(headerTenant, "header", true);
+        directory.add(jwtTenant, "jwt", true);
+        tenantProps.setPreferHeaderOverJwt(true);
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(tenantProps.getHeaderName(), headerTenant.toString());
+        request.addHeader("X-API-Key", "test");
+        setJwtAuthentication(Map.of("tenantId", jwtTenant.toString()));
+
+        TenantResolution resolution = resolver.resolve(request);
+
+        assertThat(resolution.hasTenant()).isTrue();
+        assertThat(resolution.tenantId()).isEqualTo(headerTenant.toString());
+        assertThat(resolution.source()).isEqualTo(TenantSource.HEADER);
+    }
+
+    @Test
+    void prefersJwtOverHeaderWhenConfigured() {
+        UUID headerTenant = UUID.randomUUID();
+        UUID jwtTenant = UUID.randomUUID();
+        directory.add(headerTenant, "header", true);
+        directory.add(jwtTenant, "jwt", true);
+        tenantProps.setPreferHeaderOverJwt(false);
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(tenantProps.getHeaderName(), headerTenant.toString());
+        request.addHeader("X-API-Key", "test");
+        setJwtAuthentication(Map.of("tenantId", jwtTenant.toString()));
+
+        TenantResolution resolution = resolver.resolve(request);
+
+        assertThat(resolution.hasTenant()).isTrue();
+        assertThat(resolution.tenantId()).isEqualTo(jwtTenant.toString());
+        assertThat(resolution.source()).isEqualTo(TenantSource.JWT);
+    }
+
+    @Test
+    void resolvesTenantFromQueryParameter() {
+        UUID tenantId = UUID.randomUUID();
+        directory.add(tenantId, "acme", true);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setParameter(tenantProps.getQueryParam(), tenantId.toString());
+
+        TenantResolution resolution = resolver.resolve(request);
+
+        assertThat(resolution.hasTenant()).isTrue();
+        assertThat(resolution.tenantId()).isEqualTo(tenantId.toString());
+        assertThat(resolution.source()).isEqualTo(TenantSource.QUERY_PARAM);
+    }
+
     private void setJwtAuthentication(Map<String, Object> claims) {
         Jwt jwt = new Jwt("token", Instant.now(), Instant.now().plusSeconds(300),
                 Map.of("alg", "none"), claims);

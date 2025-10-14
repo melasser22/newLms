@@ -1,5 +1,7 @@
 package com.ejada.starter_core.context;
 
+import com.ejada.common.constants.HeaderNames;
+import com.ejada.common.constants.RequestAttributeNames;
 import com.ejada.common.context.ContextManager;
 import com.ejada.common.context.TenantMdcUtil;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
@@ -65,6 +67,10 @@ public class TenantContextContributor implements RequestContextContributor {
         if (properties.isEchoResponseHeader()) {
             response.setHeader(properties.getHeaderName(), tenant);
         }
+
+        request.setAttribute(RequestAttributeNames.TENANT_ID, tenant);
+        request.setAttribute(properties.getHeaderName(), tenant);
+        request.setAttribute(HeaderNames.X_TENANT_ID, tenant);
 
         MDC.put(properties.getMdcKey(), tenant);
         TenantMdcUtil.setTenantId(tenant);
