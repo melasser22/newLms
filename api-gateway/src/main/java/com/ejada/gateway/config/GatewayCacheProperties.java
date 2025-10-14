@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.server.PathContainer;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
@@ -40,6 +41,8 @@ public class GatewayCacheProperties {
   private final Topics topics = new Topics();
 
   private final Kafka kafka = new Kafka();
+
+  private final Smart smart = new Smart();
 
   public boolean isEnabled() {
     return enabled;
@@ -125,11 +128,17 @@ public class GatewayCacheProperties {
     return kafka;
   }
 
+  public Smart getSmart() {
+    return smart;
+  }
+
   public static class Topics {
 
     private String tenantUpdated = "tenant.updated";
 
     private String catalogPlanUpdated = "catalog.plan.updated";
+
+    private String subscriptionChanged = "subscription.changed";
 
     public String getTenantUpdated() {
       return tenantUpdated;
@@ -148,6 +157,16 @@ public class GatewayCacheProperties {
     public void setCatalogPlanUpdated(String catalogPlanUpdated) {
       if (StringUtils.hasText(catalogPlanUpdated)) {
         this.catalogPlanUpdated = catalogPlanUpdated.trim();
+      }
+    }
+
+    public String getSubscriptionChanged() {
+      return subscriptionChanged;
+    }
+
+    public void setSubscriptionChanged(String subscriptionChanged) {
+      if (StringUtils.hasText(subscriptionChanged)) {
+        this.subscriptionChanged = subscriptionChanged.trim();
       }
     }
   }
@@ -174,6 +193,95 @@ public class GatewayCacheProperties {
 
     public void setEnabled(boolean enabled) {
       this.enabled = enabled;
+    }
+  }
+
+  public static class Smart {
+
+    private final List<PatternTtlRule> patterns = new ArrayList<>();
+
+    public List<PatternTtlRule> getPatterns() {
+      return Collections.unmodifiableList(patterns);
+    }
+
+    public void setPatterns(List<PatternTtlRule> rules) {
+      patterns.clear();
+      if (rules == null) {
+        return;
+      }
+      rules.stream()
+          .filter(Objects::nonNull)
+          .map(PatternTtlRule::initialise)
+          .forEach(patterns::add);
+    }
+
+    public Optional<Duration> resolveTtl(String path) {
+      if (!StringUtils.hasText(path)) {
+        return Optional.empty();
+      }
+      return patterns.stream()
+          .filter(rule -> rule.matches(path))
+          .findFirst()
+          .map(PatternTtlRule::resolvedTtl);
+    }
+  }
+
+  public static class PatternTtlRule {
+
+    private String name;
+
+    private String path;
+
+    private Duration ttl = Duration.ZERO;
+
+    private transient PathPattern compiled;
+
+    PatternTtlRule initialise() {
+      if (StringUtils.hasText(path)) {
+        this.compiled = PATH_PATTERN_PARSER.parse(path.trim());
+      }
+      return this;
+    }
+
+    boolean matches(String candidate) {
+      if (compiled == null || !StringUtils.hasText(candidate)) {
+        return false;
+      }
+      return compiled.matches(PathContainer.parsePath(candidate));
+    }
+
+    Duration resolvedTtl() {
+      if (ttl == null || ttl.isZero() || ttl.isNegative()) {
+        return Duration.ZERO;
+      }
+      return ttl;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public void setName(String name) {
+      this.name = StringUtils.hasText(name) ? name.trim() : null;
+    }
+
+    public String getPath() {
+      return path;
+    }
+
+    public void setPath(String path) {
+      this.path = path;
+      if (StringUtils.hasText(path)) {
+        this.compiled = PATH_PATTERN_PARSER.parse(path.trim());
+      }
+    }
+
+    public Duration getTtl() {
+      return ttl;
+    }
+
+    public void setTtl(Duration ttl) {
+      this.ttl = ttl;
     }
   }
 

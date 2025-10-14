@@ -4,6 +4,8 @@ import com.ejada.common.dto.BaseResponse;
 import com.ejada.gateway.config.SubscriptionValidationProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
@@ -47,6 +49,7 @@ public class SubscriptionCacheService {
   private final WebClient webClient;
   private final AtomicLong cacheHits = new AtomicLong();
   private final AtomicLong cacheMisses = new AtomicLong();
+  private final Cache<String, SubscriptionRecord> localCache;
 
   public SubscriptionCacheService(
       SubscriptionValidationProperties properties,
@@ -63,6 +66,10 @@ public class SubscriptionCacheService {
     }
     this.objectMapper = mapper;
     this.webClient = webClientBuilder.clone().build();
+    this.localCache = Caffeine.newBuilder()
+        .expireAfterWrite(Duration.ofSeconds(30))
+        .maximumSize(20_000)
+        .build();
     Gauge.builder("gateway.subscription.validation.cache_hit_rate", this,
             SubscriptionCacheService::calculateHitRate)
         .description("Cache hit ratio for subscription validation lookups")
@@ -71,10 +78,20 @@ public class SubscriptionCacheService {
 
   public Mono<Optional<SubscriptionRecord>> getCached(String tenantId) {
     String key = cacheKey(tenantId);
+    SubscriptionRecord local = localCache.getIfPresent(key);
+    if (local != null) {
+      recordCacheHit();
+      return Mono.just(Optional.of(local));
+    }
+    if (redisTemplate == null) {
+      recordCacheMiss();
+      return Mono.just(Optional.empty());
+    }
     return redisTemplate.opsForValue().get(key)
         .flatMap(json -> decode(json)
             .map(record -> {
               recordCacheHit();
+              localCache.put(key, record);
               return Mono.just(record);
             })
             .orElseGet(() -> {
@@ -139,11 +156,16 @@ public class SubscriptionCacheService {
           ? DEFAULT_CACHE_TTL
           : configuredTtl;
       Mono<Boolean> writeOperation;
+      if (redisTemplate == null) {
+        localCache.put(cacheKey, record);
+        return Mono.empty();
+      }
       if (ttl.isZero()) {
         writeOperation = redisTemplate.opsForValue().set(cacheKey, value);
       } else {
         writeOperation = redisTemplate.opsForValue().set(cacheKey, value, ttl);
       }
+      localCache.put(cacheKey, record);
       return writeOperation.then();
     } catch (JsonProcessingException e) {
       LOGGER.debug("Failed to serialise subscription record for cache", e);
@@ -166,6 +188,9 @@ public class SubscriptionCacheService {
 
   public Mono<Map<String, SubscriptionRecord>> readAllCached() {
     String pattern = properties.getCachePrefix() + "*";
+    if (redisTemplate == null) {
+      return Mono.just(new HashMap<>(localCache.asMap()));
+    }
     return redisTemplate.scan(org.springframework.data.redis.core.ScanOptions.scanOptions()
             .match(pattern)
             .count(200)
@@ -175,6 +200,18 @@ public class SubscriptionCacheService {
                 .map(record -> Mono.just(Map.entry(key, record)))
                 .orElseGet(Mono::empty)))
         .collectMap(Map.Entry::getKey, Map.Entry::getValue);
+  }
+
+  public Mono<Void> evictTenant(String tenantId) {
+    if (!StringUtils.hasText(tenantId)) {
+      return Mono.empty();
+    }
+    String key = cacheKey(tenantId);
+    localCache.invalidate(key);
+    if (redisTemplate == null) {
+      return Mono.empty();
+    }
+    return redisTemplate.delete(key).then();
   }
 
   private SubscriptionRecord extractPayload(BaseResponse<SubscriptionPayload> response) {

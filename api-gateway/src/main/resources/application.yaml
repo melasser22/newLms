@@ -345,15 +345,23 @@ gateway:
     topics:
       tenant-updated: tenant.updated
       catalog-plan-updated: catalog.plan.updated
+      subscription-changed: subscription.changed
     kafka:
       group-id: gateway-cache
+    smart:
+      patterns:
+        - name: catalog
+          path: /api/v1/catalog/**
+          ttl: 5m
+        - name: tenant
+          path: /api/v1/tenants/**
+          ttl: 1m
     routes:
       - id: catalog-plans
         route-id: catalog-service
         method: GET
         path: /api/v1/catalog/plans
-        ttl: 1h
-        stale-ttl: 30m
+        ttl: 0s
         warm: true
         tenant-scoped: true
         client:
@@ -366,8 +374,7 @@ gateway:
         route-id: catalog-service
         method: GET
         path: /api/v1/catalog/features
-        ttl: 30m
-        stale-ttl: 15m
+        ttl: 0s
         warm: true
         tenant-scoped: true
         client:
@@ -380,8 +387,7 @@ gateway:
         route-id: tenant-service
         method: GET
         path: /api/v1/tenants/{id}
-        ttl: 5m
-        stale-ttl: 5m
+        ttl: 0s
         warm: false
         tenant-scoped: true
   tracing:
@@ -463,6 +469,7 @@ gateway:
     enabled: true
     validation-uri: lb://subscription-service/internal/subscriptions/{tenantId}
     cache-ttl: 5m
+    cache-prefix: gateway:subscription:
     fail-open: true
     validate-all-routes: true
     skip-patterns:
@@ -476,6 +483,11 @@ gateway:
       catalog-service: catalog.read
       billing-service: billing.manage
       subscription-service: subscription.manage
+    warmup:
+      enabled: true
+      tenant-service-uri: lb://tenant-service/api/v1/tenants
+      refresh-interval: PT2M
+      page-size: 200
       policy-service: policy.manage
   webclient:
     connect-timeout: 3s

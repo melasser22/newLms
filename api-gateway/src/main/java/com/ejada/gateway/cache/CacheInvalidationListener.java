@@ -1,6 +1,7 @@
 package com.ejada.gateway.cache;
 
 import com.ejada.gateway.config.GatewayCacheProperties;
+import com.ejada.gateway.subscription.SubscriptionCacheService;
 import com.ejada.gateway.transformation.ResponseCacheService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,13 +29,17 @@ public class CacheInvalidationListener {
 
   private final ResponseCacheService cacheService;
 
+  private final SubscriptionCacheService subscriptionCacheService;
+
   private final ObjectMapper objectMapper;
 
   public CacheInvalidationListener(GatewayCacheProperties properties,
       ResponseCacheService cacheService,
+      SubscriptionCacheService subscriptionCacheService,
       ObjectMapper objectMapper) {
     this.properties = properties;
     this.cacheService = cacheService;
+    this.subscriptionCacheService = subscriptionCacheService;
     this.objectMapper = objectMapper;
   }
 
@@ -59,6 +64,17 @@ public class CacheInvalidationListener {
     invalidateRoute("catalog-features");
   }
 
+  @KafkaListener(topics = "${gateway.cache.topics.subscription-changed:subscription.changed}",
+      groupId = "${gateway.cache.kafka.group-id:gateway-cache}")
+  public void onSubscriptionChanged(String payload) {
+    if (!properties.isEnabled()) {
+      return;
+    }
+    extractField(payload, "tenantId")
+        .ifPresentOrElse(this::invalidateSubscriptionCaches,
+            () -> LOGGER.debug("subscription.changed event missing tenantId"));
+  }
+
   private void invalidateTenantCaches(String tenantId) {
     properties.getRouteById("tenant-by-id")
         .ifPresent(route -> cacheService.invalidateRouteForTenant(route, tenantId)
@@ -70,6 +86,7 @@ public class CacheInvalidationListener {
     properties.getRouteById("catalog-features")
         .ifPresent(route -> cacheService.invalidateRouteForTenant(route, tenantId)
             .subscribe());
+    invalidateSubscriptionCaches(tenantId);
   }
 
   private void invalidateRoute(String routeId) {
@@ -77,6 +94,12 @@ public class CacheInvalidationListener {
         .ifPresent(route -> cacheService.invalidateRoute(route)
             .doOnError(ex -> LOGGER.warn("Failed to invalidate cache route {}", routeId, ex))
             .subscribe());
+  }
+
+  private void invalidateSubscriptionCaches(String tenantId) {
+    subscriptionCacheService.evictTenant(tenantId)
+        .doOnError(ex -> LOGGER.warn("Failed to evict subscription cache for {}", tenantId, ex))
+        .subscribe();
   }
 
   private Optional<String> extractField(String payload, String fieldName) {

@@ -82,12 +82,13 @@ public class ResponseCacheService {
     if (route == null) {
       return Optional.empty();
     }
-    Duration ttl = route.resolvedTtl();
+    String canonicalPath = exchange.getRequest().getPath().pathWithinApplication().value();
+    Duration ttl = resolveEffectiveTtl(route, canonicalPath);
     if (ttl.isZero()) {
       return Optional.empty();
     }
+    Duration staleTtl = resolveStaleTtl(route, ttl);
     String tenantId = resolveTenant(exchange, route);
-    String canonicalPath = exchange.getRequest().getPath().pathWithinApplication().value();
     String canonicalQuery = canonicalQuery(exchange.getRequest().getQueryParams());
     HttpMethod method = exchange.getRequest().getMethod();
     if (method == null) {
@@ -96,7 +97,7 @@ public class ResponseCacheService {
     String signatureSource = method.name() + ':' + canonicalPath + '?' + canonicalQuery;
     String signature = sha256Hex(signatureSource.getBytes(StandardCharsets.UTF_8));
     String cacheKey = CACHE_PREFIX + route.cacheKeyPrefix() + ':' + tenantId + ':' + signature;
-    return Optional.of(new CacheMetadata(route, tenantId, cacheKey, canonicalPath, canonicalQuery, method));
+    return Optional.of(new CacheMetadata(route, tenantId, cacheKey, canonicalPath, canonicalQuery, method, ttl, staleTtl));
   }
 
   public Mono<CacheResult> find(String routeId, ServerWebExchange exchange) {
@@ -125,11 +126,11 @@ public class ResponseCacheService {
     if (!isCacheEnabled() || metadata == null) {
       return Mono.empty();
     }
-    Duration ttl = metadata.route().resolvedTtl();
+    Duration ttl = metadata.ttl();
     if (ttl.isZero()) {
       return Mono.empty();
     }
-    Duration staleTtl = metadata.route().resolvedStaleTtl();
+    Duration staleTtl = metadata.staleTtl();
     Duration redisTtl = ttl.plus(staleTtl);
     try {
       String serialized = objectMapper.writeValueAsString(response);
@@ -189,7 +190,7 @@ public class ResponseCacheService {
         .then();
   }
 
-  public CachedResponse snapshotResponse(RouteCacheProperties route,
+  public CachedResponse snapshotResponse(CacheMetadata metadata,
       ServerHttpResponse response,
       byte[] body,
       String etag,
@@ -201,26 +202,26 @@ public class ResponseCacheService {
       }
       headers.put(key, List.copyOf(values));
     });
-    applyCacheHeaders(headers, route, etag, capturedAt, false);
+    applyCacheHeaders(headers, metadata, etag, capturedAt, false);
     int status = (response.getStatusCode() != null) ? response.getStatusCode().value() : HttpStatus.OK.value();
-    Instant expiresAt = capturedAt.plus(route.resolvedTtl());
-    Instant staleAt = expiresAt.plus(route.resolvedStaleTtl());
+    Instant expiresAt = capturedAt.plus(metadata.ttl());
+    Instant staleAt = expiresAt.plus(metadata.staleTtl());
     return new CachedResponse(status, headers, body, etag, capturedAt, expiresAt, staleAt);
   }
 
   public void applyCacheHeaders(HttpHeaders headers,
-      RouteCacheProperties route,
+      CacheMetadata metadata,
       String etag,
       Instant cachedAt,
       boolean stale) {
-    if (headers == null || route == null) {
+    if (headers == null || metadata == null) {
       return;
     }
     if (StringUtils.hasText(etag)) {
       headers.setETag(etag);
     }
-    Duration ttl = route.resolvedTtl();
-    Duration staleTtl = route.resolvedStaleTtl();
+    Duration ttl = metadata.ttl();
+    Duration staleTtl = metadata.staleTtl();
     CacheControl control = CacheControl.maxAge(ttl)
         .staleWhileRevalidate(staleTtl)
         .cachePublic();
@@ -327,6 +328,34 @@ public class ResponseCacheService {
     }
   }
 
+  private Duration resolveEffectiveTtl(RouteCacheProperties route, String canonicalPath) {
+    if (route == null) {
+      return Duration.ZERO;
+    }
+    Duration configured = route.resolvedTtl();
+    if (!configured.isZero()) {
+      return configured;
+    }
+    return properties.getSmart().resolveTtl(canonicalPath).orElse(Duration.ZERO);
+  }
+
+  private Duration resolveStaleTtl(RouteCacheProperties route, Duration ttl) {
+    if (route == null) {
+      return Duration.ZERO;
+    }
+    Duration configured = route.getStaleTtl();
+    if (configured == null) {
+      if (ttl == null || ttl.isZero()) {
+        return Duration.ZERO;
+      }
+      return ttl.dividedBy(2);
+    }
+    if (configured.isNegative()) {
+      return Duration.ZERO;
+    }
+    return configured;
+  }
+
   private String canonicalQuery(MultiValueMap<String, String> params) {
     if (params == null || params.isEmpty()) {
       return "-";
@@ -365,7 +394,9 @@ public class ResponseCacheService {
                               String cacheKey,
                               String canonicalPath,
                               String canonicalQuery,
-                              HttpMethod method) {
+                              HttpMethod method,
+                              Duration ttl,
+                              Duration staleTtl) {
   }
 
   public record CacheResult(CacheMetadata metadata,
