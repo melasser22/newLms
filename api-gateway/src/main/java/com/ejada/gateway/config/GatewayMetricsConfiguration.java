@@ -2,6 +2,7 @@ package com.ejada.gateway.config;
 
 import com.ejada.gateway.filter.GatewayAccessLogFilter;
 import com.ejada.gateway.filter.GatewayMetricsFilter;
+import com.ejada.gateway.metrics.TenantRequestMetricsTracker;
 import com.ejada.gateway.observability.GatewayTracingHelper;
 import com.ejada.gateway.resilience.CircuitBreakerRecoveryTester;
 import com.ejada.gateway.routes.service.RouteVariantService;
@@ -52,8 +53,9 @@ public class GatewayMetricsConfiguration {
 
   @Bean
   public GatewayMetricsFilter gatewayMetricsFilter(GatewayTracingHelper tracingHelper,
-      RouteVariantService variantService) {
-    return new GatewayMetricsFilter(meterRegistry, tracingHelper, variantService);
+      RouteVariantService variantService,
+      TenantRequestMetricsTracker tenantMetricsTracker) {
+    return new GatewayMetricsFilter(meterRegistry, tracingHelper, variantService, tenantMetricsTracker);
   }
 
   @Bean

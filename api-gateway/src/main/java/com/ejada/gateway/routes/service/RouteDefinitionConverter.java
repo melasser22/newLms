@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.springframework.util.unit.DataSize;
 
 @Component
 public class RouteDefinitionConverter {
@@ -80,6 +81,10 @@ public class RouteDefinitionConverter {
     }
     if (!metadata.getRequestHeaders().isEmpty()) {
       route.setRequestHeaders(metadata.getRequestHeaders());
+    }
+    DataSize maxRequestSize = resolveMaxRequestSize(metadata);
+    if (maxRequestSize != null) {
+      route.setMaxRequestSize(maxRequestSize);
     }
     if (!metadata.getTenantRouting().isEmpty()) {
       Map<String, GatewayRoutesProperties.ServiceRoute.TenantRoutingRule> converted = new LinkedHashMap<>();
@@ -182,6 +187,36 @@ public class RouteDefinitionConverter {
       }
     }
     return result;
+  }
+
+  private DataSize resolveMaxRequestSize(RouteMetadata metadata) {
+    if (metadata == null) {
+      return null;
+    }
+    Object value = metadata.getAttributes().getOrDefault("maxRequestSize",
+        metadata.getAttributes().get("max-request-size"));
+    if (value == null) {
+      return null;
+    }
+    if (value instanceof Number number) {
+      long bytes = number.longValue();
+      if (bytes <= 0) {
+        return null;
+      }
+      return DataSize.ofBytes(bytes);
+    }
+    if (value instanceof String stringValue) {
+      String candidate = stringValue.trim();
+      if (!StringUtils.hasText(candidate)) {
+        return null;
+      }
+      try {
+        return DataSize.parse(candidate);
+      } catch (IllegalArgumentException ex) {
+        return null;
+      }
+    }
+    return null;
   }
 
   private boolean isExcluded(String pattern) {

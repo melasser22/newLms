@@ -452,6 +452,7 @@ gateway:
       billing-service-uri: lb://billing-service
       default-period: MONTHLY
   defaults:
+    max-request-size: 10MB
     routes:
       tenant-service: &tenant-route-base
         uri: lb://tenant-service
@@ -574,6 +575,8 @@ gateway:
       paths:
         - /api/v1/catalog/**
         - /api/catalog/**
+      methods:
+        - GET
       strip-prefix: 0
       prefix-path: /catalog
       versioning:

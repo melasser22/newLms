@@ -3,9 +3,11 @@ package com.ejada.gateway.filter;
 import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.gateway.observability.GatewayTracingHelper;
 import com.ejada.gateway.routes.service.RouteVariantService;
+import com.ejada.gateway.metrics.TenantRequestMetricsTracker;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
+import java.time.Instant;
 import org.springframework.cloud.gateway.route.Route;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.Ordered;
@@ -25,12 +27,14 @@ public class GatewayMetricsFilter implements WebFilter, Ordered {
   private final MeterRegistry meterRegistry;
   private final GatewayTracingHelper tracingHelper;
   private final RouteVariantService variantService;
+  private final TenantRequestMetricsTracker tenantMetricsTracker;
 
   public GatewayMetricsFilter(MeterRegistry meterRegistry, GatewayTracingHelper tracingHelper,
-      RouteVariantService variantService) {
+      RouteVariantService variantService, TenantRequestMetricsTracker tenantMetricsTracker) {
     this.meterRegistry = meterRegistry;
     this.tracingHelper = tracingHelper;
     this.variantService = variantService;
+    this.tenantMetricsTracker = tenantMetricsTracker;
   }
 
   @Override
@@ -42,6 +46,11 @@ public class GatewayMetricsFilter implements WebFilter, Ordered {
   public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
     Timer.Sample sample = Timer.start(meterRegistry);
     long start = System.nanoTime();
+    exchange.getResponse().beforeCommit(() -> {
+      long duration = System.nanoTime() - start;
+      exchange.getResponse().getHeaders().set("X-Response-Time", formatDuration(duration));
+      return Mono.empty();
+    });
     return chain.filter(exchange)
         .doFinally(signalType -> {
           long duration = System.nanoTime() - start;
@@ -54,6 +63,9 @@ public class GatewayMetricsFilter implements WebFilter, Ordered {
     HttpStatusCode status = exchange.getResponse().getStatusCode();
     int statusCode = status != null ? status.value() : HttpStatus.OK.value();
     String tenant = trimToDefault(exchange.getAttribute(GatewayRequestAttributes.TENANT_ID));
+    if (tenantMetricsTracker != null) {
+      tenantMetricsTracker.recordRequest(tenant, Instant.now());
+    }
     meterRegistry.counter("gateway.requests.by_tenant",
             "tenantId", tenant,
             "statusCode", String.valueOf(statusCode))
@@ -81,5 +93,10 @@ public class GatewayMetricsFilter implements WebFilter, Ordered {
       return "unknown";
     }
     return value.trim();
+  }
+
+  private String formatDuration(long durationNanos) {
+    long millis = Duration.ofNanos(durationNanos).toMillis();
+    return millis + "ms";
   }
 }
