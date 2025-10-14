@@ -29,9 +29,19 @@ public class VersionNormalizationFilter implements GatewayFilter, Ordered {
   private static final Logger LOGGER = LoggerFactory.getLogger(VersionNormalizationFilter.class);
 
   private final VersionMappingResolver resolver;
+  private final VersionAnalyticsService analyticsService;
+  private final com.ejada.gateway.versioning.preference.TenantVersionPreferenceService preferenceService;
 
   public VersionNormalizationFilter(VersionMappingResolver resolver) {
+    this(resolver, null, null);
+  }
+
+  public VersionNormalizationFilter(VersionMappingResolver resolver,
+      VersionAnalyticsService analyticsService,
+      com.ejada.gateway.versioning.preference.TenantVersionPreferenceService preferenceService) {
     this.resolver = resolver;
+    this.analyticsService = analyticsService;
+    this.preferenceService = preferenceService;
   }
 
   @Override
@@ -40,78 +50,111 @@ public class VersionNormalizationFilter implements GatewayFilter, Ordered {
       return chain.filter(exchange);
     }
 
-    Optional<VersionMappingResult> maybeResult = resolver.resolve(exchange);
-    if (maybeResult.isEmpty()) {
-      return chain.filter(exchange);
-    }
+    Mono<ServerWebExchange> prepared = (preferenceService != null)
+        ? preferenceService.resolvePreferredVersion(exchange)
+            .doOnNext(optional -> optional.ifPresent(version -> exchange.getAttributes()
+                .put(GatewayRequestAttributes.API_VERSION_PREFERENCE, version)))
+            .thenReturn(exchange)
+        : Mono.just(exchange);
 
-    VersionMappingResult result = maybeResult.get();
-    if (result.isUnsupported()) {
-      LOGGER.debug("Rejecting unsupported API version {} for mapping {}", result.getRequestedVersion(), result.getMappingId());
-      return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested API version is not supported"));
-    }
+    return prepared.flatMap(currentExchange -> {
+      Optional<VersionMappingResult> maybeResult = resolver.resolve(currentExchange);
+      if (maybeResult.isEmpty()) {
+        return chain.filter(currentExchange);
+      }
 
-    ServerHttpRequest request = exchange.getRequest();
-    ServerHttpRequest.Builder builder = request.mutate();
+      VersionMappingResult result = maybeResult.get();
+      if (result.isUnsupported()) {
+        LOGGER.debug("Rejecting unsupported API version {} for mapping {}", result.getRequestedVersion(), result.getMappingId());
+        return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested API version is not supported"));
+      }
 
-    String rewrittenPath = result.getRewrittenPath();
-    if (StringUtils.hasText(rewrittenPath)) {
-      URI updated = UriComponentsBuilder.fromUri(request.getURI())
-          .replacePath(rewrittenPath)
-          .build(true)
-          .toUri();
-      builder.uri(updated);
-    }
+      ServerHttpRequest request = currentExchange.getRequest();
+      ServerHttpRequest.Builder builder = request.mutate();
 
-    if (StringUtils.hasText(result.getResolvedVersion())) {
-      builder.headers(httpHeaders -> httpHeaders.set(HeaderNames.API_VERSION, result.getResolvedVersion()));
-    }
+      String rewrittenPath = result.getRewrittenPath();
+      if (StringUtils.hasText(rewrittenPath)) {
+        URI updated = UriComponentsBuilder.fromUri(request.getURI())
+            .replacePath(rewrittenPath)
+            .build(true)
+            .toUri();
+        builder.uri(updated);
+      }
 
-    if (StringUtils.hasText(result.getResolutionSource())) {
-      builder.headers(httpHeaders -> httpHeaders.set("X-Api-Version-Source", result.getResolutionSource()));
-    }
+      if (StringUtils.hasText(result.getResolvedVersion())) {
+        builder.headers(httpHeaders -> httpHeaders.set(HeaderNames.API_VERSION, result.getResolvedVersion()));
+      }
 
-    Map<String, String> additionalHeaders = result.getAdditionalHeaders();
-    if (!CollectionUtils.isEmpty(additionalHeaders)) {
-      builder.headers(httpHeaders -> additionalHeaders.forEach(httpHeaders::set));
-    }
+      if (StringUtils.hasText(result.getResolutionSource())) {
+        builder.headers(httpHeaders -> httpHeaders.set("X-Api-Version-Source", result.getResolutionSource()));
+      }
 
-    ServerWebExchange mutated = exchange.mutate().request(builder.build()).build();
-    mutated.getAttributes().put(GatewayRequestAttributes.API_VERSION, result.getResolvedVersion());
-    mutated.getAttributes().put(GatewayRequestAttributes.API_VERSION_REQUESTED, result.getRequestedVersion());
-    mutated.getAttributes().put(GatewayRequestAttributes.API_VERSION_SOURCE, result.getResolutionSource());
+      Map<String, String> additionalHeaders = result.getAdditionalHeaders();
+      if (!CollectionUtils.isEmpty(additionalHeaders)) {
+        builder.headers(httpHeaders -> additionalHeaders.forEach(httpHeaders::set));
+      }
 
-    if (result.isDeprecated()) {
-      mutated.getResponse().beforeCommit(() -> {
-        mutated.getResponse().getHeaders().set("Deprecation",
-            StringUtils.hasText(result.getSunset()) ? result.getSunset() : "true");
-        if (StringUtils.hasText(result.getWarning())) {
-          mutated.getResponse().getHeaders().add("X-Api-Deprecation", result.getWarning());
-        }
-        if (StringUtils.hasText(result.getSunset())) {
-          mutated.getResponse().getHeaders().set("Sunset", result.getSunset());
-        }
-        if (StringUtils.hasText(result.getPolicyLink())) {
-          mutated.getResponse().getHeaders().add("Link", '<' + result.getPolicyLink() + ">; rel=\"deprecation\"");
-        }
-        if (!result.getCompatibility().isEmpty()) {
+      ServerWebExchange mutated = currentExchange.mutate().request(builder.build()).build();
+      mutated.getAttributes().put(GatewayRequestAttributes.API_VERSION, result.getResolvedVersion());
+      mutated.getAttributes().put(GatewayRequestAttributes.API_VERSION_REQUESTED, result.getRequestedVersion());
+      mutated.getAttributes().put(GatewayRequestAttributes.API_VERSION_SOURCE, result.getResolutionSource());
+
+      if (analyticsService != null) {
+        analyticsService.record(mutated, result);
+      }
+
+      registerCompatibilityTransformation(mutated, result);
+
+      if (result.isDeprecated()) {
+        mutated.getResponse().beforeCommit(() -> {
+          mutated.getResponse().getHeaders().set("Deprecation",
+              StringUtils.hasText(result.getSunset()) ? result.getSunset() : "true");
+          if (StringUtils.hasText(result.getWarning())) {
+            mutated.getResponse().getHeaders().add("X-API-Deprecation", result.getWarning());
+          }
+          if (StringUtils.hasText(result.getSunset())) {
+            mutated.getResponse().getHeaders().set("Sunset", result.getSunset());
+          }
+          if (StringUtils.hasText(result.getPolicyLink())) {
+            mutated.getResponse().getHeaders().add("Link", '<' + result.getPolicyLink() + ">; rel=\"deprecation\"");
+          }
+          if (!result.getCompatibility().isEmpty()) {
+            mutated.getResponse().getHeaders().set("X-Api-Compatible-With", String.join(",", result.getCompatibility()));
+          }
+          return Mono.empty();
+        });
+      } else if (!result.getCompatibility().isEmpty()) {
+        mutated.getResponse().beforeCommit(() -> {
           mutated.getResponse().getHeaders().set("X-Api-Compatible-With", String.join(",", result.getCompatibility()));
-        }
-        return Mono.empty();
-      });
-    } else if (!result.getCompatibility().isEmpty()) {
-      mutated.getResponse().beforeCommit(() -> {
-        mutated.getResponse().getHeaders().set("X-Api-Compatible-With", String.join(",", result.getCompatibility()));
-        return Mono.empty();
-      });
-    }
+          return Mono.empty();
+        });
+      }
 
-    return chain.filter(mutated);
+      return chain.filter(mutated);
+    });
   }
 
   @Override
   public int getOrder() {
     // Run early so route-specific filters can observe the normalised path and version metadata.
     return Ordered.HIGHEST_PRECEDENCE + 10;
+  }
+
+  private void registerCompatibilityTransformation(ServerWebExchange exchange, VersionMappingResult result) {
+    String requested = result.getRequestedVersion();
+    String resolved = result.getResolvedVersion();
+    if (!StringUtils.hasText(requested) || !StringUtils.hasText(resolved)) {
+      return;
+    }
+    if (resolved.equals(requested)) {
+      return;
+    }
+    String routeId = result.getCompatibilityTransformations().get(requested);
+    if (!StringUtils.hasText(routeId) && result.getCompatibility().contains(requested)) {
+      routeId = "compatibility." + resolved + '.' + requested;
+    }
+    if (StringUtils.hasText(routeId)) {
+      exchange.getAttributes().put(GatewayRequestAttributes.API_VERSION_TRANSFORMATION_ROUTE, routeId);
+    }
   }
 }

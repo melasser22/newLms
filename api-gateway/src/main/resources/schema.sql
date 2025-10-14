@@ -23,6 +23,16 @@ CREATE TABLE IF NOT EXISTS public.route_definition_audit (
       FOREIGN KEY(route_id) REFERENCES public.route_definitions(id)
 );
 
+CREATE TABLE IF NOT EXISTS public.tenant_api_version_preferences (
+    id SERIAL PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    resource TEXT NOT NULL,
+    preferred_version TEXT NOT NULL,
+    fallback_version TEXT,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (tenant_id, resource)
+);
+
 -- Seed a couple of baseline routes so the gateway can boot with usable traffic
 -- definitions even before the management APIs are exercised. Each INSERT uses a
 -- deterministic UUID and ON CONFLICT safeguards to remain idempotent when the

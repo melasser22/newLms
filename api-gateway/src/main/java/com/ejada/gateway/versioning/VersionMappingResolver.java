@@ -1,6 +1,5 @@
 package com.ejada.gateway.versioning;
 
-import com.ejada.common.constants.HeaderNames;
 import com.ejada.gateway.config.GatewayVersioningProperties;
 import java.net.URI;
 import java.util.ArrayList;
@@ -108,14 +107,14 @@ public class VersionMappingResolver {
       candidatePaths.add(gatewayRequestUrl.getRawPath());
     }
 
-    String headerVersion = VersionNumber.canonicaliseOrNull(exchange.getRequest().getHeaders().getFirst(HeaderNames.ACCEPT_VERSION));
+    VersionRequestContext context = VersionRequestContext.from(exchange);
 
     for (CompiledMapping mapping : mappings) {
       if (!mapping.matchesMethod(method)) {
         continue;
       }
       for (String path : candidatePaths) {
-        VersionMappingResult result = mapping.resolve(path, headerVersion);
+        VersionMappingResult result = mapping.resolve(path, context);
         if (result == null) {
           continue;
         }
@@ -146,11 +145,13 @@ public class VersionMappingResolver {
     private final GatewayVersioningProperties.Mapping configuration;
     private final List<PatternHolder> patterns;
     private final Map<String, List<GatewayVersioningProperties.Route>> routesByVersion;
+    private final Map<String, List<GatewayVersioningProperties.Route>> compatibilityByVersion;
 
     private CompiledMapping(GatewayVersioningProperties.Mapping configuration, PathPatternParser parser) {
       this.configuration = configuration;
       this.patterns = compilePatterns(configuration.getLegacyPaths(), parser);
       this.routesByVersion = indexRoutes(configuration.getRoutes());
+      this.compatibilityByVersion = indexCompatibility(configuration.getRoutes());
     }
 
     private boolean matchesMethod(String method) {
@@ -160,67 +161,87 @@ public class VersionMappingResolver {
       return configuration.getMethods().contains(method.toUpperCase(Locale.ROOT));
     }
 
-    private VersionMappingResult resolve(String path, String headerVersion) {
+    private VersionMappingResult resolve(String path, VersionRequestContext context) {
       for (PatternHolder holder : patterns) {
         PathMatchInfo info = holder.pattern.matchAndExtract(PathContainer.parsePath(path));
         if (info == null) {
           continue;
         }
-        return doResolve(path, headerVersion, info, holder);
+        return doResolve(path, context, info, holder);
       }
       return null;
     }
 
-    private VersionMappingResult doResolve(String path, String headerVersion, PathMatchInfo info, PatternHolder holder) {
-      String requestedVersion = determineRequestedVersion(headerVersion, info, path);
+    private VersionMappingResult doResolve(String path, VersionRequestContext context, PathMatchInfo info,
+        PatternHolder holder) {
+      VersionRequestContext.VersionCandidate candidate = context.determine(info, path,
+          configuration.getDefaultVersion());
+      String requestedVersion = candidate.version();
+      String resolutionSource = candidate.source();
+      if (!StringUtils.hasText(resolutionSource) || "unknown".equalsIgnoreCase(resolutionSource)) {
+        resolutionSource = holder.versionSource;
+      }
+      boolean explicitRequest = candidate.explicit() && StringUtils.hasText(requestedVersion);
+
       String effectiveVersion = requestedVersion;
-      List<GatewayVersioningProperties.Route> candidates = routesByVersion.getOrDefault(effectiveVersion, List.of());
+      List<GatewayVersioningProperties.Route> candidates = (effectiveVersion != null)
+          ? routesByVersion.getOrDefault(effectiveVersion, List.of())
+          : List.of();
+
+      if (candidates.isEmpty() && StringUtils.hasText(requestedVersion)) {
+        List<GatewayVersioningProperties.Route> compatibilityRoutes = compatibilityByVersion.getOrDefault(
+            requestedVersion, List.of());
+        if (!compatibilityRoutes.isEmpty()) {
+          candidates = compatibilityRoutes;
+          effectiveVersion = compatibilityRoutes.get(0).getVersion();
+          resolutionSource = StringUtils.hasText(resolutionSource)
+              ? resolutionSource + ":compatibility"
+              : "compatibility";
+        }
+        if (candidates.isEmpty() && !compatibilityMatrix.isEmpty()) {
+          List<GatewayVersioningProperties.Route> globalCandidates = findGlobalCompatibilityRoutes(
+              requestedVersion);
+          if (!globalCandidates.isEmpty()) {
+            candidates = globalCandidates;
+            effectiveVersion = globalCandidates.get(0).getVersion();
+            resolutionSource = StringUtils.hasText(resolutionSource)
+                ? resolutionSource + ":compatibility"
+                : "compatibility";
+          }
+        }
+      }
 
       if (candidates.isEmpty() && configuration.isFallbackToDefault() && configuration.getDefaultVersion() != null) {
         effectiveVersion = configuration.getDefaultVersion();
         candidates = routesByVersion.getOrDefault(effectiveVersion, List.of());
+        if (!StringUtils.hasText(requestedVersion)) {
+          resolutionSource = candidate.source();
+        }
       }
 
       if (candidates.isEmpty()) {
-        if (StringUtils.hasText(requestedVersion)) {
+        if (explicitRequest) {
           return VersionMappingResult.unsupported(configuration.getId(), requestedVersion);
         }
         return null;
+      }
+
+      if (!Objects.equals(effectiveVersion, requestedVersion) && explicitRequest
+          && compatibilityByVersion.getOrDefault(requestedVersion, List.of()).isEmpty()) {
+        return VersionMappingResult.unsupported(configuration.getId(), requestedVersion);
       }
 
       GatewayVersioningProperties.Route selected = selectWeighted(candidates);
       String resolvedVersion = selected.getTargetVersionOrSelf();
       String rewritten = rewritePath(path, info, selected.getRewritePath());
 
+      Map<String, String> headers = new LinkedHashMap<>(selected.getAdditionalHeaders());
+      Map<String, String> transformations = new LinkedHashMap<>(selected.getCompatibilityTransformations());
+
       return VersionMappingResult.resolved(configuration.getId(), requestedVersion, resolvedVersion, rewritten,
           selected.isDeprecated(), selected.getWarning(), selected.getSunset(), selected.getPolicyLink(),
-          List.copyOf(selected.getCompatibility()), new LinkedHashMap<>(selected.getAdditionalHeaders()),
-          selected.getDocumentationGroup(), headerVersion != null ? "header" : holder.versionSource);
-    }
-
-    private String determineRequestedVersion(String headerVersion, PathMatchInfo info, String path) {
-      if (headerVersion != null) {
-        return headerVersion;
-      }
-      Map<String, String> variables = info.getUriVariables();
-      if (variables.containsKey("version")) {
-        String canonical = VersionNumber.canonicaliseOrNull(variables.get("version"));
-        if (canonical != null) {
-          return canonical;
-        }
-      }
-      // Inspect path segments sequentially to locate the first valid version token.
-      String[] segments = path.split("/");
-      for (String segment : segments) {
-        if (!StringUtils.hasText(segment)) {
-          continue;
-        }
-        String canonical = VersionNumber.canonicaliseOrNull(segment);
-        if (canonical != null) {
-          return canonical;
-        }
-      }
-      return configuration.getDefaultVersion();
+          List.copyOf(selected.getCompatibility()), headers,
+          selected.getDocumentationGroup(), resolutionSource, transformations);
     }
 
     private GatewayVersioningProperties.Route selectWeighted(List<GatewayVersioningProperties.Route> candidates) {
@@ -260,6 +281,27 @@ public class VersionMappingResolver {
         index.computeIfAbsent(route.getVersion(), ignored -> new ArrayList<>()).add(route);
       }
       return index;
+    }
+
+    private Map<String, List<GatewayVersioningProperties.Route>> indexCompatibility(
+        List<GatewayVersioningProperties.Route> routes) {
+      Map<String, List<GatewayVersioningProperties.Route>> index = new LinkedHashMap<>();
+      for (GatewayVersioningProperties.Route route : routes) {
+        for (String compatible : route.getCompatibility()) {
+          index.computeIfAbsent(compatible, ignored -> new ArrayList<>()).add(route);
+        }
+      }
+      return index;
+    }
+
+    private List<GatewayVersioningProperties.Route> findGlobalCompatibilityRoutes(String requestedVersion) {
+      List<GatewayVersioningProperties.Route> matches = new ArrayList<>();
+      compatibilityMatrix.forEach((targetVersion, compatibleVersions) -> {
+        if (compatibleVersions.contains(requestedVersion)) {
+          matches.addAll(routesByVersion.getOrDefault(targetVersion, List.of()));
+        }
+      });
+      return matches;
     }
 
     private List<PatternHolder> compilePatterns(List<String> legacyPaths, PathPatternParser parser) {
