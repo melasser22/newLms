@@ -24,6 +24,7 @@ public class RouteMetadata {
   private BlueGreenDeployment blueGreen;
   private final List<TrafficSplit> trafficSplits = new ArrayList<>();
   private final Map<String, Object> attributes = new LinkedHashMap<>();
+  private final Map<String, TenantRoutingRule> tenantRouting = new LinkedHashMap<>();
   private Map<String, String> requestHeaders = new LinkedHashMap<>();
   private List<String> methods = new ArrayList<>();
   private Integer stripPrefix;
@@ -43,6 +44,23 @@ public class RouteMetadata {
 
   public Map<String, Object> getAttributes() {
     return attributes;
+  }
+
+  public Map<String, TenantRoutingRule> getTenantRouting() {
+    return tenantRouting;
+  }
+
+  public void setTenantRouting(Map<String, TenantRoutingRule> rules) {
+    tenantRouting.clear();
+    if (rules == null) {
+      return;
+    }
+    rules.forEach((tenant, rule) -> {
+      if (!StringUtils.hasText(tenant) || rule == null) {
+        return;
+      }
+      tenantRouting.put(tenant.trim(), rule.copy());
+    });
   }
 
   public Map<String, String> getRequestHeaders() {
@@ -95,6 +113,25 @@ public class RouteMetadata {
     return Optional.ofNullable(candidate);
   }
 
+  public RouteMetadata copy() {
+    RouteMetadata copy = new RouteMetadata();
+    if (blueGreen != null) {
+      copy.setBlueGreen(blueGreen.copy());
+    }
+    for (TrafficSplit split : trafficSplits) {
+      if (split != null) {
+        copy.getTrafficSplits().add(split.copy());
+      }
+    }
+    copy.getAttributes().putAll(attributes);
+    copy.setTenantRouting(tenantRouting);
+    copy.setRequestHeaders(requestHeaders);
+    copy.setMethods(methods);
+    copy.setStripPrefix(stripPrefix);
+    copy.setPrefixPath(prefixPath);
+    return copy;
+  }
+
   public static RouteMetadata empty() {
     return new RouteMetadata();
   }
@@ -140,6 +177,14 @@ public class RouteMetadata {
       }
       return Optional.empty();
     }
+
+    public BlueGreenDeployment copy() {
+      BlueGreenDeployment copy = new BlueGreenDeployment();
+      getActiveSlot().ifPresent(copy::setActiveSlot);
+      copy.setBlueUri(blueUri);
+      copy.setGreenUri(greenUri);
+      return copy;
+    }
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
@@ -172,5 +217,48 @@ public class RouteMetadata {
     public void setServiceUri(URI serviceUri) {
       this.serviceUri = serviceUri;
     }
+
+    public TrafficSplit copy() {
+      TrafficSplit copy = new TrafficSplit();
+      copy.setVariantId(variantId);
+      copy.setPercentage(percentage);
+      copy.setServiceUri(serviceUri);
+      return copy;
+    }
   }
+
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class TenantRoutingRule {
+
+    private List<String> dedicatedInstances = new ArrayList<>();
+    private Map<String, Integer> instanceWeights = new LinkedHashMap<>();
+
+    public List<String> getDedicatedInstances() {
+      return dedicatedInstances;
+    }
+
+    public void setDedicatedInstances(List<String> dedicatedInstances) {
+      this.dedicatedInstances = (dedicatedInstances == null)
+          ? new ArrayList<>()
+          : new ArrayList<>(dedicatedInstances);
+    }
+
+    public Map<String, Integer> getInstanceWeights() {
+      return instanceWeights;
+    }
+
+    public void setInstanceWeights(Map<String, Integer> instanceWeights) {
+      this.instanceWeights = (instanceWeights == null)
+          ? new LinkedHashMap<>()
+          : new LinkedHashMap<>(instanceWeights);
+    }
+
+    public TenantRoutingRule copy() {
+      TenantRoutingRule copy = new TenantRoutingRule();
+      copy.setDedicatedInstances(dedicatedInstances);
+      copy.setInstanceWeights(instanceWeights);
+      return copy;
+    }
+  }
+}
 }

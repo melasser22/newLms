@@ -30,15 +30,18 @@ public class RouteDefinitionConverter {
         GatewayRoutesProperties.ServiceRoute route = createBaseRoute(resolved, split.getServiceUri() != null
             ? split.getServiceUri()
             : baseUri);
-        route.setId(group + "-" + normaliseVariant(split.getVariantId()));
+        String variantId = split.getVariantId();
+        route.setId(group + "-" + normaliseVariant(variantId));
         route.getWeight().setEnabled(true);
         route.getWeight().setGroup(group);
         route.getWeight().setValue(split.getPercentage());
+        route.setVariantId(variantId);
         routes.add(route);
       }
     } else {
       GatewayRoutesProperties.ServiceRoute route = createBaseRoute(resolved, baseUri);
       route.setId(resolved.id().toString());
+      route.setVariantId("primary");
       routes.add(route);
     }
     return routes;
@@ -77,6 +80,16 @@ public class RouteDefinitionConverter {
     }
     if (!metadata.getRequestHeaders().isEmpty()) {
       route.setRequestHeaders(metadata.getRequestHeaders());
+    }
+    if (!metadata.getTenantRouting().isEmpty()) {
+      Map<String, GatewayRoutesProperties.ServiceRoute.TenantRoutingRule> converted = new LinkedHashMap<>();
+      metadata.getTenantRouting().forEach((tenant, rule) -> {
+        GatewayRoutesProperties.ServiceRoute.TenantRoutingRule convertedRule = new GatewayRoutesProperties.ServiceRoute.TenantRoutingRule();
+        convertedRule.setDedicatedInstances(rule.getDedicatedInstances());
+        convertedRule.setInstanceWeights(rule.getInstanceWeights());
+        converted.put(tenant, convertedRule);
+      });
+      route.setTenantRouting(converted);
     }
     Object attribute = metadata.getAttributes().getOrDefault("requiredScopes",
         metadata.getAttributes().get("required-scopes"));
@@ -182,7 +195,7 @@ public class RouteDefinitionConverter {
     return "/health".equals(candidate) || candidate.startsWith("/health/");
   }
 
-  private String normaliseVariant(String value) {
+  public static String normaliseVariant(String value) {
     if (!StringUtils.hasText(value)) {
       return "variant";
     }

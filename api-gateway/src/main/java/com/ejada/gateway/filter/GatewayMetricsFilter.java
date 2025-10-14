@@ -2,6 +2,7 @@ package com.ejada.gateway.filter;
 
 import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.gateway.observability.GatewayTracingHelper;
+import com.ejada.gateway.routes.service.RouteVariantService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
@@ -23,10 +24,13 @@ public class GatewayMetricsFilter implements WebFilter, Ordered {
 
   private final MeterRegistry meterRegistry;
   private final GatewayTracingHelper tracingHelper;
+  private final RouteVariantService variantService;
 
-  public GatewayMetricsFilter(MeterRegistry meterRegistry, GatewayTracingHelper tracingHelper) {
+  public GatewayMetricsFilter(MeterRegistry meterRegistry, GatewayTracingHelper tracingHelper,
+      RouteVariantService variantService) {
     this.meterRegistry = meterRegistry;
     this.tracingHelper = tracingHelper;
+    this.variantService = variantService;
   }
 
   @Override
@@ -67,6 +71,9 @@ public class GatewayMetricsFilter implements WebFilter, Ordered {
 
     meterRegistry.timer("gateway.request.duration", "tenantId", tenant, "routeId", routeId)
         .record(Duration.ofNanos(durationNanos));
+    if (variantService != null && route != null) {
+      variantService.recordResult(route.getId(), statusCode);
+    }
   }
 
   private String trimToDefault(String value) {

@@ -90,6 +90,7 @@ public class LoadBalancerConfiguration {
               new HealthAwareFilter(),
               new ZonePreferenceFilter(localZone)),
           List.of(
+              new TenantWeightedSelector(routesProperties, tenantContext),
               new TenantAffinitySelector(tenantContext, stickTable),
               new WeightedRoundRobinSelector()));
     }

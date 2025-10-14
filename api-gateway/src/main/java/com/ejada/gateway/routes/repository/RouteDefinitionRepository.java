@@ -101,6 +101,18 @@ public class RouteDefinitionRepository {
         .flatMap(saved -> evictCache().thenReturn(saved));
   }
 
+  @Transactional
+  public Mono<RouteDefinition> delete(UUID id, String actor) {
+    return routeStore.findById(id)
+        .switchIfEmpty(Mono.error(new RouteNotFoundException(id)))
+        .flatMap(entity -> {
+          RouteDefinition existing = mapper.toDomain(entity);
+          return routeStore.delete(entity)
+              .then(audit("DELETE", existing, actor).thenReturn(existing));
+        })
+        .flatMap(saved -> evictCache().thenReturn(saved));
+  }
+
   private Mono<Void> evictCache() {
     return redisTemplate.delete(ACTIVE_ROUTES_CACHE_KEY)
         .onErrorResume(ex -> {

@@ -229,6 +229,10 @@ public class SecurityAutoConfiguration {
     return cur;
   }
 
+  CorsConfigurationSource corsConfigurationSource(SharedSecurityProps props) {
+    return new ServletSecurityConfiguration().corsConfigurationSource(props);
+  }
+
   @Configuration(proxyBeanMethods = false)
   @ConditionalOnClass(HttpServletRequest.class)
   static class ServletSecurityConfiguration {

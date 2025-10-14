@@ -2,14 +2,14 @@ package com.ejada.starter_security;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
-import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.boot.test.context.runner.WebApplicationContextRunner;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RoleCheckerAutoConfigurationTest {
 
-  private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
+  private final WebApplicationContextRunner contextRunner = new WebApplicationContextRunner()
       .withConfiguration(AutoConfigurations.of(SecurityAutoConfiguration.class))
       .withPropertyValues(
           "shared.security.hs256.secret=0123456789ABCDEF0123456789ABCDEF",
