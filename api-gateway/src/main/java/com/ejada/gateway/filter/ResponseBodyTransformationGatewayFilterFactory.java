@@ -2,6 +2,7 @@ package com.ejada.gateway.filter;
 
 import com.ejada.gateway.cache.CacheRefreshService;
 import com.ejada.gateway.config.GatewayTransformationProperties.HeaderOperations;
+import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.gateway.transformation.HeaderTransformationService;
 import com.ejada.gateway.transformation.ResponseBodyTransformer;
 import com.ejada.gateway.transformation.ResponseCacheService;
@@ -27,6 +28,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -72,6 +74,10 @@ public class ResponseBodyTransformationGatewayFilterFactory {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
       Route route = exchange.getAttribute(org.springframework.cloud.gateway.support.ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
       String effectiveRouteId = (route != null) ? route.getId() : routeId;
+      String overrideRouteId = exchange.getAttribute(GatewayRequestAttributes.API_VERSION_TRANSFORMATION_ROUTE);
+      if (StringUtils.hasText(overrideRouteId)) {
+        effectiveRouteId = overrideRouteId;
+      }
 
       HeaderOperations responseHeaders = headerTransformationService.resolveResponseOperations(effectiveRouteId);
 

@@ -1,7 +1,9 @@
 package com.ejada.gateway.config;
 
+import com.ejada.gateway.versioning.VersionAnalyticsService;
 import com.ejada.gateway.versioning.VersionMappingResolver;
 import com.ejada.gateway.versioning.VersionNormalizationFilter;
+import com.ejada.gateway.versioning.preference.TenantVersionPreferenceService;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -33,8 +35,12 @@ public class GatewayVersioningConfiguration {
   }
 
   @Bean
-  public VersionNormalizationFilter versionNormalizationFilter(VersionMappingResolver resolver) {
-    return new VersionNormalizationFilter(resolver);
+  public VersionNormalizationFilter versionNormalizationFilter(VersionMappingResolver resolver,
+      ObjectProvider<VersionAnalyticsService> analyticsProvider,
+      ObjectProvider<TenantVersionPreferenceService> preferenceProvider) {
+    return new VersionNormalizationFilter(resolver,
+        analyticsProvider.getIfAvailable(),
+        preferenceProvider.getIfAvailable());
   }
 
   /**

@@ -245,6 +245,8 @@ public class GatewayVersioningProperties {
 
     private String documentationGroup;
 
+    private Map<String, String> compatibilityTransformations = new LinkedHashMap<>();
+
     public String getVersion() {
       return version;
     }
@@ -352,6 +354,24 @@ public class GatewayVersioningProperties {
 
     public void setDocumentationGroup(String documentationGroup) {
       this.documentationGroup = StringUtils.hasText(documentationGroup) ? documentationGroup.trim() : null;
+    }
+
+    public Map<String, String> getCompatibilityTransformations() {
+      return compatibilityTransformations;
+    }
+
+    public void setCompatibilityTransformations(Map<String, String> compatibilityTransformations) {
+      LinkedHashMap<String, String> copy = new LinkedHashMap<>();
+      if (compatibilityTransformations != null) {
+        compatibilityTransformations.forEach((key, value) -> {
+          String canonicalKey = VersionNumber.canonicaliseOrNull(key);
+          if (canonicalKey == null || !StringUtils.hasText(value)) {
+            return;
+          }
+          copy.put(canonicalKey, value.trim());
+        });
+      }
+      this.compatibilityTransformations = copy;
     }
 
     void validate(String mappingId) {

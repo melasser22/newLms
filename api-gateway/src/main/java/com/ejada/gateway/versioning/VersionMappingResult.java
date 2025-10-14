@@ -23,6 +23,7 @@ public final class VersionMappingResult {
   private final Map<String, String> additionalHeaders;
   private final String documentationGroup;
   private final String resolutionSource;
+  private final Map<String, String> compatibilityTransformations;
 
   private VersionMappingResult(String mappingId,
       String requestedVersion,
@@ -36,7 +37,8 @@ public final class VersionMappingResult {
       List<String> compatibility,
       Map<String, String> additionalHeaders,
       String documentationGroup,
-      String resolutionSource) {
+      String resolutionSource,
+      Map<String, String> compatibilityTransformations) {
     this.mappingId = mappingId;
     this.requestedVersion = requestedVersion;
     this.resolvedVersion = resolvedVersion;
@@ -50,6 +52,9 @@ public final class VersionMappingResult {
     this.additionalHeaders = additionalHeaders == null ? Map.of() : Map.copyOf(additionalHeaders);
     this.documentationGroup = documentationGroup;
     this.resolutionSource = resolutionSource;
+    this.compatibilityTransformations = compatibilityTransformations == null
+        ? Map.of()
+        : Map.copyOf(compatibilityTransformations);
   }
 
   public static VersionMappingResult resolved(String mappingId,
@@ -63,7 +68,8 @@ public final class VersionMappingResult {
       List<String> compatibility,
       Map<String, String> additionalHeaders,
       String documentationGroup,
-      String resolutionSource) {
+      String resolutionSource,
+      Map<String, String> compatibilityTransformations) {
     return new VersionMappingResult(mappingId,
         requestedVersion,
         resolvedVersion,
@@ -76,7 +82,8 @@ public final class VersionMappingResult {
         compatibility,
         additionalHeaders,
         documentationGroup,
-        resolutionSource);
+        resolutionSource,
+        compatibilityTransformations);
   }
 
   public static VersionMappingResult unsupported(String mappingId, String requestedVersion) {
@@ -92,7 +99,8 @@ public final class VersionMappingResult {
         List.of(),
         Map.of(),
         null,
-        "unsupported");
+        "unsupported",
+        Map.of());
   }
 
   public VersionMappingResult withCompatibility(List<String> compatibility) {
@@ -108,7 +116,8 @@ public final class VersionMappingResult {
         compatibility,
         additionalHeaders,
         documentationGroup,
-        resolutionSource);
+        resolutionSource,
+        compatibilityTransformations);
   }
 
   public boolean isUnsupported() {
@@ -163,6 +172,10 @@ public final class VersionMappingResult {
     return mappingId;
   }
 
+  public Map<String, String> getCompatibilityTransformations() {
+    return compatibilityTransformations;
+  }
+
   public VersionMappingResult mergeHeaders(Map<String, String> globalHeaders) {
     if (globalHeaders == null || globalHeaders.isEmpty()) {
       return this;
@@ -181,7 +194,8 @@ public final class VersionMappingResult {
         compatibility,
         merged,
         documentationGroup,
-        resolutionSource);
+        resolutionSource,
+        compatibilityTransformations);
   }
 
   @Override

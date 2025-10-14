@@ -29,6 +29,14 @@ public final class GatewayRequestAttributes {
   public static final String API_VERSION_SOURCE = GatewayRequestAttributes.class.getName()
       + ".apiVersionSource";
 
+  /** Attribute storing a tenant-specific preferred API version if available. */
+  public static final String API_VERSION_PREFERENCE = GatewayRequestAttributes.class.getName()
+      + ".apiVersionPreference";
+
+  /** Attribute indicating the transformation route id for compatibility bridging. */
+  public static final String API_VERSION_TRANSFORMATION_ROUTE = GatewayRequestAttributes.class.getName()
+      + ".apiVersionTransformationRoute";
+
   private GatewayRequestAttributes() {
     // utility class
   }

@@ -2,6 +2,7 @@ package com.ejada.gateway.filter;
 
 import com.ejada.gateway.config.GatewayLimitsProperties;
 import com.ejada.gateway.config.GatewayTransformationProperties.HeaderOperations;
+import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.gateway.metrics.GatewayMetrics;
 import com.ejada.gateway.transformation.HeaderTransformationService;
 import com.ejada.gateway.transformation.RequestBodyTransformer;
@@ -18,6 +19,7 @@ import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
+import org.springframework.util.StringUtils;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
@@ -62,6 +64,10 @@ public class RequestBodyTransformationGatewayFilterFactory {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
       Route route = exchange.getAttribute(org.springframework.cloud.gateway.support.ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
       String effectiveRouteId = (route != null) ? route.getId() : routeId;
+      String overrideRouteId = exchange.getAttribute(GatewayRequestAttributes.API_VERSION_TRANSFORMATION_ROUTE);
+      if (StringUtils.hasText(overrideRouteId)) {
+        effectiveRouteId = overrideRouteId;
+      }
 
       HeaderOperations headerOperations = headerTransformationService.resolveRequestOperations(effectiveRouteId);
       DataSize maxSize = limitsProperties.resolveMaxSize(effectiveRouteId);
