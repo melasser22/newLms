@@ -55,6 +55,12 @@
       <artifactId>spring-cloud-starter-gateway</artifactId>
     </dependency>
 
+    <!-- GraphQL facade for aggregated platform data -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-graphql</artifactId>
+    </dependency>
+
     <!-- JSONPath support for payload transformations -->
     <dependency>
       <groupId>com.jayway.jsonpath</groupId>
