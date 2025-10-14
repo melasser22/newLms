@@ -72,6 +72,14 @@ public class CorrelationIdGatewayFilter implements WebFilter {
     mutatedExchange.getAttributes().put(GatewayRequestAttributes.CORRELATION_ID, correlationId);
     mutatedExchange.getAttributes().putIfAbsent(HeaderNames.CORRELATION_ID, correlationId);
 
+    if (correlationProps.isEchoResponseHeader() && StringUtils.hasText(correlationId)) {
+      String resolvedCorrelationId = correlationId;
+      mutatedExchange.getResponse().beforeCommit(() -> {
+        mutatedExchange.getResponse().getHeaders().set(headerName, resolvedCorrelationId);
+        return Mono.empty();
+      });
+    }
+
     return chain.filter(mutatedExchange);
   }
 

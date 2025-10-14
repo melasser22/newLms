@@ -11,6 +11,9 @@ import com.ejada.gateway.security.IpFilteringGatewayFilter;
 import com.ejada.gateway.security.JwtRefreshWebFilter;
 import com.ejada.gateway.security.RequestSignatureValidationFilter;
 import com.ejada.gateway.security.SecurityHeadersFilter;
+import com.ejada.gateway.security.UserAgentValidationFilter;
+import com.ejada.gateway.security.cors.CorsPreflightCache;
+import com.ejada.gateway.security.cors.CorsPreflightCachingFilter;
 import com.ejada.gateway.security.apikey.ApiKeyCodec;
 import com.ejada.gateway.security.mtls.MutualTlsAuthenticationFilter;
 import com.ejada.gateway.security.mtls.PartnerCertificateService;
@@ -133,6 +136,23 @@ public class GatewaySecurityConfiguration {
   @Bean
   public GatewaySecurityMetrics gatewaySecurityMetrics(MeterRegistry meterRegistry) {
     return new GatewaySecurityMetrics(meterRegistry);
+  }
+
+  @Bean
+  public UserAgentValidationFilter userAgentValidationFilter(GatewaySecurityProperties properties) {
+    return new UserAgentValidationFilter(properties.getUserAgentValidation());
+  }
+
+  @Bean
+  public CorsPreflightCache corsPreflightCache(GatewaySecurityProperties properties) {
+    return new CorsPreflightCache(properties.getCors().getPreflightCacheTtl());
+  }
+
+  @Bean
+  public CorsPreflightCachingFilter corsPreflightCachingFilter(
+      CorsConfigurationSource corsConfigurationSource,
+      CorsPreflightCache corsPreflightCache) {
+    return new CorsPreflightCachingFilter(corsConfigurationSource, corsPreflightCache);
   }
 
   @Bean

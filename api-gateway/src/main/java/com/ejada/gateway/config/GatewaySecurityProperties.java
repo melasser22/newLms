@@ -1,6 +1,8 @@
 package com.ejada.gateway.config;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.StringUtils;
 
@@ -19,6 +21,8 @@ public class GatewaySecurityProperties {
   private final TokenRefresh tokenRefresh = new TokenRefresh();
   private final SecurityHeaders securityHeaders = new SecurityHeaders();
   private final MutualTls mutualTls = new MutualTls();
+  private final UserAgentValidation userAgentValidation = new UserAgentValidation();
+  private final Cors cors = new Cors();
 
   public SignatureValidation getSignatureValidation() {
     return signatureValidation;
@@ -46,6 +50,14 @@ public class GatewaySecurityProperties {
 
   public MutualTls getMutualTls() {
     return mutualTls;
+  }
+
+  public UserAgentValidation getUserAgentValidation() {
+    return userAgentValidation;
+  }
+
+  public Cors getCors() {
+    return cors;
   }
 
   public static class SignatureValidation {
@@ -665,6 +677,60 @@ public class GatewaySecurityProperties {
     public void setTenantHeaderName(String tenantHeaderName) {
       if (StringUtils.hasText(tenantHeaderName)) {
         this.tenantHeaderName = tenantHeaderName;
+      }
+    }
+  }
+
+  public static class UserAgentValidation {
+
+    private boolean enabled = true;
+    private List<String> blockedPatterns = new ArrayList<>(List.of(
+        "(?i)bot", "(?i)crawler", "(?i)spider", "(?i)curl/", "(?i)wget/"));
+    private String[] skipPatterns = new String[] {"/actuator/**", "/status"};
+
+    public boolean isEnabled() {
+      return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+      this.enabled = enabled;
+    }
+
+    public List<String> getBlockedPatterns() {
+      return blockedPatterns;
+    }
+
+    public void setBlockedPatterns(List<String> blockedPatterns) {
+      if (blockedPatterns == null) {
+        this.blockedPatterns = new ArrayList<>();
+        return;
+      }
+      this.blockedPatterns = blockedPatterns.stream()
+          .filter(StringUtils::hasText)
+          .map(String::trim)
+          .toList();
+    }
+
+    public String[] getSkipPatterns() {
+      return skipPatterns;
+    }
+
+    public void setSkipPatterns(String[] skipPatterns) {
+      this.skipPatterns = (skipPatterns != null) ? skipPatterns : new String[0];
+    }
+  }
+
+  public static class Cors {
+
+    private Duration preflightCacheTtl = Duration.ofMinutes(10);
+
+    public Duration getPreflightCacheTtl() {
+      return preflightCacheTtl;
+    }
+
+    public void setPreflightCacheTtl(Duration preflightCacheTtl) {
+      if (preflightCacheTtl != null && !preflightCacheTtl.isNegative() && !preflightCacheTtl.isZero()) {
+        this.preflightCacheTtl = preflightCacheTtl;
       }
     }
   }

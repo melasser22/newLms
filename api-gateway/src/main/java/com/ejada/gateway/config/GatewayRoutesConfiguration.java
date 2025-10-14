@@ -160,6 +160,9 @@ public class GatewayRoutesConfiguration {
               if (route.getSessionAffinity().isEnabled()) {
                 filters.filter(new SessionAffinityGatewayFilter(route.getSessionAffinity()));
               }
+              if (route.getMaxRequestSize() != null) {
+                filters.requestSize(config -> config.setMaxSize(route.getMaxRequestSize()));
+              }
               responseTransformationFactory.ifAvailable(factory -> filters.filter(factory.apply(route.getId())));
               if (resilience.isEnabled()) {
                 filters.circuitBreaker(config -> {

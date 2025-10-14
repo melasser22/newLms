@@ -22,6 +22,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.util.unit.DataSize;
 import org.springframework.validation.annotation.Validated;
 
 /**
@@ -68,6 +69,7 @@ public class GatewayRoutesProperties {
   public static class RouteDefaults {
 
     private ServiceRoute.Resilience resilience = new ServiceRoute.Resilience();
+    private DataSize maxRequestSize = DataSize.ofMegabytes(10);
 
     public ServiceRoute.Resilience getResilience() {
       return resilience;
@@ -75,6 +77,16 @@ public class GatewayRoutesProperties {
 
     public void setResilience(ServiceRoute.Resilience resilience) {
       this.resilience = (resilience == null) ? new ServiceRoute.Resilience() : resilience;
+    }
+
+    public DataSize getMaxRequestSize() {
+      return maxRequestSize;
+    }
+
+    public void setMaxRequestSize(DataSize maxRequestSize) {
+      if (maxRequestSize != null && maxRequestSize.toBytes() > 0) {
+        this.maxRequestSize = maxRequestSize;
+      }
     }
   }
 
@@ -97,6 +109,9 @@ public class GatewayRoutesProperties {
 
     /** Optional HTTP methods to restrict the route (empty = all). */
     private List<String> methods = new ArrayList<>();
+
+    /** Maximum request payload size accepted by this route. */
+    private DataSize maxRequestSize;
 
     /** Number of path segments to strip before forwarding. */
     private int stripPrefix = 1;
@@ -183,6 +198,18 @@ public class GatewayRoutesProperties {
           .map(value -> value.toUpperCase(Locale.ROOT))
           .collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
       this.methods = new ArrayList<>(normalized);
+    }
+
+    public DataSize getMaxRequestSize() {
+      return maxRequestSize;
+    }
+
+    public void setMaxRequestSize(DataSize maxRequestSize) {
+      if (maxRequestSize == null || maxRequestSize.toBytes() <= 0) {
+        this.maxRequestSize = null;
+        return;
+      }
+      this.maxRequestSize = maxRequestSize;
     }
 
     public int getStripPrefix() {
@@ -312,6 +339,12 @@ public class GatewayRoutesProperties {
         this.resilience = new Resilience();
       }
       this.resilience.applyDefaults(defaults.getResilience());
+      DataSize defaultMax = defaults.getMaxRequestSize();
+      if (this.maxRequestSize == null) {
+        this.maxRequestSize = defaultMax;
+      } else if (defaultMax != null && this.maxRequestSize.toBytes() > defaultMax.toBytes()) {
+        this.maxRequestSize = defaultMax;
+      }
     }
 
     /**
@@ -487,6 +520,10 @@ public class GatewayRoutesProperties {
         throw new IllegalStateException(
             "gateway.routes." + key + ".prefixPath must start with '/' if provided");
       }
+      if (maxRequestSize == null) {
+        throw new IllegalStateException(
+            "gateway.routes." + key + ".max-request-size must be configured");
+      }
       resilience.validate(key);
       versioning.validate(key);
       weight.validate(key);
@@ -503,6 +540,7 @@ public class GatewayRoutesProperties {
           + ", uri=" + uri
           + ", paths=" + paths
           + ", methods=" + methods
+          + ", maxRequestSize=" + maxRequestSize
           + ", stripPrefix=" + stripPrefix
           + ", prefixPath='" + prefixPath + '\''
           + ", requestHeaders=" + requestHeaders
@@ -528,6 +566,7 @@ public class GatewayRoutesProperties {
           && Objects.equals(uri, that.uri)
           && Objects.equals(paths, that.paths)
           && Objects.equals(methods, that.methods)
+          && Objects.equals(maxRequestSize, that.maxRequestSize)
           && Objects.equals(prefixPath, that.prefixPath)
           && Objects.equals(resilience, that.resilience)
           && Objects.equals(requestHeaders, that.requestHeaders)
@@ -540,8 +579,8 @@ public class GatewayRoutesProperties {
 
     @Override
     public int hashCode() {
-      return Objects.hash(id, variantId, uri, paths, methods, stripPrefix, prefixPath, resilience,
-          requestHeaders, tenantRouting, versioning, weight, sessionAffinity, lbStrategy);
+      return Objects.hash(id, variantId, uri, paths, methods, maxRequestSize, stripPrefix, prefixPath,
+          resilience, requestHeaders, tenantRouting, versioning, weight, sessionAffinity, lbStrategy);
     }
 
     /**
