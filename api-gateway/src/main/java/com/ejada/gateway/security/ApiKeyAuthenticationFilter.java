@@ -5,31 +5,22 @@ import com.ejada.common.dto.BaseResponse;
 import com.ejada.gateway.config.GatewayRoutesProperties;
 import com.ejada.gateway.config.GatewayRoutesProperties.ServiceRoute;
 import com.ejada.gateway.config.GatewaySecurityProperties;
-import com.ejada.gateway.config.GatewaySecurityProperties.EncryptionAlgorithm;
 import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.gateway.security.GatewaySecurityMetrics;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.ejada.gateway.security.apikey.ApiKeyCodec;
+import com.ejada.gateway.security.apikey.ApiKeyCodec.DecodedApiKeyRecord;
+import com.ejada.gateway.security.apikey.ApiKeyRecord;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -61,8 +52,6 @@ import reactor.core.publisher.Mono;
 public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ApiKeyAuthenticationFilter.class);
-  private static final int GCM_TAG_LENGTH = 128;
-  private static final int GCM_IV_LENGTH = 12;
 
   private final ReactiveStringRedisTemplate redisTemplate;
   private final ObjectMapper objectMapper;
@@ -70,10 +59,7 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
   private final GatewaySecurityMetrics metrics;
   private final GatewayRoutesProperties routesProperties;
   private final PathMatcher pathMatcher = new AntPathMatcher();
-  private final SecureRandom secureRandom = new SecureRandom();
-
-  private volatile SecretKey cachedSecretKey;
-  private volatile String cachedKeyValue;
+  private final ApiKeyCodec apiKeyCodec;
 
   public ApiKeyAuthenticationFilter(
       ReactiveStringRedisTemplate redisTemplate,
@@ -81,7 +67,8 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
       GatewaySecurityProperties properties,
       GatewayRoutesProperties routesProperties,
       @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> primaryObjectMapper,
-      ObjectProvider<ObjectMapper> fallbackObjectMapper) {
+      ObjectProvider<ObjectMapper> fallbackObjectMapper,
+      ApiKeyCodec apiKeyCodec) {
     this.redisTemplate = Objects.requireNonNull(redisTemplate, "redisTemplate");
     this.properties = Objects.requireNonNull(properties, "properties");
     this.metrics = Objects.requireNonNull(metrics, "metrics");
@@ -91,6 +78,7 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
       mapper = (fallbackObjectMapper != null) ? fallbackObjectMapper.getIfAvailable() : null;
     }
     this.objectMapper = Objects.requireNonNull(mapper, "objectMapper");
+    this.apiKeyCodec = Objects.requireNonNull(apiKeyCodec, "apiKeyCodec");
   }
 
   @Override
@@ -128,16 +116,8 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
   }
 
   private Mono<DecodedApiKeyRecord> decodeRecord(String raw) {
-    return Mono.fromCallable(() -> {
-      JsonNode tree = objectMapper.readTree(raw);
-      if (tree.hasNonNull("ciphertext")) {
-        EncryptedPayload payload = objectMapper.treeToValue(tree, EncryptedPayload.class);
-        ApiKeyRecord record = decrypt(payload);
-        return DecodedApiKeyRecord.encrypted(record, payload.keyId());
-      }
-      PlainStoredApiKeyRecord stored = objectMapper.treeToValue(tree, PlainStoredApiKeyRecord.class);
-      return DecodedApiKeyRecord.plain(stored.toRecord());
-    });
+    return apiKeyCodec.decode(raw)
+        .onErrorResume(ex -> Mono.error(new IllegalStateException("Failed to decode API key", ex)));
   }
 
   private Mono<Void> validateAndAuthenticate(DecodedApiKeyRecord decoded, String apiKey, String redisKey,
@@ -185,27 +165,34 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
     Collection<GrantedAuthority> authorities = authorities(record.getScopes());
     ApiKeyAuthenticationToken authentication = new ApiKeyAuthenticationToken(apiKey, record.getTenantId(), authorities);
 
-    metrics.incrementApiKeyValidated(record.getTenantId());
+    return enforceRateLimit(apiKey, record, exchange)
+        .flatMap(allowed -> {
+          if (!allowed) {
+            return Mono.empty();
+          }
 
-    ServerHttpRequest mutatedRequest = mutateRequest(exchange.getRequest(), record.getTenantId());
-    ServerWebExchange mutatedExchange = exchange.mutate()
-        .request(mutatedRequest)
-        .build();
-    mutatedExchange.getAttributes().put(GatewayRequestAttributes.TENANT_ID, record.getTenantId());
-    mutatedExchange.getAttributes().put(HeaderNames.X_TENANT_ID, record.getTenantId());
+          metrics.incrementApiKeyValidated(record.getTenantId());
 
-    Mono<Void> audit = auditUsage(decoded, redisKey, record, exchange)
-        .onErrorResume(ex -> {
-          LOGGER.warn("Failed to audit API key usage for tenant {}", record.getTenantId(), ex);
-          return Mono.empty();
+          ServerHttpRequest mutatedRequest = mutateRequest(exchange.getRequest(), record.getTenantId());
+          ServerWebExchange mutatedExchange = exchange.mutate()
+              .request(mutatedRequest)
+              .build();
+          mutatedExchange.getAttributes().put(GatewayRequestAttributes.TENANT_ID, record.getTenantId());
+          mutatedExchange.getAttributes().put(HeaderNames.X_TENANT_ID, record.getTenantId());
+
+          Mono<Void> audit = auditUsage(decoded, redisKey, record, exchange)
+              .onErrorResume(ex -> {
+                LOGGER.warn("Failed to audit API key usage for tenant {}", record.getTenantId(), ex);
+                return Mono.empty();
+              });
+
+          return audit.then(chain.filter(mutatedExchange)
+              .contextWrite(ctx -> ctx
+                  .put(GatewayRequestAttributes.TENANT_ID, record.getTenantId())
+                  .put(HeaderNames.X_TENANT_ID, record.getTenantId())
+                  .put(SecurityContext.class, new SecurityContextImpl(authentication)))
+              .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication)));
         });
-
-    return audit.then(chain.filter(mutatedExchange)
-        .contextWrite(ctx -> ctx
-            .put(GatewayRequestAttributes.TENANT_ID, record.getTenantId())
-            .put(HeaderNames.X_TENANT_ID, record.getTenantId())
-            .put(SecurityContext.class, new SecurityContextImpl(authentication)))
-        .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication)));
   }
 
   private Mono<Void> auditUsage(DecodedApiKeyRecord decoded, String redisKey, ApiKeyRecord record,
@@ -229,12 +216,46 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
       return Mono.empty();
     }
     record.setLastUsedAt(now);
-    return Mono.fromCallable(() -> serializeRecord(record, decoded.encrypted()))
+    return Mono.fromCallable(() -> apiKeyCodec.encode(record, decoded.encrypted()))
         .flatMap(serialized -> {
           if (!StringUtils.hasText(serialized)) {
             return Mono.<Void>empty();
           }
           return redisTemplate.opsForValue().set(redisKey, serialized).then();
+        });
+  }
+
+  private Mono<Boolean> enforceRateLimit(String apiKey, ApiKeyRecord record, ServerWebExchange exchange) {
+    GatewaySecurityProperties.ApiKey.RateLimit cfg = properties.getApiKey().getRateLimit();
+    if (!cfg.isEnabled()) {
+      return Mono.just(true);
+    }
+    long allowed = 0L;
+    if (record.getRateLimitPerMinute() != null) {
+      allowed = Math.max(0, record.getRateLimitPerMinute());
+    }
+    if (allowed <= 0) {
+      allowed = Math.max(0, cfg.getDefaultPerMinute());
+    }
+    if (allowed <= 0) {
+      return Mono.just(true);
+    }
+    String rateKey = cfg.redisKey(apiKey);
+    return redisTemplate.opsForValue().increment(rateKey)
+        .flatMap(count -> {
+          if (count != null && count == 1L) {
+            return redisTemplate.expire(rateKey, Duration.ofMinutes(1)).thenReturn(count);
+          }
+          return Mono.just(count);
+        })
+        .defaultIfEmpty(1L)
+        .flatMap(count -> {
+          if (count > allowed) {
+            metrics.incrementBlocked("api_key_rate_limit", record.getTenantId());
+            return reject(exchange, HttpStatus.TOO_MANY_REQUESTS, "ERR_API_KEY_RATE_LIMIT", "API key rate limit exceeded")
+                .thenReturn(false);
+          }
+          return Mono.just(true);
         });
   }
 
@@ -341,189 +362,12 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
         .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
-  private ApiKeyRecord decrypt(EncryptedPayload payload) throws GeneralSecurityException, IOException {
-    if (!StringUtils.hasText(payload.ciphertext()) || !StringUtils.hasText(payload.iv())) {
-      throw new IllegalArgumentException("Encrypted payload missing ciphertext or IV");
-    }
-    EncryptionAlgorithm algorithm = Optional.ofNullable(payload.algorithm())
-        .map(EncryptionAlgorithm::from)
-        .orElse(properties.getApiKey().getEncryption().getAlgorithm());
-    if (algorithm != EncryptionAlgorithm.AES_256_GCM) {
-      throw new IllegalStateException("Unsupported API key encryption algorithm: " + payload.algorithm());
-    }
-    SecretKey key = resolveEncryptionKey();
-    byte[] iv = Base64.getDecoder().decode(payload.iv());
-    byte[] ciphertext = Base64.getDecoder().decode(payload.ciphertext());
-    Cipher cipher = Cipher.getInstance(algorithm.getTransformation());
-    cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(GCM_TAG_LENGTH, iv));
-    byte[] plaintext = cipher.doFinal(ciphertext);
-    PlainStoredApiKeyRecord stored = objectMapper.readValue(plaintext, PlainStoredApiKeyRecord.class);
-    return stored.toRecord();
-  }
-
-  private String serializeRecord(ApiKeyRecord record, boolean wasEncrypted)
-      throws GeneralSecurityException, JsonProcessingException {
-    GatewaySecurityProperties.ApiKey.Encryption encryption = properties.getApiKey().getEncryption();
-    boolean shouldEncrypt = encryption.isEnabled() && resolveEncryptionKeyOptional().isPresent();
-    if (wasEncrypted) {
-      shouldEncrypt = true;
-    }
-    if (shouldEncrypt) {
-      EncryptionAlgorithm algorithm = encryption.getAlgorithm();
-      EncryptedPayload payload = encrypt(record, algorithm, encryption.getKeyId());
-      return objectMapper.writeValueAsString(payload);
-    }
-    PlainStoredApiKeyRecord stored = PlainStoredApiKeyRecord.from(record);
-    return objectMapper.writeValueAsString(stored);
-  }
-
-  private EncryptedPayload encrypt(ApiKeyRecord record, EncryptionAlgorithm algorithm, String keyId)
-      throws GeneralSecurityException, JsonProcessingException {
-    SecretKey key = resolveEncryptionKey();
-    byte[] iv = new byte[GCM_IV_LENGTH];
-    secureRandom.nextBytes(iv);
-    Cipher cipher = Cipher.getInstance(algorithm.getTransformation());
-    cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(GCM_TAG_LENGTH, iv));
-    byte[] plaintext = objectMapper.writeValueAsBytes(PlainStoredApiKeyRecord.from(record));
-    byte[] ciphertext = cipher.doFinal(plaintext);
-    return new EncryptedPayload(
-        Base64.getEncoder().encodeToString(ciphertext),
-        Base64.getEncoder().encodeToString(iv),
-        algorithm.getId(),
-        keyId);
-  }
-
-  private SecretKey resolveEncryptionKey() {
-    return resolveEncryptionKeyOptional()
-        .orElseThrow(() -> new IllegalStateException("API key encryption key is not configured"));
-  }
-
-  private Optional<SecretKey> resolveEncryptionKeyOptional() {
-    GatewaySecurityProperties.ApiKey.Encryption encryption = properties.getApiKey().getEncryption();
-    String keyValue = encryption.getKeyValue();
-    if (!StringUtils.hasText(keyValue)) {
-      return Optional.empty();
-    }
-    SecretKey cached = this.cachedSecretKey;
-    if (cached != null && keyValue.equals(this.cachedKeyValue)) {
-      return Optional.of(cached);
-    }
-    byte[] decoded = Base64.getDecoder().decode(keyValue);
-    if (!(decoded.length == 16 || decoded.length == 24 || decoded.length == 32)) {
-      throw new IllegalStateException("API key encryption key must be 128, 192 or 256 bits");
-    }
-    SecretKey secretKey = new SecretKeySpec(decoded, "AES");
-    this.cachedSecretKey = secretKey;
-    this.cachedKeyValue = keyValue;
-    return Optional.of(secretKey);
-  }
-
   private static String trimToNull(String value) {
     if (!StringUtils.hasText(value)) {
       return null;
     }
     String trimmed = value.trim();
     return trimmed.isEmpty() ? null : trimmed;
-  }
-
-  private record DecodedApiKeyRecord(ApiKeyRecord record, boolean encrypted, Optional<String> keyId) {
-
-    static DecodedApiKeyRecord plain(ApiKeyRecord record) {
-      return new DecodedApiKeyRecord(record, false, Optional.empty());
-    }
-
-    static DecodedApiKeyRecord encrypted(ApiKeyRecord record, String keyId) {
-      return new DecodedApiKeyRecord(record, true, Optional.ofNullable(keyId));
-    }
-  }
-
-  private record EncryptedPayload(String ciphertext, String iv, String algorithm, String keyId) {
-  }
-
-  private static final class PlainStoredApiKeyRecord {
-
-    private String tenantId;
-    private Set<String> scopes;
-    private Instant expiresAt;
-    private Instant rotatedAt;
-    private Instant lastUsedAt;
-
-    ApiKeyRecord toRecord() {
-      ApiKeyRecord record = new ApiKeyRecord();
-      record.setTenantId(tenantId);
-      record.setScopes(scopes);
-      record.setExpiresAt(expiresAt);
-      record.setRotatedAt(rotatedAt);
-      record.setLastUsedAt(lastUsedAt);
-      return record;
-    }
-
-    static PlainStoredApiKeyRecord from(ApiKeyRecord record) {
-      PlainStoredApiKeyRecord stored = new PlainStoredApiKeyRecord();
-      stored.tenantId = record.getTenantId();
-      stored.scopes = (record.getScopes() == null) ? Set.of() : new LinkedHashSet<>(record.getScopes());
-      stored.expiresAt = record.getExpiresAt();
-      stored.rotatedAt = record.getRotatedAt();
-      stored.lastUsedAt = record.getLastUsedAt();
-      return stored;
-    }
-  }
-
-  private static final class ApiKeyRecord {
-
-    private String tenantId;
-    private Set<String> scopes = Set.of();
-    private Instant expiresAt;
-    private Instant rotatedAt;
-    private Instant lastUsedAt;
-
-    String getTenantId() {
-      return tenantId;
-    }
-
-    void setTenantId(String tenantId) {
-      this.tenantId = tenantId;
-    }
-
-    Set<String> getScopes() {
-      return (scopes == null) ? Set.of() : scopes;
-    }
-
-    void setScopes(Collection<String> scopes) {
-      if (scopes == null || scopes.isEmpty()) {
-        this.scopes = Set.of();
-        return;
-      }
-      this.scopes = scopes.stream()
-          .filter(Objects::nonNull)
-          .map(String::trim)
-          .filter(StringUtils::hasText)
-          .collect(Collectors.toCollection(LinkedHashSet::new));
-    }
-
-    Instant getExpiresAt() {
-      return expiresAt;
-    }
-
-    void setExpiresAt(Instant expiresAt) {
-      this.expiresAt = expiresAt;
-    }
-
-    Instant getRotatedAt() {
-      return rotatedAt;
-    }
-
-    void setRotatedAt(Instant rotatedAt) {
-      this.rotatedAt = rotatedAt;
-    }
-
-    Instant getLastUsedAt() {
-      return lastUsedAt;
-    }
-
-    void setLastUsedAt(Instant lastUsedAt) {
-      this.lastUsedAt = lastUsedAt;
-    }
   }
 
   private record ScopeRequirements(Set<String> scopes, Set<String> routeIds) {

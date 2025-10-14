@@ -6,8 +6,14 @@ import com.ejada.gateway.config.GatewayRoutesProperties;
 import com.ejada.gateway.security.ApiKeyAuthenticationFilter;
 import com.ejada.gateway.security.GatewaySecurityMetrics;
 import com.ejada.gateway.security.GatewayTokenIntrospectionService;
+import com.ejada.gateway.security.GatewayTokenRefreshService;
 import com.ejada.gateway.security.IpFilteringGatewayFilter;
+import com.ejada.gateway.security.JwtRefreshWebFilter;
 import com.ejada.gateway.security.RequestSignatureValidationFilter;
+import com.ejada.gateway.security.SecurityHeadersFilter;
+import com.ejada.gateway.security.apikey.ApiKeyCodec;
+import com.ejada.gateway.security.mtls.MutualTlsAuthenticationFilter;
+import com.ejada.gateway.security.mtls.PartnerCertificateService;
 import com.ejada.gateway.subscription.SubscriptionCacheService;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
 import com.ejada.starter_security.SharedSecurityProps;
@@ -139,8 +145,9 @@ public class GatewaySecurityConfiguration {
       GatewaySecurityProperties properties,
       GatewayRoutesProperties routesProperties,
       @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> primaryObjectMapper,
-      ObjectProvider<ObjectMapper> fallbackObjectMapper) {
-    return new ApiKeyAuthenticationFilter(redisTemplate, metrics, properties, routesProperties, primaryObjectMapper, fallbackObjectMapper);
+      ObjectProvider<ObjectMapper> fallbackObjectMapper,
+      ApiKeyCodec apiKeyCodec) {
+    return new ApiKeyAuthenticationFilter(redisTemplate, metrics, properties, routesProperties, primaryObjectMapper, fallbackObjectMapper, apiKeyCodec);
   }
 
   @Bean
@@ -181,6 +188,39 @@ public class GatewaySecurityConfiguration {
       ObjectProvider<ObjectMapper> fallbackObjectMapper,
       WebClient.Builder webClientBuilder) {
     return new GatewayTokenIntrospectionService(properties, redisTemplate, metrics, primaryObjectMapper, fallbackObjectMapper, webClientBuilder);
+  }
+
+  @Bean
+  @ConditionalOnProperty(prefix = "gateway.security.token-refresh", name = "enabled", havingValue = "true")
+  public GatewayTokenRefreshService gatewayTokenRefreshService(
+      GatewaySecurityProperties properties,
+      WebClient.Builder webClientBuilder,
+      @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> primaryObjectMapper) {
+    return new GatewayTokenRefreshService(properties, webClientBuilder, primaryObjectMapper);
+  }
+
+  @Bean
+  @ConditionalOnBean(GatewayTokenRefreshService.class)
+  public JwtRefreshWebFilter jwtRefreshWebFilter(GatewaySecurityProperties properties,
+      GatewayTokenRefreshService tokenRefreshService) {
+    return new JwtRefreshWebFilter(properties, tokenRefreshService);
+  }
+
+  @Bean
+  public SecurityHeadersFilter securityHeadersFilter(GatewaySecurityProperties properties) {
+    return new SecurityHeadersFilter(properties);
+  }
+
+  @Bean
+  @ConditionalOnBean(PartnerCertificateService.class)
+  @ConditionalOnProperty(prefix = "gateway.security.mutual-tls", name = "enabled", havingValue = "true")
+  public MutualTlsAuthenticationFilter mutualTlsAuthenticationFilter(
+      GatewaySecurityProperties properties,
+      PartnerCertificateService certificateService,
+      GatewaySecurityMetrics metrics,
+      @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> primaryObjectMapper,
+      ObjectProvider<ObjectMapper> fallbackObjectMapper) {
+    return new MutualTlsAuthenticationFilter(properties, certificateService, metrics, primaryObjectMapper, fallbackObjectMapper);
   }
 
   @Bean
