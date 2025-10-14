@@ -69,8 +69,8 @@ VALUES
         '/api/setup/**',
         'lb://setup-service',
         '[{"name":"Path","args":{"pattern":"/api/setup/**"}}]'::jsonb,
-        '[{"name":"StripPrefix","args":{"parts":"2"}},{"name":"PrefixPath","args":{"prefix":"/core"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
-        '{"methods":["GET","POST","PUT","PATCH","DELETE"],"stripPrefix":2,"prefixPath":"/core","requestHeaders":{"X-Route-Seed":"true"}}'::jsonb,
+        '[{"name":"StripPrefix","args":{"parts":"1"}},{"name":"PrefixPath","args":{"prefix":"/core"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+        '{"methods":["GET","POST","PUT","PATCH","DELETE"],"stripPrefix":1,"prefixPath":"/core","requestHeaders":{"X-Route-Seed":"true"}}'::jsonb,
         TRUE,
         1,
         NOW(),
@@ -83,6 +83,18 @@ VALUES
         '[{"name":"Path","args":{"pattern":"/api/auth/**"}}]'::jsonb,
         '[{"name":"StripPrefix","args":{"parts":"1"}},{"name":"PrefixPath","args":{"prefix":"/sec/api/v1"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
         '{"methods":["GET","POST","PUT","PATCH","DELETE"],"stripPrefix":1,"prefixPath":"/sec/api/v1","requestHeaders":{"X-Route-Seed":"true"}}'::jsonb,
+        TRUE,
+        1,
+        NOW(),
+        NOW()
+    ),
+    (
+        '55555555-5555-5555-5555-555555555555',
+        '/api/sec/**',
+        'lb://security-service',
+        '[{"name":"Path","args":{"pattern":"/api/sec/**"}}]'::jsonb,
+        '[{"name":"StripPrefix","args":{"parts":"2"}},{"name":"PrefixPath","args":{"prefix":"/sec/api/v1"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+        '{"methods":["GET","POST","PUT","PATCH","DELETE"],"stripPrefix":2,"prefixPath":"/sec/api/v1","requestHeaders":{"X-Route-Seed":"true"}}'::jsonb,
         TRUE,
         1,
         NOW(),
@@ -159,10 +171,10 @@ VALUES
             'pathPattern', '/api/setup/**',
             'serviceUri', 'lb://setup-service',
             'predicates', '[{"name":"Path","args":{"pattern":"/api/setup/**"}}]'::jsonb,
-            'filters', '[{"name":"StripPrefix","args":{"parts":"2"}},{"name":"PrefixPath","args":{"prefix":"/core"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+            'filters', '[{"name":"StripPrefix","args":{"parts":"1"}},{"name":"PrefixPath","args":{"prefix":"/core"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
             'metadata', jsonb_build_object(
                 'methods', jsonb_build_array('GET', 'POST', 'PUT', 'PATCH', 'DELETE'),
-                'stripPrefix', 2,
+                'stripPrefix', 1,
                 'prefixPath', '/core',
                 'requestHeaders', jsonb_build_object('X-Route-Seed', 'true')
             ),
@@ -188,6 +200,31 @@ VALUES
             'metadata', jsonb_build_object(
                 'methods', jsonb_build_array('GET', 'POST', 'PUT', 'PATCH', 'DELETE'),
                 'stripPrefix', 1,
+                'prefixPath', '/sec/api/v1',
+                'requestHeaders', jsonb_build_object('X-Route-Seed', 'true')
+            ),
+            'enabled', TRUE,
+            'version', 1,
+            'createdAt', NOW(),
+            'updatedAt', NOW()
+        ),
+        'seed-data',
+        NOW(),
+        1
+    ),
+    (
+        'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+        '55555555-5555-5555-5555-555555555555',
+        'SEED',
+        jsonb_build_object(
+            'id', '55555555-5555-5555-5555-555555555555',
+            'pathPattern', '/api/sec/**',
+            'serviceUri', 'lb://security-service',
+            'predicates', '[{"name":"Path","args":{"pattern":"/api/sec/**"}}]'::jsonb,
+            'filters', '[{"name":"StripPrefix","args":{"parts":"2"}},{"name":"PrefixPath","args":{"prefix":"/sec/api/v1"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+            'metadata', jsonb_build_object(
+                'methods', jsonb_build_array('GET', 'POST', 'PUT', 'PATCH', 'DELETE'),
+                'stripPrefix', 2,
                 'prefixPath', '/sec/api/v1',
                 'requestHeaders', jsonb_build_object('X-Route-Seed', 'true')
             ),
