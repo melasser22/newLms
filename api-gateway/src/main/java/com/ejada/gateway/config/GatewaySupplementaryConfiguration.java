@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @Configuration
 @EnableScheduling
 @EnableConfigurationProperties({SubscriptionValidationProperties.class,
+    SubscriptionWarmupProperties.class,
     GatewayBffProperties.class,
     AdminAggregationProperties.class,
     GatewayLoggingProperties.class,

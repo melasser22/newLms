@@ -163,7 +163,7 @@ public class ResponseBodyTransformationGatewayFilterFactory {
                 String etag = null;
                 if (cachingActive) {
                   etag = responseCacheService.generateEtag(processed);
-                  responseCacheService.applyCacheHeaders(getHeaders(), metadata.route(), etag, capturedAt, false);
+                  responseCacheService.applyCacheHeaders(getHeaders(), metadata, etag, capturedAt, false);
                   originalResponse.getHeaders().set("X-Cache", "MISS");
                 }
 
@@ -174,7 +174,7 @@ public class ResponseBodyTransformationGatewayFilterFactory {
                 Mono<Void> writeMono = super.writeWith(Mono.just(wrap));
 
                 if (cachingActive && isSuccessful(statusCode)) {
-                  CachedResponse snapshot = responseCacheService.snapshotResponse(metadata.route(), this, processed, etag, capturedAt);
+                  CachedResponse snapshot = responseCacheService.snapshotResponse(metadata, this, processed, etag, capturedAt);
                   return responseCacheService.store(metadata, snapshot)
                       .onErrorResume(ex -> {
                         LOGGER.warn("Failed to store response in cache", ex);
@@ -215,7 +215,7 @@ public class ResponseBodyTransformationGatewayFilterFactory {
       response.setStatusCode(HttpStatus.valueOf(cachedResponse.status()));
       HttpHeaders headers = new HttpHeaders();
       headers.putAll(cachedResponse.headers());
-      responseCacheService.applyCacheHeaders(headers, metadata.route(), cachedResponse.etag(), cachedResponse.cachedAt(), stale);
+      responseCacheService.applyCacheHeaders(headers, metadata, cachedResponse.etag(), cachedResponse.cachedAt(), stale);
       headerTransformationService.applyResponseHeaders(headers, responseHeaders);
       headers.set("X-Cache", stale ? "STALE" : "HIT");
       response.getHeaders().clear();
@@ -234,7 +234,7 @@ public class ResponseBodyTransformationGatewayFilterFactory {
       response.setStatusCode(HttpStatus.NOT_MODIFIED);
       HttpHeaders headers = response.getHeaders();
       headers.clear();
-      responseCacheService.applyCacheHeaders(headers, metadata.route(), cachedResponse.etag(), cachedResponse.cachedAt(), false);
+      responseCacheService.applyCacheHeaders(headers, metadata, cachedResponse.etag(), cachedResponse.cachedAt(), false);
       headerTransformationService.applyResponseHeaders(headers, responseHeaders);
       headers.set("X-Cache", "NOT_MODIFIED");
       return response.setComplete();
