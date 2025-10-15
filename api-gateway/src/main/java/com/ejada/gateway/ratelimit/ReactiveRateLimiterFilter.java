@@ -362,7 +362,7 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
           decision.burstRemaining(),
           limit.window(),
           decision.burstConsumed(),
-          props.getKeyStrategy());
+          RateLimitPropsAdapter.keyStrategy(props));
     }
     if (!decision.allowed()) {
       recordRejection(exchange);
@@ -373,7 +373,7 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
     if (meterRegistry == null) {
       return;
     }
-    String strategy = trimToNull(props.getKeyStrategy());
+    String strategy = trimToNull(RateLimitPropsAdapter.keyStrategy(props));
     String tenant = trimToNull(exchange.getAttribute(GatewayRequestAttributes.TENANT_ID));
     meterRegistry.counter("gateway.ratelimit.rejections",
             "strategy", strategy != null ? strategy : "unknown",
@@ -393,7 +393,7 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
   }
 
   private LimitDefinition resolveLimit(ServerWebExchange exchange) {
-    int defaultCapacity = Math.max(1, props.getCapacity());
+    int defaultCapacity = Math.max(1, RateLimitPropsAdapter.capacity(props));
     Duration defaultWindow = resolveBaseWindow();
     String rawTier = exchange.getAttribute(GatewayRequestAttributes.SUBSCRIPTION_TIER);
     String tier = trimToNull(rawTier);
@@ -416,7 +416,7 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
   }
 
   private String resolveAlgorithm() {
-    String algorithm = props.getAlgorithm();
+    String algorithm = RateLimitPropsAdapter.algorithm(props);
     if (!StringUtils.hasText(algorithm)) {
       return "fixed";
     }
@@ -436,7 +436,7 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
   }
 
   private String resolveFallbackKey(ServerWebExchange exchange) {
-    return switch (props.getKeyStrategy()) {
+    return switch (RateLimitPropsAdapter.keyStrategy(props)) {
       case "ip" -> {
         String forwarded = exchange.getRequest().getHeaders().getFirst(HeaderNames.CLIENT_IP);
         yield StringUtils.hasText(forwarded)
