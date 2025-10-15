@@ -35,7 +35,7 @@ public class VersionMappingResolver {
   public VersionMappingResolver(GatewayVersioningProperties properties) {
     this.enabled = properties.isEnabled();
     this.compatibilityMatrix = normaliseCompatibility(properties.getCompatibility().getMatrix());
-    this.mappings = compileMappings(properties.getMappings());
+    this.mappings = compileMappings(properties.getMappings(), this.compatibilityMatrix);
   }
 
   public boolean isEnabled() {
@@ -73,7 +73,8 @@ public class VersionMappingResolver {
     return canonical;
   }
 
-  private List<CompiledMapping> compileMappings(List<GatewayVersioningProperties.Mapping> definitions) {
+  private List<CompiledMapping> compileMappings(List<GatewayVersioningProperties.Mapping> definitions,
+      Map<String, List<String>> compatibilityMatrix) {
     if (definitions == null) {
       return List.of();
     }
@@ -83,7 +84,7 @@ public class VersionMappingResolver {
     List<CompiledMapping> compiled = new ArrayList<>(definitions.size());
     for (GatewayVersioningProperties.Mapping mapping : definitions) {
       mapping.validate();
-      compiled.add(new CompiledMapping(mapping, parser));
+      compiled.add(new CompiledMapping(mapping, parser, compatibilityMatrix));
     }
     return compiled;
   }
@@ -146,12 +147,15 @@ public class VersionMappingResolver {
     private final List<PatternHolder> patterns;
     private final Map<String, List<GatewayVersioningProperties.Route>> routesByVersion;
     private final Map<String, List<GatewayVersioningProperties.Route>> compatibilityByVersion;
+    private final Map<String, List<String>> globalCompatibility;
 
-    private CompiledMapping(GatewayVersioningProperties.Mapping configuration, PathPatternParser parser) {
+    private CompiledMapping(GatewayVersioningProperties.Mapping configuration, PathPatternParser parser,
+        Map<String, List<String>> globalCompatibility) {
       this.configuration = configuration;
       this.patterns = compilePatterns(configuration.getLegacyPaths(), parser);
       this.routesByVersion = indexRoutes(configuration.getRoutes());
       this.compatibilityByVersion = indexCompatibility(configuration.getRoutes());
+      this.globalCompatibility = globalCompatibility;
     }
 
     private boolean matchesMethod(String method) {
@@ -198,7 +202,7 @@ public class VersionMappingResolver {
               ? resolutionSource + ":compatibility"
               : "compatibility";
         }
-        if (candidates.isEmpty() && !compatibilityMatrix.isEmpty()) {
+        if (candidates.isEmpty() && globalCompatibility != null && !globalCompatibility.isEmpty()) {
           List<GatewayVersioningProperties.Route> globalCandidates = findGlobalCompatibilityRoutes(
               requestedVersion);
           if (!globalCandidates.isEmpty()) {
@@ -296,7 +300,10 @@ public class VersionMappingResolver {
 
     private List<GatewayVersioningProperties.Route> findGlobalCompatibilityRoutes(String requestedVersion) {
       List<GatewayVersioningProperties.Route> matches = new ArrayList<>();
-      compatibilityMatrix.forEach((targetVersion, compatibleVersions) -> {
+      if (globalCompatibility == null || globalCompatibility.isEmpty()) {
+        return matches;
+      }
+      globalCompatibility.forEach((targetVersion, compatibleVersions) -> {
         if (compatibleVersions.contains(requestedVersion)) {
           matches.addAll(routesByVersion.getOrDefault(targetVersion, List.of()));
         }

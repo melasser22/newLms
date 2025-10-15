@@ -233,4 +233,44 @@ public class RateLimitProps implements BaseStarterProperties {
       }
     }
   }
+
+  /**
+   * Provides backward compatible access to the primary key strategy configured for
+   * rate limiting. The strategy is derived from the first enabled multidimensional
+   * strategy if present, otherwise defaults to {@code tenant}.
+   */
+  public String getKeyStrategy() {
+    List<StrategyProperties> strategies = (multidimensional != null)
+        ? multidimensional.getStrategies()
+        : List.of();
+    if (strategies == null || strategies.isEmpty()) {
+      return "tenant";
+    }
+    return strategies.stream()
+        .filter(Objects::nonNull)
+        .filter(StrategyProperties::isEnabled)
+        .map(StrategyProperties::getName)
+        .filter(StringUtils::hasText)
+        .map(name -> name.trim().toLowerCase(Locale.ROOT))
+        .findFirst()
+        .orElse("tenant");
+  }
+
+  /**
+   * Legacy accessor returning the default rate limit capacity which maps to the
+   * request-per-minute quota of the default tier.
+   */
+  public int getCapacity() {
+    TierProperties tier = tier(defaultTier);
+    return Math.max(1, tier.getRequestsPerMinute());
+  }
+
+  /**
+   * Returns the configured algorithm identifier. The new configuration no longer
+   * exposes the concept directly, so we default to {@code fixed} for backwards
+   * compatibility.
+   */
+  public String getAlgorithm() {
+    return "fixed";
+  }
 }

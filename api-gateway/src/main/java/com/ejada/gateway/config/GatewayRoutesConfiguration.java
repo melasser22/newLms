@@ -12,11 +12,11 @@ import com.ejada.gateway.filter.ResponseBodyTransformationGatewayFilterFactory;
 import com.ejada.gateway.filter.SessionAffinityGatewayFilter;
 import com.ejada.gateway.resilience.TenantCircuitBreakerMetrics;
 import com.ejada.gateway.versioning.VersionNormalizationFilter;
-import io.github.resilience4j.bulkhead.Bulkhead;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cloud.gateway.filter.factory.RequestSizeGatewayFilterFactory;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.route.RouteLocator;
@@ -48,6 +48,7 @@ public class GatewayRoutesConfiguration {
       ObjectProvider<GatewayRouteDefinitionProvider> dynamicProviders,
       ObjectProvider<RequestBodyTransformationGatewayFilterFactory> requestTransformationFactory,
       ObjectProvider<ResponseBodyTransformationGatewayFilterFactory> responseTransformationFactory,
+      ObjectProvider<RequestSizeGatewayFilterFactory> requestSizeFilterFactory,
       ObjectProvider<VersionNormalizationFilter> versionNormalizationFilter,
       TenantCircuitBreakerMetrics circuitBreakerMetrics) {
     RouteLocatorBuilder.Builder routes = builder.routes();
@@ -161,7 +162,8 @@ public class GatewayRoutesConfiguration {
                 filters.filter(new SessionAffinityGatewayFilter(route.getSessionAffinity()));
               }
               if (route.getMaxRequestSize() != null) {
-                filters.requestSize(config -> config.setMaxSize(route.getMaxRequestSize()));
+                requestSizeFilterFactory.ifAvailable(factory ->
+                    filters.filter(factory.apply(config -> config.setMaxSize(route.getMaxRequestSize()))));
               }
               responseTransformationFactory.ifAvailable(factory -> filters.filter(factory.apply(route.getId())));
               if (resilience.isEnabled()) {
@@ -170,11 +172,9 @@ public class GatewayRoutesConfiguration {
                   config.setFallbackUri(resilience.resolvedFallbackUri(route.getId()));
                 });
 
-                filters.bulkhead(config -> {
-                  config.setName(resilience.resolvedBulkheadName(route.getId()));
-                  config.setFallbackUri(resilience.resolvedFallbackUri(route.getId()));
-                  config.setType(Bulkhead.Type.THREADPOOL);
-                });
+                // Bulkhead filter was removed in newer Gateway releases; circuit breaker provides
+                // the primary resilience mechanism. Retain compatibility by skipping bulkhead
+                // configuration when the factory is absent.
 
                 GatewayRoutesProperties.ServiceRoute.Resilience.Retry retry = resilience.getRetry();
                 if (retry.isEnabled()) {

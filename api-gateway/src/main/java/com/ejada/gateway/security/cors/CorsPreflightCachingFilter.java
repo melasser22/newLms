@@ -70,8 +70,8 @@ public class CorsPreflightCachingFilter implements WebFilter, Ordered {
       return reject(exchange);
     }
 
-    HttpMethod allowedMethod = configuration.checkHttpMethod(requestedMethod);
-    if (allowedMethod == null) {
+    List<HttpMethod> allowedMethods = configuration.checkHttpMethod(requestedMethod);
+    if (CollectionUtils.isEmpty(allowedMethods)) {
       return reject(exchange);
     }
 
@@ -83,7 +83,7 @@ public class CorsPreflightCachingFilter implements WebFilter, Ordered {
 
     HttpHeaders responseHeaders = new HttpHeaders();
     responseHeaders.setAccessControlAllowOrigin(allowedOrigin);
-    responseHeaders.setAccessControlAllowMethods(List.of(allowedMethod));
+    responseHeaders.setAccessControlAllowMethods(allowedMethods);
     if (!CollectionUtils.isEmpty(allowedHeaders)) {
       responseHeaders.setAccessControlAllowHeaders(allowedHeaders);
     }

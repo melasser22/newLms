@@ -2,6 +2,7 @@ package com.ejada.gateway.graphql;
 
 import org.dataloader.DataLoaderFactory;
 import org.dataloader.DataLoaderRegistry;
+import graphql.GraphQLContext;
 import org.springframework.graphql.execution.DataLoaderRegistrar;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +25,7 @@ public class GatewayDataLoaderRegistrar implements DataLoaderRegistrar {
   }
 
   @Override
-  public void registerDataLoaders(DataLoaderRegistry registry) {
+  public void registerDataLoaders(DataLoaderRegistry registry, GraphQLContext context) {
     registry.register(SubscriptionBatchLoader.NAME,
         DataLoaderFactory.newMappedDataLoader(subscriptionBatchLoader));
     registry.register(CatalogBatchLoader.NAME,

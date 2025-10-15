@@ -50,7 +50,7 @@ public class CorrelationIdGatewayFilter implements WebFilter {
       return chain.filter(exchange);
     }
 
-    String headerName = correlationProps.getHeaderName();
+    final String headerName = correlationProps.getHeaderName();
     String correlationId = trimToNull(exchange.getRequest().getHeaders().getFirst(headerName));
     if (!StringUtils.hasText(correlationId) && correlationProps.isGenerateIfMissing()) {
       correlationId = UUID.randomUUID().toString();
@@ -73,9 +73,10 @@ public class CorrelationIdGatewayFilter implements WebFilter {
     mutatedExchange.getAttributes().putIfAbsent(HeaderNames.CORRELATION_ID, correlationId);
 
     if (correlationProps.isEchoResponseHeader() && StringUtils.hasText(correlationId)) {
-      String resolvedCorrelationId = correlationId;
-      mutatedExchange.getResponse().beforeCommit(() -> {
-        mutatedExchange.getResponse().getHeaders().set(headerName, resolvedCorrelationId);
+      final String resolvedCorrelationId = correlationId;
+      final ServerWebExchange exchangeToFilter = mutatedExchange;
+      exchangeToFilter.getResponse().beforeCommit(() -> {
+        exchangeToFilter.getResponse().getHeaders().set(headerName, resolvedCorrelationId);
         return Mono.empty();
       });
     }
