@@ -3,7 +3,6 @@ package com.ejada.starter_data.datasource;
 import com.ejada.common.tenant.TenantIsolationValidator;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -56,7 +55,7 @@ public class TenantAwareDataSource extends AbstractDataSource {
     }
 
     @Override
-    public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+    public Logger getParentLogger() {
         return Logger.getLogger(TenantAwareDataSource.class.getName());
     }
 
