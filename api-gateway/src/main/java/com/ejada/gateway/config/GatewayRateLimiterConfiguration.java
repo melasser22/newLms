@@ -1,5 +1,6 @@
 package com.ejada.gateway.config;
 
+import com.ejada.gateway.ratelimit.RateLimitPropsAdapter;
 import com.ejada.shared_starter_ratelimit.RateLimitProps;
 import java.util.Locale;
 import java.util.Map;
@@ -35,7 +36,7 @@ public class GatewayRateLimiterConfiguration {
   public KeyResolver rateLimiterKeyResolver(ObjectProvider<RateLimitProps> propsProvider,
       Map<String, KeyResolver> resolvers) {
     RateLimitProps props = propsProvider.getIfAvailable(RateLimitProps::new);
-    String strategy = normalizeStrategy(props.getKeyStrategy());
+    String strategy = normalizeStrategy(RateLimitPropsAdapter.keyStrategy(props));
 
     KeyResolver resolver = selectResolver(strategy, resolvers);
     if (resolver != null) {
