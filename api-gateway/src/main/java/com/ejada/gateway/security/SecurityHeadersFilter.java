@@ -8,6 +8,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -63,7 +64,7 @@ public class SecurityHeadersFilter implements GlobalFilter, Ordered {
   }
 
   private boolean isHttps(ServerWebExchange exchange) {
-    HttpStatus status = exchange.getResponse().getStatusCode();
+    HttpStatusCode status = exchange.getResponse().getStatusCode();
     if (status != null && status.is3xxRedirection()) {
       return true;
     }

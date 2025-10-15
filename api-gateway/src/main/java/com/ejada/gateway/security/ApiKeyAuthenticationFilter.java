@@ -230,13 +230,14 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
     if (!cfg.isEnabled()) {
       return Mono.just(true);
     }
-    long allowed = 0L;
+    long resolvedAllowed = 0L;
     if (record.getRateLimitPerMinute() != null) {
-      allowed = Math.max(0, record.getRateLimitPerMinute());
+      resolvedAllowed = Math.max(0, record.getRateLimitPerMinute());
     }
-    if (allowed <= 0) {
-      allowed = Math.max(0, cfg.getDefaultPerMinute());
+    if (resolvedAllowed <= 0) {
+      resolvedAllowed = Math.max(0, cfg.getDefaultPerMinute());
     }
+    final long allowed = resolvedAllowed;
     if (allowed <= 0) {
       return Mono.just(true);
     }

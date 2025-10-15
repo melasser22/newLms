@@ -95,7 +95,7 @@ public class CompositeLoadBalancer implements ReactorServiceInstanceLoadBalancer
     }
 
     return migrationService.chooseFromTarget(targetService.get(), request, filters, selectors)
-        .map(wrapper -> new DefaultResponse(wrapper.instance()))
+        .map(wrapper -> (Response<ServiceInstance>) new DefaultResponse(wrapper.instance()))
         .switchIfEmpty(baseSelection);
   }
 
@@ -142,7 +142,7 @@ public class CompositeLoadBalancer implements ReactorServiceInstanceLoadBalancer
     for (InstanceSelector selector : selectors) {
       Optional<ServiceInstance> selected = selector.select(targetServiceId, request, filtered);
       if (selected.isPresent()) {
-        return Mono.just(new DefaultResponse(selected.get()));
+        return Mono.fromSupplier(() -> (Response<ServiceInstance>) new DefaultResponse(selected.get()));
       }
     }
 

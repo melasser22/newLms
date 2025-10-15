@@ -63,11 +63,9 @@ public class RequestBodyTransformationGatewayFilterFactory {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
       Route route = exchange.getAttribute(org.springframework.cloud.gateway.support.ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
-      String effectiveRouteId = (route != null) ? route.getId() : routeId;
+      String primaryRouteId = (route != null) ? route.getId() : routeId;
       String overrideRouteId = exchange.getAttribute(GatewayRequestAttributes.API_VERSION_TRANSFORMATION_ROUTE);
-      if (StringUtils.hasText(overrideRouteId)) {
-        effectiveRouteId = overrideRouteId;
-      }
+      final String effectiveRouteId = StringUtils.hasText(overrideRouteId) ? overrideRouteId : primaryRouteId;
 
       HeaderOperations headerOperations = headerTransformationService.resolveRequestOperations(effectiveRouteId);
       DataSize maxSize = limitsProperties.resolveMaxSize(effectiveRouteId);

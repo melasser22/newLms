@@ -1,11 +1,12 @@
 package com.ejada.gateway.graphql;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import org.dataloader.DataLoader;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.graphql.data.method.annotation.Argument;
+import org.springframework.graphql.data.method.annotation.BatchMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
-import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.stereotype.Controller;
 import reactor.core.publisher.Mono;
 
@@ -32,24 +33,41 @@ public class TenantGraphQlController {
     return service.fetchTenants(ids);
   }
 
-  @SchemaMapping(typeName = "Tenant", field = "subscriptions")
-  public CompletableFuture<List<SubscriptionNode>> subscriptions(TenantNode tenant,
-      @org.springframework.graphql.data.method.annotation.DataLoader(SubscriptionBatchLoader.NAME)
-      DataLoader<Integer, List<SubscriptionNode>> loader) {
-    return loader.load(tenant.id());
+  @BatchMapping(typeName = "Tenant", field = "subscriptions")
+  public Mono<Map<TenantNode, List<SubscriptionNode>>> subscriptions(List<TenantNode> tenants) {
+    return batchMap(tenants,
+        tenantIds -> service.fetchSubscriptions(tenantIds),
+        List::of);
   }
 
-  @SchemaMapping(typeName = "Tenant", field = "catalog")
-  public CompletableFuture<List<CatalogItemNode>> catalog(TenantNode tenant,
-      @org.springframework.graphql.data.method.annotation.DataLoader(CatalogBatchLoader.NAME)
-      DataLoader<Integer, List<CatalogItemNode>> loader) {
-    return loader.load(tenant.id());
+  @BatchMapping(typeName = "Tenant", field = "catalog")
+  public Mono<Map<TenantNode, List<CatalogItemNode>>> catalog(List<TenantNode> tenants) {
+    return batchMap(tenants,
+        tenantIds -> service.fetchCatalogEntries(tenantIds),
+        List::of);
   }
 
-  @SchemaMapping(typeName = "Tenant", field = "billing")
-  public CompletableFuture<BillingSummaryNode> billing(TenantNode tenant,
-      @org.springframework.graphql.data.method.annotation.DataLoader(BillingBatchLoader.NAME)
-      DataLoader<Integer, BillingSummaryNode> loader) {
-    return loader.load(tenant.id());
+  @BatchMapping(typeName = "Tenant", field = "billing")
+  public Mono<Map<TenantNode, BillingSummaryNode>> billing(List<TenantNode> tenants) {
+    return batchMap(tenants,
+        tenantIds -> service.fetchBillingSummaries(tenantIds),
+        () -> null);
+  }
+
+  private <T> Mono<Map<TenantNode, T>> batchMap(List<TenantNode> tenants,
+      java.util.function.Function<Set<Integer>, Mono<Map<Integer, T>>> fetcher,
+      java.util.function.Supplier<T> defaultSupplier) {
+    Set<Integer> tenantIds = tenants.stream()
+        .map(TenantNode::id)
+        .filter(java.util.Objects::nonNull)
+        .collect(Collectors.toSet());
+    if (tenantIds.isEmpty()) {
+      return Mono.just(tenants.stream()
+          .collect(Collectors.toMap(tenant -> tenant, tenant -> defaultSupplier.get())));
+    }
+    return fetcher.apply(tenantIds)
+        .map(result -> tenants.stream()
+            .collect(Collectors.toMap(tenant -> tenant,
+                tenant -> result.getOrDefault(tenant.id(), defaultSupplier.get()))));
   }
 }
