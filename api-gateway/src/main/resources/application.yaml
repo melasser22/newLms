@@ -494,7 +494,7 @@ gateway:
     enabled: true
     validation-uri: lb://subscription-service/internal/subscriptions/{tenantId}
     cache-ttl: 5m
-    cache-prefix: gateway:subscription:
+    cache-prefix: "gateway:subscription:"
     fail-open: true
     validate-all-routes: true
     skip-patterns:
