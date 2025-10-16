@@ -17,13 +17,13 @@ RUN set -eux; \
     mv "$BOOT_JAR" app.jar; \
     find . -maxdepth 1 -name 'tenant-service-*-plain.jar' -delete
 
-COPY entrypoint.sh /entrypoint.sh
+COPY entrypoint.sh ./entrypoint.sh
 
-RUN chmod +x /entrypoint.sh
-RUN chown -R appuser:appgroup /app
+RUN chmod +x /app/entrypoint.sh \
+    && chown -R appuser:appgroup /app
 
 USER appuser
 
 EXPOSE 8080
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
