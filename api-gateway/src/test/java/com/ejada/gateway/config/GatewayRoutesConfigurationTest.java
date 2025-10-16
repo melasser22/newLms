@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.ejada.gateway.resilience.TenantCircuitBreakerMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -48,6 +49,7 @@ class GatewayRoutesConfigurationTest {
         emptyProvider(),
         emptyProvider(),
         emptyProvider(),
+        emptyProvider(),
         new TenantCircuitBreakerMetrics(new SimpleMeterRegistry())))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("No gateway routes were configured");
@@ -65,6 +67,7 @@ class GatewayRoutesConfigurationTest {
 
     RouteLocator locator = configuration.gatewayRoutes(routeLocatorBuilder,
         properties,
+        emptyProvider(),
         emptyProvider(),
         emptyProvider(),
         emptyProvider(),
@@ -89,18 +92,28 @@ class GatewayRoutesConfigurationTest {
       }
 
       @Override
-      public T getIfAvailable(Consumer<T> consumer) throws BeansException {
-        return null;
-      }
-
-      @Override
       public T getIfUnique() throws BeansException {
         return null;
       }
 
       @Override
-      public T getIfUnique(Consumer<T> consumer) throws BeansException {
+      public T getIfAvailable(java.util.function.Supplier<T> supplier) throws BeansException {
         return null;
+      }
+
+      @Override
+      public void ifAvailable(Consumer<T> dependencyConsumer) throws BeansException {
+        // no-op
+      }
+
+      @Override
+      public T getIfUnique(java.util.function.Supplier<T> supplier) throws BeansException {
+        return null;
+      }
+
+      @Override
+      public void ifUnique(Consumer<T> dependencyConsumer) throws BeansException {
+        // no-op
       }
 
       @Override
@@ -111,6 +124,11 @@ class GatewayRoutesConfigurationTest {
       @Override
       public Stream<T> orderedStream() {
         return Stream.empty();
+      }
+
+      @Override
+      public Iterator<T> iterator() {
+        return Stream.<T>empty().iterator();
       }
     };
   }

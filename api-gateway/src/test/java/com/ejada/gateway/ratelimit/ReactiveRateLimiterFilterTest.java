@@ -8,6 +8,8 @@ import com.ejada.gateway.observability.GatewayTracingHelper;
 import com.ejada.shared_starter_ratelimit.RateLimitProps;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,16 +47,12 @@ class ReactiveRateLimiterFilterTest {
         factory.afterPropertiesSet();
         this.connectionFactory = factory;
         ReactiveStringRedisTemplate template = new ReactiveStringRedisTemplate(factory);
-        RateLimitProps props = new RateLimitProps();
-        props.setCapacity(2);
-        props.setRefillPerMinute(2);
-        props.setKeyStrategy("tenant");
-        props.setAlgorithm("sliding");
+        RateLimitProps props = createProps(2, 2);
         this.gatewayRateLimitProperties = new GatewayRateLimitProperties();
         gatewayRateLimitProperties.setBurstMultiplier(1.0d);
         KeyResolver keyResolver = exchange -> Mono.just("tenant-a");
         this.tracingHelper = new GatewayTracingHelper(null, new GatewayTracingProperties());
-        this.filter = new ReactiveRateLimiterFilter(template, props, keyResolver, new ObjectMapper(),
+        this.filter = new ReactiveRateLimiterFilter(template, props, keyResolver, new ObjectMapper().findAndRegisterModules(),
                 gatewayRateLimitProperties, new SimpleMeterRegistry(), tracingHelper);
         flushRedis();
     }
@@ -93,16 +91,13 @@ class ReactiveRateLimiterFilterTest {
 
     @Test
     void slidingWindowEnforcesLimitsUnderConcurrency() {
-        RateLimitProps props = new RateLimitProps();
-        props.setCapacity(5);
-        props.setKeyStrategy("tenant");
-        props.setAlgorithm("sliding");
+        RateLimitProps props = createProps(5, 5);
         GatewayRateLimitProperties gatewayProps = new GatewayRateLimitProperties();
         gatewayProps.setBurstMultiplier(1.0d);
         ReactiveStringRedisTemplate template = new ReactiveStringRedisTemplate(connectionFactory);
         KeyResolver keyResolver = exchange -> Mono.just("tenant-b");
         ReactiveRateLimiterFilter concurrentFilter = new ReactiveRateLimiterFilter(template, props, keyResolver,
-                new ObjectMapper(), gatewayProps, new SimpleMeterRegistry(), tracingHelper);
+                new ObjectMapper().findAndRegisterModules(), gatewayProps, new SimpleMeterRegistry(), tracingHelper);
 
         flushRedis();
 
@@ -126,6 +121,24 @@ class ReactiveRateLimiterFilterTest {
 
         assertThat(allowed).isEqualTo(5);
         assertThat(rejected).isEqualTo(1);
+    }
+
+    private RateLimitProps createProps(int requestsPerMinute, int burstCapacity) {
+        RateLimitProps props = new RateLimitProps();
+        RateLimitProps.TierProperties tier = new RateLimitProps.TierProperties();
+        tier.setRequestsPerMinute(requestsPerMinute);
+        tier.setBurstCapacity(burstCapacity);
+        props.setDefaultTier("custom");
+        props.setTiers(Map.of("custom", tier));
+        RateLimitProps.StrategyProperties strategy = new RateLimitProps.StrategyProperties();
+        strategy.setName("tenant");
+        strategy.setEnabled(true);
+        strategy.setDimensions(List.of(RateLimitProps.Dimension.TENANT));
+        RateLimitProps.MultiDimensionalProperties multidimensional = new RateLimitProps.MultiDimensionalProperties();
+        multidimensional.setStrategies(List.of(strategy));
+        props.setMultidimensional(multidimensional);
+        props.applyDefaults();
+        return props;
     }
 
     private void flushRedis() {

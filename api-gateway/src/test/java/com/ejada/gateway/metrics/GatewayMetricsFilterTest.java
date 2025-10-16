@@ -1,11 +1,14 @@
 package com.ejada.gateway.metrics;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import com.ejada.gateway.config.GatewayTracingProperties;
 import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.gateway.filter.GatewayMetricsFilter;
 import com.ejada.gateway.observability.GatewayTracingHelper;
+import com.ejada.gateway.routes.service.RouteVariantService;
+import com.ejada.gateway.metrics.TenantRequestMetricsTracker;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.net.URI;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,13 +26,17 @@ class GatewayMetricsFilterTest {
 
   private SimpleMeterRegistry meterRegistry;
   private GatewayMetricsFilter filter;
+  private RouteVariantService variantService;
+  private TenantRequestMetricsTracker tenantMetricsTracker;
 
   @BeforeEach
   void setUp() {
     this.meterRegistry = new SimpleMeterRegistry();
     GatewayTracingProperties tracingProperties = new GatewayTracingProperties();
     GatewayTracingHelper tracingHelper = new GatewayTracingHelper(null, tracingProperties);
-    this.filter = new GatewayMetricsFilter(meterRegistry, tracingHelper);
+    this.variantService = mock(RouteVariantService.class);
+    this.tenantMetricsTracker = mock(TenantRequestMetricsTracker.class);
+    this.filter = new GatewayMetricsFilter(meterRegistry, tracingHelper, variantService, tenantMetricsTracker);
   }
 
   @Test

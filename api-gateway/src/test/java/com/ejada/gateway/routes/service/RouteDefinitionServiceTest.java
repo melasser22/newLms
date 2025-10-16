@@ -10,6 +10,7 @@ import com.ejada.gateway.routes.model.RouteDefinition;
 import com.ejada.gateway.routes.model.RouteDefinitionRequest;
 import com.ejada.gateway.routes.model.RouteMetadata;
 import com.ejada.gateway.routes.repository.RouteDefinitionRepository;
+import com.ejada.gateway.routes.service.RouteVariantService;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
@@ -37,11 +38,14 @@ class RouteDefinitionServiceTest {
   @Mock
   private ApplicationEventPublisher eventPublisher;
 
+  @Mock
+  private RouteVariantService variantService;
+
   private RouteDefinitionService service;
 
   @BeforeEach
   void setUp() {
-    service = new RouteDefinitionService(repository, validator, eventPublisher);
+    service = new RouteDefinitionService(repository, validator, eventPublisher, variantService);
     when(validator.validate(any(RouteDefinition.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
   }

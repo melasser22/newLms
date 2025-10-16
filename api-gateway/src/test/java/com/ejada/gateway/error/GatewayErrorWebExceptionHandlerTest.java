@@ -30,7 +30,7 @@ class GatewayErrorWebExceptionHandlerTest {
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   private final GatewayErrorWebExceptionHandler handler = new GatewayErrorWebExceptionHandler(
-      objectMapper,
+      new StaticObjectProvider<>(objectMapper),
       new StaticObjectProvider<>(null));
 
   @Test

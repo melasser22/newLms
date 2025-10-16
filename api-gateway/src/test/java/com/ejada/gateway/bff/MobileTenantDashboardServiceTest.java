@@ -34,9 +34,9 @@ class MobileTenantDashboardServiceTest {
   @Test
   void buildTransformsAggregateIntoMobilePayload() throws Exception {
     TenantDashboardAggregateResponse aggregate = new TenantDashboardAggregateResponse(
-        json("""{"id":1,"name":"Acme","status":"ACTIVE","healthScore":92}"""),
-        json("""{"activeCount":4,"plan":"Enterprise"}"""),
-        json("""{"currency":"EUR","monthlySpend":250.42,"usagePercentage":74.3}"""),
+        json("{\"id\":1,\"name\":\"Acme\",\"status\":\"ACTIVE\",\"healthScore\":92}"),
+        json("{\"activeCount\":4,\"plan\":\"Enterprise\"}"),
+        json("{\"currency\":\"EUR\",\"monthlySpend\":250.42,\"usagePercentage\":74.3}"),
         List.of(),
         Instant.parse("2024-01-01T00:00:00Z"));
 

@@ -7,6 +7,7 @@ import com.ejada.gateway.config.GatewayRoutesProperties;
 import com.ejada.gateway.config.GatewaySecurityProperties;
 import com.ejada.gateway.config.GatewaySecurityProperties.EncryptionAlgorithm;
 import com.ejada.gateway.context.GatewayRequestAttributes;
+import com.ejada.gateway.security.apikey.ApiKeyCodec;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,6 +53,7 @@ class ApiKeyAuthenticationFilterTest {
   private ObjectMapper objectMapper;
   private GatewaySecurityProperties properties;
   private GatewayRoutesProperties routesProperties;
+  private ApiKeyCodec apiKeyCodec;
   private byte[] encryptionKey;
   private final SecureRandom secureRandom = new SecureRandom();
 
@@ -70,8 +72,10 @@ class ApiKeyAuthenticationFilterTest {
     this.routesProperties = new GatewayRoutesProperties();
     configureRoutes();
     configureSecurity();
+    this.apiKeyCodec = new ApiKeyCodec(properties, TestObjectProviders.of(objectMapper),
+        TestObjectProviders.of(objectMapper), TestObjectProviders.of(secureRandom));
     this.filter = new ApiKeyAuthenticationFilter(redisTemplate, metrics, properties, routesProperties,
-        TestObjectProviders.of(objectMapper), TestObjectProviders.of(objectMapper));
+        TestObjectProviders.of(objectMapper), TestObjectProviders.of(objectMapper), apiKeyCodec);
   }
 
   @AfterEach
