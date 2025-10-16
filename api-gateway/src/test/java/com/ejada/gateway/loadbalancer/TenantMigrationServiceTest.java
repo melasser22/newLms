@@ -93,7 +93,7 @@ class TenantMigrationServiceTest {
         }
 
         @Override
-        public Flux<List<ServiceInstance>> get(Request<?> request) {
+        public Flux<List<ServiceInstance>> get(Request request) {
             return Flux.just(instances);
         }
     }

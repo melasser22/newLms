@@ -57,11 +57,11 @@ public class TokenBucketLuaRateLimiter {
       + "return {allowed, tokens, reason, retryAfter}\n";
 
   private final StringRedisTemplate redisTemplate;
-  private final RedisScript<List> redisScript;
+  private final RedisScript<List<Object>> redisScript;
 
   public TokenBucketLuaRateLimiter(StringRedisTemplate redisTemplate) {
     this.redisTemplate = redisTemplate;
-    DefaultRedisScript<List> script = new DefaultRedisScript<>();
+    DefaultRedisScript<List<Object>> script = new DefaultRedisScript<>();
     script.setScriptText(SCRIPT);
     script.setResultType(List.class);
     this.redisScript = script;
