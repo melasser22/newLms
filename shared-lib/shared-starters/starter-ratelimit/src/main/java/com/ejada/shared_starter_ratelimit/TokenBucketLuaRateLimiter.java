@@ -63,7 +63,9 @@ public class TokenBucketLuaRateLimiter {
     this.redisTemplate = redisTemplate;
     DefaultRedisScript<List<Object>> script = new DefaultRedisScript<>();
     script.setScriptText(SCRIPT);
-    script.setResultType(List.class);
+    @SuppressWarnings("unchecked")
+    Class<List<Object>> resultType = (Class<List<Object>>) (Class<?>) List.class;
+    script.setResultType(resultType);
     this.redisScript = script;
   }
 
