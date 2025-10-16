@@ -27,7 +27,15 @@ RUN set -eux; \
     find . -maxdepth 1 -name "${ARTIFACT_NAME}-*-plain.jar" -exec rm -f {} \;; \
     cat <<'EOF' > /entrypoint.sh
 #!/bin/sh
-set -e
+
+# Older /bin/sh implementations included in some lightweight container images
+# (notably BusyBox variants) do not recognise any options passed to `set`.
+# Invoking `set -e` in those environments causes the interpreter to abort with
+# an "illegal option" error before our logic runs, which was surfacing as the
+# repeated `/app/entrypoint.sh: set: line 2: illegal option -` messages during
+# container start-up.  The commands in this script are deliberately simple and
+# either idempotent or followed by an explicit `exec`, so we can safely avoid
+# relying on `set -e` here.
 
 if [ -z "${SPRING_PROFILES_ACTIVE:-}" ]; then
   export SPRING_PROFILES_ACTIVE=dev
