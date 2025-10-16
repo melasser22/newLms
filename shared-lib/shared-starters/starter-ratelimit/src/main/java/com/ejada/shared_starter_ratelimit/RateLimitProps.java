@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -41,15 +42,32 @@ public class RateLimitProps implements BaseStarterProperties {
   /** Dynamic runtime configuration, including Redis pub/sub channel. */
   private DynamicProperties dynamic = new DynamicProperties();
 
+  @Getter(AccessLevel.NONE)
+  @Setter(AccessLevel.NONE)
+  private Integer legacyCapacity;
+
+  @Getter(AccessLevel.NONE)
+  @Setter(AccessLevel.NONE)
+  private Integer legacyBurstCapacity;
+
   /** Apply defaults and normalisation after binding. */
   public void applyDefaults() {
     if (window == null || window.isZero() || window.isNegative()) {
       window = Duration.ofMinutes(1);
     }
 
+    applyLegacyCapacityOverrides();
+
     tiers = normaliseTiers(tiers);
 
     String normalisedDefault = normalizeTierName(defaultTier);
+    if (!tiers.containsKey(normalisedDefault)) {
+      TierProperties builtIn = builtInTier(normalisedDefault);
+      if (builtIn != null) {
+        tiers.put(normalisedDefault, builtIn);
+      }
+    }
+
     if (!tiers.containsKey(normalisedDefault)) {
       defaultTier = "BASIC";
     } else {
@@ -59,6 +77,43 @@ public class RateLimitProps implements BaseStarterProperties {
     multidimensional.applyDefaults();
     bypass.applyDefaults();
     dynamic.applyDefaults();
+  }
+
+  public void setCapacity(Integer capacity) {
+    this.legacyCapacity = capacity;
+  }
+
+  public void setBurstCapacity(Integer burstCapacity) {
+    this.legacyBurstCapacity = burstCapacity;
+  }
+
+  private void applyLegacyCapacityOverrides() {
+    boolean hasCapacity = legacyCapacity != null && legacyCapacity > 0;
+    boolean hasBurst = legacyBurstCapacity != null && legacyBurstCapacity > 0;
+
+    if (!hasCapacity && !hasBurst) {
+      return;
+    }
+
+    if (tiers == null) {
+      tiers = new LinkedHashMap<>();
+    }
+
+    String targetTier = normalizeTierName(defaultTier);
+    if (!StringUtils.hasText(targetTier)) {
+      targetTier = "BASIC";
+    }
+
+    TierProperties tier = tiers.computeIfAbsent(targetTier, key -> new TierProperties());
+
+    if (hasCapacity) {
+      tier.setRequestsPerMinute(Math.max(1, legacyCapacity));
+    }
+
+    if (hasBurst) {
+      int burst = Math.max(legacyBurstCapacity, tier.getRequestsPerMinute());
+      tier.setBurstCapacity(burst);
+    }
   }
 
   public TierProperties tier(String name) {
@@ -90,6 +145,15 @@ public class RateLimitProps implements BaseStarterProperties {
     }
 
     return result;
+  }
+
+  private TierProperties builtInTier(String tierName) {
+    return switch (tierName) {
+      case "BASIC" -> TierProperties.basic();
+      case "PRO" -> TierProperties.pro();
+      case "ENTERPRISE" -> TierProperties.enterprise();
+      default -> null;
+    };
   }
 
   private static String normalizeTierName(String name) {

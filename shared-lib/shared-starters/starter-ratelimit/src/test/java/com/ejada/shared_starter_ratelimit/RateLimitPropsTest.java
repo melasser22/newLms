@@ -34,4 +34,22 @@ class RateLimitPropsTest {
     assertEquals("custom:updates", props.getDynamic().getSubscriptionChannel());
     assertEquals("ROOT_ADMIN", props.getBypass().getSuperAdminRoles().get(0));
   }
+
+  @Test
+  void legacyCapacityPropertiesOverrideDefaultTier() {
+    MapConfigurationPropertySource source = new MapConfigurationPropertySource(
+        Map.of(
+            "shared.ratelimit.capacity", "600",
+            "shared.ratelimit.burst-capacity", "900"
+        ));
+
+    RateLimitProps props = new Binder(source)
+        .bind("shared.ratelimit", RateLimitProps.class)
+        .get();
+    props.applyDefaults();
+
+    assertEquals(600, props.getCapacity());
+    assertEquals(600, props.tier("BASIC").getRequestsPerMinute());
+    assertEquals(900, props.tier("BASIC").getBurstCapacity());
+  }
 }
