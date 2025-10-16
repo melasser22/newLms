@@ -1,7 +1,9 @@
 package com.ejada.gateway.security;
 
+import java.util.Iterator;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import org.springframework.beans.factory.ObjectProvider;
 
 public final class TestObjectProviders {
@@ -52,6 +54,21 @@ public final class TestObjectProviders {
         if (instance != null) {
           dependencyConsumer.accept(instance);
         }
+      }
+
+      @Override
+      public Stream<T> stream() {
+        return instance != null ? Stream.of(instance) : Stream.empty();
+      }
+
+      @Override
+      public Stream<T> orderedStream() {
+        return stream();
+      }
+
+      @Override
+      public Iterator<T> iterator() {
+        return stream().iterator();
       }
     };
   }

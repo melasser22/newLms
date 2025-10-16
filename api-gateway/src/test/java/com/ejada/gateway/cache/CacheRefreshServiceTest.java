@@ -7,10 +7,16 @@ import com.ejada.gateway.transformation.ResponseCacheService;
 import java.net.URI;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.util.Iterator;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 import org.mockito.Answers;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -28,7 +34,7 @@ class CacheRefreshServiceTest {
     serverProperties = new ServerProperties();
     serverProperties.setPort(8085);
     serverProperties.getServlet().setContextPath("/gateway/api");
-    builderProvider = () -> WebClient.builder();
+    builderProvider = new BuilderObjectProvider();
     cacheRefreshService = new CacheRefreshService(cacheService, serverProperties, builderProvider);
   }
 
@@ -41,7 +47,7 @@ class CacheRefreshServiceTest {
   @Test
   void updatesBaseUriWhenServerPortChanges() {
     TestWebServer webServer = new TestWebServer(9099);
-    WebServerInitializedEvent event = new WebServerInitializedEvent(webServer, new GenericApplicationContext());
+    WebServerInitializedEvent event = new TestWebServerInitializedEvent(webServer, new GenericApplicationContext());
 
     cacheRefreshService.onWebServerInitialized(event);
 
@@ -59,6 +65,64 @@ class CacheRefreshServiceTest {
 
   private URI invokeResolveRequestUri(String path, String query) {
     return ReflectionTestUtils.invokeMethod(cacheRefreshService, "resolveRequestUri", path, query);
+  }
+
+  private static final class BuilderObjectProvider implements ObjectProvider<WebClient.Builder> {
+
+    @Override
+    public WebClient.Builder getObject(Object... args) {
+      return WebClient.builder();
+    }
+
+    @Override
+    public WebClient.Builder getObject() {
+      return WebClient.builder();
+    }
+
+    @Override
+    public WebClient.Builder getIfAvailable() {
+      return WebClient.builder();
+    }
+
+    @Override
+    public WebClient.Builder getIfAvailable(Supplier<WebClient.Builder> defaultSupplier) {
+      return WebClient.builder();
+    }
+
+    @Override
+    public void ifAvailable(Consumer<WebClient.Builder> dependencyConsumer) {
+      dependencyConsumer.accept(WebClient.builder());
+    }
+
+    @Override
+    public WebClient.Builder getIfUnique() {
+      return WebClient.builder();
+    }
+
+    @Override
+    public WebClient.Builder getIfUnique(Supplier<WebClient.Builder> defaultSupplier) {
+      return WebClient.builder();
+    }
+
+    @Override
+    public void ifUnique(Consumer<WebClient.Builder> dependencyConsumer) {
+      dependencyConsumer.accept(WebClient.builder());
+    }
+
+    @Override
+    public Iterator<WebClient.Builder> iterator() {
+      return List.of(WebClient.builder()).iterator();
+    }
+
+    @Override
+    public Stream<WebClient.Builder> stream() {
+      return Stream.of(WebClient.builder());
+    }
+
+    @Override
+    public Stream<WebClient.Builder> orderedStream() {
+      return stream();
+    }
   }
 
   private static final class TestWebServer implements org.springframework.boot.web.server.WebServer {
@@ -87,6 +151,14 @@ class CacheRefreshServiceTest {
     @Override
     public void shutDownGracefully(org.springframework.boot.web.server.GracefulShutdownCallback callback) {
       callback.shutdownComplete(org.springframework.boot.web.server.GracefulShutdownResult.IMMEDIATE);
+    }
+  }
+
+  private static final class TestWebServerInitializedEvent extends WebServerInitializedEvent {
+
+    private TestWebServerInitializedEvent(org.springframework.boot.web.server.WebServer webServer,
+        ApplicationContext applicationContext) {
+      super(webServer, applicationContext);
     }
   }
 }

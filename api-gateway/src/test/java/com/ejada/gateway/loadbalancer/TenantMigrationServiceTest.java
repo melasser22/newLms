@@ -3,6 +3,7 @@ package com.ejada.gateway.loadbalancer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import com.ejada.gateway.config.TenantMigrationProperties;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,7 +15,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cloud.client.DefaultServiceInstance;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.Request;
-import org.springframework.cloud.client.loadbalancer.ServiceInstanceListSupplier;
+import org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
 import org.springframework.cloud.loadbalancer.support.LoadBalancerClientFactory;
 import reactor.core.publisher.Flux;
 
@@ -92,7 +93,7 @@ class TenantMigrationServiceTest {
         }
 
         @Override
-        public Flux<List<ServiceInstance>> get(Request request) {
+        public Flux<List<ServiceInstance>> get(Request<?> request) {
             return Flux.just(instances);
         }
     }
