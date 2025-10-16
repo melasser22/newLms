@@ -15,9 +15,8 @@ import java.util.stream.Stream;
 import org.mockito.Answers;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
+import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -47,7 +46,8 @@ class CacheRefreshServiceTest {
   @Test
   void updatesBaseUriWhenServerPortChanges() {
     TestWebServer webServer = new TestWebServer(9099);
-    WebServerInitializedEvent event = new TestWebServerInitializedEvent(webServer, new GenericApplicationContext());
+    WebServerApplicationContext applicationContext = mock(WebServerApplicationContext.class);
+    WebServerInitializedEvent event = new TestWebServerInitializedEvent(webServer, applicationContext);
 
     cacheRefreshService.onWebServerInitialized(event);
 
@@ -156,9 +156,19 @@ class CacheRefreshServiceTest {
 
   private static final class TestWebServerInitializedEvent extends WebServerInitializedEvent {
 
+    private static final long serialVersionUID = 1L;
+
+    private final WebServerApplicationContext applicationContext;
+
     private TestWebServerInitializedEvent(org.springframework.boot.web.server.WebServer webServer,
-        ApplicationContext applicationContext) {
-      super(webServer, applicationContext);
+        WebServerApplicationContext applicationContext) {
+      super(webServer);
+      this.applicationContext = applicationContext;
+    }
+
+    @Override
+    public WebServerApplicationContext getApplicationContext() {
+      return applicationContext;
     }
   }
 }
