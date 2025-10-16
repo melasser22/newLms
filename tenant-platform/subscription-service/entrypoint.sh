@@ -1,5 +1,9 @@
 #!/bin/sh
-set -e
+if ! set -e 2>/dev/null; then
+  if ! set -o errexit 2>/dev/null; then
+    echo 'Warning: unable to enable errexit; continuing without it' >&2
+  fi
+fi
 
 if [ -z "${SPRING_PROFILES_ACTIVE:-}" ]; then
   export SPRING_PROFILES_ACTIVE=dev
