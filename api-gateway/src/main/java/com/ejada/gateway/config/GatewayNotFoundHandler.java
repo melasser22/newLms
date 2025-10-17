@@ -35,7 +35,7 @@ import reactor.core.publisher.Mono;
  * This is specifically designed to handle Spring Cloud Gateway's route matching failures.
  */
 @Component
-@Order(-1) // Higher priority than default error handler
+@Order(-3) // Highest priority so NOT_FOUND errors short-circuit before generic handlers
 public class GatewayNotFoundHandler extends AbstractErrorWebExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GatewayNotFoundHandler.class);
