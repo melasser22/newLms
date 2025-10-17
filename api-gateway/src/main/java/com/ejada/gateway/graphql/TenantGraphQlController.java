@@ -1,5 +1,6 @@
 package com.ejada.gateway.graphql;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,13 +62,31 @@ public class TenantGraphQlController {
         .map(TenantNode::id)
         .filter(java.util.Objects::nonNull)
         .collect(Collectors.toSet());
+    Map<TenantNode, T> defaults = createDefaultMap(tenants, defaultSupplier);
     if (tenantIds.isEmpty()) {
-      return Mono.just(tenants.stream()
-          .collect(Collectors.toMap(tenant -> tenant, tenant -> defaultSupplier.get())));
+      return Mono.just(defaults);
     }
     return fetcher.apply(tenantIds)
-        .map(result -> tenants.stream()
-            .collect(Collectors.toMap(tenant -> tenant,
-                tenant -> result.getOrDefault(tenant.id(), defaultSupplier.get()))));
+        .map(result -> {
+          Map<Integer, T> resolved = result != null ? result : Map.of();
+          Map<TenantNode, T> mapped = new LinkedHashMap<>(defaults);
+          for (TenantNode tenant : tenants) {
+            Integer tenantId = tenant.id();
+            if (tenantId != null && resolved.containsKey(tenantId)) {
+              mapped.put(tenant, resolved.get(tenantId));
+            }
+          }
+          return mapped;
+        })
+        .defaultIfEmpty(defaults);
+  }
+
+  private <T> Map<TenantNode, T> createDefaultMap(List<TenantNode> tenants,
+      java.util.function.Supplier<T> defaultSupplier) {
+    Map<TenantNode, T> defaults = new LinkedHashMap<>();
+    for (TenantNode tenant : tenants) {
+      defaults.put(tenant, defaultSupplier.get());
+    }
+    return defaults;
   }
 }
