@@ -21,6 +21,7 @@ import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -128,7 +129,7 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
       String correlation = correlationId != null ? correlationId : "unknown";
       String json = String.format("{\"status\":%d,\"code\":\"%s\",\"message\":\"%s\",\"correlationId\":\"%s\"}",
           status.value(), errorCode, message.replace("\"", "'"), correlation);
-      DataBuffer buffer = response.bufferFactory().wrap(json.getBytes());
+      DataBuffer buffer = response.bufferFactory().wrap(json.getBytes(StandardCharsets.UTF_8));
       return response.writeWith(Mono.just(buffer));
     }
   }
