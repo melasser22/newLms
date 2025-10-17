@@ -9,4 +9,4 @@ spring:
       import-check:
         enabled: false
   config:
-    import: optional:configserver:
+    import: "optional:configserver:"
