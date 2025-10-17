@@ -10,6 +10,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -76,17 +78,14 @@ public class IpFilteringGatewayFilter implements GlobalFilter, Ordered {
     String blacklistKey = cfg.blacklistKey(tenantId);
     String whitelistKey = cfg.whitelistKey(tenantId);
 
-    Mono<Boolean> blacklistCheck = redisTemplate.opsForSet().isMember(blacklistKey, clientIp);
-    if (blacklistCheck == null) {
-      blacklistCheck = Mono.just(false);
-    } else {
-      blacklistCheck = blacklistCheck.defaultIfEmpty(false);
-    }
+    Mono<Boolean> rawBlacklistCheck = redisTemplate.opsForSet().isMember(blacklistKey, clientIp);
+    Mono<Boolean> blacklistCheck = Optional.ofNullable(rawBlacklistCheck)
+        .orElseGet(() -> Mono.just(false))
+        .defaultIfEmpty(false);
 
-    var whitelistMembers = redisTemplate.opsForSet().members(whitelistKey);
-    if (whitelistMembers == null) {
-      whitelistMembers = reactor.core.publisher.Flux.empty();
-    }
+    Flux<String> whitelistMembers = Optional
+        .ofNullable(redisTemplate.opsForSet().members(whitelistKey))
+        .orElseGet(Flux::empty);
 
     return blacklistCheck.flatMap(isBlacklisted -> {
       if (isBlacklisted) {
