@@ -31,11 +31,15 @@ public record DetailedHealthStatus(
 
   public record RedisHealthStatus(String status, long latencyMs, String message) {
     public static RedisHealthStatus unavailable() {
-      return new RedisHealthStatus("DOWN", -1, "Not assessed");
+      return new RedisHealthStatus("UNKNOWN", -1, "Not assessed");
     }
 
     public boolean isUp() {
       return "UP".equalsIgnoreCase(status);
+    }
+
+    public boolean isUnknown() {
+      return "UNKNOWN".equalsIgnoreCase(status) || status == null || status.isBlank();
     }
   }
 }
