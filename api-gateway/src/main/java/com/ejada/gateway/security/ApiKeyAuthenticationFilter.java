@@ -271,10 +271,11 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
     return redisTemplate.opsForValue().increment(rateKey)
         .onErrorResume(ex -> handleRedisFailure(ex, "increment", rateKey))
         .flatMap(count -> {
-          if (count != null && count == 1L) {
-            return redisTemplate.expire(rateKey, Duration.ofMinutes(1))
-                .onErrorResume(expireEx -> handleRedisFailure(expireEx, "expire", rateKey))
-                .thenReturn(count);
+          if (count == null) {
+            return Mono.empty();
+          }
+          if (count == 1L) {
+            return redisTemplate.expire(rateKey, Duration.ofMinutes(1)).thenReturn(count);
           }
           return Mono.just(count);
         })

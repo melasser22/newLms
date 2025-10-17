@@ -52,15 +52,13 @@ public class TenantVersionPreferenceService {
     }
 
     return repository.findFirstByTenantIdIgnoreCaseAndResource(tenantId, resource)
-        .map(entity -> VersionNumber.canonicaliseOrNull(entity.getPreferredVersion()))
-        .defaultIfEmpty(null)
+        .map(entity -> Optional.ofNullable(VersionNumber.canonicaliseOrNull(entity.getPreferredVersion())))
+        .switchIfEmpty(Mono.just(Optional.empty()))
         .map(optionalVersion -> {
-          cache.put(key, new CachedPreference(optionalVersion, Instant.now().plus(CACHE_TTL)));
-          if (optionalVersion != null) {
-            LOGGER.debug("Resolved tenant {} preference {} for resource {}", tenantId, optionalVersion,
-                resource);
-          }
-          return Optional.ofNullable(optionalVersion);
+          cache.put(key, new CachedPreference(optionalVersion.orElse(null), Instant.now().plus(CACHE_TTL)));
+          optionalVersion.ifPresent(version ->
+              LOGGER.debug("Resolved tenant {} preference {} for resource {}", tenantId, version, resource));
+          return optionalVersion;
         })
         .onErrorResume(ex -> {
           LOGGER.warn("Failed to resolve tenant version preference for {} {}", tenantId, resource, ex);
