@@ -75,9 +75,8 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
       return Mono.error(ex);
     }
 
-    boolean notFound = isNotFoundError(ex);
-    HttpStatus status = notFound ? HttpStatus.NOT_FOUND : determineStatus(ex);
-    String errorCode = notFound ? "ERR_RESOURCE_NOT_FOUND" : determineErrorCode(ex, status);
+    HttpStatus status = determineStatus(ex);
+    String errorCode = determineErrorCode(ex, status);
     String correlationId = resolveCorrelationId(exchange);
     String tenantId = resolveTenantId(exchange);
     String message = enhanceMessage(determineMessage(ex, status), status, correlationId);
@@ -110,13 +109,6 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
       LOGGER.error("Unexpected error in error handler [correlationId={}]: {}", correlationId, e.getMessage(), e);
       return writeFallbackErrorResponse(response, status, errorCode, message, correlationId);
     }
-  }
-
-  private boolean isNotFoundError(Throwable ex) {
-    if (ex instanceof ResponseStatusException rse) {
-      return rse.getStatusCode().value() == HttpStatus.NOT_FOUND.value();
-    }
-    return ex instanceof org.springframework.cloud.gateway.support.NotFoundException;
   }
 
   /**
@@ -282,7 +274,7 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
   private Map<String, Object> buildDiagnostics(ServerWebExchange exchange, HttpStatus status,
       String errorCode, String message, String correlationId, String tenantId) {
     Map<String, Object> diagnostics = new LinkedHashMap<>();
-    diagnostics.put("timestamp", Instant.now());
+    diagnostics.put("timestamp", Instant.now().toString());
     diagnostics.put("path", exchange.getRequest().getPath().value());
     HttpMethod requestMethod = exchange.getRequest().getMethod();
     diagnostics.put("method", requestMethod != null ? requestMethod.name() : "UNKNOWN");
