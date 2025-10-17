@@ -754,7 +754,7 @@ gateway:
         - id: policy-service
           uri: lb://policy-service
           health-path: /actuator/health
-          required: true
+          required: false
           deployment: primary
 
 # Application metadata that surfaces through /actuator/info and diagnostics endpoints.
