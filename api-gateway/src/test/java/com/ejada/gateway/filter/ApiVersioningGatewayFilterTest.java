@@ -120,15 +120,17 @@ class ApiVersioningGatewayFilterTest {
         MockServerHttpRequest.get("/1.0/demo/items").build());
 
     AtomicReference<String> header = new AtomicReference<>();
+    AtomicReference<String> path = new AtomicReference<>();
 
     GatewayFilterChain chain = webExchange -> {
       header.set(webExchange.getRequest().getHeaders().getFirst(HeaderNames.API_VERSION));
+      path.set(webExchange.getRequest().getURI().getRawPath());
       return Mono.empty();
     };
 
     filter.filter(exchange, chain).block();
 
-    assertEquals("/demo/items", exchange.getRequest().getURI().getRawPath());
+    assertEquals("/demo/items", path.get());
     assertEquals("v1", header.get());
   }
 
@@ -137,6 +139,7 @@ class ApiVersioningGatewayFilterTest {
     route.setId("demo");
     route.setUri(URI.create("http://example.com"));
     route.setPaths(paths);
+    route.setMaxRequestSize(org.springframework.util.unit.DataSize.ofMegabytes(5));
     return route;
   }
 }

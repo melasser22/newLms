@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.ejada.common.constants.HeaderNames;
 import com.ejada.gateway.config.GatewaySecurityProperties;
+import com.ejada.gateway.support.ReactiveRedisTestSupport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.nio.charset.StandardCharsets;
@@ -13,8 +14,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
@@ -22,19 +21,10 @@ import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
-@Testcontainers
 class RequestSignatureValidationFilterTest {
 
-  @Container
-  @SuppressWarnings("resource")
-  static final GenericContainer<?> REDIS = new GenericContainer<>("redis:7").withExposedPorts(6379);
-
   private ReactiveStringRedisTemplate redisTemplate;
-  private ReactiveRedisConnectionFactory connectionFactory;
+  private ReactiveRedisTestSupport.InMemoryRedisStore redisStore;
   private RequestSignatureValidationFilter filter;
   private SimpleMeterRegistry meterRegistry;
   private ObjectMapper objectMapper;
@@ -42,12 +32,8 @@ class RequestSignatureValidationFilterTest {
 
   @BeforeEach
   void setUp() {
-    LettuceConnectionFactory factory = new LettuceConnectionFactory(REDIS.getHost(), REDIS.getMappedPort(6379));
-    factory.afterPropertiesSet();
-    this.connectionFactory = factory;
-    this.redisTemplate = new ReactiveStringRedisTemplate(factory);
-    flushRedis();
-
+    this.redisStore = ReactiveRedisTestSupport.newStore();
+    this.redisTemplate = ReactiveRedisTestSupport.mockStringTemplate(redisStore);
     this.objectMapper = new ObjectMapper().findAndRegisterModules();
     this.meterRegistry = new SimpleMeterRegistry();
     GatewaySecurityMetrics metrics = new GatewaySecurityMetrics(meterRegistry);
@@ -60,8 +46,8 @@ class RequestSignatureValidationFilterTest {
 
   @AfterEach
   void tearDown() {
-    if (connectionFactory instanceof LettuceConnectionFactory lettuce) {
-      lettuce.destroy();
+    if (redisStore != null) {
+      redisStore.clear();
     }
     if (meterRegistry != null) {
       meterRegistry.close();
@@ -131,11 +117,5 @@ class RequestSignatureValidationFilterTest {
       sb.append(String.format("%02x", b));
     }
     return sb.toString();
-  }
-
-  private void flushRedis() {
-    try (var connection = connectionFactory.getReactiveConnection()) {
-      connection.serverCommands().flushAll().block();
-    }
   }
 }

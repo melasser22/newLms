@@ -8,6 +8,7 @@ import com.ejada.gateway.config.GatewaySecurityProperties;
 import com.ejada.gateway.config.GatewaySecurityProperties.EncryptionAlgorithm;
 import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.gateway.security.apikey.ApiKeyCodec;
+import com.ejada.gateway.support.ReactiveRedisTestSupport;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,8 +25,6 @@ import javax.crypto.spec.SecretKeySpec;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
@@ -35,19 +34,11 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-@Testcontainers
 class ApiKeyAuthenticationFilterTest {
 
-  @Container
-  @SuppressWarnings("resource")
-  static final GenericContainer<?> REDIS = new GenericContainer<>("redis:7").withExposedPorts(6379);
-
   private ReactiveStringRedisTemplate redisTemplate;
-  private ReactiveRedisConnectionFactory connectionFactory;
+  private ReactiveRedisTestSupport.InMemoryRedisStore redisStore;
   private ApiKeyAuthenticationFilter filter;
   private SimpleMeterRegistry meterRegistry;
   private ObjectMapper objectMapper;
@@ -59,12 +50,8 @@ class ApiKeyAuthenticationFilterTest {
 
   @BeforeEach
   void setUp() {
-    LettuceConnectionFactory factory = new LettuceConnectionFactory(REDIS.getHost(), REDIS.getMappedPort(6379));
-    factory.afterPropertiesSet();
-    this.connectionFactory = factory;
-    this.redisTemplate = new ReactiveStringRedisTemplate(factory);
-    flushRedis();
-
+    this.redisStore = ReactiveRedisTestSupport.newStore();
+    this.redisTemplate = ReactiveRedisTestSupport.mockStringTemplate(redisStore);
     this.objectMapper = new ObjectMapper().findAndRegisterModules();
     this.meterRegistry = new SimpleMeterRegistry();
     GatewaySecurityMetrics metrics = new GatewaySecurityMetrics(meterRegistry);
@@ -80,8 +67,8 @@ class ApiKeyAuthenticationFilterTest {
 
   @AfterEach
   void tearDown() {
-    if (connectionFactory instanceof LettuceConnectionFactory lettuce) {
-      lettuce.destroy();
+    if (redisStore != null) {
+      redisStore.clear();
     }
     if (meterRegistry != null) {
       meterRegistry.close();
@@ -234,9 +221,4 @@ class ApiKeyAuthenticationFilterTest {
     return objectMapper.readValue(payload, new TypeReference<Map<String, Object>>() {});
   }
 
-  private void flushRedis() {
-    try (var connection = connectionFactory.getReactiveConnection()) {
-      connection.serverCommands().flushAll().block();
-    }
-  }
 }
