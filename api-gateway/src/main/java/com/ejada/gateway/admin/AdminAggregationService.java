@@ -86,34 +86,42 @@ public class AdminAggregationService {
 
   @Timed(value = "gateway.admin.downstream.snapshots", description = "Downstream service snapshot aggregation")
   public Mono<List<AdminServiceSnapshot>> collectDownstreamSnapshots() {
-    List<AdminAggregationProperties.Service> services = adminProperties.getAggregation().getServices();
-    if (services.isEmpty()) {
-      return Mono.just(List.of());
-    }
+    return Mono.defer(() -> {
+      List<AdminAggregationProperties.Service> services = adminProperties.getAggregation().getServices();
+      if (services.isEmpty()) {
+        return Mono.just(List.of());
+      }
 
-    IntStream.range(0, services.size()).forEach(index -> {
-      AdminAggregationProperties.Service service = services.get(index);
-      String key = service.getId() != null ? service.getId() : String.valueOf(index);
-      service.validate(key);
+      try {
+        IntStream.range(0, services.size()).forEach(index -> {
+          AdminAggregationProperties.Service service = services.get(index);
+          String key = service.getId() != null ? service.getId() : String.valueOf(index);
+          service.validate(key);
+        });
+      } catch (RuntimeException ex) {
+        return Mono.error(ex);
+      }
+
+      Duration timeout = adminProperties.getAggregation().getTimeout();
+
+      return Flux.fromIterable(services)
+          .flatMap(service -> fetchSnapshot(service, timeout))
+          .sort(Comparator.comparing(AdminServiceSnapshot::serviceId))
+          .collectList();
     });
-
-    Duration timeout = adminProperties.getAggregation().getTimeout();
-
-    return Flux.fromIterable(services)
-        .flatMap(service -> fetchSnapshot(service, timeout))
-        .sort(Comparator.comparing(AdminServiceSnapshot::serviceId))
-        .collectList();
   }
 
   @Timed(value = "gateway.admin.health.detailed", description = "Detailed gateway health aggregation")
   public Mono<DetailedHealthStatus> fetchDetailedHealth() {
-    Mono<RedisHealthStatus> redisHealth = checkRedisHealth();
-    Mono<List<AdminServiceSnapshot>> downstream = collectDownstreamSnapshots();
-    Mono<List<CircuitBreakerHealth>> circuitBreakers = Mono.fromSupplier(this::collectCircuitBreakerStates);
+    return Mono.defer(() -> {
+      Mono<RedisHealthStatus> redisHealth = checkRedisHealth();
+      Mono<List<AdminServiceSnapshot>> downstream = collectDownstreamSnapshots();
+      Mono<List<CircuitBreakerHealth>> circuitBreakers = Mono.fromSupplier(this::collectCircuitBreakerStates);
 
-    return Mono.zip(redisHealth, downstream, circuitBreakers)
-        .map(tuple -> new DetailedHealthStatus(tuple.getT1(), tuple.getT2(), tuple.getT3()))
-        .defaultIfEmpty(DetailedHealthStatus.empty());
+      return Mono.zip(redisHealth, downstream, circuitBreakers)
+          .map(tuple -> new DetailedHealthStatus(tuple.getT1(), tuple.getT2(), tuple.getT3()))
+          .defaultIfEmpty(DetailedHealthStatus.empty());
+    });
   }
 
   @Timed(value = "gateway.admin.health.redis", description = "Redis connectivity check")
