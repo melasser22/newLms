@@ -227,9 +227,9 @@ public class GatewayTokenIntrospectionService {
   }
 
   private static class TokenIntrospectionPayload {
-    private Boolean active;
-    private Boolean revoked;
-    private Instant expiresAt;
-    private String tenantId;
+    public Boolean active;
+    public Boolean revoked;
+    public Instant expiresAt;
+    public String tenantId;
   }
 }

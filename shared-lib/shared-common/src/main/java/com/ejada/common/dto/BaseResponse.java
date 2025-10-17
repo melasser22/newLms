@@ -103,6 +103,7 @@ public class BaseResponse<T> {
      *
      * @return true if status is ApiStatus.SUCCESS
      */
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public boolean isSuccess() {
         return status == ApiStatus.SUCCESS;
     }
@@ -112,6 +113,7 @@ public class BaseResponse<T> {
      *
      * @return true if status is ApiStatus.ERROR
      */
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public boolean isError() {
         return status == ApiStatus.ERROR;
     }
@@ -121,6 +123,7 @@ public class BaseResponse<T> {
      *
      * @return true if status is ApiStatus.WARNING
      */
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public boolean isWarning() {
         return status == ApiStatus.WARNING;
     }

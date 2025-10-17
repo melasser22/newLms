@@ -15,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.cloud.gateway.filter.factory.StripPrefixGatewayFilterFactory;
+import org.springframework.cloud.gateway.handler.predicate.PathRoutePredicateFactory;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -27,6 +29,8 @@ class GatewayRoutesConfigurationTest {
   @BeforeEach
   void setUp() {
     applicationContext = new AnnotationConfigApplicationContext();
+    applicationContext.registerBean(PathRoutePredicateFactory.class, () -> new PathRoutePredicateFactory());
+    applicationContext.registerBean(StripPrefixGatewayFilterFactory.class, StripPrefixGatewayFilterFactory::new);
     applicationContext.refresh();
     routeLocatorBuilder = new RouteLocatorBuilder(applicationContext);
   }

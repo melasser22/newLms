@@ -29,7 +29,10 @@ public class GatewayReadinessIndicator implements ReactiveHealthIndicator {
     return adminAggregationService.fetchDetailedHealth()
         .map(this::mapToHealth)
         .doOnError(ex -> LOGGER.error("Health check failed: {}", ex.getMessage(), ex))
-        .onErrorResume(ex -> Mono.just(Health.down(ex).build()));
+        .onErrorResume(ex -> Mono.just(Health.down()
+            .withException(ex)
+            .withDetail("error", ex)
+            .build()));
   }
 
   private Health mapToHealth(DetailedHealthStatus detailed) {
