@@ -10,3 +10,11 @@ spring:
         enabled: false
   config:
     import: "optional:configserver:"
+
+gateway:
+  routes:
+    tenant:
+      id: tenant-service
+      uri: lb://tenant-service
+      paths:
+        - /api/v1/tenants/**
