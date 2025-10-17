@@ -179,8 +179,10 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
               .build();
           exchange.getAttributes().put(GatewayRequestAttributes.TENANT_ID, record.getTenantId());
           exchange.getAttributes().put(HeaderNames.X_TENANT_ID, record.getTenantId());
+          exchange.getAttributes().put(GatewayRequestAttributes.MUTATED_REQUEST, mutatedRequest);
           mutatedExchange.getAttributes().put(GatewayRequestAttributes.TENANT_ID, record.getTenantId());
           mutatedExchange.getAttributes().put(HeaderNames.X_TENANT_ID, record.getTenantId());
+          mutatedExchange.getAttributes().put(GatewayRequestAttributes.MUTATED_REQUEST, mutatedRequest);
           if (!StringUtils.hasText(exchange.getRequest().getHeaders().getFirst(HeaderNames.X_TENANT_ID))) {
             try {
               exchange.getRequest().getHeaders().set(HeaderNames.X_TENANT_ID, record.getTenantId());

@@ -209,8 +209,12 @@ public class RateLimitProps implements BaseStarterProperties {
     private List<StrategyProperties> strategies = new ArrayList<>();
 
     void applyDefaults() {
-      if (strategies == null || strategies.isEmpty()) {
+      if (strategies == null) {
         strategies = new ArrayList<>();
+      } else if (!(strategies instanceof ArrayList<?>)) {
+        strategies = new ArrayList<>(strategies);
+      }
+      if (strategies.isEmpty()) {
         strategies.add(StrategyProperties.of("tenant", List.of(Dimension.TENANT)));
         strategies.add(StrategyProperties.of("tenant_user", List.of(Dimension.TENANT, Dimension.USER)));
         strategies.add(StrategyProperties.of("tenant_ip", List.of(Dimension.TENANT, Dimension.IP)));

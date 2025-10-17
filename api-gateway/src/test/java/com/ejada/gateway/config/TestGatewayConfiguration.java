@@ -30,13 +30,13 @@ public class TestGatewayConfiguration {
 
   @Bean
   @Primary
-  JwtDecoder jwtDecoder() {
+  JwtDecoder testJwtDecoder() {
     return token -> buildJwt(token);
   }
 
   @Bean
   @Primary
-  ReactiveJwtDecoder reactiveJwtDecoder() {
+  ReactiveJwtDecoder testReactiveJwtDecoder() {
     return token -> Mono.just(buildJwt(token));
   }
 

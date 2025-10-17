@@ -18,6 +18,9 @@ public final class GatewayRequestAttributes {
   public static final String SUBSCRIPTION = GatewayRequestAttributes.class.getName() + ".subscription";
   public static final String SUBSCRIPTION_TIER = GatewayRequestAttributes.class.getName() + ".subscriptionTier";
 
+  /** Attribute storing the mutated request used by upstream filters. */
+  public static final String MUTATED_REQUEST = GatewayRequestAttributes.class.getName() + ".mutatedRequest";
+
   /** Attribute storing the resolved API version for versioned routes. */
   public static final String API_VERSION = GatewayRequestAttributes.class.getName() + ".apiVersion";
 

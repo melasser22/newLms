@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.security.core.Authentication;
@@ -100,7 +101,9 @@ class ApiKeyAuthenticationFilterTest {
 
     StepVerifier.create(filter.filter(exchange, chain)).verifyComplete();
 
-    assertThat(exchange.getRequest().getHeaders().getFirst(HeaderNames.X_TENANT_ID)).isEqualTo("tenant-a");
+    ServerHttpRequest mutated = exchange.getAttribute(GatewayRequestAttributes.MUTATED_REQUEST);
+    assertThat(mutated).isNotNull();
+    assertThat(mutated.getHeaders().getFirst(HeaderNames.X_TENANT_ID)).isEqualTo("tenant-a");
     assertThat((String) exchange.getAttribute(GatewayRequestAttributes.TENANT_ID)).isEqualTo("tenant-a");
     assertThat(authenticationRef.get()).isInstanceOf(ApiKeyAuthenticationToken.class);
     double validated = meterRegistry.get("gateway.security.api_key_validated").counter().count();
