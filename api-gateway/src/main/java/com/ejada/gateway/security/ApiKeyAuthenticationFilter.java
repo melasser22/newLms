@@ -14,6 +14,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -27,6 +30,8 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -107,7 +112,8 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
           return reject(exchange, HttpStatus.UNAUTHORIZED, "ERR_API_KEY_INVALID", "Invalid API key")
               .then(Mono.<DecodedApiKeyRecord>empty());
         }))
-        .flatMap(decoded -> validateAndAuthenticate(decoded, apiKey, redisKey, exchange, chain));
+        .flatMap(decoded -> validateAndAuthenticate(decoded, apiKey, redisKey, exchange, chain))
+        .onErrorResume(ex -> handleRedisFailure(exchange, chain, redisKey, ex));
   }
 
   @Override
@@ -232,7 +238,16 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
           if (!StringUtils.hasText(serialized)) {
             return Mono.<Void>empty();
           }
-          return redisTemplate.opsForValue().set(redisKey, serialized).then();
+          return redisTemplate.opsForValue().set(redisKey, serialized)
+              .onErrorResume(ex -> handleRedisFailure(ex, "set", redisKey))
+              .then();
+        })
+        .onErrorResume(ex -> {
+          if (isRedisConnectivityIssue(ex)) {
+            LOGGER.warn("Failed to update API key usage metadata for tenant {} due to Redis outage", record.getTenantId(), ex);
+            return Mono.empty();
+          }
+          return Mono.error(ex);
         });
   }
 
@@ -254,6 +269,7 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
     }
     String rateKey = cfg.redisKey(apiKey);
     return redisTemplate.opsForValue().increment(rateKey)
+        .onErrorResume(ex -> handleRedisFailure(ex, "increment", rateKey))
         .flatMap(count -> {
           if (count == null) {
             return Mono.empty();
@@ -375,6 +391,37 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
         .map(scope -> scope.startsWith("SCOPE_") ? scope.substring("SCOPE_".length()) : scope)
         .map(value -> value.toLowerCase(Locale.ROOT))
         .collect(Collectors.toCollection(LinkedHashSet::new));
+  }
+
+  private Mono<Void> handleRedisFailure(ServerWebExchange exchange, WebFilterChain chain, String redisKey, Throwable ex) {
+    if (!isRedisConnectivityIssue(ex)) {
+      return Mono.error(ex);
+    }
+    LOGGER.warn("Redis unavailable during API key lookup for key {}, allowing request", redisKey, ex);
+    return chain.filter(exchange);
+  }
+
+  private <T> Mono<T> handleRedisFailure(Throwable ex, String operation, String key) {
+    if (!isRedisConnectivityIssue(ex)) {
+      return Mono.error(ex);
+    }
+    LOGGER.warn("Redis unavailable during API key {} for key {}, continuing without enforcement", operation, key, ex);
+    return Mono.empty();
+  }
+
+  private boolean isRedisConnectivityIssue(Throwable ex) {
+    Throwable current = ex;
+    while (current != null) {
+      if (current instanceof RedisConnectionFailureException
+          || current instanceof DataAccessResourceFailureException
+          || current instanceof ConnectException
+          || current instanceof UnknownHostException
+          || current instanceof SocketTimeoutException) {
+        return true;
+      }
+      current = current.getCause();
+    }
+    return false;
   }
 
   private static String trimToNull(String value) {
