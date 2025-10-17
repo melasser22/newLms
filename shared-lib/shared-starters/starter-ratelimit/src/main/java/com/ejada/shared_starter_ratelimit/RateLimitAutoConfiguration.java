@@ -5,9 +5,12 @@ import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
@@ -31,33 +34,14 @@ public class RateLimitAutoConfiguration {
   }
 
   @Bean
-  @ConditionalOnBean(StringRedisTemplate.class)
-  public TokenBucketLuaRateLimiter tokenBucketLuaRateLimiter(StringRedisTemplate redisTemplate) {
-    return new TokenBucketLuaRateLimiter(redisTemplate);
-  }
-
-  @Bean
   public RateLimitBypassEvaluator rateLimitBypassEvaluator(RateLimitProps props) {
     props.applyDefaults();
     return new RateLimitBypassEvaluator(props.getBypass());
   }
 
   @Bean
-  @ConditionalOnBean(TokenBucketLuaRateLimiter.class)
-  public RateLimitService rateLimitService(
-      RateLimitProps props,
-      TenantRateLimitRegistry registry,
-      RateLimitMetricsRecorder metricsRecorder,
-      RateLimitKeyGenerator keyGenerator,
-      TokenBucketLuaRateLimiter tokenBucket,
-      RateLimitBypassEvaluator bypassEvaluator,
-      ObjectProvider<AuditService> auditService) {
-    return new RateLimitService(props, registry, metricsRecorder, keyGenerator, tokenBucket, bypassEvaluator,
-        auditService.getIfAvailable());
-  }
-
-  @Bean
   @ConditionalOnBean(RateLimitService.class)
+  @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
   public FilterRegistrationBean<RateLimitFilter> rateLimitFilter(RateLimitService rateLimitService) {
     FilterRegistrationBean<RateLimitFilter> registration = new FilterRegistrationBean<>();
     registration.setFilter(new RateLimitFilter(rateLimitService));
@@ -66,13 +50,38 @@ public class RateLimitAutoConfiguration {
     return registration;
   }
 
-  @Bean(initMethod = "start", destroyMethod = "stop")
-  @ConditionalOnBean({RedisConnectionFactory.class, RateLimitService.class})
-  public RateLimitSubscriptionListener rateLimitSubscriptionListener(
-      RedisConnectionFactory connectionFactory,
-      RateLimitProps props,
-      TenantRateLimitRegistry registry) {
-    props.applyDefaults();
-    return new RateLimitSubscriptionListener(connectionFactory, props.getDynamic().getSubscriptionChannel(), registry);
+  @Configuration(proxyBeanMethods = false)
+  @ConditionalOnClass(StringRedisTemplate.class)
+  static class RedisRateLimitConfiguration {
+
+    @Bean
+    @ConditionalOnBean(StringRedisTemplate.class)
+    TokenBucketLuaRateLimiter tokenBucketLuaRateLimiter(StringRedisTemplate redisTemplate) {
+      return new TokenBucketLuaRateLimiter(redisTemplate);
+    }
+
+    @Bean
+    @ConditionalOnBean(TokenBucketLuaRateLimiter.class)
+    RateLimitService rateLimitService(
+        RateLimitProps props,
+        TenantRateLimitRegistry registry,
+        RateLimitMetricsRecorder metricsRecorder,
+        RateLimitKeyGenerator keyGenerator,
+        TokenBucketLuaRateLimiter tokenBucket,
+        RateLimitBypassEvaluator bypassEvaluator,
+        ObjectProvider<AuditService> auditService) {
+      return new RateLimitService(props, registry, metricsRecorder, keyGenerator, tokenBucket, bypassEvaluator,
+          auditService.getIfAvailable());
+    }
+
+    @Bean(initMethod = "start", destroyMethod = "stop")
+    @ConditionalOnBean({RedisConnectionFactory.class, RateLimitService.class})
+    RateLimitSubscriptionListener rateLimitSubscriptionListener(
+        RedisConnectionFactory connectionFactory,
+        RateLimitProps props,
+        TenantRateLimitRegistry registry) {
+      props.applyDefaults();
+      return new RateLimitSubscriptionListener(connectionFactory, props.getDynamic().getSubscriptionChannel(), registry);
+    }
   }
 }
