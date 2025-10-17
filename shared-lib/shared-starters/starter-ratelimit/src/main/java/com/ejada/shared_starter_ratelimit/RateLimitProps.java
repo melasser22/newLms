@@ -208,6 +208,14 @@ public class RateLimitProps implements BaseStarterProperties {
   public static class MultiDimensionalProperties {
     private List<StrategyProperties> strategies = new ArrayList<>();
 
+    public void setStrategies(List<StrategyProperties> strategies) {
+      if (strategies == null) {
+        this.strategies = new ArrayList<>();
+      } else {
+        this.strategies = new ArrayList<>(strategies);
+      }
+    }
+
     void applyDefaults() {
       List<StrategyProperties> current = strategies;
       strategies = (current == null) ? new ArrayList<>() : new ArrayList<>(current);
