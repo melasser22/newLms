@@ -21,6 +21,7 @@ import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -126,17 +127,10 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
       return response.writeWith(Mono.just(buffer));
     } catch (Exception fallbackException) {
       LOGGER.error("Failed to write JSON fallback error response", fallbackException);
-      String correlation = StringUtils.hasText(correlationId) ? correlationId : "unknown";
-      String safeMessage = message.replace("\"", "'");
-      String diagnosticsJson = "{}";
-      try {
-        diagnosticsJson = new ObjectMapper().findAndRegisterModules().writeValueAsString(safeDiagnostics);
-      } catch (Exception inner) {
-        LOGGER.debug("Failed to serialize diagnostics for fallback response", inner);
-      }
-      String json = String.format("{\"status\":\"ERROR\",\"code\":\"%s\",\"message\":\"%s\",\"correlationId\":\"%s\",\"data\":%s}",
-          errorCode, safeMessage, correlation, diagnosticsJson);
-      DataBuffer buffer = response.bufferFactory().wrap(json.getBytes());
+      String correlation = correlationId != null ? correlationId : "unknown";
+      String json = String.format("{\"status\":%d,\"code\":\"%s\",\"message\":\"%s\",\"correlationId\":\"%s\"}",
+          status.value(), errorCode, message.replace("\"", "'"), correlation);
+      DataBuffer buffer = response.bufferFactory().wrap(json.getBytes(StandardCharsets.UTF_8));
       return response.writeWith(Mono.just(buffer));
     }
   }

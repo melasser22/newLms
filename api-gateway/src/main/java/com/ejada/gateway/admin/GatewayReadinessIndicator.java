@@ -36,7 +36,9 @@ public class GatewayReadinessIndicator implements ReactiveHealthIndicator {
   }
 
   private Health mapToHealth(DetailedHealthStatus detailed) {
-    boolean redisUp = detailed.redis() != null && detailed.redis().isUp();
+    boolean redisUp = detailed.redis() == null
+        || detailed.redis().isUp()
+        || detailed.redis().isUnknown();
     boolean downstreamHealthy = detailed.downstreamServices().stream()
         .filter(AdminServiceSnapshot::required)
         .allMatch(snapshot -> snapshot.state() != AdminServiceState.DOWN);
