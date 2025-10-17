@@ -83,7 +83,9 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     Map<String, Object> diagnostics = buildDiagnostics(exchange, status, errorCode, message, correlationId, tenantId);
 
     // Log the exception details for troubleshooting
-    if (status.is5xxServerError()) {
+    if (notFound) {
+      LOGGER.debug("Gateway route not found [path={}, correlationId={}]", exchange.getRequest().getPath(), correlationId);
+    } else if (status.is5xxServerError()) {
       LOGGER.error("Gateway error [correlationId={}, tenantId={}, path={}, status={}]: {}",
           correlationId, tenantId, exchange.getRequest().getPath().value(), status.value(), message, ex);
     } else {

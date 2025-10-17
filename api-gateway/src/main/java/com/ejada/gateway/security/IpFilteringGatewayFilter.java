@@ -76,18 +76,27 @@ public class IpFilteringGatewayFilter implements GlobalFilter, Ordered {
     String blacklistKey = cfg.blacklistKey(tenantId);
     String whitelistKey = cfg.whitelistKey(tenantId);
 
-    return redisTemplate.opsForSet().isMember(blacklistKey, clientIp)
-        .defaultIfEmpty(false)
-        .flatMap(isBlacklisted -> {
-          if (isBlacklisted) {
-            LOGGER.debug("Blocking request from {} for tenant {} due to blacklist", clientIp, tenantId);
-            metrics.incrementBlocked("ip_blacklist", tenantId);
-            return reject(exchange, "ERR_IP_BLOCKED", "IP address blocked", HttpStatus.FORBIDDEN);
-          }
-          return redisTemplate.opsForSet().members(whitelistKey)
-              .collectList()
-              .flatMap(members -> applyWhitelist(members, clientIp, tenantId, exchange, chain));
-        });
+    Mono<Boolean> blacklistCheck = redisTemplate.opsForSet().isMember(blacklistKey, clientIp);
+    if (blacklistCheck == null) {
+      blacklistCheck = Mono.just(false);
+    } else {
+      blacklistCheck = blacklistCheck.defaultIfEmpty(false);
+    }
+
+    var whitelistMembers = redisTemplate.opsForSet().members(whitelistKey);
+    if (whitelistMembers == null) {
+      whitelistMembers = reactor.core.publisher.Flux.empty();
+    }
+
+    return blacklistCheck.flatMap(isBlacklisted -> {
+      if (isBlacklisted) {
+        LOGGER.debug("Blocking request from {} for tenant {} due to blacklist", clientIp, tenantId);
+        metrics.incrementBlocked("ip_blacklist", tenantId);
+        return reject(exchange, "ERR_IP_BLOCKED", "IP address blocked", HttpStatus.FORBIDDEN);
+      }
+      return whitelistMembers.collectList()
+          .flatMap(members -> applyWhitelist(members, clientIp, tenantId, exchange, chain));
+    });
   }
 
   @Override

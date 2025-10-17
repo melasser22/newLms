@@ -72,6 +72,9 @@ public class TenantDashboardAggregationService {
   }
 
   private <T> Mono<SafeResult<T>> safeFetch(Mono<T> mono, String warning) {
+    if (mono == null) {
+      return Mono.just(SafeResult.warning(warning));
+    }
     return mono.map(SafeResult::success)
         .onErrorResume(ex -> {
           LOGGER.warn("Downstream call failed: {}", ex.getMessage());

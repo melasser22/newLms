@@ -216,7 +216,12 @@ public class RateLimitProps implements BaseStarterProperties {
         strategies.add(StrategyProperties.of("tenant_ip", List.of(Dimension.TENANT, Dimension.IP)));
         strategies.add(StrategyProperties.of("tenant_endpoint", List.of(Dimension.TENANT, Dimension.ENDPOINT)));
       } else {
-        strategies.replaceAll(strategy -> strategy == null ? StrategyProperties.of("tenant", List.of(Dimension.TENANT)) : strategy.normalised());
+        List<StrategyProperties> normalised = strategies.stream()
+            .map(strategy -> strategy == null
+                ? StrategyProperties.of("tenant", List.of(Dimension.TENANT))
+                : strategy.normalised())
+            .collect(Collectors.toCollection(ArrayList::new));
+        strategies = normalised;
       }
     }
   }

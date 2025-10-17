@@ -126,7 +126,17 @@ public class GatewayTokenIntrospectionService {
   }
 
   private TokenStatus mapPayload(BaseResponse<TokenIntrospectionPayload> response) {
-    TokenIntrospectionPayload payload = response != null ? response.getData() : null;
+    Object rawPayload = response != null ? response.getData() : null;
+    TokenIntrospectionPayload payload = null;
+    if (rawPayload instanceof TokenIntrospectionPayload typed) {
+      payload = typed;
+    } else if (rawPayload != null) {
+      try {
+        payload = objectMapper.convertValue(rawPayload, TokenIntrospectionPayload.class);
+      } catch (IllegalArgumentException ex) {
+        LOGGER.warn("Failed to convert introspection payload", ex);
+      }
+    }
     if (payload == null) {
       return TokenStatus.active(null, null);
     }

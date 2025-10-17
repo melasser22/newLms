@@ -174,9 +174,9 @@ public class CacheRefreshService {
   }
 
   private java.net.URI resolveLocalBaseUri(Integer overridePort) {
-    String scheme = (serverProperties.getSsl() != null && serverProperties.getSsl().isEnabled())
-        ? "https"
-        : "http";
+    ServerProperties.Ssl ssl = serverProperties.getSsl();
+    boolean sslEnabled = ssl != null && ssl.isEnabled();
+    String scheme = sslEnabled ? "https" : "http";
     InetAddress address = serverProperties.getAddress();
     String host = (address != null) ? address.getHostAddress() : "127.0.0.1";
     if (!StringUtils.hasText(host) || "0.0.0.0".equals(host) || "::".equals(host)) {

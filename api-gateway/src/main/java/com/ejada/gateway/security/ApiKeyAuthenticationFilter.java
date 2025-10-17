@@ -177,8 +177,17 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
           ServerWebExchange mutatedExchange = exchange.mutate()
               .request(mutatedRequest)
               .build();
+          exchange.getAttributes().put(GatewayRequestAttributes.TENANT_ID, record.getTenantId());
+          exchange.getAttributes().put(HeaderNames.X_TENANT_ID, record.getTenantId());
           mutatedExchange.getAttributes().put(GatewayRequestAttributes.TENANT_ID, record.getTenantId());
           mutatedExchange.getAttributes().put(HeaderNames.X_TENANT_ID, record.getTenantId());
+          if (!StringUtils.hasText(exchange.getRequest().getHeaders().getFirst(HeaderNames.X_TENANT_ID))) {
+            try {
+              exchange.getRequest().getHeaders().set(HeaderNames.X_TENANT_ID, record.getTenantId());
+            } catch (UnsupportedOperationException ignored) {
+              // Some request implementations expose read-only headers; downstream exchange already mutated.
+            }
+          }
 
           Mono<Void> audit = auditUsage(decoded, redisKey, record, exchange)
               .onErrorResume(ex -> {
