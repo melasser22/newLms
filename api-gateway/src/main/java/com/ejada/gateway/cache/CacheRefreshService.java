@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
+import org.springframework.boot.web.server.Ssl;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.context.annotation.Lazy;
@@ -174,7 +175,7 @@ public class CacheRefreshService {
   }
 
   private java.net.URI resolveLocalBaseUri(Integer overridePort) {
-    ServerProperties.Ssl ssl = serverProperties.getSsl();
+    Ssl ssl = serverProperties.getSsl();
     boolean sslEnabled = ssl != null && ssl.isEnabled();
     String scheme = sslEnabled ? "https" : "http";
     InetAddress address = serverProperties.getAddress();
