@@ -255,7 +255,10 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
     String rateKey = cfg.redisKey(apiKey);
     return redisTemplate.opsForValue().increment(rateKey)
         .flatMap(count -> {
-          if (count != null && count == 1L) {
+          if (count == null) {
+            return Mono.empty();
+          }
+          if (count == 1L) {
             return redisTemplate.expire(rateKey, Duration.ofMinutes(1)).thenReturn(count);
           }
           return Mono.just(count);

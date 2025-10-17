@@ -60,8 +60,8 @@ public final class RateLimitPropsAdapter {
           if (strategy == null) {
             continue;
           }
-          Boolean enabled = invokeBoolean(strategy, "isEnabled");
-          if (Boolean.FALSE.equals(enabled)) {
+          boolean enabled = invokeBoolean(strategy, "isEnabled");
+          if (!enabled) {
             continue;
           }
           String name = invokeString(strategy, "getName");
@@ -152,16 +152,19 @@ public final class RateLimitPropsAdapter {
     return invokeInteger(target, method);
   }
 
-  private static Boolean invokeBoolean(@Nullable Object target, String methodName) {
+  private static boolean invokeBoolean(@Nullable Object target, String methodName) {
     Method method = findMethod(target != null ? target.getClass() : null, methodName);
     if (method == null) {
-      return null;
+      return true;
     }
     Object value = invoke(target, method);
     if (value instanceof Boolean bool) {
       return bool;
     }
-    return null;
+    if (value instanceof String str) {
+      return Boolean.parseBoolean(str);
+    }
+    return true;
   }
 
   @Nullable
