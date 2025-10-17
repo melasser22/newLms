@@ -533,6 +533,26 @@ gateway:
         circuit-breaker-name: setup-service
         fallback-uri: forward:/fallback/setup-service
         priority: NON_CRITICAL
+    setup-docs:
+      id: setup-service-docs
+      uri: lb://setup-service
+      paths:
+        - /api/setup/swagger-ui/**
+        - /api/setup/v3/api-docs/**
+      strip-prefix: 2
+      prefix-path: /core
+      resilience:
+        enabled: false
+    setup-docs-legacy:
+      id: setup-service-docs-legacy
+      uri: lb://setup-service
+      paths:
+        - /api/setup/core/swagger-ui/**
+        - /api/setup/core/v3/api-docs/**
+      strip-prefix: 3
+      prefix-path: /core
+      resilience:
+        enabled: false
     tenant:
       <<: *tenant-route-base
       id: tenant-service
