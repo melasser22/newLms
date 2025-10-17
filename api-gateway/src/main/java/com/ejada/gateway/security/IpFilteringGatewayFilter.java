@@ -78,13 +78,19 @@ public class IpFilteringGatewayFilter implements GlobalFilter, Ordered {
     String blacklistKey = cfg.blacklistKey(tenantId);
     String whitelistKey = cfg.whitelistKey(tenantId);
 
-    Mono<Boolean> rawBlacklistCheck = redisTemplate.opsForSet().isMember(blacklistKey, clientIp);
+    var setOperations = redisTemplate.opsForSet();
+    Mono<Boolean> rawBlacklistCheck = (setOperations != null)
+        ? setOperations.isMember(blacklistKey, clientIp)
+        : null;
+    Flux<String> blacklistMembers = (setOperations != null)
+        ? setOperations.members(blacklistKey)
+        : Flux.empty();
     Mono<Boolean> blacklistCheck = Optional.ofNullable(rawBlacklistCheck)
-        .orElseGet(() -> Mono.just(false))
+        .orElseGet(() -> blacklistMembers.any(clientIp::equals))
         .defaultIfEmpty(false);
 
     Flux<String> whitelistMembers = Optional
-        .ofNullable(redisTemplate.opsForSet().members(whitelistKey))
+        .ofNullable(setOperations != null ? setOperations.members(whitelistKey) : null)
         .orElseGet(Flux::empty);
 
     return blacklistCheck.flatMap(isBlacklisted -> {

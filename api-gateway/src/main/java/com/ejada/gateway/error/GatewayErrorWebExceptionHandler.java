@@ -63,6 +63,7 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     ObjectMapper jacksonObjectMapper = jacksonObjectMapperProvider.getIfAvailable();
     this.objectMapper = (jacksonObjectMapper != null) ? jacksonObjectMapper
         : objectMapperProvider.getIfAvailable(ObjectMapper::new);
+    this.objectMapper.findAndRegisterModules();
     LOGGER.info("GatewayErrorWebExceptionHandler initialized with ObjectMapper: {}",
         this.objectMapper.getClass().getName());
   }
@@ -120,28 +121,35 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     Map<String, Object> safeDiagnostics = diagnostics != null ? diagnostics : Map.of();
     try {
       BaseResponse<Map<String, Object>> fallback = BaseResponse.error(errorCode, message, safeDiagnostics);
-      byte[] bytes = new ObjectMapper().writeValueAsBytes(fallback);
+      byte[] bytes = new ObjectMapper().findAndRegisterModules().writeValueAsBytes(fallback);
       DataBuffer buffer = response.bufferFactory().wrap(bytes);
       return response.writeWith(Mono.just(buffer));
     } catch (Exception fallbackException) {
       LOGGER.error("Failed to write JSON fallback error response", fallbackException);
-      String correlation = correlationId != null ? correlationId : "unknown";
-      String json = String.format("{\"status\":%d,\"code\":\"%s\",\"message\":\"%s\",\"correlationId\":\"%s\"}",
-          status.value(), errorCode, message.replace("\"", "'"), correlation);
+      String correlation = StringUtils.hasText(correlationId) ? correlationId : "unknown";
+      String safeMessage = message.replace("\"", "'");
+      String diagnosticsJson = "{}";
+      try {
+        diagnosticsJson = new ObjectMapper().findAndRegisterModules().writeValueAsString(safeDiagnostics);
+      } catch (Exception inner) {
+        LOGGER.debug("Failed to serialize diagnostics for fallback response", inner);
+      }
+      String json = String.format("{\"status\":\"ERROR\",\"code\":\"%s\",\"message\":\"%s\",\"correlationId\":\"%s\",\"data\":%s}",
+          errorCode, safeMessage, correlation, diagnosticsJson);
       DataBuffer buffer = response.bufferFactory().wrap(json.getBytes());
       return response.writeWith(Mono.just(buffer));
     }
   }
 
   private HttpStatus determineStatus(Throwable ex) {
+    if (ex instanceof org.springframework.cloud.gateway.support.NotFoundException
+        || ex instanceof NotFoundException
+        || ex instanceof java.util.NoSuchElementException) {
+      return HttpStatus.NOT_FOUND;
+    }
     if (ex instanceof ResponseStatusException rse) {
       HttpStatus status = HttpStatus.resolve(rse.getStatusCode().value());
       return status != null ? status : HttpStatus.INTERNAL_SERVER_ERROR;
-    }
-    if (ex instanceof NotFoundException
-        || ex instanceof java.util.NoSuchElementException
-        || ex instanceof org.springframework.cloud.gateway.support.NotFoundException) {
-      return HttpStatus.NOT_FOUND;
     }
     if (ex instanceof DuplicateResourceException || ex instanceof IllegalStateException) {
       return HttpStatus.CONFLICT;
@@ -173,16 +181,13 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
   }
 
   private String determineErrorCode(Throwable ex, HttpStatus status) {
-    if (ex instanceof ResponseStatusException) {
-      if (status == HttpStatus.NOT_FOUND) {
-        return "ERR_RESOURCE_NOT_FOUND";
-      }
-      return status.is5xxServerError() ? "ERR_INTERNAL" : "ERR_STATUS";
-    }
-    if (ex instanceof NotFoundException
-        || ex instanceof java.util.NoSuchElementException
-        || ex instanceof org.springframework.cloud.gateway.support.NotFoundException) {
+    if (ex instanceof org.springframework.cloud.gateway.support.NotFoundException
+        || ex instanceof NotFoundException
+        || ex instanceof java.util.NoSuchElementException) {
       return "ERR_RESOURCE_NOT_FOUND";
+    }
+    if (ex instanceof ResponseStatusException) {
+      return status.is5xxServerError() ? "ERR_INTERNAL" : "ERR_STATUS";
     }
     if (ex instanceof DuplicateResourceException || ex instanceof DataIntegrityViolationException) {
       return "ERR_DATA_CONFLICT";
