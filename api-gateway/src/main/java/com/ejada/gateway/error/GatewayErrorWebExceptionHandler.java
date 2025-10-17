@@ -104,11 +104,10 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
       return response.writeWith(Mono.just(buffer));
     } catch (JsonProcessingException e) {
       LOGGER.error("Failed to serialize error response [correlationId={}]: {}", correlationId, e.getMessage(), e);
-      // Fallback to plain text error response
-      return writeFallbackErrorResponse(response, status, errorCode, message, correlationId);
+      return writeFallbackErrorResponse(response, status, errorCode, message, correlationId, diagnostics);
     } catch (Exception e) {
       LOGGER.error("Unexpected error in error handler [correlationId={}]: {}", correlationId, e.getMessage(), e);
-      return writeFallbackErrorResponse(response, status, errorCode, message, correlationId);
+      return writeFallbackErrorResponse(response, status, errorCode, message, correlationId, diagnostics);
     }
   }
 
@@ -116,17 +115,21 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
    * Writes a plain text fallback error response when JSON serialization fails.
    */
   private Mono<Void> writeFallbackErrorResponse(ServerHttpResponse response, HttpStatus status,
-      String errorCode, String message, String correlationId) {
+      String errorCode, String message, String correlationId, Map<String, Object> diagnostics) {
+    response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+    Map<String, Object> safeDiagnostics = diagnostics != null ? diagnostics : Map.of();
     try {
-      response.getHeaders().setContentType(MediaType.TEXT_PLAIN);
-      String plainTextError = String.format(
-          "Error Code: %s%nStatus: %d%nMessage: %s%nCorrelation ID: %s",
-          errorCode, status.value(), message, correlationId != null ? correlationId : "unknown");
-      DataBuffer buffer = response.bufferFactory().wrap(plainTextError.getBytes());
+      BaseResponse<Map<String, Object>> fallback = BaseResponse.error(errorCode, message, safeDiagnostics);
+      byte[] bytes = new ObjectMapper().writeValueAsBytes(fallback);
+      DataBuffer buffer = response.bufferFactory().wrap(bytes);
       return response.writeWith(Mono.just(buffer));
     } catch (Exception fallbackException) {
-      LOGGER.error("Failed to write fallback error response", fallbackException);
-      return response.setComplete();
+      LOGGER.error("Failed to write JSON fallback error response", fallbackException);
+      String correlation = correlationId != null ? correlationId : "unknown";
+      String json = String.format("{\"status\":%d,\"code\":\"%s\",\"message\":\"%s\",\"correlationId\":\"%s\"}",
+          status.value(), errorCode, message.replace("\"", "'"), correlation);
+      DataBuffer buffer = response.bufferFactory().wrap(json.getBytes());
+      return response.writeWith(Mono.just(buffer));
     }
   }
 
