@@ -32,6 +32,7 @@ public class TenantAffinitySelector implements InstanceSelector {
     String tenantId = LoadBalancerRequestAdapter.resolveTenantId(request, tenantContext);
     boolean websocket = LoadBalancerRequestAdapter.isWebSocket(requestData);
     String stickinessKey = websocket ? LoadBalancerRequestAdapter.resolveStickinessKey(requestData, tenantId) : null;
+    String affinityKey = StringUtils.hasText(tenantId) ? tenantId : stickinessKey;
 
     if (stickinessKey != null && stickTable != null) {
       Optional<ServiceInstance> sticky = stickTable.lookup(stickinessKey, serviceId,
@@ -41,11 +42,11 @@ public class TenantAffinitySelector implements InstanceSelector {
       }
     }
 
-    if (!StringUtils.hasText(tenantId)) {
+    if (!StringUtils.hasText(affinityKey)) {
       return Optional.empty();
     }
 
-    ServiceInstance chosen = selectByRendezvous(tenantId, candidates);
+    ServiceInstance chosen = selectByRendezvous(affinityKey, candidates);
     if (chosen != null && stickinessKey != null && stickTable != null) {
       stickTable.record(stickinessKey, chosen);
     }

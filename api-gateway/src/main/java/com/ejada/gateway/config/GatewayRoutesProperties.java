@@ -111,7 +111,7 @@ public class GatewayRoutesProperties {
     private List<String> methods = new ArrayList<>();
 
     /** Maximum request payload size accepted by this route. */
-    private DataSize maxRequestSize;
+    private DataSize maxRequestSize = DataSize.ofMegabytes(10);
 
     /** Number of path segments to strip before forwarding. */
     private int stripPrefix = 1;

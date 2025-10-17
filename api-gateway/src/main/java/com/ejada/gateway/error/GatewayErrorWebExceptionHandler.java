@@ -75,19 +75,18 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
       return Mono.error(ex);
     }
 
-    if (isNotFoundError(ex)) {
-      return Mono.error(ex);
-    }
-
-    HttpStatus status = determineStatus(ex);
-    String errorCode = determineErrorCode(ex, status);
+    boolean notFound = isNotFoundError(ex);
+    HttpStatus status = notFound ? HttpStatus.NOT_FOUND : determineStatus(ex);
+    String errorCode = notFound ? "ERR_RESOURCE_NOT_FOUND" : determineErrorCode(ex, status);
     String correlationId = resolveCorrelationId(exchange);
     String tenantId = resolveTenantId(exchange);
     String message = enhanceMessage(determineMessage(ex, status), status, correlationId);
     Map<String, Object> diagnostics = buildDiagnostics(exchange, status, errorCode, message, correlationId, tenantId);
 
     // Log the exception details for troubleshooting
-    if (status.is5xxServerError()) {
+    if (notFound) {
+      LOGGER.debug("Gateway route not found [path={}, correlationId={}]", exchange.getRequest().getPath(), correlationId);
+    } else if (status.is5xxServerError()) {
       LOGGER.error("Gateway error [correlationId={}, tenantId={}, path={}, status={}]: {}",
           correlationId, tenantId, exchange.getRequest().getPath().value(), status.value(), message, ex);
     } else {
