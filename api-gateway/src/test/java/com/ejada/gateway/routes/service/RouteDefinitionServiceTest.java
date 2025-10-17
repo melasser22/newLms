@@ -2,6 +2,7 @@ package com.ejada.gateway.routes.service;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,7 +47,7 @@ class RouteDefinitionServiceTest {
   @BeforeEach
   void setUp() {
     service = new RouteDefinitionService(repository, validator, eventPublisher, variantService);
-    when(validator.validate(any(RouteDefinition.class)))
+    lenient().when(validator.validate(any(RouteDefinition.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
   }
 

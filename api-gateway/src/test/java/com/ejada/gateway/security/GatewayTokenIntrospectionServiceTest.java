@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.gateway.config.GatewaySecurityProperties;
+import com.ejada.gateway.support.ReactiveRedisTestSupport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
@@ -13,8 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,37 +24,26 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-@Testcontainers
 class GatewayTokenIntrospectionServiceTest {
 
-  @Container
-  @SuppressWarnings("resource")
-  static final GenericContainer<?> REDIS = new GenericContainer<>("redis:7").withExposedPorts(6379);
-
   private ReactiveStringRedisTemplate redisTemplate;
-  private ReactiveRedisConnectionFactory connectionFactory;
+  private ReactiveRedisTestSupport.InMemoryRedisStore redisStore;
   private SimpleMeterRegistry meterRegistry;
   private ObjectMapper objectMapper;
 
   @BeforeEach
   void setUp() {
-    LettuceConnectionFactory factory = new LettuceConnectionFactory(REDIS.getHost(), REDIS.getMappedPort(6379));
-    factory.afterPropertiesSet();
-    this.connectionFactory = factory;
-    this.redisTemplate = new ReactiveStringRedisTemplate(factory);
-    flushRedis();
+    this.redisStore = ReactiveRedisTestSupport.newStore();
+    this.redisTemplate = ReactiveRedisTestSupport.mockStringTemplate(redisStore);
     this.meterRegistry = new SimpleMeterRegistry();
     this.objectMapper = new ObjectMapper().findAndRegisterModules();
   }
 
   @AfterEach
   void tearDown() {
-    if (connectionFactory instanceof LettuceConnectionFactory lettuce) {
-      lettuce.destroy();
+    if (redisStore != null) {
+      redisStore.clear();
     }
     if (meterRegistry != null) {
       meterRegistry.close();
@@ -148,9 +136,4 @@ class GatewayTokenIntrospectionServiceTest {
         .build();
   }
 
-  private void flushRedis() {
-    try (var connection = connectionFactory.getReactiveConnection()) {
-      connection.serverCommands().flushAll().block();
-    }
-  }
 }

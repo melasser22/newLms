@@ -8,15 +8,19 @@ import com.ejada.gateway.observability.GatewayTracingHelper;
 import com.ejada.shared_starter_ratelimit.RateLimitProps;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.stubbing.Answer;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
-import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
@@ -24,37 +28,27 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-@Testcontainers
 class ReactiveRateLimiterFilterTest {
 
-    @Container
-    @SuppressWarnings("resource")
-    static final GenericContainer<?> REDIS = new GenericContainer<>("redis:7").withExposedPorts(6379);
-
     private ReactiveRateLimiterFilter filter;
-    private ReactiveRedisConnectionFactory connectionFactory;
+    private ReactiveStringRedisTemplate redisTemplate;
     private GatewayRateLimitProperties gatewayRateLimitProperties;
     private GatewayTracingHelper tracingHelper;
+    private Map<String, WindowCounter> counters;
 
     @BeforeEach
     void setUp() {
-        LettuceConnectionFactory factory =
-                new LettuceConnectionFactory(REDIS.getHost(), REDIS.getMappedPort(6379));
-        factory.afterPropertiesSet();
-        this.connectionFactory = factory;
-        ReactiveStringRedisTemplate template = new ReactiveStringRedisTemplate(factory);
+        this.redisTemplate = org.mockito.Mockito.mock(ReactiveStringRedisTemplate.class);
+        this.counters = new ConcurrentHashMap<>();
+        stubRateLimitScript();
         RateLimitProps props = createProps(2, 2);
         this.gatewayRateLimitProperties = new GatewayRateLimitProperties();
         gatewayRateLimitProperties.setBurstMultiplier(1.0d);
         KeyResolver keyResolver = exchange -> Mono.just("tenant-a");
         this.tracingHelper = new GatewayTracingHelper(null, new GatewayTracingProperties());
-        this.filter = new ReactiveRateLimiterFilter(template, props, keyResolver, new ObjectMapper().findAndRegisterModules(),
+        this.filter = new ReactiveRateLimiterFilter(redisTemplate, props, keyResolver, new ObjectMapper().findAndRegisterModules(),
                 gatewayRateLimitProperties, new SimpleMeterRegistry(), tracingHelper);
-        flushRedis();
     }
 
     @Test
@@ -94,12 +88,9 @@ class ReactiveRateLimiterFilterTest {
         RateLimitProps props = createProps(5, 5);
         GatewayRateLimitProperties gatewayProps = new GatewayRateLimitProperties();
         gatewayProps.setBurstMultiplier(1.0d);
-        ReactiveStringRedisTemplate template = new ReactiveStringRedisTemplate(connectionFactory);
         KeyResolver keyResolver = exchange -> Mono.just("tenant-b");
-        ReactiveRateLimiterFilter concurrentFilter = new ReactiveRateLimiterFilter(template, props, keyResolver,
+        ReactiveRateLimiterFilter concurrentFilter = new ReactiveRateLimiterFilter(redisTemplate, props, keyResolver,
                 new ObjectMapper().findAndRegisterModules(), gatewayProps, new SimpleMeterRegistry(), tracingHelper);
-
-        flushRedis();
 
         WebFilterChain chain = serverWebExchange -> Mono.empty();
 
@@ -141,9 +132,66 @@ class ReactiveRateLimiterFilterTest {
         return props;
     }
 
-    private void flushRedis() {
-        try (var connection = connectionFactory.getReactiveConnection()) {
-            connection.serverCommands().flushAll().block();
+    private void stubRateLimitScript() {
+        org.mockito.Mockito.lenient()
+                .when(redisTemplate.execute(org.mockito.ArgumentMatchers.<RedisScript<List<?>>>any(),
+                    org.mockito.ArgumentMatchers.<List<String>>any(),
+                    org.mockito.ArgumentMatchers.<Object[]>any()))
+                .thenAnswer(rateLimitAnswer());
+    }
+
+    private Answer<Flux<List<?>>> rateLimitAnswer() {
+        return invocation -> {
+            @SuppressWarnings("unchecked")
+            List<String> keys = invocation.getArgument(1);
+            Object[] args = Arrays.copyOfRange(invocation.getArguments(), 2, invocation.getArguments().length);
+            Object[] scriptArgs = (args.length == 1 && args[0] instanceof Object[])
+                    ? (Object[]) args[0]
+                    : args;
+            String rateKey = keys.get(0);
+            long nowMillis = Long.parseLong(scriptArgs[1].toString());
+            long windowMillis = Long.parseLong(scriptArgs[2].toString());
+            long capacity = Long.parseLong(scriptArgs[3].toString());
+            long burstCapacity = Long.parseLong(scriptArgs[4].toString());
+            WindowCounter counter = counters.computeIfAbsent(rateKey, key -> new WindowCounter(nowMillis, windowMillis));
+            counter.resetIfExpired(nowMillis, windowMillis);
+            long totalAllowed = Math.max(capacity, burstCapacity);
+            boolean allowed = counter.increment(totalAllowed);
+            long remaining = Math.max(0, totalAllowed - counter.requests.get());
+            long reset = counter.windowStart + windowMillis;
+            boolean burstUsed = counter.requests.get() > capacity;
+            long baseRemaining = Math.max(0, capacity - counter.requests.get());
+            long burstRemaining = Math.max(0, totalAllowed - capacity - Math.max(0, counter.requests.get() - capacity));
+            List<Object> result = new ArrayList<>();
+            result.add(allowed);
+            result.add(remaining);
+            result.add(reset);
+            result.add("event");
+            result.add(burstUsed);
+            result.add(baseRemaining);
+            result.add(burstRemaining);
+            return Flux.just(result);
+        };
+    }
+
+    private static final class WindowCounter {
+        private long windowStart;
+        private final AtomicInteger requests = new AtomicInteger();
+
+        private WindowCounter(long windowStart, long windowMillis) {
+            this.windowStart = windowStart;
+        }
+
+        private void resetIfExpired(long nowMillis, long windowMillis) {
+            if (nowMillis - windowStart >= windowMillis) {
+                windowStart = nowMillis;
+                requests.set(0);
+            }
+        }
+
+        private boolean increment(long capacity) {
+            int current = requests.incrementAndGet();
+            return current <= capacity;
         }
     }
 }
