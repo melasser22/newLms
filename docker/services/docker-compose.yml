@@ -263,11 +263,11 @@ services:
     ports:
       - "8000:8000"
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8000/actuator/health || exit 1"]
-      interval: 10s
+      test: ["CMD", "curl", "-f", "http://localhost:8000/actuator/health"]
+      interval: 20s
       timeout: 5s
-      retries: 10
-      start_period: 15s
+      retries: 5
+      start_period: 30s
     networks:
       backend:
         aliases:
