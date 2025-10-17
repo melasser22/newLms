@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.ejada.gateway.admin.model.DetailedHealthStatus;
 import com.ejada.gateway.config.AdminAggregationProperties;
 import com.ejada.gateway.config.GatewayRoutesProperties;
 import java.net.URI;
@@ -116,6 +117,24 @@ class AdminAggregationServiceTest {
           assertThat(health.getStatus().getCode()).isEqualTo("DOWN");
           assertThat(health.getDetails()).containsValue(failure);
         })
+        .verifyComplete();
+
+    Mockito.verify(aggregationService).fetchDetailedHealth();
+  }
+
+  @Test
+  void readinessIndicatorTreatsUnknownRedisStatusAsHealthy() {
+    AdminAggregationService aggregationService = mock(AdminAggregationService.class);
+    DetailedHealthStatus healthy = new DetailedHealthStatus(
+        DetailedHealthStatus.RedisHealthStatus.unavailable(),
+        List.of(),
+        List.of());
+    when(aggregationService.fetchDetailedHealth()).thenReturn(Mono.just(healthy));
+
+    GatewayReadinessIndicator readinessIndicator = new GatewayReadinessIndicator(aggregationService);
+
+    StepVerifier.create(readinessIndicator.health())
+        .assertNext(health -> assertThat(health.getStatus().getCode()).isEqualTo("UP"))
         .verifyComplete();
 
     Mockito.verify(aggregationService).fetchDetailedHealth();
