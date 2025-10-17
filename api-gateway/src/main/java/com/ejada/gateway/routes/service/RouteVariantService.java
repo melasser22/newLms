@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -50,6 +51,7 @@ public class RouteVariantService {
   private final ConcurrentMap<String, RollingWindow> canaryWindows = new ConcurrentHashMap<>();
   private final Set<UUID> rollbackInFlight = ConcurrentHashMap.newKeySet();
 
+  @Autowired
   public RouteVariantService(RouteDefinitionRepository repository) {
     this(repository, Clock.systemUTC());
   }
