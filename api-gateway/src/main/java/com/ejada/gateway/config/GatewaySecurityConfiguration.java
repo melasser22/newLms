@@ -19,11 +19,17 @@ import com.ejada.gateway.security.mtls.MutualTlsAuthenticationFilter;
 import com.ejada.gateway.security.mtls.PartnerCertificateService;
 import com.ejada.gateway.subscription.SubscriptionCacheService;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
+import com.ejada.starter_security.Role;
 import com.ejada.starter_security.SharedSecurityProps;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -37,6 +43,9 @@ import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
@@ -88,6 +97,14 @@ public class GatewaySecurityConfiguration {
   }
 
   @Bean
+  @ConditionalOnMissingBean(JwtAuthenticationConverter.class)
+  public JwtAuthenticationConverter jwtAuthenticationConverter(SharedSecurityProps props) {
+    JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+    converter.setJwtGrantedAuthoritiesConverter(jwt -> extractAuthorities(jwt, props));
+    return converter;
+  }
+
+  @Bean
   public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http,
       SharedSecurityProps props,
       CorsConfigurationSource corsConfigurationSource,
@@ -119,6 +136,60 @@ public class GatewaySecurityConfiguration {
         .jwtAuthenticationConverter(new ReactiveJwtAuthenticationConverterAdapter(jwtAuthenticationConverter))));
 
     return http.build();
+  }
+
+  private static Collection<? extends GrantedAuthority> extractAuthorities(Jwt jwt,
+      SharedSecurityProps props) {
+    List<GrantedAuthority> authorities = new ArrayList<>();
+    Set<String> validRoles = EnumSet.allOf(Role.class).stream().map(Enum::name)
+        .collect(Collectors.toSet());
+
+    Object rolesObj = claimPath(jwt.getClaims(), props.getRolesClaim());
+    if (rolesObj instanceof Collection<?> coll) {
+      for (Object value : coll) {
+        String role = String.valueOf(value).trim();
+        if (!role.isEmpty() && validRoles.contains(role)) {
+          authorities.add(new SimpleGrantedAuthority(props.getRolePrefix() + role));
+        }
+      }
+    } else if (rolesObj instanceof String str && StringUtils.hasText(str)) {
+      for (String value : str.split("[,\\s]+")) {
+        String role = value.trim();
+        if (!role.isEmpty() && validRoles.contains(role)) {
+          authorities.add(new SimpleGrantedAuthority(props.getRolePrefix() + role));
+        }
+      }
+    }
+
+    String scope = jwt.getClaimAsString(props.getScopeClaim());
+    if (StringUtils.hasText(scope)) {
+      for (String token : scope.split("\\s+")) {
+        String trimmed = token.trim();
+        if (!trimmed.isEmpty()) {
+          authorities.add(new SimpleGrantedAuthority(props.getAuthorityPrefix() + trimmed));
+        }
+      }
+    }
+
+    return authorities;
+  }
+
+  private static Object claimPath(Map<String, Object> claims, String path) {
+    if (!StringUtils.hasText(path)) {
+      return null;
+    }
+
+    Object current = claims;
+    for (String segment : path.split("\\.")) {
+      if (!(current instanceof Map<?, ?> map)) {
+        return null;
+      }
+      current = map.get(segment);
+      if (current == null) {
+        return null;
+      }
+    }
+    return current;
   }
 
   @Bean
