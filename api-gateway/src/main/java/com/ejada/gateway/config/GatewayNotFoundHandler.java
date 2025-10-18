@@ -7,17 +7,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.boot.autoconfigure.web.WebProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.AbstractErrorWebExceptionHandler;
+import org.springframework.boot.web.reactive.error.DefaultErrorAttributes;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
 import org.springframework.cloud.gateway.support.NotFoundException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.HttpMessageReader;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -28,6 +31,7 @@ import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 /**
@@ -39,8 +43,10 @@ import reactor.core.publisher.Mono;
 public class GatewayNotFoundHandler extends AbstractErrorWebExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GatewayNotFoundHandler.class);
+    private static final String ERROR_ATTRIBUTE = DefaultErrorAttributes.class.getName() + ".ERROR";
 
     private final ObjectMapper objectMapper;
+    private final java.util.List<HttpMessageReader<?>> messageReaders;
 
     public GatewayNotFoundHandler(
             ErrorAttributes errorAttributes,
@@ -50,7 +56,8 @@ public class GatewayNotFoundHandler extends AbstractErrorWebExceptionHandler {
             @Qualifier("jacksonObjectMapper") ObjectProvider<ObjectMapper> jacksonObjectMapperProvider,
             ObjectProvider<ObjectMapper> fallbackObjectMapperProvider) {
         super(errorAttributes, webProperties.getResources(), applicationContext);
-        super.setMessageReaders(serverCodecConfigurer.getReaders());
+        this.messageReaders = java.util.List.copyOf(serverCodecConfigurer.getReaders());
+        super.setMessageReaders(this.messageReaders);
         super.setMessageWriters(serverCodecConfigurer.getWriters());
 
         ObjectMapper jacksonObjectMapper = jacksonObjectMapperProvider.getIfAvailable();
@@ -61,8 +68,58 @@ public class GatewayNotFoundHandler extends AbstractErrorWebExceptionHandler {
     }
 
     @Override
+    public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("GatewayNotFoundHandler.handle invoked for {} (notFound={})",
+                    ex.getClass().getName(), isNotFoundError(ex));
+        }
+        if (!isNotFoundError(ex)) {
+            return super.handle(exchange, ex);
+        }
+        ServerRequest request = ServerRequest.create(exchange, this.messageReaders);
+        return renderNotFoundResponse(exchange, request, ex);
+    }
+
+    @Override
     protected RouterFunction<ServerResponse> getRoutingFunction(ErrorAttributes errorAttributes) {
         return RouterFunctions.route(RequestPredicates.all(), this::renderErrorResponse);
+    }
+
+    private Mono<Void> renderNotFoundResponse(ServerWebExchange exchange, ServerRequest request,
+            Throwable error) {
+        String correlationId = resolveCorrelationId(request);
+        String tenantId = resolveTenantId(request);
+        String path = request.path();
+        String method = request.method().name();
+        String message = resolveMessage(error, method, path);
+
+        LOGGER.warn("No route found [correlationId={}, tenantId={}, method={}, path={}]",
+                correlationId, tenantId, method, path);
+
+        Map<String, Object> errorResponse = new LinkedHashMap<>();
+        errorResponse.put("timestamp", Instant.now().toString());
+        errorResponse.put("status", HttpStatus.NOT_FOUND.value());
+        errorResponse.put("error", "Not Found");
+        errorResponse.put("message", message);
+        errorResponse.put("path", path);
+        errorResponse.put("method", method);
+        errorResponse.put("correlationId", correlationId);
+        errorResponse.put("tenantId", tenantId);
+
+        byte[] payload;
+        try {
+            payload = objectMapper.writeValueAsBytes(errorResponse);
+        } catch (Exception serializationError) {
+            LOGGER.error("Failed to serialize NOT_FOUND response [correlationId={}]: {}",
+                    correlationId, serializationError.getMessage(), serializationError);
+            payload = "{\"status\":404,\"error\":\"Not Found\"}".getBytes(StandardCharsets.UTF_8);
+        }
+
+        var response = exchange.getResponse();
+        response.setStatusCode(HttpStatus.NOT_FOUND);
+        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        exchange.getAttributes().remove(ERROR_ATTRIBUTE);
+        return response.writeWith(Mono.just(response.bufferFactory().wrap(payload)));
     }
 
     private Mono<ServerResponse> renderErrorResponse(ServerRequest request) {
@@ -83,7 +140,7 @@ public class GatewayNotFoundHandler extends AbstractErrorWebExceptionHandler {
                 correlationId, tenantId, method, path);
 
         Map<String, Object> errorResponse = new LinkedHashMap<>();
-        errorResponse.put("timestamp", Instant.now());
+        errorResponse.put("timestamp", Instant.now().toString());
         errorResponse.put("status", HttpStatus.NOT_FOUND.value());
         errorResponse.put("error", "Not Found");
         errorResponse.put("message", message);
@@ -101,10 +158,13 @@ public class GatewayNotFoundHandler extends AbstractErrorWebExceptionHandler {
     }
 
     private boolean isNotFoundError(Throwable error) {
+        if (error instanceof NotFoundException) {
+            return true;
+        }
         if (error instanceof ResponseStatusException rse) {
             return rse.getStatusCode().value() == HttpStatus.NOT_FOUND.value();
         }
-        return error instanceof NotFoundException;
+        return false;
     }
 
     private String resolveMessage(Throwable error, String method, String path) {

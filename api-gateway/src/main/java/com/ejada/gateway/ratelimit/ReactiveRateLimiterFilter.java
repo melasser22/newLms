@@ -22,6 +22,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
@@ -43,6 +46,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -162,6 +166,7 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
   private final Counter bypassCounter;
   private final Counter burstCounter;
   private final GatewayTracingHelper tracingHelper;
+  private final ConcurrentMap<String, LocalWindowCounter> localCounters = new ConcurrentHashMap<>();
 
   @Autowired
   public ReactiveRateLimiterFilter(ReactiveStringRedisTemplate redisTemplate,
@@ -223,7 +228,8 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
     }
 
     LimitDefinition limit = resolveLimit(exchange);
-    return executeRateLimit(key, limit)
+    String algorithm = resolveAlgorithm();
+    return executeRateLimit(key, limit, algorithm)
         .flatMap(decision -> {
           applyHeaders(exchange, limit, decision);
           recordRateLimitDecision(exchange, limit, decision);
@@ -237,25 +243,38 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
         });
   }
 
-  private Mono<RateLimitDecision> executeRateLimit(String key, LimitDefinition limit) {
+  private Mono<RateLimitDecision> executeRateLimit(String key, LimitDefinition limit, String algorithm) {
     Duration window = limit.window();
-    String algorithm = resolveAlgorithm();
     Instant now = Instant.now();
     List<String> keys = List.of(rateKey(key, algorithm), burstKey(key));
     String eventId = UUID.randomUUID().toString();
-    List<String> args = List.of(
+    Object[] args = List.of(
         algorithm,
         String.valueOf(now.toEpochMilli()),
         String.valueOf(window.toMillis()),
         String.valueOf(limit.capacity()),
         String.valueOf(limit.burstCapacity()),
         String.valueOf(window.toMillis()),
-        eventId);
+        eventId).toArray();
 
-    return redisTemplate.execute(RATE_LIMIT_SCRIPT, keys, args.toArray())
-        .next()
-        .map(result -> decodeResult(result, limit, window, now))
-        .defaultIfEmpty(defaultDecision(limit, window, now));
+    Flux<List<String>> flux;
+    try {
+      flux = redisTemplate.execute(RATE_LIMIT_SCRIPT, keys, args);
+    } catch (Exception ex) {
+      LOGGER.warn("Redis rate limit execution failed, using local fallback", ex);
+      return Mono.fromCallable(() -> localDecision(key, algorithm, limit, now));
+    }
+
+    return Mono.justOrEmpty(flux)
+        .flatMap(results -> results
+            .next()
+            .map(result -> decodeResult(result, limit, window, now))
+            .defaultIfEmpty(defaultDecision(limit, window, now)))
+        .switchIfEmpty(Mono.fromCallable(() -> localDecision(key, algorithm, limit, now)))
+        .onErrorResume(ex -> {
+          LOGGER.warn("Redis rate limit execution failed, using local fallback", ex);
+          return Mono.fromCallable(() -> localDecision(key, algorithm, limit, now));
+        });
   }
 
   private RateLimitDecision decodeResult(List<?> raw, LimitDefinition limit, Duration window, Instant now) {
@@ -519,5 +538,60 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
 
   private record RateLimitDecision(boolean allowed, long remaining, long resetEpochMillis,
       Duration window, boolean burstConsumed, long baseRemaining, long burstRemaining) {
+  }
+
+  private RateLimitDecision localDecision(String key, String algorithm, LimitDefinition limit,
+      Instant now) {
+    long windowMillis = Math.max(1L, limit.window().toMillis());
+    long nowMillis = now.toEpochMilli();
+    String counterKey = rateKey(key, algorithm);
+    LocalWindowCounter counter = localCounters.computeIfAbsent(counterKey,
+        k -> new LocalWindowCounter(nowMillis));
+    counter.resetIfExpired(nowMillis, windowMillis);
+    long totalCapacity = Math.max(limit.capacity(), limit.burstCapacity());
+    CounterSnapshot snapshot = counter.increment(totalCapacity);
+    long used = snapshot.count();
+    long baseRemaining = Math.max(0L, limit.capacity() - used);
+    long extraCapacity = Math.max(0L, totalCapacity - limit.capacity());
+    long burstRemaining = Math.max(0L, extraCapacity - Math.max(0L, used - limit.capacity()));
+    long totalRemaining = Math.max(0L, totalCapacity - used);
+    long resetMillis = counter.windowStart() + windowMillis;
+    boolean burstConsumed = used > limit.capacity();
+    return new RateLimitDecision(snapshot.allowed(), totalRemaining, resetMillis, limit.window(),
+        burstConsumed, baseRemaining, burstRemaining);
+  }
+
+  private static final class LocalWindowCounter {
+
+    private final AtomicInteger requests = new AtomicInteger();
+    private volatile long windowStart;
+
+    private LocalWindowCounter(long windowStart) {
+      this.windowStart = windowStart;
+    }
+
+    private void resetIfExpired(long nowMillis, long windowMillis) {
+      if (nowMillis - windowStart >= windowMillis) {
+        synchronized (this) {
+          if (nowMillis - windowStart >= windowMillis) {
+            windowStart = nowMillis;
+            requests.set(0);
+          }
+        }
+      }
+    }
+
+    private CounterSnapshot increment(long capacity) {
+      int current = requests.incrementAndGet();
+      boolean allowed = current <= capacity;
+      return new CounterSnapshot(allowed, current);
+    }
+
+    private long windowStart() {
+      return windowStart;
+    }
+  }
+
+  private record CounterSnapshot(boolean allowed, long count) {
   }
 }
