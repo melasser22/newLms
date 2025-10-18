@@ -105,6 +105,30 @@ class AdminAggregationServiceTest {
   }
 
   @Test
+  void collectDownstreamSnapshotsUsesIndexWhenServiceIdBlank() {
+    AdminAggregationProperties properties = new AdminAggregationProperties();
+    AdminAggregationProperties.Service invalidService = new AdminAggregationProperties.Service();
+    invalidService.setId("  ");
+    invalidService.setUri(URI.create("http://localhost:9000"));
+    properties.getAggregation().setServices(List.of(invalidService));
+
+    WebClient.Builder builder = WebClient.builder();
+    AdminAggregationService aggregationService = new AdminAggregationService(
+        builder,
+        properties,
+        new GatewayRoutesProperties(),
+        provider(null),
+        provider(null),
+        provider(null));
+
+    StepVerifier.create(aggregationService.collectDownstreamSnapshots())
+        .expectErrorSatisfies(ex -> assertThat(ex)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("gateway.admin.aggregation.services[0].id"))
+        .verify();
+  }
+
+  @Test
   void readinessIndicatorReportsDownWhenAggregationFails() {
     AdminAggregationService aggregationService = mock(AdminAggregationService.class);
     RuntimeException failure = new RuntimeException("aggregation misconfigured");
