@@ -91,9 +91,7 @@ public class IpFilteringGatewayFilter implements GlobalFilter, Ordered {
         .defaultIfEmpty(false);
 
     Flux<String> whitelistMembers = setOperations.members(whitelistKey);
-    if (whitelistMembers == null) {
-      whitelistMembers = Flux.empty();
-    }
+    Flux<String> whitelistFlux = whitelistMembers != null ? whitelistMembers : Flux.empty();
 
     return blacklistCheck.flatMap(isBlacklisted -> {
       if (isBlacklisted) {
@@ -101,7 +99,7 @@ public class IpFilteringGatewayFilter implements GlobalFilter, Ordered {
         metrics.incrementBlocked("ip_blacklist", tenantId);
         return reject(exchange, "ERR_IP_BLOCKED", "IP address blocked", HttpStatus.FORBIDDEN);
       }
-      return whitelistMembers.collectList()
+      return whitelistFlux.collectList()
           .flatMap(members -> applyWhitelist(members, clientIp, tenantId, exchange, chain));
     });
   }
