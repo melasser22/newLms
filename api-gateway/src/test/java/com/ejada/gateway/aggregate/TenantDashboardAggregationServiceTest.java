@@ -71,6 +71,28 @@ class TenantDashboardAggregationServiceTest {
   }
 
   @Test
+  void aggregateAddsWarningsWhenOptionalServicesReturnEmpty() throws Exception {
+    when(downstreamAggregationClient.fetchTenantProfile(1)).thenReturn(Mono.just(json("""
+        {"id":1,"code":"ACME","name":"Acme"}
+        """)));
+    when(downstreamAggregationClient.fetchTenantSubscriptions(1))
+        .thenReturn(Mono.<JsonNode>empty());
+    when(downstreamAggregationClient.fetchBillingSummary(1))
+        .thenReturn(Mono.<JsonNode>empty());
+
+    StepVerifier.create(service.aggregate(1))
+        .assertNext(result -> {
+          assert result.tenant().get("id").asInt() == 1;
+          assert result.subscriptions() == null;
+          assert result.billing() == null;
+          assert result.warnings().size() == 2;
+          assert result.warnings().contains("Subscription catalogue unavailable");
+          assert result.warnings().contains("Billing summary unavailable");
+        })
+        .verifyComplete();
+  }
+
+  @Test
   void aggregatePropagatesTenantFailure() {
     when(downstreamAggregationClient.fetchTenantProfile(1))
         .thenReturn(Mono.error(new IllegalStateException("tenant down")));
