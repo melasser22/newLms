@@ -6,6 +6,7 @@ import com.ejada.gateway.config.TenantMigrationProperties;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import java.util.List;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -14,6 +15,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClients;
 import org.springframework.cloud.loadbalancer.core.ReactorServiceInstanceLoadBalancer;
+import org.springframework.cloud.loadbalancer.core.RetryAwareServiceInstanceListSupplier;
 import org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
 import org.springframework.cloud.loadbalancer.support.LoadBalancerClientFactory;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -60,9 +62,19 @@ public class LoadBalancerConfiguration {
   static class TenantAffinityLoadBalancerClientConfiguration {
 
     @Bean
+    public ServiceInstanceListSupplier baseDiscoveryClientServiceInstanceListSupplier(
+        ConfigurableApplicationContext context) {
+      return ServiceInstanceListSupplier.builder()
+          .withDiscoveryClient()
+          .withCaching()
+          .build(context);
+    }
+
+    @Bean
     @Primary
     public ServiceInstanceListSupplier retryAwareDiscoveryClientServiceInstanceListSupplier(
-        ConfigurableApplicationContext context,
+        @Qualifier("baseDiscoveryClientServiceInstanceListSupplier")
+        ServiceInstanceListSupplier discoveryDelegate,
         LoadBalancerHealthCheckAggregator aggregator,
         GatewayKubernetesDiscoveryProperties kubernetesDiscoveryProperties,
         ObjectProvider<KubernetesPodMetadataProvider> metadataProvider) {
