@@ -66,15 +66,17 @@ public class LoadBalancerConfiguration {
         LoadBalancerHealthCheckAggregator aggregator,
         GatewayKubernetesDiscoveryProperties kubernetesDiscoveryProperties,
         ObjectProvider<KubernetesPodMetadataProvider> metadataProvider) {
-      ServiceInstanceListSupplier delegate = ServiceInstanceListSupplier.builder()
-          .withDiscoveryClient()
-          .withCaching()
-          .build(context);
-      KubernetesPodMetadataProvider provider = metadataProvider.getIfAvailable();
-      if (provider != null && kubernetesDiscoveryProperties.isEnabled()) {
-        delegate = new KubernetesServiceInstanceMetadataSupplier(delegate, provider, kubernetesDiscoveryProperties);
-      }
-      return new WeightedServiceInstanceListSupplier(delegate, aggregator);
+      return new LazyServiceInstanceListSupplier(() -> {
+        ServiceInstanceListSupplier delegate = ServiceInstanceListSupplier.builder()
+            .withDiscoveryClient()
+            .withCaching()
+            .build(context);
+        KubernetesPodMetadataProvider provider = metadataProvider.getIfAvailable();
+        if (provider != null && kubernetesDiscoveryProperties.isEnabled()) {
+          delegate = new KubernetesServiceInstanceMetadataSupplier(delegate, provider, kubernetesDiscoveryProperties);
+        }
+        return new WeightedServiceInstanceListSupplier(delegate, aggregator);
+      });
     }
 
     @Bean
