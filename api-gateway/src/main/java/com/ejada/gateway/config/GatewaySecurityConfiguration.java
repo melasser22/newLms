@@ -138,7 +138,7 @@ public class GatewaySecurityConfiguration {
     return http.build();
   }
 
-  private static Collection<? extends GrantedAuthority> extractAuthorities(Jwt jwt,
+  private static Collection<GrantedAuthority> extractAuthorities(Jwt jwt,
       SharedSecurityProps props) {
     List<GrantedAuthority> authorities = new ArrayList<>();
     Set<String> validRoles = EnumSet.allOf(Role.class).stream().map(Enum::name)
