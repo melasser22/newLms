@@ -29,6 +29,12 @@
       <artifactId>springdoc-openapi-starter-common</artifactId>
     </dependency>
 
+    <!-- YAML mapper used by Springdoc's ObjectMapperProvider -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-yaml</artifactId>
+    </dependency>
+
     <!-- UI stack (opt-in for MVC) -->
     <dependency>
       <groupId>org.springdoc</groupId>
