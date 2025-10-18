@@ -21,6 +21,7 @@ import com.ejada.gateway.subscription.SubscriptionCacheService;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
 import com.ejada.starter_security.Role;
 import com.ejada.starter_security.SharedSecurityProps;
+import com.ejada.starter_security.TenantAwareJwtValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,7 +40,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -102,6 +105,14 @@ public class GatewaySecurityConfiguration {
     JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
     converter.setJwtGrantedAuthoritiesConverter(jwt -> extractAuthorities(jwt, props));
     return converter;
+  }
+
+  @Bean
+  @ConditionalOnMissingBean(TenantAwareJwtValidator.class)
+  public TenantAwareJwtValidator tenantAwareJwtValidator(
+      SharedSecurityProps props,
+      ObjectProvider<StringRedisTemplate> redisTemplateProvider) {
+    return new TenantAwareJwtValidator(props, redisTemplateProvider.getIfAvailable());
   }
 
   @Bean

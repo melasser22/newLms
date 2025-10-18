@@ -32,7 +32,9 @@ public class R2dbcFallbackConfiguration {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(R2dbcFallbackConfiguration.class);
 
-  private static final String FALLBACK_URL = "r2dbc:postgresql://postgres:5432/lms";
+  private static final String FALLBACK_URL = "r2dbc:postgresql://localhost:5432/lms";
+  private static final String FALLBACK_USERNAME = "postgres";
+  private static final String FALLBACK_PASSWORD = "postgres";
 
   @Bean
   @ConditionalOnMissingBean(ConnectionFactory.class)
@@ -63,7 +65,24 @@ public class R2dbcFallbackConfiguration {
         "spring.r2dbc.url is not configured; falling back to default PostgreSQL connection {}. "
             + "Provide SPRING_R2DBC_URL (or spring.r2dbc.url) to target the correct database.",
         FALLBACK_URL);
-    return ConnectionFactories.get(FALLBACK_URL);
+
+    ConnectionFactoryOptions.Builder builder =
+        ConnectionFactoryOptions.builder().from(ConnectionFactoryOptions.parse(FALLBACK_URL));
+    builder.option(USER, StringUtils.hasText(properties.getUsername())
+        ? properties.getUsername()
+        : FALLBACK_USERNAME);
+
+    if (properties.getPassword() != null) {
+      builder.option(PASSWORD, properties.getPassword());
+    } else if (StringUtils.hasText(FALLBACK_PASSWORD)) {
+      builder.option(PASSWORD, FALLBACK_PASSWORD);
+    }
+
+    if (StringUtils.hasText(properties.getName())) {
+      builder.option(ConnectionFactoryOptions.DATABASE, properties.getName());
+    }
+
+    return ConnectionFactories.get(builder.build());
   }
 
   @Bean

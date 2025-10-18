@@ -1,6 +1,8 @@
 package com.ejada.gateway.contract;
 
 import com.ejada.gateway.config.TestGatewayConfiguration;
+import com.ejada.gateway.config.RedisTestConfiguration;
+import com.ejada.gateway.config.SubscriptionCacheTestConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
@@ -16,10 +18,16 @@ import org.springframework.web.reactive.function.client.WebClient;
  * doubles for JWT and circuit breaker behaviour.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ContextConfiguration(classes = TestGatewayConfiguration.class)
+@ContextConfiguration(classes = {
+    TestGatewayConfiguration.class,
+    RedisTestConfiguration.class,
+    SubscriptionCacheTestConfiguration.class
+})
 @TestPropertySource(properties = {
     "shared.security.resource-server.enabled=true",
-    "chaos.monkey.enabled=false"
+    "chaos.monkey.enabled=false",
+    "shared.ratelimit.enabled=false",
+    "spring.autoconfigure.exclude=com.ejada.shared_starter_ratelimit.RateLimitAutoConfiguration,com.ejada.kafka_starter.config.KafkaConsumerConfig,com.ejada.kafka_starter.config.KafkaProducerConfig"
 })
 public abstract class ContractBaseTest {
 
@@ -33,5 +41,7 @@ public abstract class ContractBaseTest {
   @DynamicPropertySource
   static void contractProperties(DynamicPropertyRegistry registry) {
     registry.add("spring.main.allow-bean-definition-overriding", () -> true);
+    registry.add("spring.kafka.listener.auto-startup", () -> false);
+    registry.add("spring.kafka.bootstrap-servers", () -> "localhost:65535");
   }
 }

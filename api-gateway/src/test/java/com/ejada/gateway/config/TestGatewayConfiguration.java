@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.function.Function;
+import com.ejada.gateway.support.ReactiveRedisTestSupport;
 import org.springframework.cloud.client.circuitbreaker.ConfigBuilder;
 import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreaker;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -15,6 +16,7 @@ import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -38,6 +40,12 @@ public class TestGatewayConfiguration {
   @Primary
   ReactiveJwtDecoder testReactiveJwtDecoder() {
     return token -> Mono.just(buildJwt(token));
+  }
+
+  @Bean
+  @Primary
+  ReactiveStringRedisTemplate reactiveStringRedisTemplate() {
+    return ReactiveRedisTestSupport.mockStringTemplate(ReactiveRedisTestSupport.newStore());
   }
 
   @Bean
