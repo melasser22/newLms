@@ -3,6 +3,7 @@ package com.ejada.gateway.admin.model;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -19,6 +20,10 @@ public record AdminServiceSnapshot(
     long latencyMs,
     Instant checkedAt,
     Map<String, Object> details) {
+
+  public AdminServiceSnapshot {
+    details = details == null ? Map.of() : Map.copyOf(details);
+  }
 
   public static AdminServiceSnapshot success(String serviceId,
       String deployment,
@@ -49,7 +54,7 @@ public record AdminServiceSnapshot(
       return "UNKNOWN";
     }
     Object candidate = payload.get("status");
-    return Objects.toString(candidate, "UNKNOWN").toUpperCase();
+    return Objects.toString(candidate, "UNKNOWN").toUpperCase(Locale.ROOT);
   }
 
   private static Map<String, Object> extractDetails(Map<String, Object> payload) {
@@ -71,7 +76,7 @@ public record AdminServiceSnapshot(
 
   private static AdminServiceState mapState(String status) {
     if (!String.valueOf(status).isEmpty()) {
-      return switch (status.toUpperCase()) {
+      return switch (status.toUpperCase(Locale.ROOT)) {
         case "UP" -> AdminServiceState.UP;
         case "OUT_OF_SERVICE", "DOWN" -> AdminServiceState.DOWN;
         case "DEGRADED" -> AdminServiceState.DEGRADED;

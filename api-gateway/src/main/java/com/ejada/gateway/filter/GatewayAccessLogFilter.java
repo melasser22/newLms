@@ -6,6 +6,8 @@ import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.gateway.observability.GatewayTracingHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -125,8 +127,16 @@ public class GatewayAccessLogFilter implements WebFilter, Ordered {
     if (StringUtils.hasText(forwarded)) {
       return forwarded.split(",")[0].trim();
     }
-    if (request.getRemoteAddress() != null) {
-      return request.getRemoteAddress().getAddress().getHostAddress();
+    InetSocketAddress remoteAddress = request.getRemoteAddress();
+    if (remoteAddress != null) {
+      InetAddress address = remoteAddress.getAddress();
+      if (address != null) {
+        return address.getHostAddress();
+      }
+      String hostString = remoteAddress.getHostString();
+      if (StringUtils.hasText(hostString)) {
+        return hostString;
+      }
     }
     return "unknown";
   }

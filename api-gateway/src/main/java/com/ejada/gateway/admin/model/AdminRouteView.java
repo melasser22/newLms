@@ -31,6 +31,13 @@ public record AdminRouteView(
     String circuitBreakerName,
     String loadBalancingStrategy) {
 
+  public AdminRouteView {
+    paths = paths == null ? List.of() : List.copyOf(paths);
+    methods = methods == null ? List.of() : List.copyOf(methods);
+    supportedVersions = supportedVersions == null ? List.of() : List.copyOf(supportedVersions);
+    requestHeaders = requestHeaders == null ? Map.of() : Map.copyOf(requestHeaders);
+  }
+
   public static AdminRouteView fromRoute(GatewayRoutesProperties.ServiceRoute route) {
     GatewayRoutesProperties.ServiceRoute.Versioning versioning = route.getVersioning();
     GatewayRoutesProperties.ServiceRoute.SessionAffinity affinity = route.getSessionAffinity();
