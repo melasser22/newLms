@@ -1,0 +1,16 @@
+spring:
+  cache:
+    type: simple
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+management:
+  health:
+    redis:
+      enabled: false
+
+shared:
+  redis:
+    enabled: false
