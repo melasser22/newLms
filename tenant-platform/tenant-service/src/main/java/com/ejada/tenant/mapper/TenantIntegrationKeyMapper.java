@@ -87,19 +87,35 @@ public interface TenantIntegrationKeyMapper {
     void update(@MappingTarget @NonNull TenantIntegrationKey entity, @NonNull TenantIntegrationKeyUpdateReq req);
 
     // ---------- Response ----------
-    @BeanMapping(ignoreUnmappedSourceProperties = {"keySecret", "active", "expired", "deleted"})
-    @Mapping(
-            target = "tenantId",
-            expression = "java(entity.getTenant() != null ? entity.getTenant().getId() : null)")
-    @Mapping(target = "scopes", source = "scopes", qualifiedByName = "toList")
-    @Mapping(target = "status", source = "status", qualifiedByName = "toDtoStatus")
-    @Mapping(target = "isDeleted", source = "isDeleted")
-    @Mapping(target = "createdBy", source = "createdBy")
-    @Mapping(target = "secretLastRotatedAt", source = "secretLastRotatedAt")
-    @Mapping(target = "secretLastRotatedBy", source = "secretLastRotatedBy")
-    @Mapping(target = "plainSecret", expression = "java(null)")
-    @Mapping(target = "withPlainSecret", ignore = true)
-    TenantIntegrationKeyRes toRes(@NonNull TenantIntegrationKey entity);
+    default TenantIntegrationKeyRes toRes(@NonNull TenantIntegrationKey entity) {
+        Integer tenantId = null;
+        Tenant tenant = entity.getTenant();
+        if (tenant != null) {
+            tenantId = tenant.getId();
+        }
+
+        return new TenantIntegrationKeyRes(
+                entity.getTikId(),
+                tenantId,
+                entity.getKeyId(),
+                entity.getLabel(),
+                toList(entity.getScopes()),
+                toDtoStatus(entity.getStatus()),
+                entity.getValidFrom(),
+                entity.getExpiresAt(),
+                entity.getLastUsedAt(),
+                entity.getUseCount(),
+                entity.getDailyQuota(),
+                entity.getMeta(),
+                entity.getIsDeleted(),
+                entity.getCreatedAt(),
+                entity.getUpdatedAt(),
+                entity.getCreatedBy(),
+                entity.getSecretLastRotatedAt(),
+                entity.getSecretLastRotatedBy(),
+                null
+        );
+    }
 
     // ---------- Enum & collection converters ----------
     @Named("toEntityStatus")
