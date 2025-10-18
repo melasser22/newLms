@@ -5,7 +5,8 @@ FROM eclipse-temurin:21-jre-alpine AS runner
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication"
 
 RUN addgroup -g 1001 -S appgroup \
-    && adduser -u 1001 -S appuser -G appgroup
+    && adduser -u 1001 -S appuser -G appgroup \
+    && apk add --no-cache wget
 
 WORKDIR /app
 
