@@ -16,7 +16,7 @@ import org.springframework.lang.NonNull;
 
 // Explicitly declare componentModel to ensure Spring Bean generation
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING, config = SharedMapstructConfig.class)
-public interface AddonMapper {
+public abstract class AddonMapper {
 
     // ---------- Create ----------
     @Mapping(target = "addonId", ignore = true)
@@ -27,10 +27,10 @@ public interface AddonMapper {
     @Mapping(target = "category", source = "category")
     @Mapping(target = "isActive", source = "isActive")
     @Mapping(target = "isDeleted", constant = "false")
-    Addon toEntity(@NonNull AddonCreateReq req);
+    public abstract Addon toEntity(@NonNull AddonCreateReq req);
 
     @AfterMapping
-    default void defaults(@MappingTarget final Addon e, final AddonCreateReq req) {
+    protected void defaults(@MappingTarget final Addon e, final AddonCreateReq req) {
         if (e.getIsActive() == null) {
             e.setIsActive(Boolean.TRUE);
         }
@@ -43,12 +43,24 @@ public interface AddonMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "addonId", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
-    void update(@MappingTarget @NonNull Addon entity, @NonNull AddonUpdateReq req);
+    public abstract void update(@MappingTarget @NonNull Addon entity, @NonNull AddonUpdateReq req);
 
     // ---------- Response ----------
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "isActive", source = "isActive")
-    @Mapping(target = "isDeleted", source = "isDeleted")
-    AddonRes toRes(@NonNull Addon entity);
+    public AddonRes toRes(@NonNull Addon entity) {
+        final Boolean isActive = Boolean.TRUE.equals(entity.getIsActive()) ? Boolean.TRUE : Boolean.FALSE;
+        final Boolean isDeleted = Boolean.TRUE.equals(entity.getIsDeleted()) ? Boolean.TRUE : Boolean.FALSE;
+
+        return new AddonRes(
+                entity.getAddonId(),
+                entity.getAddonCd(),
+                entity.getAddonEnNm(),
+                entity.getAddonArNm(),
+                entity.getDescription(),
+                entity.getCategory(),
+                isActive,
+                isDeleted,
+                null,
+                null
+        );
+    }
 }
