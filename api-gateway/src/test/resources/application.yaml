@@ -12,6 +12,8 @@ spring:
     import: "optional:configserver:"
 
 gateway:
+  internal:
+    api-key: test-internal-api-key
   routes:
     setup:
       id: setup-service
