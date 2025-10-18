@@ -2,6 +2,7 @@ package com.ejada.shared_starter_ratelimit;
 
 import com.ejada.audit.starter.api.AuditService;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.servlet.Filter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -39,17 +40,6 @@ public class RateLimitAutoConfiguration {
     return new RateLimitBypassEvaluator(props.getBypass());
   }
 
-  @Bean
-  @ConditionalOnBean(RateLimitService.class)
-  @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-  public FilterRegistrationBean<RateLimitFilter> rateLimitFilter(RateLimitService rateLimitService) {
-    FilterRegistrationBean<RateLimitFilter> registration = new FilterRegistrationBean<>();
-    registration.setFilter(new RateLimitFilter(rateLimitService));
-    registration.addUrlPatterns("/api/v1/*");
-    registration.setOrder(1);
-    return registration;
-  }
-
   @Configuration(proxyBeanMethods = false)
   @ConditionalOnClass(StringRedisTemplate.class)
   static class RedisRateLimitConfiguration {
@@ -82,6 +72,22 @@ public class RateLimitAutoConfiguration {
         TenantRateLimitRegistry registry) {
       props.applyDefaults();
       return new RateLimitSubscriptionListener(connectionFactory, props.getDynamic().getSubscriptionChannel(), registry);
+    }
+  }
+
+  @Configuration(proxyBeanMethods = false)
+  @ConditionalOnClass({Filter.class, FilterRegistrationBean.class})
+  @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+  @ConditionalOnBean(RateLimitService.class)
+  static class ServletFilterConfiguration {
+
+    @Bean
+    FilterRegistrationBean<RateLimitFilter> rateLimitFilter(RateLimitService rateLimitService) {
+      FilterRegistrationBean<RateLimitFilter> registration = new FilterRegistrationBean<>();
+      registration.setFilter(new RateLimitFilter(rateLimitService));
+      registration.addUrlPatterns("/api/v1/*");
+      registration.setOrder(1);
+      return registration;
     }
   }
 }
