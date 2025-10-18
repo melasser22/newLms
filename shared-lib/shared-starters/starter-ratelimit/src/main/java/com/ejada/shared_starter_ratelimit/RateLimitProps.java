@@ -303,6 +303,7 @@ public class RateLimitProps implements BaseStarterProperties {
   @Getter
   @Setter
   public static class DynamicProperties {
+    private boolean enabled = true;
     private String subscriptionChannel = "ratelimit:subscription-updates";
 
     void applyDefaults() {

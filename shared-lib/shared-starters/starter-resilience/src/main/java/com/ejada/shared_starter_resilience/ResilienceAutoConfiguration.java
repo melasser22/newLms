@@ -10,6 +10,8 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
 
 /**
  * Auto-configuration for basic HTTP resilience features.
@@ -19,7 +21,6 @@ import org.springframework.web.client.RestTemplate;
  * solely on the blocking {@link RestTemplate} API.</p>
  */
 @AutoConfiguration
-@ConditionalOnClass(RestTemplateBuilder.class)
 @EnableConfigurationProperties(SharedResilienceProps.class)
 public class ResilienceAutoConfiguration {
 
