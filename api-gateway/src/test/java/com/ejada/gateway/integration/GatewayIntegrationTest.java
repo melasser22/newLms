@@ -75,6 +75,7 @@ public abstract class GatewayIntegrationTest {
     registry.add("shared.security.resource-server.enabled", () -> true);
     registry.add("chaos.monkey.enabled", () -> false);
     registry.add("spring.main.allow-bean-definition-overriding", () -> true);
+    registry.add("gateway.cache.kafka.enabled", () -> false);
     registry.add("spring.kafka.bootstrap-servers", () -> "localhost:65535");
     registry.add("spring.kafka.listener.auto-startup", () -> false);
   }

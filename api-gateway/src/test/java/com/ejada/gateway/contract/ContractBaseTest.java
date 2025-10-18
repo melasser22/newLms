@@ -43,5 +43,6 @@ public abstract class ContractBaseTest {
     registry.add("spring.main.allow-bean-definition-overriding", () -> true);
     registry.add("spring.kafka.listener.auto-startup", () -> false);
     registry.add("spring.kafka.bootstrap-servers", () -> "localhost:65535");
+    registry.add("gateway.cache.kafka.enabled", () -> false);
   }
 }
