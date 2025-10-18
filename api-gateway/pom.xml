@@ -38,6 +38,16 @@
         <scope>import</scope>
       </dependency>
       <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-http</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-io</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
         <groupId>com.google.errorprone</groupId>
         <artifactId>error_prone_annotations</artifactId>
         <version>2.27.0</version>
@@ -53,6 +63,7 @@
   <properties>
     <java.version>21</java.version>
     <spring-boot.run.skip>false</spring-boot.run.skip>
+    <jetty.version>9.4.53.v20231009</jetty.version>
   </properties>
 
   <dependencies>

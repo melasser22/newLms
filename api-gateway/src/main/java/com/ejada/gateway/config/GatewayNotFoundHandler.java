@@ -101,10 +101,13 @@ public class GatewayNotFoundHandler extends AbstractErrorWebExceptionHandler {
     }
 
     private boolean isNotFoundError(Throwable error) {
+        if (error instanceof NotFoundException) {
+            return true;
+        }
         if (error instanceof ResponseStatusException rse) {
             return rse.getStatusCode().value() == HttpStatus.NOT_FOUND.value();
         }
-        return error instanceof NotFoundException;
+        return false;
     }
 
     private String resolveMessage(Throwable error, String method, String path) {

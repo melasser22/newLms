@@ -17,6 +17,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
+import org.springframework.boot.web.server.Ssl;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -32,6 +33,9 @@ class CacheRefreshServiceTest {
     cacheService = mock(ResponseCacheService.class, Answers.RETURNS_DEEP_STUBS);
     serverProperties = new ServerProperties();
     serverProperties.setPort(8085);
+    Ssl ssl = new Ssl();
+    ssl.setEnabled(false);
+    serverProperties.setSsl(ssl);
     serverProperties.getServlet().setContextPath("/gateway/api");
     builderProvider = new BuilderObjectProvider();
     cacheRefreshService = new CacheRefreshService(cacheService, serverProperties, builderProvider);
