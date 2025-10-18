@@ -88,7 +88,9 @@ public interface TenantIntegrationKeyMapper {
 
     // ---------- Response ----------
     @BeanMapping(ignoreUnmappedSourceProperties = {"keySecret", "active", "expired", "deleted"})
-    @Mapping(target = "tenantId", source = "tenant.id")
+    @Mapping(
+            target = "tenantId",
+            expression = "java(entity.getTenant() != null ? entity.getTenant().getId() : null)")
     @Mapping(target = "scopes", source = "scopes", qualifiedByName = "toList")
     @Mapping(target = "status", source = "status", qualifiedByName = "toDtoStatus")
     @Mapping(target = "isDeleted", source = "isDeleted")
