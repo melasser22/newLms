@@ -122,6 +122,10 @@
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
+      <artifactId>starter-audit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-core</artifactId>
     </dependency>
     <dependency>

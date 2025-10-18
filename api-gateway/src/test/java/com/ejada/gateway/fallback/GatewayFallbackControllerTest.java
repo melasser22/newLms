@@ -1,14 +1,24 @@
 package com.ejada.gateway.fallback;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.ejada.gateway.config.GatewayRoutesProperties;
 import com.ejada.gateway.config.GatewayRoutesProperties.ServiceRoute;
 import com.ejada.gateway.config.ReactiveContextConfiguration;
+import com.ejada.gateway.config.RedisTestConfiguration;
+import com.ejada.gateway.config.SubscriptionCacheTestConfiguration;
+import com.ejada.gateway.fallback.CachedFallbackService;
+import com.ejada.gateway.fallback.BillingFallbackQueue;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
+import com.ejada.gateway.resilience.TenantCircuitBreakerMetrics;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
@@ -18,6 +28,7 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Mono;
 
 @WebFluxTest(
     controllers = GatewayFallbackController.class,
@@ -30,11 +41,27 @@ import org.springframework.test.web.reactive.server.WebTestClient;
             classes = com.ejada.gateway.ratelimit.ReactiveRateLimiterFilter.class)
     })
 @TestPropertySource(properties = "shared.ratelimit.enabled=false")
-@Import(GatewayFallbackControllerTest.TestSecurityConfig.class)
+@Import({GatewayFallbackControllerTest.TestSecurityConfig.class, RedisTestConfiguration.class,
+    SubscriptionCacheTestConfiguration.class})
 class GatewayFallbackControllerTest {
 
   @Autowired
   private WebTestClient webTestClient;
+
+  @MockBean
+  private BillingFallbackQueue billingFallbackQueue;
+
+  @MockBean
+  private CachedFallbackService cachedFallbackService;
+
+  @MockBean
+  private TenantCircuitBreakerMetrics tenantCircuitBreakerMetrics;
+
+  @BeforeEach
+  void setUpMocks() {
+    when(billingFallbackQueue.enqueue(any(), any())).thenReturn(Mono.just("queue-key"));
+    when(cachedFallbackService.resolve(any(), any())).thenReturn(Mono.empty());
+  }
 
   @Test
   void fallbackReturnsServiceUnavailable() {
@@ -45,7 +72,7 @@ class GatewayFallbackControllerTest {
         .expectStatus()
         .isEqualTo(HttpStatus.SERVICE_UNAVAILABLE)
         .expectBody()
-        .jsonPath("$.routeId")
+        .jsonPath("$.data.routeId")
         .isEqualTo("sample-route")
         .jsonPath("$.message")
         .isNotEmpty();

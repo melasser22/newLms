@@ -20,7 +20,10 @@ import org.springframework.test.web.reactive.server.WebTestClient;
     properties = {
         "shared.ratelimit.enabled=false",
         "shared.security.mode=hs256",
-        "shared.security.hs256.secret=" + GatewayRoutesIntegrationTest.SECRET
+        "shared.security.hs256.secret=" + GatewayRoutesIntegrationTest.SECRET,
+        "spring.autoconfigure.exclude=com.ejada.shared_starter_ratelimit.RateLimitAutoConfiguration,com.ejada.kafka_starter.config.KafkaConsumerConfig,com.ejada.kafka_starter.config.KafkaProducerConfig",
+        "spring.kafka.listener.auto-startup=false",
+        "spring.kafka.bootstrap-servers=localhost:65535"
     }
 )
 @TestPropertySource(properties = {
@@ -51,7 +54,7 @@ class GatewayRoutesIntegrationTest {
         .expectStatus()
         .isEqualTo(HttpStatus.BAD_GATEWAY)
         .expectBody()
-        .jsonPath("$.routeId")
+        .jsonPath("$.data.routeId")
         .isEqualTo("test-service")
         .jsonPath("$.message")
         .isEqualTo("Custom outage message");

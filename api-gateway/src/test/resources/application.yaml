@@ -10,6 +10,13 @@ spring:
         enabled: false
   config:
     import: "optional:configserver:"
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/lms
+    username: postgres
+    password: postgres
+  sql:
+    init:
+      mode: never
 
 gateway:
   internal:
