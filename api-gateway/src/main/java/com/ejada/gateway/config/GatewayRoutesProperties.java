@@ -879,6 +879,8 @@ public class GatewayRoutesProperties {
     public static class Resilience {
 
       private boolean enabled;
+      /** Tracks whether the enabled flag was explicitly configured for this route. */
+      private boolean enabledSetExplicitly;
 
       /** Optional override for the circuit breaker name. */
       private String circuitBreakerName;
@@ -905,6 +907,7 @@ public class GatewayRoutesProperties {
 
       public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+        this.enabledSetExplicitly = true;
       }
 
       public String getCircuitBreakerName() {
@@ -973,7 +976,7 @@ public class GatewayRoutesProperties {
         if (defaults == null) {
           return;
         }
-        if (!this.enabled) {
+        if (!this.enabledSetExplicitly) {
           this.enabled = defaults.enabled;
         }
         if (!StringUtils.hasText(this.circuitBreakerName)) {
@@ -1049,6 +1052,7 @@ public class GatewayRoutesProperties {
           return false;
         }
         return enabled == that.enabled
+            && enabledSetExplicitly == that.enabledSetExplicitly
             && Objects.equals(circuitBreakerName, that.circuitBreakerName)
             && Objects.equals(fallbackUri, that.fallbackUri)
             && fallbackStatus == that.fallbackStatus
@@ -1060,7 +1064,7 @@ public class GatewayRoutesProperties {
 
       @Override
       public int hashCode() {
-        return Objects.hash(enabled, circuitBreakerName, fallbackUri, fallbackStatus, fallbackMessage, retry,
+        return Objects.hash(enabled, enabledSetExplicitly, circuitBreakerName, fallbackUri, fallbackStatus, fallbackMessage, retry,
             priority, fallbackOnMethods);
       }
 
@@ -1068,6 +1072,7 @@ public class GatewayRoutesProperties {
       public String toString() {
         return "Resilience{"
             + "enabled=" + enabled
+            + ", enabledSetExplicitly=" + enabledSetExplicitly
             + ", circuitBreakerName='" + circuitBreakerName + '\''
             + ", fallbackUri='" + fallbackUri + '\''
             + ", fallbackStatus=" + fallbackStatus
