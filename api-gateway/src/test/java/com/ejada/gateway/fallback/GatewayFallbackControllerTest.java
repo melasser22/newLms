@@ -3,6 +3,7 @@ package com.ejada.gateway.fallback;
 import com.ejada.gateway.config.GatewayRoutesProperties;
 import com.ejada.gateway.config.GatewayRoutesProperties.ServiceRoute;
 import com.ejada.gateway.config.ReactiveContextConfiguration;
+import com.ejada.starter_core.config.CoreAutoConfiguration;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,6 +73,13 @@ class GatewayFallbackControllerTest {
 
       properties.getRoutes().put(route.getId(), route);
       return properties;
+    }
+
+    @Bean
+    CoreAutoConfiguration.CoreProps coreProps() {
+      CoreAutoConfiguration.CoreProps props = new CoreAutoConfiguration.CoreProps();
+      props.getCorrelation().setEnabled(false);
+      return props;
     }
   }
 }
