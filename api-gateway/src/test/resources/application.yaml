@@ -3,6 +3,10 @@ jasypt:
     password: test-secret
 
 spring:
+  kafka:
+    bootstrap-servers: localhost:65535
+    listener:
+      auto-startup: false
   cloud:
     config:
       enabled: false
