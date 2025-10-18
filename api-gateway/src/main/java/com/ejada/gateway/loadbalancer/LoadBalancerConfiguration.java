@@ -77,7 +77,8 @@ public class LoadBalancerConfiguration {
         ServiceInstanceListSupplier discoveryDelegate,
         LoadBalancerHealthCheckAggregator aggregator,
         GatewayKubernetesDiscoveryProperties kubernetesDiscoveryProperties,
-        ObjectProvider<KubernetesPodMetadataProvider> metadataProvider) {
+        ObjectProvider<KubernetesPodMetadataProvider> metadataProvider,
+        ConfigurableApplicationContext context) {
       return new LazyServiceInstanceListSupplier(() -> {
         ServiceInstanceListSupplier delegate = ServiceInstanceListSupplier.builder()
             .withBlockingDiscoveryClient()
