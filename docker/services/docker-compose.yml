@@ -276,4 +276,4 @@ services:
 networks:
   backend:
     name: lms-backend
-    driver: bridge
+    external: true
