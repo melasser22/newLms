@@ -61,7 +61,8 @@ public class LoadBalancerConfiguration {
 
     @Bean
     @Primary
-    public ServiceInstanceListSupplier serviceInstanceListSupplier(ConfigurableApplicationContext context,
+    public ServiceInstanceListSupplier retryAwareDiscoveryClientServiceInstanceListSupplier(
+        ConfigurableApplicationContext context,
         LoadBalancerHealthCheckAggregator aggregator,
         GatewayKubernetesDiscoveryProperties kubernetesDiscoveryProperties,
         ObjectProvider<KubernetesPodMetadataProvider> metadataProvider) {
