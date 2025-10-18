@@ -11,6 +11,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,8 +38,13 @@ class TenantControllerSecurityTest {
     @MockitoBean
     private TenantService tenantService;
 
+    @MockitoBean
+    private TenantAccessPolicy tenantAccessPolicy;
+
     @Test
     void tenantEndpointsRequireAuthentication() throws Exception {
+        when(tenantAccessPolicy.isAllowed(any())).thenReturn(true);
+
         mockMvc.perform(get("/tenant/api/v1/tenants")
                 .contextPath("/tenant")
                 .header("X-Tenant-Id", "tenant-123"))
