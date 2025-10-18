@@ -43,6 +43,13 @@
       <optional>true</optional>
     </dependency>
 
+    <!-- Reactive web stack support -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webflux</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <!-- Security context access for bypass evaluation -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
