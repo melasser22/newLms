@@ -148,9 +148,12 @@ management:
 shared:
   patterns:
     docs:
-      api-v3-wildcard: &pattern-docs-api-v3 /api/**/v3/api-docs/**
-      api-swagger-wildcard: &pattern-docs-api-swagger /api/**/swagger-ui/**
-      api-swagger-html: &pattern-docs-api-swagger-html /api/**/swagger-ui.html
+      api-v3-single: &pattern-docs-api-v3-single /api/*/v3/api-docs/**
+      api-v3-double: &pattern-docs-api-v3-double /api/*/*/v3/api-docs/**
+      api-swagger-single: &pattern-docs-api-swagger-single /api/*/swagger-ui/**
+      api-swagger-double: &pattern-docs-api-swagger-double /api/*/*/swagger-ui/**
+      api-swagger-html-single: &pattern-docs-api-swagger-html-single /api/*/swagger-ui.html
+      api-swagger-html-double: &pattern-docs-api-swagger-html-double /api/*/*/swagger-ui.html
       root-v3: &pattern-docs-root-v3 /v3/api-docs/**
       root-swagger: &pattern-docs-root-swagger /swagger-ui/**
       root-swagger-html: &pattern-docs-root-swagger-html /swagger-ui.html
@@ -164,9 +167,12 @@ shared:
         - /actuator/health/**
         - /actuator/info
         - /actuator/prometheus
-        - *pattern-docs-api-v3
-        - *pattern-docs-api-swagger
-        - *pattern-docs-api-swagger-html
+        - *pattern-docs-api-v3-single
+        - *pattern-docs-api-v3-double
+        - *pattern-docs-api-swagger-single
+        - *pattern-docs-api-swagger-double
+        - *pattern-docs-api-swagger-html-single
+        - *pattern-docs-api-swagger-html-double
         - *pattern-docs-root-v3
         - *pattern-docs-root-swagger
         - *pattern-docs-root-swagger-html
@@ -189,9 +195,12 @@ shared:
       skip-patterns:
         - /actuator/**
         - /favicon.ico
-        - /api/**/v3/api-docs/**
-        - /api/**/swagger-ui/**
-        - /api/**/swagger-ui.html
+        - /api/*/v3/api-docs/**
+        - /api/*/*/v3/api-docs/**
+        - /api/*/swagger-ui/**
+        - /api/*/*/swagger-ui/**
+        - /api/*/swagger-ui.html
+        - /api/*/*/swagger-ui.html
         - /v3/api-docs/**
         - /swagger-ui/**
         - /swagger-ui.html
@@ -500,8 +509,10 @@ gateway:
     skip-patterns:
       - /actuator/**
       - /fallback/**
-      - /api/**/swagger-ui/**
-      - /api/**/v3/api-docs/**
+      - /api/*/swagger-ui/**
+      - /api/*/*/swagger-ui/**
+      - /api/*/v3/api-docs/**
+      - /api/*/*/v3/api-docs/**
       - /swagger-ui/**
       - /v3/api-docs/**
     required-features:
