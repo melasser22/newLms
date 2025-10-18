@@ -24,6 +24,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -95,7 +96,9 @@ public class AdminAggregationService {
       try {
         IntStream.range(0, services.size()).forEach(index -> {
           AdminAggregationProperties.Service service = services.get(index);
-          String key = service.getId() != null ? service.getId() : String.valueOf(index);
+          String key = StringUtils.hasText(service.getId())
+              ? service.getId()
+              : String.valueOf(index);
           service.validate(key);
         });
       } catch (RuntimeException ex) {
