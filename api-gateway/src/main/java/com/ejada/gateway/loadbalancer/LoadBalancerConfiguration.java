@@ -68,8 +68,9 @@ public class LoadBalancerConfiguration {
         ObjectProvider<KubernetesPodMetadataProvider> metadataProvider) {
       return new LazyServiceInstanceListSupplier(() -> {
         ServiceInstanceListSupplier delegate = ServiceInstanceListSupplier.builder()
-            .withDiscoveryClient()
+            .withBlockingDiscoveryClient()
             .withCaching()
+            .withRetryAwareness()
             .build(context);
         KubernetesPodMetadataProvider provider = metadataProvider.getIfAvailable();
         if (provider != null && kubernetesDiscoveryProperties.isEnabled()) {
