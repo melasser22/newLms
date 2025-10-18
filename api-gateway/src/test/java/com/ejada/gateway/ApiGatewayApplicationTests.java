@@ -18,7 +18,9 @@ import org.springframework.test.context.TestPropertySource;
     "gateway.routes.test.paths[0]=/test/**",
     "gateway.cache.kafka.enabled=false",
     "shared.ratelimit.enabled=false",
-    "spring.autoconfigure.exclude=com.ejada.shared_starter_ratelimit.RateLimitAutoConfiguration"
+    "spring.autoconfigure.exclude=com.ejada.shared_starter_ratelimit.RateLimitAutoConfiguration",
+    "spring.kafka.bootstrap-servers=localhost:65535",
+    "spring.kafka.listener.auto-startup=false"
 })
 class ApiGatewayApplicationTests {
 
