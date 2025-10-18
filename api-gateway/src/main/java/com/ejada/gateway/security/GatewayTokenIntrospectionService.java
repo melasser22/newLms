@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -138,8 +139,8 @@ public class GatewayTokenIntrospectionService {
       expiresAt = typed.expiresAt;
       tenantId = typed.tenantId;
     } else if (rawPayload instanceof Map<?, ?> map) {
-      active = booleanValue(map.get("active"));
-      revoked = booleanValue(map.get("revoked"));
+      active = booleanValue(map.get("active")).orElse(null);
+      revoked = booleanValue(map.get("revoked")).orElse(null);
       expiresAt = instantValue(map.get("expiresAt"));
       tenantId = stringValue(map.get("tenantId"));
     } else if (rawPayload != null) {
@@ -160,16 +161,16 @@ public class GatewayTokenIntrospectionService {
     return new TokenStatus(resolvedActive, trimToNull(tenantId), expiresAt);
   }
 
-  private Boolean booleanValue(Object value) {
+  private Optional<Boolean> booleanValue(Object value) {
     if (value instanceof Boolean bool) {
-      return bool;
+      return Optional.of(bool);
     }
     if (value instanceof String text) {
       if (StringUtils.hasText(text)) {
-        return Boolean.parseBoolean(text.trim());
+        return Optional.of(Boolean.parseBoolean(text.trim()));
       }
     }
-    return null;
+    return Optional.empty();
   }
 
   private Instant instantValue(Object value) {
