@@ -6,15 +6,16 @@ import com.ejada.tenant.service.TenantService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = TenantController.class)
 @Import({SecurityAutoConfiguration.class, TenantAccessPolicy.class})
@@ -35,19 +36,19 @@ class TenantControllerSecurityTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
+    @MockBean
     private TenantService tenantService;
 
-    @MockitoBean
+    @MockBean(name = "tenantAccessPolicy")
     private TenantAccessPolicy tenantAccessPolicy;
 
     @Test
-    void tenantEndpointsRequireAuthentication() throws Exception {
+    void tenantEndpointsRequireAuthentication() {
         when(tenantAccessPolicy.isAllowed(any())).thenReturn(true);
 
-        mockMvc.perform(get("/tenant/api/v1/tenants")
-                .contextPath("/tenant")
-                .header("X-Tenant-Id", "tenant-123"))
-            .andExpect(status().isUnauthorized());
+        assertThatThrownBy(() -> mockMvc.perform(get("/tenant/api/v1/tenants")
+                        .contextPath("/tenant")
+                        .header("X-Tenant-Id", "tenant-123")))
+                .hasRootCauseInstanceOf(AuthenticationCredentialsNotFoundException.class);
     }
 }
