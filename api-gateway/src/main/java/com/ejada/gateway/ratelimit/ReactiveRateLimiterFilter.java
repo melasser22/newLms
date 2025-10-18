@@ -519,7 +519,11 @@ return {tostring(allowed), tostring(totalRemaining), tostring(resetTimestamp), t
   }
 
   private boolean parseBoolean(Object value) {
-    return Objects.equals("1", String.valueOf(value));
+    if (value instanceof Boolean bool) {
+      return bool;
+    }
+    String text = String.valueOf(value);
+    return Objects.equals("1", text) || "true".equalsIgnoreCase(text);
   }
 
   private long parseLong(Object value, long defaultValue) {

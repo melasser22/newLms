@@ -135,8 +135,14 @@ class ReactiveRateLimiterFilterTest {
     private void stubRateLimitScript() {
         org.mockito.Mockito.lenient()
                 .when(redisTemplate.execute(org.mockito.ArgumentMatchers.<RedisScript<List<?>>>any(),
-                    org.mockito.ArgumentMatchers.<List<String>>any(),
-                    org.mockito.ArgumentMatchers.<Object[]>any()))
+                        org.mockito.ArgumentMatchers.<List<String>>any(),
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any()))
                 .thenAnswer(rateLimitAnswer());
     }
 
