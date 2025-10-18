@@ -76,6 +76,10 @@ public class TenantDashboardAggregationService {
       return Mono.just(SafeResult.warning(warning));
     }
     return mono.map(SafeResult::success)
+        .switchIfEmpty(Mono.fromSupplier(() -> {
+          LOGGER.warn("Downstream call returned empty payload: {}", warning);
+          return SafeResult.warning(warning);
+        }))
         .onErrorResume(ex -> {
           LOGGER.warn("Downstream call failed: {}", ex.getMessage());
           return Mono.just(SafeResult.warning(warning));
