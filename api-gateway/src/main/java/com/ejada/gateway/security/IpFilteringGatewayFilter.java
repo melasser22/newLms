@@ -10,7 +10,6 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -79,19 +78,11 @@ public class IpFilteringGatewayFilter implements GlobalFilter, Ordered {
     String whitelistKey = cfg.whitelistKey(tenantId);
 
     var setOperations = redisTemplate.opsForSet();
-    Mono<Boolean> rawBlacklistCheck = (setOperations != null)
-        ? setOperations.isMember(blacklistKey, clientIp)
-        : null;
-    Flux<String> blacklistMembers = (setOperations != null)
-        ? setOperations.members(blacklistKey)
-        : Flux.empty();
-    Mono<Boolean> blacklistCheck = Optional.ofNullable(rawBlacklistCheck)
-        .orElseGet(() -> blacklistMembers.any(clientIp::equals))
+    Mono<Boolean> blacklistCheck = setOperations.isMember(blacklistKey, clientIp)
+        .switchIfEmpty(setOperations.members(blacklistKey).any(clientIp::equals))
         .defaultIfEmpty(false);
 
-    Flux<String> whitelistMembers = Optional
-        .ofNullable(setOperations != null ? setOperations.members(whitelistKey) : null)
-        .orElseGet(Flux::empty);
+    Flux<String> whitelistMembers = setOperations.members(whitelistKey);
 
     return blacklistCheck.flatMap(isBlacklisted -> {
       if (isBlacklisted) {
