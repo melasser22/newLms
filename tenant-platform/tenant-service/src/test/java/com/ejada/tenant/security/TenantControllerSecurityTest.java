@@ -38,7 +38,7 @@ class TenantControllerSecurityTest {
 
     @Test
     void tenantEndpointsRequireAuthentication() throws Exception {
-        mockMvc.perform(get("/api/v1/tenants")
+        mockMvc.perform(get("/tenant/api/v1/tenants")
                 .contextPath("/tenant")
                 .header("X-Tenant-Id", "tenant-123"))
             .andExpect(status().isUnauthorized());
