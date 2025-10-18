@@ -55,6 +55,7 @@ class IpFilteringGatewayFilterTest {
 
     MockServerHttpRequest request = MockServerHttpRequest.get("/secure")
         .remoteAddress(new InetSocketAddress("1.2.3.4", 0))
+        .header(HeaderNames.CLIENT_IP, "1.2.3.4")
         .header(HeaderNames.X_TENANT_ID, "tenant-a")
         .build();
     MockServerWebExchange exchange = MockServerWebExchange.from(request);
@@ -75,6 +76,7 @@ class IpFilteringGatewayFilterTest {
 
     MockServerHttpRequest request = MockServerHttpRequest.get("/secure")
         .remoteAddress(new InetSocketAddress("9.9.9.9", 0))
+        .header(HeaderNames.CLIENT_IP, "9.9.9.9")
         .header(HeaderNames.X_TENANT_ID, "tenant-a")
         .build();
     MockServerWebExchange exchange = MockServerWebExchange.from(request);
@@ -93,6 +95,7 @@ class IpFilteringGatewayFilterTest {
 
     MockServerHttpRequest request = MockServerHttpRequest.get("/secure")
         .remoteAddress(new InetSocketAddress("5.6.7.8", 0))
+        .header(HeaderNames.CLIENT_IP, "5.6.7.8")
         .header(HeaderNames.X_TENANT_ID, "tenant-a")
         .build();
     MockServerWebExchange exchange = MockServerWebExchange.from(request);
@@ -110,6 +113,7 @@ class IpFilteringGatewayFilterTest {
 
     MockServerHttpRequest request = MockServerHttpRequest.get("/secure")
         .remoteAddress(new InetSocketAddress("10.0.0.42", 0))
+        .header(HeaderNames.CLIENT_IP, "10.0.0.42")
         .header(HeaderNames.X_TENANT_ID, "tenant-a")
         .build();
     MockServerWebExchange exchange = MockServerWebExchange.from(request);
