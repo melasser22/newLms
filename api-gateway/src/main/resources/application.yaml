@@ -172,6 +172,7 @@ shared:
         - https://lms.example.com
         - https://admin.lms.example.com
       permit-all:
+        - /api/auth/admin/login
         - /actuator/health/**
         - /actuator/info
         - /actuator/prometheus
