@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,20 +41,20 @@ public class AdminAggregationService {
   private static final ParameterizedTypeReference<Map<String, Object>> MAP_TYPE =
       new ParameterizedTypeReference<>() {};
 
-  private final WebClient gatewayWebClient;
+  private final WebClient.Builder webClientBuilder;
   private final AdminAggregationProperties adminProperties;
   private final GatewayRoutesProperties routesProperties;
   private final ReactiveStringRedisTemplate redisTemplate;
   private final CircuitBreakerRegistry circuitBreakerRegistry;
   private final LoadBalancerHealthCheckAggregator loadBalancerAggregator;
 
-  public AdminAggregationService(WebClient gatewayWebClient,
+  public AdminAggregationService(WebClient.Builder webClientBuilder,
       AdminAggregationProperties adminProperties,
       GatewayRoutesProperties routesProperties,
       ObjectProvider<ReactiveStringRedisTemplate> redisTemplateProvider,
       ObjectProvider<CircuitBreakerRegistry> circuitBreakerRegistryProvider,
       ObjectProvider<LoadBalancerHealthCheckAggregator> loadBalancerAggregatorProvider) {
-    this.gatewayWebClient = gatewayWebClient;
+    this.webClientBuilder = Objects.requireNonNull(webClientBuilder, "webClientBuilder");
     this.adminProperties = adminProperties;
     this.routesProperties = routesProperties;
     this.redisTemplate = redisTemplateProvider.getIfAvailable();
@@ -160,7 +161,7 @@ public class AdminAggregationService {
 
   private Mono<AdminServiceSnapshot> fetchSnapshot(AdminAggregationProperties.Service service,
       Duration defaultTimeout) {
-    WebClient client = gatewayWebClient.mutate()
+    WebClient client = webClientBuilder.clone()
         .baseUrl(service.getUri().toString())
         .build();
     Duration timeout = service.resolveTimeout(defaultTimeout);
