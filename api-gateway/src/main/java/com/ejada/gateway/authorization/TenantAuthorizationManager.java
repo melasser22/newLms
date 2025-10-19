@@ -6,11 +6,13 @@ import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.gateway.subscription.SubscriptionCacheService;
 import com.ejada.gateway.subscription.SubscriptionRecord;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
+import com.ejada.starter_security.SharedSecurityProps;
 import com.ejada.starter_core.web.FilterSkipUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Objects;
@@ -51,6 +53,7 @@ public class TenantAuthorizationManager implements ReactiveAuthorizationManager<
   private static final Set<String> SUSPENDED_STATUSES = Set.of("INACTIVE", "SUSPENDED");
 
   private final CoreAutoConfiguration.CoreProps coreProps;
+  private final String[] bypassPatterns;
   private final ReactiveStringRedisTemplate redisTemplate;
   private final SubscriptionCacheService subscriptionCacheService;
   private final GatewayRateLimitProperties rateLimitProperties;
@@ -58,11 +61,13 @@ public class TenantAuthorizationManager implements ReactiveAuthorizationManager<
 
   public TenantAuthorizationManager(
       CoreAutoConfiguration.CoreProps coreProps,
+      SharedSecurityProps securityProps,
       ReactiveStringRedisTemplate redisTemplate,
       SubscriptionCacheService subscriptionCacheService,
       GatewayRateLimitProperties rateLimitProperties,
       ObjectMapper objectMapper) {
     this.coreProps = Objects.requireNonNull(coreProps, "coreProps");
+    this.bypassPatterns = mergeBypassPatterns(coreProps, securityProps);
     this.redisTemplate = Objects.requireNonNull(redisTemplate, "redisTemplate");
     this.subscriptionCacheService =
         Objects.requireNonNull(subscriptionCacheService, "subscriptionCacheService");
@@ -75,13 +80,28 @@ public class TenantAuthorizationManager implements ReactiveAuthorizationManager<
       Mono<Authentication> authentication, AuthorizationContext context) {
     ServerWebExchange exchange = context.getExchange();
     String path = exchange.getRequest().getPath().pathWithinApplication().value();
-    if (FilterSkipUtils.shouldSkip(path, coreProps.getTenant().getSkipPatterns())) {
+    if (FilterSkipUtils.shouldSkip(path, bypassPatterns)) {
       return Mono.just(new AuthorizationDecision(true));
     }
     return authentication
         .filter(Authentication::isAuthenticated)
         .flatMap(auth -> evaluateAuthorization(auth, exchange))
         .defaultIfEmpty(new AuthorizationDecision(false));
+  }
+
+  private static String[] mergeBypassPatterns(CoreAutoConfiguration.CoreProps coreProps,
+      SharedSecurityProps securityProps) {
+    String[] tenantSkips = FilterSkipUtils.copyOrDefault(coreProps.getTenant().getSkipPatterns());
+    String[] permitAll = Optional.ofNullable(securityProps)
+        .map(SharedSecurityProps::getResourceServer)
+        .map(SharedSecurityProps.ResourceServer::getPermitAll)
+        .orElseGet(() -> new String[0]);
+    return java.util.stream.Stream.concat(Arrays.stream(tenantSkips), Arrays.stream(permitAll))
+        .filter(Objects::nonNull)
+        .map(String::trim)
+        .filter(value -> !value.isEmpty())
+        .distinct()
+        .toArray(String[]::new);
   }
 
   private Mono<AuthorizationDecision> evaluateAuthorization(Authentication auth, ServerWebExchange exchange) {
