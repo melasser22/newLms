@@ -7,8 +7,10 @@ import java.util.function.Function;
 import com.ejada.gateway.support.ReactiveRedisTestSupport;
 import org.springframework.cloud.client.circuitbreaker.ConfigBuilder;
 import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreaker;
-import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.web.embedded.netty.NettyReactiveWebServerFactory;
+import org.springframework.boot.web.reactive.server.ReactiveWebServerFactory;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -27,7 +29,7 @@ import reactor.core.publisher.Mono;
  * the application context lightweight while still exercising the majority
  * of the request pipeline.
  */
-@TestConfiguration
+@Configuration(proxyBeanMethods = false)
 public class TestGatewayConfiguration {
 
   @Bean
@@ -46,6 +48,12 @@ public class TestGatewayConfiguration {
   @Primary
   ReactiveStringRedisTemplate reactiveStringRedisTemplate() {
     return ReactiveRedisTestSupport.mockStringTemplate(ReactiveRedisTestSupport.newStore());
+  }
+
+  @Bean
+  @Primary
+  ReactiveWebServerFactory reactiveWebServerFactory() {
+    return new NettyReactiveWebServerFactory();
   }
 
   @Bean
