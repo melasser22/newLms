@@ -1,5 +1,7 @@
 package com.ejada.gateway.admin;
 
+import com.ejada.common.constants.HeaderNames;
+import com.ejada.common.context.ContextManager;
 import com.ejada.gateway.admin.model.AdminOverview;
 import com.ejada.gateway.admin.model.AdminRouteView;
 import com.ejada.gateway.admin.model.AdminServiceSnapshot;
@@ -166,10 +168,22 @@ public class AdminAggregationService {
         .baseUrl(service.getUri().toString())
         .build();
     Duration timeout = service.resolveTimeout(defaultTimeout);
+    String correlationId = StringUtils.trimWhitespace(ContextManager.getCorrelationId());
+    String tenantId = StringUtils.trimWhitespace(ContextManager.Tenant.get());
 
     return client.get()
         .uri(service.getHealthPath())
-        .headers(httpHeaders -> service.getHeaders().forEach(httpHeaders::add))
+        .headers(httpHeaders -> {
+          service.getHeaders().forEach(httpHeaders::add);
+          if (StringUtils.hasText(correlationId)
+              && !httpHeaders.containsKey(HeaderNames.CORRELATION_ID)) {
+            httpHeaders.set(HeaderNames.CORRELATION_ID, correlationId);
+          }
+          if (StringUtils.hasText(tenantId)
+              && !httpHeaders.containsKey(HeaderNames.X_TENANT_ID)) {
+            httpHeaders.set(HeaderNames.X_TENANT_ID, tenantId);
+          }
+        })
         .retrieve()
         .bodyToMono(MAP_TYPE)
         .timeout(timeout)

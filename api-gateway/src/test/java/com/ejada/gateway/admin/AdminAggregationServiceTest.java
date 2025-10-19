@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.ejada.common.constants.HeaderNames;
+import com.ejada.common.context.ContextManager;
 import com.ejada.gateway.admin.model.AdminServiceSnapshot;
 import com.ejada.gateway.admin.model.AdminServiceState;
 import com.ejada.gateway.admin.model.DetailedHealthStatus;
@@ -11,10 +13,17 @@ import com.ejada.gateway.config.AdminAggregationProperties;
 import com.ejada.gateway.config.GatewayRoutesProperties;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.ClientRequest;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -196,6 +205,97 @@ class AdminAggregationServiceTest {
           assertThat(snapshot.details()).containsEntry("message", "connection refused");
         })
         .verifyComplete();
+  }
+
+  @Test
+  void fetchSnapshotPropagatesContextHeadersWhenMissing() {
+    AdminAggregationProperties properties = new AdminAggregationProperties();
+    AdminAggregationProperties.Service service = new AdminAggregationProperties.Service();
+    service.setId("tenant-service");
+    service.setUri(URI.create("http://tenant-service"));
+    properties.getAggregation().setServices(List.of(service));
+
+    AtomicReference<ClientRequest> captured = new AtomicReference<>();
+    WebClient.Builder webClientBuilder = WebClient.builder()
+        .exchangeFunction(request -> {
+          captured.set(request);
+          return Mono.just(ClientResponse.create(HttpStatus.OK)
+              .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+              .body("{\"status\":\"UP\"}")
+              .build());
+        });
+
+    ContextManager.setCorrelationId("corr-123");
+    ContextManager.Tenant.set("tenant-xyz");
+
+    try {
+      AdminAggregationService aggregationService = new AdminAggregationService(
+          webClientBuilder,
+          properties,
+          new GatewayRoutesProperties(),
+          provider(null),
+          provider(null),
+          provider(null));
+
+      StepVerifier.create(aggregationService.collectDownstreamSnapshots())
+          .assertNext(snapshots -> assertThat(snapshots).hasSize(1))
+          .verifyComplete();
+    } finally {
+      ContextManager.clearCorrelationId();
+      ContextManager.Tenant.clear();
+    }
+
+    ClientRequest request = captured.get();
+    assertThat(request).isNotNull();
+    assertThat(request.headers().getFirst(HeaderNames.CORRELATION_ID)).isEqualTo("corr-123");
+    assertThat(request.headers().getFirst(HeaderNames.X_TENANT_ID)).isEqualTo("tenant-xyz");
+  }
+
+  @Test
+  void fetchSnapshotDoesNotOverrideExplicitHeaders() {
+    AdminAggregationProperties properties = new AdminAggregationProperties();
+    AdminAggregationProperties.Service service = new AdminAggregationProperties.Service();
+    service.setId("catalog-service");
+    service.setUri(URI.create("http://catalog-service"));
+    service.setHeaders(Map.of(
+        HeaderNames.CORRELATION_ID, "preset-correlation",
+        HeaderNames.X_TENANT_ID, "preset-tenant"));
+    properties.getAggregation().setServices(List.of(service));
+
+    AtomicReference<ClientRequest> captured = new AtomicReference<>();
+    WebClient.Builder webClientBuilder = WebClient.builder()
+        .exchangeFunction(request -> {
+          captured.set(request);
+          return Mono.just(ClientResponse.create(HttpStatus.OK)
+              .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+              .body("{\"status\":\"UP\"}")
+              .build());
+        });
+
+    ContextManager.setCorrelationId("corr-override");
+    ContextManager.Tenant.set("tenant-override");
+
+    try {
+      AdminAggregationService aggregationService = new AdminAggregationService(
+          webClientBuilder,
+          properties,
+          new GatewayRoutesProperties(),
+          provider(null),
+          provider(null),
+          provider(null));
+
+      StepVerifier.create(aggregationService.collectDownstreamSnapshots())
+          .assertNext(snapshots -> assertThat(snapshots).hasSize(1))
+          .verifyComplete();
+    } finally {
+      ContextManager.clearCorrelationId();
+      ContextManager.Tenant.clear();
+    }
+
+    ClientRequest request = captured.get();
+    assertThat(request).isNotNull();
+    assertThat(request.headers().getFirst(HeaderNames.CORRELATION_ID)).isEqualTo("preset-correlation");
+    assertThat(request.headers().getFirst(HeaderNames.X_TENANT_ID)).isEqualTo("preset-tenant");
   }
 }
 
