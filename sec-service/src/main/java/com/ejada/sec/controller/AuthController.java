@@ -57,7 +57,7 @@ public class AuthController extends BaseResponseController {
     return respond(() -> passwordResetService.reset(req));
   }
 
-  @PostMapping("admin/login")
+  @PostMapping("/admin/login")
   public ResponseEntity<BaseResponse<SuperadminAuthResponse>> Adminlogin(@Valid @RequestBody SuperadminLoginRequest request) {
     return respond(() -> superadminService.login(request));
   }
