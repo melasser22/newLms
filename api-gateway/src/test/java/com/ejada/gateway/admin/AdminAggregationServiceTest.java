@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.ejada.gateway.admin.model.AdminServiceSnapshot;
+import com.ejada.gateway.admin.model.AdminServiceState;
 import com.ejada.gateway.admin.model.DetailedHealthStatus;
 import com.ejada.gateway.config.AdminAggregationProperties;
 import com.ejada.gateway.config.GatewayRoutesProperties;
@@ -162,6 +164,38 @@ class AdminAggregationServiceTest {
         .verifyComplete();
 
     Mockito.verify(aggregationService).fetchDetailedHealth();
+  }
+
+  @Test
+  void collectDownstreamSnapshotsCapturesFailuresAsSnapshots() {
+    AdminAggregationProperties properties = new AdminAggregationProperties();
+    AdminAggregationProperties.Service downstream = new AdminAggregationProperties.Service();
+    downstream.setId("billing-service");
+    downstream.setUri(URI.create("http://billing-service"));
+    downstream.setRequired(false);
+    properties.getAggregation().setServices(List.of(downstream));
+
+    WebClient.Builder webClientBuilder = WebClient.builder()
+        .exchangeFunction(request -> Mono.error(new IllegalStateException("connection refused")));
+
+    AdminAggregationService aggregationService = new AdminAggregationService(
+        webClientBuilder,
+        properties,
+        new GatewayRoutesProperties(),
+        provider(null),
+        provider(null),
+        provider(null));
+
+    StepVerifier.create(aggregationService.collectDownstreamSnapshots())
+        .assertNext(snapshots -> {
+          assertThat(snapshots).hasSize(1);
+          AdminServiceSnapshot snapshot = snapshots.get(0);
+          assertThat(snapshot.serviceId()).isEqualTo("billing-service");
+          assertThat(snapshot.required()).isFalse();
+          assertThat(snapshot.state()).isEqualTo(AdminServiceState.DOWN);
+          assertThat(snapshot.details()).containsEntry("message", "connection refused");
+        })
+        .verifyComplete();
   }
 }
 

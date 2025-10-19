@@ -17,6 +17,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -181,7 +182,7 @@ public class AdminAggregationService {
             tuple.getT1(),
             Instant.now()))
         .onErrorResume(ex -> {
-          LOGGER.warn("Admin aggregation failed for {}", service.getId(), ex);
+          logAggregationFailure(service, ex);
           return Mono.just(AdminServiceSnapshot.failure(
               service.getId(),
               service.getDeployment(),
@@ -189,5 +190,29 @@ public class AdminAggregationService {
               ex,
               Instant.now()));
         });
+  }
+
+  private void logAggregationFailure(AdminAggregationProperties.Service service, Throwable failure) {
+    String serviceId = service.getId();
+    String deployment = service.getDeployment();
+    String failureMessage = Optional.ofNullable(failure.getMessage())
+        .filter(StringUtils::hasText)
+        .orElse(failure.getClass().getSimpleName());
+    String message = "Admin aggregation failed for {} (deployment: {})";
+    if (service.isRequired()) {
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.warn(message, serviceId, deployment, failure);
+      } else {
+        LOGGER.warn(message + ": {}", serviceId, deployment, failureMessage);
+      }
+      return;
+    }
+
+    String optionalMessage = "Optional " + message;
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug(optionalMessage, serviceId, deployment, failure);
+    } else {
+      LOGGER.info(optionalMessage + ": {}", serviceId, deployment, failureMessage);
+    }
   }
 }
