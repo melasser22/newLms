@@ -17,7 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient;
  * against the real HTTP layer while still relying on lightweight test
  * doubles for JWT and circuit breaker behaviour.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ContextConfiguration(classes = {
     TestGatewayConfiguration.class,
     RedisTestConfiguration.class,

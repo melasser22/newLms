@@ -11,11 +11,12 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.client.reactive.ClientHttpConnector;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.ClientRequest;
@@ -67,6 +68,7 @@ public class WebClientConfig {
   }
 
   @Bean
+  @Primary
   @LoadBalanced
   @RefreshScope
   public WebClient.Builder loadBalancedWebClientBuilder(ClientHttpConnector gatewayClientHttpConnector,

@@ -81,7 +81,7 @@ public class IpFilteringGatewayFilter implements GlobalFilter, Ordered {
 
     Mono<Boolean> rawIsMember = setOperations.isMember(blacklistKey, clientIp);
     if (rawIsMember == null) {
-      rawIsMember = Mono.just(false);
+      rawIsMember = Mono.empty();
     }
     Mono<Boolean> blacklistCheck = rawIsMember
         .switchIfEmpty(Mono.defer(() -> {
