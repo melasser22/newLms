@@ -63,6 +63,7 @@ shared:
         - "/actuator/health"
         - "/v3/api-docs/**"
         - "/swagger-ui/**"
+        - "/api/auth/**"
         - "/api/*/v3/api-docs/**"
         - "/api/*/swagger-ui/**"
       disable-csrf: false
