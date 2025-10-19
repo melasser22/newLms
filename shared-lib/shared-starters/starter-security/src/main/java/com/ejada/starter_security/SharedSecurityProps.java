@@ -117,7 +117,7 @@ public class SharedSecurityProps implements BaseStarterProperties {
         "/api/*/swagger-ui.html",
         "/api/*/*/swagger-ui.html",
         // common public endpoints (with and without /api version prefix):
-        "/auth/**", "/api/*/auth/**",
+        "/auth/**", "/api/auth/**", "/api/*/auth/**",
         "/login", "/register",
         "/config/**"
     };
@@ -127,7 +127,7 @@ public class SharedSecurityProps implements BaseStarterProperties {
 
     /** Patterns that should bypass CSRF checks when CSRF is enabled. */
     private String[] csrfIgnore = new String[]{
-        "/auth/**", "/api/*/auth/**",
+        "/auth/**", "/api/auth/**", "/api/*/auth/**",
         "/login", "/register"
     };
 
@@ -176,11 +176,22 @@ public class SharedSecurityProps implements BaseStarterProperties {
     /** Require presence of X-Tenant-Id header on authenticated requests. */
     private boolean requireTenantHeader = false;
 
+    /**
+     * Request path patterns (Ant-style) where the tenant header is optional even if globally
+     * required. Useful for platform-level endpoints such as superadmin APIs.
+     */
+    private String[] headerOptionalPatterns = new String[0];
+
     /** Enable request path/body validation to prevent cross-tenant access. */
     private boolean preventCrossTenantAccess = false;
 
     /** JSON field names inspected when validating request bodies. */
     private String[] bodyTenantFields = new String[]{"tenantId", "tenant_id"};
+
+    public void setHeaderOptionalPatterns(String[] headerOptionalPatterns) {
+      this.headerOptionalPatterns =
+          headerOptionalPatterns != null ? headerOptionalPatterns : new String[0];
+    }
   }
 
   public void setHs256(Hs256 hs256) {
