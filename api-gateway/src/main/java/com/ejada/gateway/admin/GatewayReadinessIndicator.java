@@ -39,15 +39,27 @@ public class GatewayReadinessIndicator implements ReactiveHealthIndicator {
     boolean redisUp = detailed.redis() == null
         || detailed.redis().isUp()
         || detailed.redis().isUnknown();
-    boolean downstreamHealthy = detailed.downstreamServices().stream()
+    boolean redisDown = detailed.redis() != null
+        && !detailed.redis().isUp()
+        && !detailed.redis().isUnknown();
+    boolean downstreamDown = detailed.downstreamServices().stream()
         .filter(AdminServiceSnapshot::required)
-        .allMatch(snapshot -> snapshot.state() != AdminServiceState.DOWN);
+        .anyMatch(snapshot -> snapshot.state() == AdminServiceState.DOWN);
+    boolean downstreamIndeterminate = detailed.downstreamServices().stream()
+        .filter(AdminServiceSnapshot::required)
+        .anyMatch(snapshot -> snapshot.state() == AdminServiceState.UNKNOWN
+            || snapshot.state() == AdminServiceState.DEGRADED);
     boolean breakersHealthy = detailed.circuitBreakers().stream()
         .noneMatch(cb -> "open".equalsIgnoreCase(cb.state()));
 
-    Health.Builder builder = (redisUp && downstreamHealthy && breakersHealthy)
-        ? Health.up()
-        : Health.down();
+    Health.Builder builder;
+    if (!redisUp || redisDown || downstreamDown || !breakersHealthy) {
+      builder = Health.down();
+    } else if (downstreamIndeterminate) {
+      builder = Health.status("DEGRADED");
+    } else {
+      builder = Health.up();
+    }
     builder.withDetail("redis", detailed.redis());
     builder.withDetail("downstreamServices", detailed.downstreamServices());
     builder.withDetail("circuitBreakers", detailed.circuitBreakers());
