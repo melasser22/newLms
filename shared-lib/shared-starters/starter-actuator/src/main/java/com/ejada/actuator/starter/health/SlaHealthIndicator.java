@@ -29,7 +29,7 @@ public class SlaHealthIndicator extends AbstractHealthIndicator {
     Result result = calculator.calculate();
     boolean slaMet = result.isSlaMet();
 
-    builder.status(slaMet ? Status.UP : Status.DOWN)
+    builder.status(Status.UP)
         .withDetail("sla_compliant", slaMet)
         .withDetail("availability_percent", round(result.getSli()))
         .withDetail("sli", round(result.getSli()))
