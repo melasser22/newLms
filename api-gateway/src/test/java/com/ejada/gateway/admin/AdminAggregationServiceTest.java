@@ -210,6 +210,39 @@ class AdminAggregationServiceTest {
   }
 
   @Test
+  void collectDownstreamSnapshotsTreatsUnauthorizedAsUnknown() {
+    AdminAggregationProperties properties = new AdminAggregationProperties();
+    AdminAggregationProperties.Service downstream = new AdminAggregationProperties.Service();
+    downstream.setId("setup-service");
+    downstream.setUri(URI.create("http://gateway/api/setup/core"));
+    properties.getAggregation().setServices(List.of(downstream));
+
+    WebClient.Builder webClientBuilder = WebClient.builder()
+        .exchangeFunction(request -> Mono.just(ClientResponse.create(HttpStatus.UNAUTHORIZED)
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .body("Unauthorized")
+            .build()));
+
+    AdminAggregationService aggregationService = new AdminAggregationService(
+        webClientBuilder,
+        properties,
+        new GatewayRoutesProperties(),
+        provider(null),
+        provider(null),
+        provider(null));
+
+    StepVerifier.create(aggregationService.collectDownstreamSnapshots())
+        .assertNext(snapshots -> {
+          assertThat(snapshots).hasSize(1);
+          AdminServiceSnapshot snapshot = snapshots.get(0);
+          assertThat(snapshot.serviceId()).isEqualTo("setup-service");
+          assertThat(snapshot.state()).isEqualTo(AdminServiceState.UNKNOWN);
+          assertThat(snapshot.status()).isEqualTo(HttpStatus.UNAUTHORIZED.name());
+        })
+        .verifyComplete();
+  }
+
+  @Test
   void collectDownstreamSnapshotsShortCircuitsOptionalServicesWithoutInstances() {
     AdminAggregationProperties properties = new AdminAggregationProperties();
     AdminAggregationProperties.Service optionalService = new AdminAggregationProperties.Service();
