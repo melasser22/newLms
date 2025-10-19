@@ -65,6 +65,8 @@ spring:
         locator:
           enabled: true
           lower-case-service-id: true
+      healthcheck:
+        enabled: false
   jpa:
     open-in-view: false
   sql:
@@ -103,6 +105,9 @@ shared:
 
 app:
   env: dev
+  admin:
+    aggregation:
+      enabled: false
 
 jasypt:
   encryptor:
@@ -122,6 +127,20 @@ logging:
     reactor.netty: DEBUG
 
 management:
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+    metrics:
+      enabled: false
   health:
     kubernetes:
       enabled: true
+    discoverycomposite:
+      enabled: false
+    circuitbreakers:
+      enabled: false
+    reactive-discovery-clients:
+      enabled: false
+    gateway:
+      enabled: false
