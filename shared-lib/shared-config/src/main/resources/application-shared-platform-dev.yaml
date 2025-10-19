@@ -30,7 +30,7 @@ management:
     web:
       base-path: /actuator
       exposure:
-        include: health,info,metrics,prometheus,beans,conditions,configprops,loggers,threaddump
+        include: "*"
   endpoint:
     health:
       show-details: always
@@ -60,18 +60,19 @@ shared:
     resource-server:
       enabled: true
       permit-all:
-        - "/actuator/health"
+        - "/actuator/**"
         - "/v3/api-docs/**"
         - "/swagger-ui/**"
+        - "/swagger-ui.html"
         - "/api/auth/**"
         - "/api/*/v3/api-docs/**"
         - "/api/*/swagger-ui/**"
       disable-csrf: false
-      verify-tenant-claim: true
+      verify-tenant-claim: false
     stateless: true
     tenant-verification:
-      strict-mode: true
-      require-tenant-header: true
+      strict-mode: false
+      require-tenant-header: false
     roles-claim: roles
     tenant-claim: tenant
 

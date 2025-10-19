@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: optional:classpath:application-shared-platform-dev.yaml
   cache:
     type: simple
   data:
