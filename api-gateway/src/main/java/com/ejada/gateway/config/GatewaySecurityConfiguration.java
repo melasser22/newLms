@@ -206,6 +206,7 @@ public class GatewaySecurityConfiguration {
   @Bean
   public TenantAuthorizationManager tenantAuthorizationManager(
       CoreAutoConfiguration.CoreProps coreProps,
+      SharedSecurityProps sharedSecurityProps,
       ReactiveStringRedisTemplate redisTemplate,
       SubscriptionCacheService subscriptionCacheService,
       GatewayRateLimitProperties gatewayRateLimitProperties,
@@ -213,8 +214,8 @@ public class GatewaySecurityConfiguration {
       ObjectProvider<ObjectMapper> fallbackObjectMapper) {
     ObjectMapper mapper = Optional.ofNullable(primaryObjectMapper.getIfAvailable())
         .orElseGet(fallbackObjectMapper::getIfAvailable);
-    return new TenantAuthorizationManager(coreProps, redisTemplate, subscriptionCacheService,
-        gatewayRateLimitProperties, mapper);
+    return new TenantAuthorizationManager(coreProps, sharedSecurityProps, redisTemplate,
+        subscriptionCacheService, gatewayRateLimitProperties, mapper);
   }
 
   @Bean
