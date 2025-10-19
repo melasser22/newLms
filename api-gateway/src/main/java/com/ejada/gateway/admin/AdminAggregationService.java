@@ -26,10 +26,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -203,12 +205,30 @@ public class AdminAggregationService {
             Instant.now()))
         .onErrorResume(ex -> {
           logAggregationFailure(service, ex);
+          Instant timestamp = Instant.now();
+          if (ex instanceof WebClientResponseException httpEx) {
+            HttpStatus status = httpEx.getStatusCode();
+            if (status == HttpStatus.UNAUTHORIZED || status == HttpStatus.FORBIDDEN) {
+              return Mono.just(AdminServiceSnapshot.unauthorized(
+                  service.getId(),
+                  service.getDeployment(),
+                  service.isRequired(),
+                  httpEx,
+                  timestamp));
+            }
+            return Mono.just(AdminServiceSnapshot.httpFailure(
+                service.getId(),
+                service.getDeployment(),
+                service.isRequired(),
+                httpEx,
+                timestamp));
+          }
           return Mono.just(AdminServiceSnapshot.failure(
               service.getId(),
               service.getDeployment(),
               service.isRequired(),
               ex,
-              Instant.now()));
+              timestamp));
         });
   }
 
