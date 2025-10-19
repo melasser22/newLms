@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.gateway.filter.factory.RequestSizeGatewayFilterFactory;
+import org.springframework.cloud.gateway.filter.factory.SpringCloudCircuitBreakerFilterFactory;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.route.RouteLocator;
@@ -50,6 +51,7 @@ public class GatewayRoutesConfiguration {
       ObjectProvider<ResponseBodyTransformationGatewayFilterFactory> responseTransformationFactory,
       ObjectProvider<RequestSizeGatewayFilterFactory> requestSizeFilterFactory,
       ObjectProvider<VersionNormalizationFilter> versionNormalizationFilter,
+      ObjectProvider<SpringCloudCircuitBreakerFilterFactory> circuitBreakerFilterFactory,
       TenantCircuitBreakerMetrics circuitBreakerMetrics) {
     RouteLocatorBuilder.Builder routes = builder.routes();
 
@@ -104,6 +106,8 @@ public class GatewayRoutesConfiguration {
 
     LOGGER.info("Registering {} gateway routes ({} static, {} dynamic)",
         aggregated.size(), staticRouteCount.get(), dynamicRouteCount.get());
+
+    boolean circuitBreakerAvailable = circuitBreakerFilterFactory.getIfAvailable() != null;
 
     for (GatewayRoutesProperties.ServiceRoute route : aggregated.values()) {
       GatewayRoutesProperties.ServiceRoute.Resilience resilience = route.getResilience();
@@ -167,10 +171,17 @@ public class GatewayRoutesConfiguration {
               }
               responseTransformationFactory.ifAvailable(factory -> filters.filter(factory.apply(route.getId())));
               if (resilience.isEnabled()) {
-                filters.circuitBreaker(config -> {
-                  config.setName(resilience.resolvedCircuitBreakerName(route.getId()));
-                  config.setFallbackUri(resilience.resolvedFallbackUri(route.getId()));
-                });
+                if (circuitBreakerAvailable) {
+                  filters.circuitBreaker(config -> {
+                    config.setName(resilience.resolvedCircuitBreakerName(route.getId()));
+                    config.setFallbackUri(resilience.resolvedFallbackUri(route.getId()));
+                  });
+                } else {
+                  LOGGER.warn(
+                      "Circuit breaker requested for route {} but the Spring Cloud circuit breaker filter factory is unavailable."
+                          + " Skipping circuit breaker configuration.",
+                      route.getId());
+                }
 
                 // Bulkhead filter was removed in newer Gateway releases; circuit breaker provides
                 // the primary resilience mechanism. Retain compatibility by skipping bulkhead

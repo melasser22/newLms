@@ -54,6 +54,7 @@ class GatewayRoutesConfigurationTest {
         emptyProvider(),
         emptyProvider(),
         emptyProvider(),
+        emptyProvider(),
         new TenantCircuitBreakerMetrics(new SimpleMeterRegistry())))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("No gateway routes were configured");
@@ -71,6 +72,7 @@ class GatewayRoutesConfigurationTest {
 
     RouteLocator locator = configuration.gatewayRoutes(routeLocatorBuilder,
         properties,
+        emptyProvider(),
         emptyProvider(),
         emptyProvider(),
         emptyProvider(),
