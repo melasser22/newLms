@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 /**
  * Captures the outcome of aggregating a single downstream service's status.
@@ -63,6 +64,42 @@ public record AdminServiceSnapshot(
     details.put("message", Optional.ofNullable(failure.getMessage()).orElse("Unavailable"));
     return new AdminServiceSnapshot(serviceId, deployment, required, state,
         status, -1, timestamp, Collections.unmodifiableMap(details));
+  }
+
+  public static AdminServiceSnapshot unauthorized(String serviceId,
+      String deployment,
+      boolean required,
+      WebClientResponseException failure,
+      Instant timestamp) {
+    Map<String, Object> details = new LinkedHashMap<>();
+    details.put("error", failure.getClass().getSimpleName());
+    details.put("status", failure.getStatusCode().value());
+    String response = failure.getResponseBodyAsString();
+    if (response != null && !response.isBlank()) {
+      details.put("message", response.trim());
+    } else {
+      details.put("message", Optional.ofNullable(failure.getStatusText()).orElse("Unauthorized"));
+    }
+    return new AdminServiceSnapshot(serviceId, deployment, required, AdminServiceState.UNKNOWN,
+        failure.getStatusCode().name(), -1, timestamp, Collections.unmodifiableMap(details));
+  }
+
+  public static AdminServiceSnapshot httpFailure(String serviceId,
+      String deployment,
+      boolean required,
+      WebClientResponseException failure,
+      Instant timestamp) {
+    Map<String, Object> details = new LinkedHashMap<>();
+    details.put("error", failure.getClass().getSimpleName());
+    details.put("status", failure.getStatusCode().value());
+    String response = failure.getResponseBodyAsString();
+    if (response != null && !response.isBlank()) {
+      details.put("message", response.trim());
+    } else {
+      details.put("message", Optional.ofNullable(failure.getMessage()).orElse("Unavailable"));
+    }
+    return new AdminServiceSnapshot(serviceId, deployment, required, AdminServiceState.DOWN,
+        failure.getStatusCode().name(), -1, timestamp, Collections.unmodifiableMap(details));
   }
 
   private static String extractStatus(Map<String, Object> payload) {
