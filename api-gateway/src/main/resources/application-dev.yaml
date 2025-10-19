@@ -13,6 +13,14 @@ spring:
       health-check:
         refetch-instances: true
         interval: 5s
+    kubernetes:
+      enabled: true
+      discovery:
+        enabled: true
+        all-namespaces: false
+        primary-port-name: http
+      reload:
+        enabled: true
     discovery:
       client:
         simple:
@@ -52,6 +60,11 @@ spring:
                 instance-id: security-service-dev
                 metadata:
                   management.context-path: /sec
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
   jpa:
     open-in-view: false
   sql:
@@ -107,3 +120,8 @@ logging:
     org.springframework.cloud.gateway: DEBUG
     org.springframework.web.server: DEBUG
     reactor.netty: DEBUG
+
+management:
+  health:
+    kubernetes:
+      enabled: true
