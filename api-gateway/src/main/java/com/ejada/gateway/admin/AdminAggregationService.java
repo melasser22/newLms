@@ -40,20 +40,20 @@ public class AdminAggregationService {
   private static final ParameterizedTypeReference<Map<String, Object>> MAP_TYPE =
       new ParameterizedTypeReference<>() {};
 
-  private final WebClient.Builder webClientBuilder;
+  private final WebClient gatewayWebClient;
   private final AdminAggregationProperties adminProperties;
   private final GatewayRoutesProperties routesProperties;
   private final ReactiveStringRedisTemplate redisTemplate;
   private final CircuitBreakerRegistry circuitBreakerRegistry;
   private final LoadBalancerHealthCheckAggregator loadBalancerAggregator;
 
-  public AdminAggregationService(WebClient.Builder webClientBuilder,
+  public AdminAggregationService(WebClient gatewayWebClient,
       AdminAggregationProperties adminProperties,
       GatewayRoutesProperties routesProperties,
       ObjectProvider<ReactiveStringRedisTemplate> redisTemplateProvider,
       ObjectProvider<CircuitBreakerRegistry> circuitBreakerRegistryProvider,
       ObjectProvider<LoadBalancerHealthCheckAggregator> loadBalancerAggregatorProvider) {
-    this.webClientBuilder = webClientBuilder;
+    this.gatewayWebClient = gatewayWebClient;
     this.adminProperties = adminProperties;
     this.routesProperties = routesProperties;
     this.redisTemplate = redisTemplateProvider.getIfAvailable();
@@ -160,7 +160,7 @@ public class AdminAggregationService {
 
   private Mono<AdminServiceSnapshot> fetchSnapshot(AdminAggregationProperties.Service service,
       Duration defaultTimeout) {
-    WebClient client = webClientBuilder.clone()
+    WebClient client = gatewayWebClient.mutate()
         .baseUrl(service.getUri().toString())
         .build();
     Duration timeout = service.resolveTimeout(defaultTimeout);

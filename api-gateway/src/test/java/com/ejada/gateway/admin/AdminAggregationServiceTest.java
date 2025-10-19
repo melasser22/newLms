@@ -88,9 +88,9 @@ class AdminAggregationServiceTest {
     invalidService.setUri(URI.create("http://localhost:9000"));
     properties.getAggregation().setServices(List.of(invalidService));
 
-    WebClient.Builder builder = WebClient.builder();
+    WebClient webClient = WebClient.builder().build();
     AdminAggregationService aggregationService = new AdminAggregationService(
-        builder,
+        webClient,
         properties,
         new GatewayRoutesProperties(),
         provider(null),
@@ -112,9 +112,9 @@ class AdminAggregationServiceTest {
     invalidService.setUri(URI.create("http://localhost:9000"));
     properties.getAggregation().setServices(List.of(invalidService));
 
-    WebClient.Builder builder = WebClient.builder();
+    WebClient webClient = WebClient.builder().build();
     AdminAggregationService aggregationService = new AdminAggregationService(
-        builder,
+        webClient,
         properties,
         new GatewayRoutesProperties(),
         provider(null),
