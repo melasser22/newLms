@@ -11,6 +11,7 @@ import com.ejada.gateway.admin.model.DetailedHealthStatus.RedisHealthStatus;
 import com.ejada.gateway.config.AdminAggregationProperties;
 import com.ejada.gateway.config.GatewayRoutesProperties;
 import com.ejada.gateway.loadbalancer.LoadBalancerHealthCheckAggregator;
+import com.ejada.gateway.loadbalancer.LoadBalancerHealthCheckAggregator.Availability;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.micrometer.core.annotation.Timed;
 import java.time.Duration;
@@ -164,6 +165,11 @@ public class AdminAggregationService {
 
   private Mono<AdminServiceSnapshot> fetchSnapshot(AdminAggregationProperties.Service service,
       Duration defaultTimeout) {
+    Optional<AdminServiceSnapshot> shortCircuit = shortCircuitIfNoInstances(service);
+    if (shortCircuit.isPresent()) {
+      return Mono.just(shortCircuit.get());
+    }
+
     WebClient client = webClientBuilder.clone()
         .baseUrl(service.getUri().toString())
         .build();
@@ -204,6 +210,29 @@ public class AdminAggregationService {
               ex,
               Instant.now()));
         });
+  }
+
+  private Optional<AdminServiceSnapshot> shortCircuitIfNoInstances(AdminAggregationProperties.Service service) {
+    if (service.isRequired() || loadBalancerAggregator == null) {
+      return Optional.empty();
+    }
+
+    List<LoadBalancerHealthCheckAggregator.InstanceState> instances =
+        loadBalancerAggregator.snapshot(service.getId());
+    boolean hasReachableInstance = instances.stream()
+        .anyMatch(state -> state.getAvailability() != Availability.DOWN);
+    if (!instances.isEmpty() && hasReachableInstance) {
+      return Optional.empty();
+    }
+
+    IllegalStateException failure = new IllegalStateException("No service instances discovered");
+    logAggregationFailure(service, failure);
+    return Optional.of(AdminServiceSnapshot.failure(
+        service.getId(),
+        service.getDeployment(),
+        service.isRequired(),
+        failure,
+        Instant.now()));
   }
 
   private void logAggregationFailure(AdminAggregationProperties.Service service, Throwable failure) {
