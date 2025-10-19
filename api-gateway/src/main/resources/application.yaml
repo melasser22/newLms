@@ -128,12 +128,20 @@ management:
   endpoint:
     health:
       show-details: always
+      show-components: always
       probes:
         enabled: true
     metrics:
       enabled: true
     gateway:
       enabled: true
+  health:
+    circuitbreakers:
+      enabled: false
+    discovery:
+      enabled: false
+    loadbalancer:
+      enabled: false
   tracing:
     sampling:
       probability: 1.0
