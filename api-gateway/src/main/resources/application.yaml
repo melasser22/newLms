@@ -691,7 +691,7 @@ gateway:
     security-auth:
       <<: &security-route-base
         uri: lb://security-service
-        prefix-path: /sec/api/v1
+        prefix-path: /api/v1
         request-headers:
           X-Route-Source: static
         resilience: &security-resilience-base
