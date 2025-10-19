@@ -11,8 +11,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.PathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.util.UrlPathHelper;
 
 /**
  * Validates tenant context against inbound headers to guard against tampering.
@@ -23,9 +26,13 @@ class TenantContextValidatorInterceptor implements HandlerInterceptor {
       LoggerFactory.getLogger(TenantContextValidatorInterceptor.class);
 
   private final SharedSecurityProps props;
+  private final PathMatcher pathMatcher = new AntPathMatcher();
+  private final UrlPathHelper pathHelper = new UrlPathHelper();
 
   TenantContextValidatorInterceptor(SharedSecurityProps props) {
     this.props = props;
+    this.pathHelper.setRemoveSemicolonContent(true);
+    this.pathHelper.setUrlDecode(false);
   }
 
   @Override
@@ -52,14 +59,19 @@ class TenantContextValidatorInterceptor implements HandlerInterceptor {
     String headerTenant = normalize(request.getHeader(HeaderNames.X_TENANT_ID));
     String contextTenant = normalize(ContextManager.Tenant.get());
 
-    if (verification.isRequireTenantHeader() && headerTenant == null) {
+    boolean headerOptional = isTenantHeaderOptional(request, verification);
+
+    if (verification.isRequireTenantHeader() && !headerOptional && headerTenant == null) {
       logMismatch("Missing required tenant header", headerTenant, contextTenant);
       writeViolation(response, HttpServletResponse.SC_BAD_REQUEST,
           "TENANT_HEADER_REQUIRED", "X-Tenant-Id header is required");
       return false;
     }
 
-    if (headerTenant != null && contextTenant != null && !Objects.equals(headerTenant, contextTenant)) {
+    if (!headerOptional
+        && headerTenant != null
+        && contextTenant != null
+        && !Objects.equals(headerTenant, contextTenant)) {
       logMismatch("Tenant context mismatch detected", headerTenant, contextTenant);
       if (verification.isStrictMode()) {
         writeViolation(response, HttpServletResponse.SC_BAD_REQUEST,
@@ -69,6 +81,24 @@ class TenantContextValidatorInterceptor implements HandlerInterceptor {
     }
 
     return true;
+  }
+
+  private boolean isTenantHeaderOptional(HttpServletRequest request,
+                                         SharedSecurityProps.TenantVerification verification) {
+    String[] patterns = verification.getHeaderOptionalPatterns();
+    if (patterns == null || patterns.length == 0) {
+      return false;
+    }
+    String requestPath = pathHelper.getPathWithinApplication(request);
+    for (String pattern : patterns) {
+      if (!StringUtils.hasText(pattern)) {
+        continue;
+      }
+      if (pathMatcher.match(pattern.trim(), requestPath)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void writeViolation(HttpServletResponse response,
