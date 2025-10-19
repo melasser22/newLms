@@ -80,6 +80,10 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     HttpStatus status = determineStatus(ex);
     String errorCode = determineErrorCode(ex, status);
     String correlationId = resolveCorrelationId(exchange);
+    if (!StringUtils.hasText(correlationId)) {
+      correlationId = java.util.UUID.randomUUID().toString();
+      exchange.getAttributes().put(GatewayRequestAttributes.CORRELATION_ID, correlationId);
+    }
     String tenantId = resolveTenantId(exchange);
     String message = enhanceMessage(determineMessage(ex, status), status, correlationId);
     Map<String, Object> diagnostics = buildDiagnostics(exchange, status, errorCode, message, correlationId, tenantId);
@@ -98,6 +102,9 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
 
     response.setStatusCode(status);
     response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+    if (StringUtils.hasText(correlationId)) {
+      response.getHeaders().set(HeaderNames.CORRELATION_ID, correlationId);
+    }
 
     try {
       BaseResponse<Map<String, Object>> errorResponse = BaseResponse.error(errorCode, message, diagnostics);
