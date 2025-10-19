@@ -66,13 +66,27 @@ class TenantContextValidatorInterceptorTest {
     assertEquals(HttpServletResponse.SC_OK, response.getStatus());
   }
 
+  @Test
+  void allowsMissingHeaderWhenOptionalPatternMatches() throws Exception {
+    TenantContextValidatorInterceptor interceptor =
+        newInterceptor(false, true, true, "/api/v1/auth/admin/**");
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setRequestURI("/api/v1/auth/admin/login");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+
+    assertTrue(interceptor.preHandle(request, response, new Object()));
+    assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+  }
+
   private TenantContextValidatorInterceptor newInterceptor(boolean verify,
                                                             boolean strict,
-                                                            boolean requireHeader) {
+                                                            boolean requireHeader,
+                                                            String... optionalPatterns) {
     SharedSecurityProps props = new SharedSecurityProps();
     props.getResourceServer().setVerifyTenantClaim(verify);
     props.getTenantVerification().setStrictMode(strict);
     props.getTenantVerification().setRequireTenantHeader(requireHeader);
+    props.getTenantVerification().setHeaderOptionalPatterns(optionalPatterns);
     return new TenantContextValidatorInterceptor(props);
   }
 }

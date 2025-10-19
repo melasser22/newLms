@@ -158,6 +158,9 @@ shared:
     tenant-verification:
       strict-mode: true
       require-tenant-header: true
+      header-optional-patterns:
+        - /api/v1/auth/admin/**
+        - /api/v1/superadmin/**
     stateless: true
     roles-claim: roles
     tenant-claim: tenant
