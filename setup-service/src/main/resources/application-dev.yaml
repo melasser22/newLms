@@ -1,4 +1,6 @@
 spring:
+  main:
+    lazy-initialization: true
   config:
     import:
       - optional:classpath:application-shared-platform-dev.yaml
@@ -22,6 +24,10 @@ app:
     client-id: ejada-setup-dev
   jpa:
     show-sql: true
+
+logging:
+  level:
+    org.springframework: WARN
 
 shared:
   openapi:
