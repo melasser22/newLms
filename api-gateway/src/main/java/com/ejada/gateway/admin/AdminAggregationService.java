@@ -30,15 +30,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientRequestException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -215,11 +213,12 @@ public class AdminAggregationService {
         .onErrorResume(ex -> {
           logAggregationFailure(service, ex);
           AdminServiceState state = classifyFailure(ex);
-          String status = mapFailureStatus(state);
+          String failureStatus = mapFailureStatus(state);
           Instant timestamp = Instant.now();
           if (ex instanceof WebClientResponseException httpEx) {
-            HttpStatus status = httpEx.getStatusCode();
-            if (status == HttpStatus.UNAUTHORIZED || status == HttpStatus.FORBIDDEN) {
+            HttpStatusCode statusCode = httpEx.getStatusCode();
+            if (statusCode.isSameCodeAs(HttpStatus.UNAUTHORIZED)
+                || statusCode.isSameCodeAs(HttpStatus.FORBIDDEN)) {
               return Mono.just(AdminServiceSnapshot.unauthorized(
                   service.getId(),
                   service.getDeployment(),
@@ -239,7 +238,7 @@ public class AdminAggregationService {
               service.getDeployment(),
               service.isRequired(),
               state,
-              status,
+              failureStatus,
               ex,
               timestamp));
         });
