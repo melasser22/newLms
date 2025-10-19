@@ -11,9 +11,11 @@ import com.ejada.gateway.admin.model.AdminServiceState;
 import com.ejada.gateway.admin.model.DetailedHealthStatus;
 import com.ejada.gateway.config.AdminAggregationProperties;
 import com.ejada.gateway.config.GatewayRoutesProperties;
+import com.ejada.gateway.loadbalancer.LoadBalancerHealthCheckAggregator;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -205,6 +207,45 @@ class AdminAggregationServiceTest {
           assertThat(snapshot.details()).containsEntry("message", "connection refused");
         })
         .verifyComplete();
+  }
+
+  @Test
+  void collectDownstreamSnapshotsShortCircuitsOptionalServicesWithoutInstances() {
+    AdminAggregationProperties properties = new AdminAggregationProperties();
+    AdminAggregationProperties.Service optionalService = new AdminAggregationProperties.Service();
+    optionalService.setId("policy-service");
+    optionalService.setUri(URI.create("lb://policy-service"));
+    optionalService.setRequired(false);
+    properties.getAggregation().setServices(List.of(optionalService));
+
+    AtomicInteger invocationCount = new AtomicInteger();
+    WebClient.Builder webClientBuilder = WebClient.builder()
+        .exchangeFunction(request -> {
+          invocationCount.incrementAndGet();
+          return Mono.error(new AssertionError("WebClient should not be invoked when no instances exist"));
+        });
+
+    LoadBalancerHealthCheckAggregator aggregator = new LoadBalancerHealthCheckAggregator();
+
+    AdminAggregationService aggregationService = new AdminAggregationService(
+        webClientBuilder,
+        properties,
+        new GatewayRoutesProperties(),
+        provider(null),
+        provider(null),
+        provider(aggregator));
+
+    StepVerifier.create(aggregationService.collectDownstreamSnapshots())
+        .assertNext(snapshots -> {
+          assertThat(snapshots).hasSize(1);
+          AdminServiceSnapshot snapshot = snapshots.get(0);
+          assertThat(snapshot.serviceId()).isEqualTo("policy-service");
+          assertThat(snapshot.state()).isEqualTo(AdminServiceState.DOWN);
+          assertThat(snapshot.details()).containsEntry("message", "No service instances discovered");
+        })
+        .verifyComplete();
+
+    assertThat(invocationCount).hasValue(0);
   }
 
   @Test
