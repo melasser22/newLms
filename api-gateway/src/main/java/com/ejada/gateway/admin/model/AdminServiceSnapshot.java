@@ -7,6 +7,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 /**
@@ -81,7 +83,7 @@ public record AdminServiceSnapshot(
       details.put("message", Optional.ofNullable(failure.getStatusText()).orElse("Unauthorized"));
     }
     return new AdminServiceSnapshot(serviceId, deployment, required, AdminServiceState.UNKNOWN,
-        failure.getStatusCode().name(), -1, timestamp, Collections.unmodifiableMap(details));
+        statusCodeName(failure.getStatusCode()), -1, timestamp, Collections.unmodifiableMap(details));
   }
 
   public static AdminServiceSnapshot httpFailure(String serviceId,
@@ -99,7 +101,7 @@ public record AdminServiceSnapshot(
       details.put("message", Optional.ofNullable(failure.getMessage()).orElse("Unavailable"));
     }
     return new AdminServiceSnapshot(serviceId, deployment, required, AdminServiceState.DOWN,
-        failure.getStatusCode().name(), -1, timestamp, Collections.unmodifiableMap(details));
+        statusCodeName(failure.getStatusCode()), -1, timestamp, Collections.unmodifiableMap(details));
   }
 
   private static String extractStatus(Map<String, Object> payload) {
@@ -137,5 +139,12 @@ public record AdminServiceSnapshot(
       };
     }
     return AdminServiceState.UNKNOWN;
+  }
+
+  private static String statusCodeName(HttpStatusCode statusCode) {
+    if (statusCode instanceof HttpStatus httpStatus) {
+      return httpStatus.name();
+    }
+    return statusCode.toString();
   }
 }
