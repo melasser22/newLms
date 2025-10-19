@@ -14,7 +14,7 @@ import org.springframework.boot.actuate.health.Status;
 class SlaHealthIndicatorTest {
 
   @Test
-  void reportsDownWhenSlaIsNotMet() {
+  void remainsUpWhenSlaIsNotMetButFlagsNonCompliance() {
     SharedActuatorProperties props = new SharedActuatorProperties();
     props.getSlaMetrics().setSlaTarget(95.0D);
 
@@ -31,7 +31,7 @@ class SlaHealthIndicatorTest {
 
     Health health = indicator.getHealth(true);
 
-    assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+    assertThat(health.getStatus()).isEqualTo(Status.UP);
     assertThat(health.getDetails()).containsEntry("sla_compliant", false);
   }
 
