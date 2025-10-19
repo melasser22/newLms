@@ -42,11 +42,27 @@ public record AdminServiceSnapshot(
       boolean required,
       Throwable failure,
       Instant timestamp) {
+    return failure(serviceId,
+        deployment,
+        required,
+        AdminServiceState.DOWN,
+        "UNAVAILABLE",
+        failure,
+        timestamp);
+  }
+
+  public static AdminServiceSnapshot failure(String serviceId,
+      String deployment,
+      boolean required,
+      AdminServiceState state,
+      String status,
+      Throwable failure,
+      Instant timestamp) {
     Map<String, Object> details = new LinkedHashMap<>();
     details.put("error", failure.getClass().getSimpleName());
     details.put("message", Optional.ofNullable(failure.getMessage()).orElse("Unavailable"));
-    return new AdminServiceSnapshot(serviceId, deployment, required, AdminServiceState.DOWN,
-        "UNAVAILABLE", -1, timestamp, Collections.unmodifiableMap(details));
+    return new AdminServiceSnapshot(serviceId, deployment, required, state,
+        status, -1, timestamp, Collections.unmodifiableMap(details));
   }
 
   private static String extractStatus(Map<String, Object> payload) {

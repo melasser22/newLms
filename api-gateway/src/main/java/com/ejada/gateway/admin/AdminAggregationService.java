@@ -5,6 +5,7 @@ import com.ejada.common.context.ContextManager;
 import com.ejada.gateway.admin.model.AdminOverview;
 import com.ejada.gateway.admin.model.AdminRouteView;
 import com.ejada.gateway.admin.model.AdminServiceSnapshot;
+import com.ejada.gateway.admin.model.AdminServiceState;
 import com.ejada.gateway.admin.model.DetailedHealthStatus;
 import com.ejada.gateway.admin.model.DetailedHealthStatus.CircuitBreakerHealth;
 import com.ejada.gateway.admin.model.DetailedHealthStatus.RedisHealthStatus;
@@ -14,6 +15,8 @@ import com.ejada.gateway.loadbalancer.LoadBalancerHealthCheckAggregator;
 import com.ejada.gateway.loadbalancer.LoadBalancerHealthCheckAggregator.Availability;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.micrometer.core.annotation.Timed;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
@@ -21,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,10 +32,13 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.Exceptions;
 
 /**
  * Aggregates status information across downstream services so platform operators can inspect the
@@ -203,10 +210,14 @@ public class AdminAggregationService {
             Instant.now()))
         .onErrorResume(ex -> {
           logAggregationFailure(service, ex);
+          AdminServiceState state = classifyFailure(ex);
+          String status = mapFailureStatus(state);
           return Mono.just(AdminServiceSnapshot.failure(
               service.getId(),
               service.getDeployment(),
               service.isRequired(),
+              state,
+              status,
               ex,
               Instant.now()));
         });
@@ -257,5 +268,41 @@ public class AdminAggregationService {
     } else {
       LOGGER.info(optionalMessage + ": {}", serviceId, deployment, failureMessage);
     }
+  }
+
+  private AdminServiceState classifyFailure(Throwable failure) {
+    Throwable unwrapped = Exceptions.unwrap(failure);
+    if (unwrapped instanceof WebClientResponseException response) {
+      if (response.getStatusCode().is5xxServerError()) {
+        return AdminServiceState.DOWN;
+      }
+      return AdminServiceState.DEGRADED;
+    }
+    if (unwrapped instanceof WebClientRequestException requestException) {
+      Throwable cause = requestException.getCause();
+      if (cause instanceof SocketTimeoutException
+          || cause instanceof ConnectException) {
+        return AdminServiceState.UNKNOWN;
+      }
+      return AdminServiceState.UNKNOWN;
+    }
+    if (unwrapped instanceof TimeoutException
+        || unwrapped instanceof SocketTimeoutException
+        || unwrapped instanceof ConnectException) {
+      return AdminServiceState.UNKNOWN;
+    }
+    if (unwrapped instanceof IllegalStateException) {
+      return AdminServiceState.UNKNOWN;
+    }
+    return AdminServiceState.UNKNOWN;
+  }
+
+  private String mapFailureStatus(AdminServiceState state) {
+    return switch (state) {
+      case DOWN -> "UNAVAILABLE";
+      case DEGRADED -> "DEGRADED";
+      case UNKNOWN -> "UNKNOWN";
+      default -> "UNKNOWN";
+    };
   }
 }

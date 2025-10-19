@@ -13,6 +13,7 @@ import com.ejada.gateway.config.AdminAggregationProperties;
 import com.ejada.gateway.config.GatewayRoutesProperties;
 import com.ejada.gateway.loadbalancer.LoadBalancerHealthCheckAggregator;
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -178,6 +179,33 @@ class AdminAggregationServiceTest {
   }
 
   @Test
+  void readinessIndicatorReportsDegradedWhenDependenciesUnknown() {
+    AdminAggregationService aggregationService = mock(AdminAggregationService.class);
+    AdminServiceSnapshot snapshot = new AdminServiceSnapshot(
+        "tenant-service",
+        "primary",
+        true,
+        AdminServiceState.UNKNOWN,
+        "UNKNOWN",
+        -1,
+        Instant.now(),
+        Map.of());
+    DetailedHealthStatus degraded = new DetailedHealthStatus(
+        DetailedHealthStatus.RedisHealthStatus.unavailable(),
+        List.of(snapshot),
+        List.of());
+    when(aggregationService.fetchDetailedHealth()).thenReturn(Mono.just(degraded));
+
+    GatewayReadinessIndicator readinessIndicator = new GatewayReadinessIndicator(aggregationService);
+
+    StepVerifier.create(readinessIndicator.health())
+        .assertNext(health -> assertThat(health.getStatus().getCode()).isEqualTo("DEGRADED"))
+        .verifyComplete();
+
+    Mockito.verify(aggregationService).fetchDetailedHealth();
+  }
+
+  @Test
   void collectDownstreamSnapshotsCapturesFailuresAsSnapshots() {
     AdminAggregationProperties properties = new AdminAggregationProperties();
     AdminAggregationProperties.Service downstream = new AdminAggregationProperties.Service();
@@ -203,8 +231,73 @@ class AdminAggregationServiceTest {
           AdminServiceSnapshot snapshot = snapshots.get(0);
           assertThat(snapshot.serviceId()).isEqualTo("billing-service");
           assertThat(snapshot.required()).isFalse();
-          assertThat(snapshot.state()).isEqualTo(AdminServiceState.DOWN);
+          assertThat(snapshot.state()).isEqualTo(AdminServiceState.UNKNOWN);
+          assertThat(snapshot.status()).isEqualTo("UNKNOWN");
           assertThat(snapshot.details()).containsEntry("message", "connection refused");
+        })
+        .verifyComplete();
+  }
+
+  @Test
+  void collectDownstreamSnapshotsTreatsServerErrorsAsDown() {
+    AdminAggregationProperties properties = new AdminAggregationProperties();
+    AdminAggregationProperties.Service downstream = new AdminAggregationProperties.Service();
+    downstream.setId("subscription-service");
+    downstream.setUri(URI.create("http://subscription-service"));
+    properties.getAggregation().setServices(List.of(downstream));
+
+    WebClient.Builder webClientBuilder = WebClient.builder()
+        .exchangeFunction(request -> Mono.just(ClientResponse.create(HttpStatus.INTERNAL_SERVER_ERROR)
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .body("{\"status\":\"DOWN\"}")
+            .build()));
+
+    AdminAggregationService aggregationService = new AdminAggregationService(
+        webClientBuilder,
+        properties,
+        new GatewayRoutesProperties(),
+        provider(null),
+        provider(null),
+        provider(null));
+
+    StepVerifier.create(aggregationService.collectDownstreamSnapshots())
+        .assertNext(snapshots -> {
+          assertThat(snapshots).hasSize(1);
+          AdminServiceSnapshot snapshot = snapshots.get(0);
+          assertThat(snapshot.state()).isEqualTo(AdminServiceState.DOWN);
+          assertThat(snapshot.status()).isEqualTo("UNAVAILABLE");
+        })
+        .verifyComplete();
+  }
+
+  @Test
+  void collectDownstreamSnapshotsTreatsClientErrorsAsDegraded() {
+    AdminAggregationProperties properties = new AdminAggregationProperties();
+    AdminAggregationProperties.Service downstream = new AdminAggregationProperties.Service();
+    downstream.setId("catalog-service");
+    downstream.setUri(URI.create("http://catalog-service"));
+    properties.getAggregation().setServices(List.of(downstream));
+
+    WebClient.Builder webClientBuilder = WebClient.builder()
+        .exchangeFunction(request -> Mono.just(ClientResponse.create(HttpStatus.BAD_REQUEST)
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .body("{\"status\":\"DOWN\"}")
+            .build()));
+
+    AdminAggregationService aggregationService = new AdminAggregationService(
+        webClientBuilder,
+        properties,
+        new GatewayRoutesProperties(),
+        provider(null),
+        provider(null),
+        provider(null));
+
+    StepVerifier.create(aggregationService.collectDownstreamSnapshots())
+        .assertNext(snapshots -> {
+          assertThat(snapshots).hasSize(1);
+          AdminServiceSnapshot snapshot = snapshots.get(0);
+          assertThat(snapshot.state()).isEqualTo(AdminServiceState.DEGRADED);
+          assertThat(snapshot.status()).isEqualTo("DEGRADED");
         })
         .verifyComplete();
   }
@@ -240,7 +333,8 @@ class AdminAggregationServiceTest {
           assertThat(snapshots).hasSize(1);
           AdminServiceSnapshot snapshot = snapshots.get(0);
           assertThat(snapshot.serviceId()).isEqualTo("policy-service");
-          assertThat(snapshot.state()).isEqualTo(AdminServiceState.DOWN);
+          assertThat(snapshot.state()).isEqualTo(AdminServiceState.UNKNOWN);
+          assertThat(snapshot.status()).isEqualTo("UNKNOWN");
           assertThat(snapshot.details()).containsEntry("message", "No service instances discovered");
         })
         .verifyComplete();
