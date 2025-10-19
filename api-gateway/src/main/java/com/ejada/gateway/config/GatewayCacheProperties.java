@@ -9,7 +9,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.http.HttpMethod;
@@ -533,7 +532,4 @@ public class GatewayCacheProperties {
     }
   }
 
-  public String describeRoutes() {
-    return routes.stream().map(RouteCacheProperties::toString).collect(Collectors.joining(","));
-  }
 }
