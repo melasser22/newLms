@@ -54,6 +54,7 @@ public class TenantAuthorizationManager implements ReactiveAuthorizationManager<
 
   private final CoreAutoConfiguration.CoreProps coreProps;
   private final String[] bypassPatterns;
+  private final String[] permitAllPatterns;
   private final ReactiveStringRedisTemplate redisTemplate;
   private final SubscriptionCacheService subscriptionCacheService;
   private final GatewayRateLimitProperties rateLimitProperties;
@@ -73,6 +74,10 @@ public class TenantAuthorizationManager implements ReactiveAuthorizationManager<
         Objects.requireNonNull(subscriptionCacheService, "subscriptionCacheService");
     this.rateLimitProperties = Objects.requireNonNull(rateLimitProperties, "rateLimitProperties");
     this.objectMapper = (objectMapper != null) ? objectMapper : new ObjectMapper();
+    this.permitAllPatterns = Optional.ofNullable(securityProps)
+        .map(SharedSecurityProps::getResourceServer)
+        .map(SharedSecurityProps.ResourceServer::getPermitAll)
+        .orElse(new String[0]);
   }
 
   @Override
@@ -80,7 +85,8 @@ public class TenantAuthorizationManager implements ReactiveAuthorizationManager<
       Mono<Authentication> authentication, AuthorizationContext context) {
     ServerWebExchange exchange = context.getExchange();
     String path = exchange.getRequest().getPath().pathWithinApplication().value();
-    if (FilterSkipUtils.shouldSkip(path, bypassPatterns)) {
+    if (FilterSkipUtils.shouldSkip(path, bypassPatterns)
+        || FilterSkipUtils.shouldSkip(path, permitAllPatterns)) {
       return Mono.just(new AuthorizationDecision(true));
     }
     return authentication
