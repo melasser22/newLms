@@ -86,14 +86,26 @@ shared:
       enabled: true
       verify-tenant-claim: true
       permit-all:
-        - /api/v1/auth/**
+        - /**
         - /api/auth/**
+        - /swagger-ui/**
+        - /v3/api-docs/**
+        - /sec/api/v1/auth/**
+        - /sec/api/auth/**
+        - /sec/swagger-ui/**
+        - /sec/v3/api-docs/**
     tenant-verification:
       strict-mode: true
       require-tenant-header: true
       header-optional-patterns:
-        - /api/v1/auth/admin/**
+        - /**
         - /api/v1/superadmin/**
+        - /sec/api/v1/auth/**
+        - /sec/api/v1/superadmin/**
+        - /sec/swagger-ui/**
+        - /sec/v3/api-docs/**
+        - /swagger-ui/**
+        - /v3/api-docs/**
     jwt:
       secret: ${SHARED_SECURITY_JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
       token-period: 15m

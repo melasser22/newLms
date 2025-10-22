@@ -40,8 +40,14 @@ shared:
     resource-server:
       enabled: true
       verify-tenant-claim: true
+      permit-all:
+        - /swagger-ui/**
+        - /v3/api-docs/**
     tenant-verification:
       strict-mode: true
       require-tenant-header: true
+      header-optional-patterns:
+        - /swagger-ui/**
+        - /v3/api-docs/**
     jwt:
       token-period: 15m

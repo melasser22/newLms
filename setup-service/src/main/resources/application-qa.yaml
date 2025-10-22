@@ -203,11 +203,17 @@ shared:
     resource-server:
       enabled: true
       verify-tenant-claim: true
-      permit-all: ["/setup/systemParameters/**"]
+      permit-all:
+        - /setup/systemParameters/**
+        - /swagger-ui/**
+        - /v3/api-docs/**
       disable-csrf: false
     tenant-verification:
       strict-mode: true
       require-tenant-header: true
+      header-optional-patterns:
+        - /swagger-ui/**
+        - /v3/api-docs/**
     stateless: true
     roles-claim: roles
     tenant-claim: tenant

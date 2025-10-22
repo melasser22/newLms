@@ -18,6 +18,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
@@ -48,6 +49,17 @@ public class TenantAuthorizationManager implements ReactiveAuthorizationManager<
   private static final Pattern TIER_PATTERN =
       Pattern.compile("(?i)tier[:/_-]?([a-z0-9]+)");
 
+  private static final String[] DEFAULT_PERMIT_ALL_PATTERNS = new String[]{
+      "/auth/**",
+      "/api/auth/**",
+      "/api/*/auth/**",
+      "/api/v1/auth/**",
+      "/api/v1/auth/admin/**",
+      "/api/sec/auth/**",
+      "/sec/api/v1/auth/**",
+      "/sec/auth/**"
+  };
+
   private static final Duration CACHE_TTL = Duration.ofMinutes(5);
   private static final String DEFAULT_TIER = "free";
   private static final Set<String> SUSPENDED_STATUSES = Set.of("INACTIVE", "SUSPENDED");
@@ -74,10 +86,16 @@ public class TenantAuthorizationManager implements ReactiveAuthorizationManager<
         Objects.requireNonNull(subscriptionCacheService, "subscriptionCacheService");
     this.rateLimitProperties = Objects.requireNonNull(rateLimitProperties, "rateLimitProperties");
     this.objectMapper = (objectMapper != null) ? objectMapper : new ObjectMapper();
-    this.permitAllPatterns = Optional.ofNullable(securityProps)
+    Stream<String> configuredPermitAll = Optional.ofNullable(securityProps)
         .map(SharedSecurityProps::getResourceServer)
         .map(SharedSecurityProps.ResourceServer::getPermitAll)
-        .orElse(new String[0]);
+        .map(Arrays::stream)
+        .orElseGet(Stream::empty);
+    this.permitAllPatterns = Stream.concat(Arrays.stream(DEFAULT_PERMIT_ALL_PATTERNS), configuredPermitAll)
+        .filter(StringUtils::hasText)
+        .map(String::trim)
+        .distinct()
+        .toArray(String[]::new);
   }
 
   @Override
@@ -98,11 +116,14 @@ public class TenantAuthorizationManager implements ReactiveAuthorizationManager<
   private static String[] mergeBypassPatterns(CoreAutoConfiguration.CoreProps coreProps,
       SharedSecurityProps securityProps) {
     String[] tenantSkips = FilterSkipUtils.copyOrDefault(coreProps.getTenant().getSkipPatterns());
-    String[] permitAll = Optional.ofNullable(securityProps)
+    Stream<String> configuredPermitAll = Optional.ofNullable(securityProps)
         .map(SharedSecurityProps::getResourceServer)
         .map(SharedSecurityProps.ResourceServer::getPermitAll)
-        .orElseGet(() -> new String[0]);
-    return java.util.stream.Stream.concat(Arrays.stream(tenantSkips), Arrays.stream(permitAll))
+        .map(Arrays::stream)
+        .orElseGet(Stream::empty);
+    Stream<String> permitAllStream =
+        Stream.concat(Arrays.stream(DEFAULT_PERMIT_ALL_PATTERNS), configuredPermitAll);
+    return Stream.concat(Arrays.stream(tenantSkips), permitAllStream)
         .filter(Objects::nonNull)
         .map(String::trim)
         .filter(value -> !value.isEmpty())

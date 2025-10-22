@@ -174,7 +174,11 @@ shared:
       permit-all:
         - /api/auth/**
         - /api/v1/auth/**
+        - /api/sec/auth/**
         - /api/auth/admin/login
+        - /api/sec/auth/admin/login
+        - /auth/**
+        - /auth/admin/login
         - /actuator/health/**
         - /actuator/info
         - /actuator/prometheus
@@ -210,6 +214,7 @@ shared:
         - /api/*/*/v3/api-docs/**
         - /api/*/swagger-ui/**
         - /api/auth/**
+        - /api/sec/auth/**
         - /api/*/*/swagger-ui/**
         - /api/*/swagger-ui.html
         - /api/*/*/swagger-ui.html
@@ -521,6 +526,11 @@ gateway:
     skip-patterns:
       - /actuator/**
       - /fallback/**
+      - /auth/**
+      - /sec/api/v1/auth/**
+      - /api/auth/**
+      - /api/v1/auth/**
+      - /api/sec/auth/**
       - /api/*/swagger-ui/**
       - /api/*/*/swagger-ui/**
       - /api/*/v3/api-docs/**
