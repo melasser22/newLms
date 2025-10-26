@@ -24,6 +24,7 @@ import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.test.StepVerifier;
 
 class GatewayErrorWebExceptionHandlerTest {
@@ -78,6 +79,56 @@ class GatewayErrorWebExceptionHandlerTest {
         .containsEntry("status", HttpStatus.GATEWAY_TIMEOUT.value())
         .containsEntry("errorCode", "ERR_UPSTREAM_TIMEOUT")
         .containsEntry("supportUrl", "https://support.example.com/error/504");
+  }
+
+  @Test
+  void mapsUpstreamServerErrorsToBadGateway() throws Exception {
+    MockServerWebExchange exchange = MockServerWebExchange.from(
+        MockServerHttpRequest.post("/first-login").build());
+
+    WebClientResponseException exception = WebClientResponseException.create(
+        HttpStatus.INTERNAL_SERVER_ERROR.value(),
+        "Internal Server Error",
+        HttpHeaders.EMPTY,
+        "{\"message\":\"security down\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8),
+        java.nio.charset.StandardCharsets.UTF_8);
+
+    StepVerifier.create(handler.handle(exchange, exception)).verifyComplete();
+
+    assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
+    BaseResponse<Map<String, Object>> response = readBody(exchange);
+    assertThat(response.getCode()).isEqualTo("ERR_UPSTREAM_SERVER_ERROR");
+    assertThat(response.getMessage())
+        .isEqualTo("Upstream service responded with 500 INTERNAL_SERVER_ERROR: {\"message\":\"security down\"}");
+    assertThat(response.getData())
+        .containsEntry("status", HttpStatus.BAD_GATEWAY.value())
+        .containsEntry("upstreamStatus", HttpStatus.INTERNAL_SERVER_ERROR.value())
+        .containsEntry("upstreamStatusText", "Internal Server Error")
+        .containsEntry("errorCode", "ERR_UPSTREAM_SERVER_ERROR");
+  }
+
+  @Test
+  void mapsUpstreamClientErrorsToOriginalStatus() throws Exception {
+    MockServerWebExchange exchange = MockServerWebExchange.from(
+        MockServerHttpRequest.post("/first-login").build());
+
+    WebClientResponseException exception = WebClientResponseException.create(
+        HttpStatus.BAD_REQUEST.value(),
+        "Bad Request",
+        HttpHeaders.EMPTY,
+        "missing fields".getBytes(java.nio.charset.StandardCharsets.UTF_8),
+        java.nio.charset.StandardCharsets.UTF_8);
+
+    StepVerifier.create(handler.handle(exchange, exception)).verifyComplete();
+
+    assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    BaseResponse<Map<String, Object>> response = readBody(exchange);
+    assertThat(response.getCode()).isEqualTo("ERR_UPSTREAM_CLIENT_ERROR");
+    assertThat(response.getMessage())
+        .isEqualTo("Upstream service responded with 400 BAD_REQUEST: missing fields");
+    assertThat(response.getData())
+        .containsEntry("status", HttpStatus.BAD_REQUEST.value())
+        .containsEntry("upstreamStatus", HttpStatus.BAD_REQUEST.value());
   }
 
   @Test
