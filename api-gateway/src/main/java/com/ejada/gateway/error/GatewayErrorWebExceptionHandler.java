@@ -44,6 +44,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -87,7 +88,8 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     }
     String tenantId = resolveTenantId(exchange);
     String message = enhanceMessage(determineMessage(ex, status), status, correlationId);
-    Map<String, Object> diagnostics = buildDiagnostics(exchange, status, errorCode, message, correlationId, tenantId);
+    Map<String, Object> diagnostics =
+        buildDiagnostics(exchange, status, errorCode, message, correlationId, tenantId, ex);
 
     // Log the exception details for troubleshooting
     boolean notFound = status == HttpStatus.NOT_FOUND;
@@ -174,6 +176,20 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
       return HttpStatus.FORBIDDEN;
     }
 
+    WebClientResponseException webClientResponseException = resolveWebClientResponseException(ex);
+    if (webClientResponseException != null) {
+      HttpStatus upstreamStatus = HttpStatus.resolve(webClientResponseException.getStatusCode().value());
+      if (upstreamStatus != null) {
+        if (upstreamStatus.is4xxClientError()) {
+          return upstreamStatus;
+        }
+        if (upstreamStatus.is5xxServerError()) {
+          return HttpStatus.BAD_GATEWAY;
+        }
+      }
+      return HttpStatus.BAD_GATEWAY;
+    }
+
     WebClientRequestException webClientException = resolveWebClientRequestException(ex);
     if (webClientException != null) {
       if (isTimeoutException(webClientException)) {
@@ -220,6 +236,16 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     if (ex instanceof org.springframework.security.access.AccessDeniedException) {
       return "ERR_ACCESS_DENIED";
     }
+    WebClientResponseException responseException = resolveWebClientResponseException(ex);
+    if (responseException != null) {
+      HttpStatusCode upstream = responseException.getStatusCode();
+      if (upstream.is4xxClientError()) {
+        return "ERR_UPSTREAM_CLIENT_ERROR";
+      }
+      if (upstream.is5xxServerError()) {
+        return "ERR_UPSTREAM_SERVER_ERROR";
+      }
+    }
     if (status == HttpStatus.SERVICE_UNAVAILABLE) {
       return "ERR_UPSTREAM_UNAVAILABLE";
     }
@@ -258,6 +284,10 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
         return reason;
       }
     }
+    WebClientResponseException responseException = resolveWebClientResponseException(ex);
+    if (responseException != null) {
+      return buildUpstreamResponseMessage(responseException);
+    }
     if (ex instanceof DataIntegrityViolationException) {
       return "Data conflict occurred";
     }
@@ -293,7 +323,7 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
   }
 
   private Map<String, Object> buildDiagnostics(ServerWebExchange exchange, HttpStatus status,
-      String errorCode, String message, String correlationId, String tenantId) {
+      String errorCode, String message, String correlationId, String tenantId, Throwable exception) {
     Map<String, Object> diagnostics = new LinkedHashMap<>();
     diagnostics.put("timestamp", Instant.now().toString());
     diagnostics.put("path", exchange.getRequest().getPath().value());
@@ -305,6 +335,17 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     diagnostics.put("correlationId", StringUtils.hasText(correlationId) ? correlationId : "unknown");
     diagnostics.put("tenantId", StringUtils.hasText(tenantId) ? tenantId : "unknown");
     diagnostics.put("supportUrl", "https://support.example.com/error/" + status.value());
+    WebClientResponseException responseException = resolveWebClientResponseException(exception);
+    if (responseException != null) {
+      diagnostics.put("upstreamStatus", responseException.getRawStatusCode());
+      if (StringUtils.hasText(responseException.getStatusText())) {
+        diagnostics.put("upstreamStatusText", responseException.getStatusText());
+      }
+      String body = trimToNull(responseException.getResponseBodyAsString());
+      if (body != null) {
+        diagnostics.put("upstreamBody", abbreviate(body));
+      }
+    }
     return diagnostics;
   }
 
@@ -405,5 +446,48 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
       current = current.getCause();
     }
     return false;
+  }
+
+  private WebClientResponseException resolveWebClientResponseException(Throwable ex) {
+    if (ex instanceof WebClientResponseException responseException) {
+      return responseException;
+    }
+    Set<Throwable> visited = new HashSet<>();
+    Throwable current = ex != null ? ex.getCause() : null;
+    while (current != null && visited.add(current)) {
+      if (current instanceof WebClientResponseException responseException) {
+        return responseException;
+      }
+      current = current.getCause();
+    }
+    return null;
+  }
+
+  private String buildUpstreamResponseMessage(WebClientResponseException ex) {
+    String statusDescriptor = formatUpstreamStatus(ex);
+    String body = trimToNull(ex.getResponseBodyAsString());
+    if (body == null) {
+      return "Upstream service responded with " + statusDescriptor;
+    }
+    return "Upstream service responded with " + statusDescriptor + ": " + abbreviate(body);
+  }
+
+  private String formatUpstreamStatus(WebClientResponseException ex) {
+    HttpStatusCode statusCode = ex.getStatusCode();
+    HttpStatus httpStatus = HttpStatus.resolve(statusCode.value());
+    String reason = httpStatus != null ? httpStatus.getReasonPhrase() : ex.getStatusText();
+    if (!StringUtils.hasText(reason)) {
+      return Integer.toString(statusCode.value());
+    }
+    return statusCode.value() + " " + reason.replace(' ', '_').toUpperCase();
+  }
+
+  private String abbreviate(String value) {
+    String sanitized = value.replaceAll("[\r\n]+", " ").trim();
+    int maxLength = 512;
+    if (sanitized.length() <= maxLength) {
+      return sanitized;
+    }
+    return sanitized.substring(0, maxLength - 1) + "…";
   }
 }
