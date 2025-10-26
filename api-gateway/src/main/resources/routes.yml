@@ -1,0 +1,235 @@
+gateway:
+  versioning:
+    enabled: true
+    compatibility:
+      matrix:
+        v2:
+          - v1
+    mappings:
+      - &tenant-versioning-base
+        id: tenant-api
+        description: Normalize legacy tenant endpoints to v2 implementations
+        default-version: v2
+        legacy-paths:
+          - /v1/tenants/{*remaining}
+          - /api/v1/tenants/{*remaining}
+        routes:
+          - version: v1
+            target-version: v2
+            rewrite-path: /v2/tenants/{remaining}
+            weight: 90
+            deprecated: true
+            warning: "Tenant API v1 is deprecated and will be removed. Use Accept-Version: v2."
+            sunset: 2024-12-31T00:00:00Z
+            policy-link: https://docs.example.com/tenant-api-deprecation
+            compatibility:
+              - v1
+              - v2
+            additional-headers:
+              X-Gateway-Track: primary
+          - version: v1
+            target-version: v2
+            rewrite-path: /v2/tenants/{remaining}
+            weight: 10
+            deprecated: true
+            warning: Tenant API v1 is being migrated to v2 rollout track.
+            sunset: 2024-12-31T00:00:00Z
+            documentation-group: tenant-api-v2-canary
+            additional-headers:
+              X-Gateway-Track: canary
+          - version: v2
+            rewrite-path: /v2/tenants/{remaining}
+            weight: 100
+            compatibility:
+              - v2
+            documentation-group: tenant-api-v2
+  routes:
+    setup: &setup-route
+      id: setup-service
+      uri: lb://setup-service
+      paths:
+        - /api/setup/**
+      strip-prefix: 1
+      prefix-path: /core
+      resilience:
+        enabled: true
+        circuit-breaker-name: setup-service
+        fallback-uri: forward:/fallback/setup-service
+        priority: NON_CRITICAL
+    setup-docs:
+      <<: *setup-route
+      id: setup-service-docs
+      paths:
+        - /api/setup/swagger-ui/**
+        - /api/setup/v3/api-docs/**
+      strip-prefix: 2
+      resilience:
+        enabled: false
+    setup-docs-legacy:
+      <<: *setup-route
+      id: setup-service-docs-legacy
+      paths:
+        - /api/setup/core/swagger-ui/**
+        - /api/setup/core/v3/api-docs/**
+      strip-prefix: 3
+      resilience:
+        enabled: false
+    tenant: &tenant-route-base
+      id: tenant-service
+      uri: lb://tenant-service
+      paths:
+        - /api/v1/tenants/**
+        - /api/tenants/**
+        - /api/tenant/**
+      strip-prefix: 0
+      prefix-path: /tenant
+      versioning:
+        <<: *tenant-versioning-base
+        fallback-to-default: true
+        propagate-header: true
+      weight:
+        enabled: true
+        group: tenant-service
+        value: 90
+      request-headers:
+        X-Gateway-Track: primary
+      resilience: &tenant-resilience-base
+        enabled: true
+        circuit-breaker-name: tenant-service-cb
+        fallback-uri: forward:/fallback/tenant-service
+        fallback-on-methods:
+          - GET
+        priority: CRITICAL
+    tenant-canary:
+      <<: *tenant-route-base
+      id: tenant-service-canary
+      weight:
+        enabled: true
+        group: tenant-service
+        value: 10
+      request-headers:
+        X-Gateway-Track: canary
+      resilience:
+        <<: *tenant-resilience-base
+        circuit-breaker-name: tenant-service-canary
+        priority: NON_CRITICAL
+    catalog:
+      id: catalog-service
+      uri: lb://catalog-service
+      paths:
+        - /api/v1/catalog/**
+        - /api/catalog/**
+      methods:
+        - GET
+      strip-prefix: 0
+      prefix-path: /catalog
+      versioning:
+        enabled: true
+        default-version: v1
+        supported-versions:
+          - v1
+      resilience:
+        enabled: true
+        circuit-breaker-name: catalog-service-cb
+        fallback-uri: forward:/fallback/catalog-service
+        fallback-status: OK
+        fallback-message: Catalog service is currently unavailable. Please retry shortly.
+        priority: NON_CRITICAL
+        retry:
+          enabled: true
+          retries: 3
+          methods:
+            - GET
+          statuses:
+            - 500
+            - BAD_GATEWAY
+          series:
+            - SERVER_ERROR
+          backoff:
+            enabled: true
+            first-backoff: 100ms
+            max-backoff: 3s
+            factor: 1.5
+            based-on-previous-value: true
+    subscription:
+      id: subscription-service
+      uri: lb://subscription-service
+      paths:
+        - /api/v1/subscriptions/**
+        - /api/subscriptions/**
+        - /api/subscription/**
+      strip-prefix: 0
+      prefix-path: /subscription
+      versioning:
+        enabled: true
+        default-version: v1
+        supported-versions:
+          - v1
+      resilience:
+        enabled: true
+        circuit-breaker-name: subscription-service
+        fallback-uri: forward:/fallback/subscription-service
+        fallback-status: OK
+        fallback-message: Subscription service unavailable. Serving stale subscription snapshot.
+        priority: CRITICAL
+    billing:
+      id: billing-service
+      uri: lb://billing-service
+      paths:
+        - /api/v1/billing/**
+        - /api/billing/**
+      strip-prefix: 0
+      prefix-path: /billing
+      versioning:
+        enabled: true
+        default-version: v1
+        supported-versions:
+          - v1
+      resilience:
+        enabled: true
+        circuit-breaker-name: billing-service
+        fallback-uri: forward:/fallback/billing-service
+        fallback-status: ACCEPTED
+        fallback-message: Billing service is unavailable. Usage event queued for later processing.
+        priority: CRITICAL
+    security-auth: &security-route-base
+      id: security-service
+      uri: lb://security-service
+      paths:
+        - /api/auth/**
+      strip-prefix: 1
+      prefix-path: /sec/api/v1
+      request-headers:
+        X-Route-Source: static
+      resilience: &security-resilience-base
+        enabled: true
+        circuit-breaker-name: security-service
+        fallback-uri: forward:/fallback/security-service
+        fallback-message: Security service is temporarily unavailable. Please retry shortly.
+        priority: CRITICAL
+    security-management:
+      <<: *security-route-base
+      id: security-service-management
+      paths:
+        - /api/sec/**
+      strip-prefix: 2
+      resilience:
+        <<: *security-resilience-base
+    policy:
+      id: policy-service
+      uri: lb://policy-service
+      paths:
+        - /api/v1/policies/**
+        - /api/policies/**
+      strip-prefix: 0
+      prefix-path: /policy
+      versioning:
+        enabled: true
+        default-version: v1
+        supported-versions:
+          - v1
+      resilience:
+        enabled: true
+        circuit-breaker-name: policy-service
+        fallback-uri: forward:/fallback/default
+        priority: NON_CRITICAL

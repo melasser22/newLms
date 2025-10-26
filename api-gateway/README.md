@@ -16,17 +16,18 @@ Enterprise-ready Spring Cloud Gateway that fronts the Ejada SaaS Products Framew
 
 ## Configuration Overview
 
-All configuration lives in [`src/main/resources/application.yaml`](src/main/resources/application.yaml). Key sections include:
+Gateway configuration now lives in focused modules under [`src/main/resources`](src/main/resources/):
 
-- `gateway.routes` – declarative downstream routes with resilience settings.
-- `gateway.subscription` – subscription validation endpoint, caching, and feature mapping per route.
-- `gateway.webclient` – connection and response timeout settings for the shared `WebClient` builder.
-- `gateway.cache.routes[].client` – optional authentication headers (API key/Bearer) and timeout tuning used by the
-  background cache refresher when revalidating entries.
-- `shared.security` – JWT/OIDC configuration and CORS policy.
-- `resilience4j.*` – circuit breaker/retry/bulkhead defaults.
-- `spring.cloud.gateway.*` – HTTP client tuning, rate limiting, metrics.
-- `jasypt.encryptor.*` – password and cipher settings for decrypting secrets served by the Config Server.
+- `application.yml` – Spring Boot basics, shared pattern anchors, and Config Server wiring.
+- `gateway.yml` – Spring Cloud Gateway infrastructure defaults, cache, subscription, and admin wiring.
+- `routes.yml` – Declarative downstream routes with resilience metadata.
+- `security.yml` – OAuth2 resource server wiring and CORS/permit-all rules.
+- `tenant.yml` – Tenant extraction, correlation headers, and rate limiting.
+- `resilience.yml` – Circuit breaker, retry, and bulkhead presets.
+- `logging.yml` – Logging, actuator exposure, and telemetry endpoints.
+
+Helm renders these modules via [`charts/api-gateway`](../charts/api-gateway). Override any document by editing
+`values.yaml` or supplying `--set-file config.<name>=...` when installing the chart.
 
 A configuration reload (Spring Cloud Config or Kubernetes ConfigMap) triggers the [`GatewayRoutesRefresher`](src/main/java/com/ejada/gateway/config/GatewayRoutesRefresher.java) which publishes a `RefreshRoutesEvent` and reloads dynamic routes without downtime.
 

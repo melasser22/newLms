@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * Configuration properties for the Jasypt encryptor used by the API gateway.
  *
  * <p>The properties are intentionally opinionated to enforce a strong default
- * algorithm while still allowing overrides through {@code application.yaml} or
+ * algorithm while still allowing overrides through {@code application.yml} or
  * environment variables.</p>
  */
 @ConfigurationProperties(prefix = "jasypt.encryptor")

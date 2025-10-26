@@ -1,0 +1,40 @@
+core:
+  tenant:
+    enabled: true
+    header-name: X-Tenant-Id
+    query-param: tenantId
+    resolve-from-jwt: true
+    jwt-claim-names:
+      - tenant_id
+      - tid
+    prefer-header-over-jwt: true
+    skip-patterns:
+      - ${shared.patterns.actuator.generic}
+      - ${shared.patterns.misc.favicon}
+      - ${shared.patterns.docs.api-v3-single}
+      - ${shared.patterns.docs.api-v3-double}
+      - ${shared.patterns.docs.api-swagger-single}
+      - ${shared.patterns.docs.api-swagger-double}
+      - ${shared.patterns.docs.api-swagger-html-single}
+      - ${shared.patterns.docs.api-swagger-html-double}
+      - ${shared.patterns.auth.api-auth}
+      - ${shared.patterns.auth.api-auth-sec}
+      - ${shared.patterns.docs.root-v3}
+      - ${shared.patterns.docs.root-swagger}
+      - ${shared.patterns.docs.root-swagger-html}
+  correlation:
+    enabled: true
+    header-name: X-Correlation-Id
+    echo-response-header: true
+    generate-if-missing: true
+    skip-patterns:
+      - ${shared.patterns.actuator.generic}
+
+observability:
+  application-name: ${spring.application.name}
+
+ratelimit:
+  enabled: true
+  capacity: 200
+  window: 1m
+  key-strategy: tenant

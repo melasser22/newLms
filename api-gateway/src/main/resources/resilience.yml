@@ -1,0 +1,92 @@
+resilience4j:
+  circuitbreaker:
+    configs:
+      default: &circuitbreaker-default
+        sliding-window-size: 50
+        minimum-number-of-calls: 20
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 5
+        automatic-transition-from-open-to-half-open-enabled: true
+      critical:
+        <<: *circuitbreaker-default
+        sliding-window-size: 30
+        minimum-number-of-calls: 15
+        failure-rate-threshold: 30
+        slow-call-duration-threshold: 3s
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+      non-critical:
+        <<: *circuitbreaker-default
+        sliding-window-size: 60
+        minimum-number-of-calls: 25
+        slow-call-duration-threshold: 3s
+        permitted-number-of-calls-in-half-open-state: 6
+    instances:
+      tenant-service-cb:
+        base-config: critical
+      catalog-service-cb:
+        base-config: non-critical
+      subscription-service:
+        base-config: critical
+      billing-service:
+        base-config: critical
+      setup-service:
+        base-config: non-critical
+      policy-service:
+        base-config: non-critical
+      tenant-service-canary:
+        base-config: non-critical
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 200ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions: &retry-exceptions
+          - java.io.IOException
+          - org.springframework.web.reactive.function.client.WebClientResponseException
+    instances:
+      catalog-service:
+        base-config: default
+      policy-service:
+        base-config: default
+      tenant-service:
+        base-config: default
+  bulkhead:
+    configs:
+      default:
+        max-concurrent-calls: 50
+        max-wait-duration: 1s
+    instances:
+      tenant-service:
+        base-config: default
+      policy-service:
+        base-config: default
+  thread-pool-bulkhead:
+    configs:
+      default:
+        max-thread-pool-size: 30
+        core-thread-pool-size: 10
+        queue-capacity: 100
+        keep-alive-duration: 30s
+    instances:
+      setup-service-bulkhead:
+        base-config: default
+      tenant-service-cb-bulkhead:
+        base-config: default
+      tenant-service-canary-bulkhead:
+        base-config: default
+      catalog-service-cb-bulkhead:
+        base-config: default
+      subscription-service-bulkhead:
+        base-config: default
+      billing-service-bulkhead:
+        base-config: default
+      security-service-bulkhead:
+        base-config: default
+      policy-service-bulkhead:
+        base-config: default
