@@ -20,7 +20,7 @@ Gateway configuration now lives in focused modules under [`src/main/resources`](
 
 - `application.yml` – Spring Boot basics, shared pattern anchors, and Config Server wiring.
 - `gateway.yml` – Spring Cloud Gateway infrastructure defaults, cache, subscription, and admin wiring.
-- `routes.yml` – Declarative downstream routes with resilience metadata.
+- `routes.yml` – API version normalisation metadata (static routes now live in the database).
 - `security.yml` – OAuth2 resource server wiring and CORS/permit-all rules.
 - `tenant.yml` – Tenant extraction, correlation headers, and rate limiting.
 - `resilience.yml` – Circuit breaker, retry, and bulkhead presets.
