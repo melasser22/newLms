@@ -133,6 +133,42 @@ VALUES
         1,
         NOW(),
         NOW()
+    ),
+    (
+        '66666666-6666-6666-6666-666666666666',
+        '/api/v1/subscriptions/**',
+        'lb://subscription-service',
+        '[{"name":"Path","args":{"pattern":"/api/v1/subscriptions/**"}}]'::jsonb,
+        '[{"name":"StripPrefix","args":{"parts":"1"}},{"name":"PrefixPath","args":{"prefix":"/subscription"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+        '{"methods":["GET","POST","PUT","PATCH","DELETE"],"stripPrefix":1,"prefixPath":"/subscription","requestHeaders":{"X-Route-Seed":"true"}}'::jsonb,
+        TRUE,
+        1,
+        NOW(),
+        NOW()
+    ),
+    (
+        '77777777-7777-7777-7777-777777777777',
+        '/api/v1/billing/**',
+        'lb://billing-service',
+        '[{"name":"Path","args":{"pattern":"/api/v1/billing/**"}}]'::jsonb,
+        '[{"name":"StripPrefix","args":{"parts":"1"}},{"name":"PrefixPath","args":{"prefix":"/billing"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+        '{"methods":["GET","POST","PUT","PATCH","DELETE"],"stripPrefix":1,"prefixPath":"/billing","requestHeaders":{"X-Route-Seed":"true"}}'::jsonb,
+        TRUE,
+        1,
+        NOW(),
+        NOW()
+    ),
+    (
+        '88888888-8888-8888-8888-888888888888',
+        '/api/v1/analytics/**',
+        'lb://analytics-service',
+        '[{"name":"Path","args":{"pattern":"/api/v1/analytics/**"}}]'::jsonb,
+        '[{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+        '{"methods":["GET"],"stripPrefix":0,"requestHeaders":{"X-Route-Seed":"true"}}'::jsonb,
+        TRUE,
+        1,
+        NOW(),
+        NOW()
     )
 ON CONFLICT (id) DO NOTHING;
 
@@ -260,6 +296,80 @@ VALUES
                 'methods', jsonb_build_array('GET', 'POST', 'PUT', 'PATCH', 'DELETE'),
                 'stripPrefix', 2,
                 'prefixPath', '/sec/api/v1',
+                'requestHeaders', jsonb_build_object('X-Route-Seed', 'true')
+            ),
+            'enabled', TRUE,
+            'version', 1,
+            'createdAt', NOW(),
+            'updatedAt', NOW()
+        ),
+        'seed-data',
+        NOW(),
+        1
+    ),
+    (
+        'f6666666-6666-6666-6666-666666666666',
+        '66666666-6666-6666-6666-666666666666',
+        'SEED',
+        jsonb_build_object(
+            'id', '66666666-6666-6666-6666-666666666666',
+            'pathPattern', '/api/v1/subscriptions/**',
+            'serviceUri', 'lb://subscription-service',
+            'predicates', '[{"name":"Path","args":{"pattern":"/api/v1/subscriptions/**"}}]'::jsonb,
+            'filters', '[{"name":"StripPrefix","args":{"parts":"1"}},{"name":"PrefixPath","args":{"prefix":"/subscription"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+            'metadata', jsonb_build_object(
+                'methods', jsonb_build_array('GET', 'POST', 'PUT', 'PATCH', 'DELETE'),
+                'stripPrefix', 1,
+                'prefixPath', '/subscription',
+                'requestHeaders', jsonb_build_object('X-Route-Seed', 'true')
+            ),
+            'enabled', TRUE,
+            'version', 1,
+            'createdAt', NOW(),
+            'updatedAt', NOW()
+        ),
+        'seed-data',
+        NOW(),
+        1
+    ),
+    (
+        'f7777777-7777-7777-7777-777777777777',
+        '77777777-7777-7777-7777-777777777777',
+        'SEED',
+        jsonb_build_object(
+            'id', '77777777-7777-7777-7777-777777777777',
+            'pathPattern', '/api/v1/billing/**',
+            'serviceUri', 'lb://billing-service',
+            'predicates', '[{"name":"Path","args":{"pattern":"/api/v1/billing/**"}}]'::jsonb,
+            'filters', '[{"name":"StripPrefix","args":{"parts":"1"}},{"name":"PrefixPath","args":{"prefix":"/billing"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+            'metadata', jsonb_build_object(
+                'methods', jsonb_build_array('GET', 'POST', 'PUT', 'PATCH', 'DELETE'),
+                'stripPrefix', 1,
+                'prefixPath', '/billing',
+                'requestHeaders', jsonb_build_object('X-Route-Seed', 'true')
+            ),
+            'enabled', TRUE,
+            'version', 1,
+            'createdAt', NOW(),
+            'updatedAt', NOW()
+        ),
+        'seed-data',
+        NOW(),
+        1
+    ),
+    (
+        'f8888888-8888-8888-8888-888888888888',
+        '88888888-8888-8888-8888-888888888888',
+        'SEED',
+        jsonb_build_object(
+            'id', '88888888-8888-8888-8888-888888888888',
+            'pathPattern', '/api/v1/analytics/**',
+            'serviceUri', 'lb://analytics-service',
+            'predicates', '[{"name":"Path","args":{"pattern":"/api/v1/analytics/**"}}]'::jsonb,
+            'filters', '[{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
+            'metadata', jsonb_build_object(
+                'methods', jsonb_build_array('GET'),
+                'stripPrefix', 0,
                 'requestHeaders', jsonb_build_object('X-Route-Seed', 'true')
             ),
             'enabled', TRUE,
