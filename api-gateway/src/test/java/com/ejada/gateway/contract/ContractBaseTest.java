@@ -3,13 +3,19 @@ package com.ejada.gateway.contract;
 import com.ejada.gateway.config.TestGatewayConfiguration;
 import com.ejada.gateway.config.RedisTestConfiguration;
 import com.ejada.gateway.config.SubscriptionCacheTestConfiguration;
+import io.restassured.module.mockmvc.RestAssuredMockMvc;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 /**
  * Base class used by Spring Cloud Contract generated tests. It spins up the
@@ -18,6 +24,7 @@ import org.springframework.web.reactive.function.client.WebClient;
  * doubles for JWT and circuit breaker behaviour.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@AutoConfigureMockMvc
 @ContextConfiguration(classes = {
     TestGatewayConfiguration.class,
     RedisTestConfiguration.class,
@@ -33,9 +40,20 @@ public abstract class ContractBaseTest {
 
   protected WebClient webClient;
 
+  @Autowired
+  private WebApplicationContext webApplicationContext;
+
+  @Autowired(required = false)
+  private MockMvc mockMvc;
+
   @BeforeEach
   void setUp() {
     this.webClient = WebClient.create();
+    if (mockMvc != null) {
+      RestAssuredMockMvc.mockMvc(mockMvc);
+    } else {
+      RestAssuredMockMvc.mockMvc(MockMvcBuilders.webAppContextSetup(webApplicationContext).build());
+    }
   }
 
   @DynamicPropertySource

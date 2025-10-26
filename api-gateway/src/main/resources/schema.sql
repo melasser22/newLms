@@ -23,6 +23,30 @@ CREATE TABLE IF NOT EXISTS public.route_definition_audit (
       FOREIGN KEY(route_id) REFERENCES public.route_definitions(id)
 );
 
+CREATE TABLE IF NOT EXISTS public.route_call_audit (
+    call_id UUID PRIMARY KEY,
+    route_id UUID,
+    route_id_raw TEXT,
+    method TEXT NOT NULL,
+    path TEXT NOT NULL,
+    status_code INTEGER,
+    duration_ms BIGINT,
+    tenant_id TEXT,
+    correlation_id TEXT,
+    client_ip TEXT,
+    outcome TEXT NOT NULL,
+    error_message TEXT,
+    occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_route_call_definition
+      FOREIGN KEY(route_id) REFERENCES public.route_definitions(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_route_call_audit_route_id
+    ON public.route_call_audit(route_id);
+
+CREATE INDEX IF NOT EXISTS idx_route_call_audit_occurred_at
+    ON public.route_call_audit(occurred_at);
+
 CREATE TABLE IF NOT EXISTS public.tenant_api_version_preferences (
     id SERIAL PRIMARY KEY,
     tenant_id TEXT NOT NULL,
