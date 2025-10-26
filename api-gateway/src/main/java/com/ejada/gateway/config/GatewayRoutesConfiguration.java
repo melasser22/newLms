@@ -101,7 +101,7 @@ public class GatewayRoutesConfiguration {
 
     if (aggregated.isEmpty()) {
       throw new IllegalStateException(
-          "No gateway routes were configured. Verify gateway.routes entries in application.yml or the Config Server response.");
+          "No gateway routes were configured. Ensure database route definitions are active or supply gateway.routes entries via configuration.");
     }
 
     LOGGER.info("Registering {} gateway routes ({} static, {} dynamic)",

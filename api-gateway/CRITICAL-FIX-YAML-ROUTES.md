@@ -1,5 +1,8 @@
 # CRITICAL FIX: YAML Route Configuration
 
+> **Note:** Static gateway routes now live in the database. This document is retained for historical context when the platform
+> relied on YAML-managed route catalogues.
+
 ## Problem Found
 
 **CRITICAL YAML INDENTATION ERROR** in `routes.yml`

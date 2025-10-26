@@ -7,7 +7,7 @@ This keeps responsibilities clear and enables targeted overrides.
 
 - `application.yml` – Core Spring Boot settings, shared pattern anchors, and encryption metadata.
 - `gateway.yml` – Spring Cloud Gateway infrastructure defaults, cache and subscription behaviour, and administrative wiring.
-- `routes.yml` – Declarative downstream route catalogue with reusable anchors for shared behaviour.
+- `routes.yml` – API version metadata; static service routes are provisioned via the database admin APIs.
 - `security.yml` – OAuth2 resource server wiring, CORS policy, and centralised `permit-all` declarations.
 - `tenant.yml` – Tenant resolution, correlation identifiers, and rate limiting configuration.
 - `resilience.yml` – Reusable circuit breaker, retry, and bulkhead definitions for service integrations.
