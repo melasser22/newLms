@@ -6,10 +6,6 @@ spring:
           args:
             maxSize: 10MB
         - name: SaveSession
-        - name: AddRequestHeader
-          args:
-            name: X-Gateway-Trace
-            value: "#{T(java.util.UUID).randomUUID()}"
       x-forwarded:
         enabled: true
         for-enabled: true
