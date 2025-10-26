@@ -264,6 +264,72 @@ All errors include correlation IDs for tracking:
 }
 ```
 
+## Admin Aggregation Failures and Downstream Instability (2026-02-15)
+
+### Issue Description
+- Admin console repeatedly reports `"Admin aggregation failed for <service> (deployment: primary)"`
+- Gateway log shows oscillating PostgreSQL connections (`Channel inbound receiver cancelled`)
+- `/api/v1/superadmin/admins/first-login` intermittently returns `500` with "Unexpected gateway error"
+- Redis-backed rate limiting occasionally emits `"Rate limiter failed, allowing request"`
+
+### Root Causes Identified
+
+1. **Downstream unreachability / service discovery gaps**
+   - Aggregation probes failed because the gateway could not resolve or connect to `tenant-service`, `catalog-service`, `subscription-service`, `billing-service`, `setup-service`, and `security-service`.
+   - The failures were mostly `ConnectException` and `TimeoutException`, previously surfaced as `UNKNOWN` which made dashboards harder to interpret.
+
+2. **PostgreSQL connection churn**
+   - Unstable database connectivity caused repeated R2DBC reconnect attempts, cancelling in-flight requests and amplifying aggregation errors.
+
+3. **Security service availability**
+   - The first-login flow depends on the security service. When the downstream call timed out, the gateway surfaced a generic `500`.
+
+4. **Redis / rate limiter resilience**
+   - Redis availability issues triggered the fallback path that lets requests through without limiting, but emitted noisy warnings without actionable context.
+
+### Solutions Implemented
+
+1. **Better failure classification and logging**
+   - `AdminAggregationService` now distinguishes between connection failures (`DOWN`) and latency issues (`DEGRADED`) and includes the exact health endpoint URI in the log message.
+   - Admin dashboards clearly show which services are unreachable vs. slow, enabling faster triage.
+
+2. **Regression tests for aggregation edge cases**
+   - Added unit tests that simulate `ConnectException` and `TimeoutException` during aggregation to prevent regressions in failure handling.
+
+3. **Operational Playbook**
+   - New health-check script snippets (below) document the exact commands the on-call team should run to confirm downstream availability.
+
+### Immediate Diagnostic Actions
+
+```bash
+# 1. Verify downstream health endpoints
+for svc in tenant catalog subscription billing setup security; do
+  curl -sf http://$svc-service:port/actuator/health || echo "$svc-service is unreachable"
+done
+
+# 2. Inspect PostgreSQL reachability
+pg_isready -h 10.89.1.2 -p 5432 -d lms || telnet 10.89.1.2 5432
+
+# 3. Confirm Redis connectivity for rate limiting
+redis-cli -h redis --tls ping
+
+# 4. Check security service tokens for first-login
+curl -i http://security-service:port/actuator/health
+```
+
+### Configuration Checklist
+
+- Ensure `gateway.admin.aggregation.services` contains valid URIs (prefer `lb://` targets) for every critical downstream service.
+- Review `spring.r2dbc.*` pool settings and database credentials; transient errors often indicate exhausted connection pools or network partitions.
+- Validate OAuth/JWT configuration in `application.yaml`/Config Server so the first-login flow can reach the security service with a valid token.
+- Confirm Redis credentials/SSL settings where applicable; when Redis is optional, monitor the gateway metric `gateway.admin.health.redis`.
+
+### Monitoring Recommendations
+
+- Track the metrics `gateway.admin.downstream.snapshots` (latency and status per service) and `gateway.admin.health.redis` in your dashboard.
+- Alert when any required service remains `DOWN` for more than 60 seconds or when PostgreSQL connection churn exceeds baseline thresholds.
+- Forward the `Admin aggregation failed ...` log to centralized logging with high severity; the message now contains the full URI, aiding correlation with network ACLs or DNS issues.
+
 ## Prevention Best Practices
 
 1. **Always use ObjectProvider for optional dependencies**
