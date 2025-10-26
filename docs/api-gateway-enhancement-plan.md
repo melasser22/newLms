@@ -174,7 +174,7 @@ gateway:
 ## 8. Implementation Roadmap
 
 1. **Foundation (Week 1)**
-   - Update configuration (`application.yaml`) & Dockerfile.
+   - Update configuration (`application.yml`) & Dockerfile.
    - Implement enhanced security & context filters.
    - Introduce dynamic route SPI and refresher.
 

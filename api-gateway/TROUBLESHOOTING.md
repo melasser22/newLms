@@ -321,7 +321,7 @@ curl -i http://security-service:port/actuator/health
 
 - Ensure `gateway.admin.aggregation.services` contains valid URIs (prefer `lb://` targets) for every critical downstream service.
 - Review `spring.r2dbc.*` pool settings and database credentials; transient errors often indicate exhausted connection pools or network partitions.
-- Validate OAuth/JWT configuration in `application.yaml`/Config Server so the first-login flow can reach the security service with a valid token.
+- Validate OAuth/JWT configuration in `security.yml` or the Config Server so the first-login flow can reach the security service with a valid token.
 - Confirm Redis credentials/SSL settings where applicable; when Redis is optional, monitor the gateway metric `gateway.admin.health.redis`.
 
 ### Monitoring Recommendations
@@ -360,7 +360,7 @@ curl -i http://security-service:port/actuator/health
 ## Related Configuration
 
 ### Application Configuration
-Key configuration in `application.yaml`:
+Key configuration in `application.yml`:
 ```yaml
 logging:
   level:

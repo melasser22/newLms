@@ -2,7 +2,7 @@
 
 ## Problem Found
 
-**CRITICAL YAML INDENTATION ERROR** in `application.yaml`
+**CRITICAL YAML INDENTATION ERROR** in `routes.yml`
 
 The routes for `tenant`, `catalog`, `subscription`, `billing`, and `policy` services were **incorrectly nested under the `jasypt.encryptor.property` section** instead of `gateway.routes`.
 
@@ -63,7 +63,7 @@ jasypt:
 
 ## Files Changed
 
-1. **application.yaml** - Fixed YAML structure
+1. **routes.yml** - Fixed YAML structure
    - Moved `resilience` config under `gateway.routes.setup`
    - Moved all route definitions under `gateway.routes`
    - Restored `app` and `jasypt` sections in correct positions
@@ -111,7 +111,7 @@ The YAML indentation error likely occurred during:
 
 1. **Use YAML validators** before committing:
    ```bash
-   yamllint application.yaml
+   yamllint routes.yml
    ```
 
 2. **Use IDE YAML plugins** with syntax checking
