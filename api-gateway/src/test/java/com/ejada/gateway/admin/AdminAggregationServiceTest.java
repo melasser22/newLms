@@ -22,11 +22,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -93,6 +95,76 @@ class AdminAggregationServiceTest {
         return stream().iterator();
       }
     };
+  }
+
+  @Test
+  void collectDownstreamSnapshotsMarksServiceDownOnConnectionFailure() {
+    AdminAggregationProperties properties = new AdminAggregationProperties();
+    AdminAggregationProperties.Service service = new AdminAggregationProperties.Service();
+    service.setId("tenant-service");
+    service.setUri(URI.create("http://tenant-service"));
+    properties.getAggregation().setServices(List.of(service));
+
+    WebClientRequestException connectionFailure = new WebClientRequestException(
+        new java.net.ConnectException("Connection refused"),
+        HttpMethod.GET,
+        service.getUri().resolve(service.getHealthPath()),
+        HttpHeaders.EMPTY);
+
+    WebClient.Builder webClientBuilder = WebClient.builder()
+        .exchangeFunction(request -> Mono.error(connectionFailure));
+
+    AdminAggregationService aggregationService = new AdminAggregationService(
+        webClientBuilder,
+        properties,
+        new GatewayRoutesProperties(),
+        provider(null),
+        provider(null),
+        provider(null));
+
+    StepVerifier.create(aggregationService.collectDownstreamSnapshots())
+        .assertNext(snapshots -> {
+          assertThat(snapshots).hasSize(1);
+          AdminServiceSnapshot snapshot = snapshots.getFirst();
+          assertThat(snapshot.state()).isEqualTo(AdminServiceState.DOWN);
+          assertThat(snapshot.status()).isEqualTo("UNAVAILABLE");
+        })
+        .verifyComplete();
+  }
+
+  @Test
+  void collectDownstreamSnapshotsMarksServiceDegradedOnTimeout() {
+    AdminAggregationProperties properties = new AdminAggregationProperties();
+    AdminAggregationProperties.Service service = new AdminAggregationProperties.Service();
+    service.setId("catalog-service");
+    service.setUri(URI.create("http://catalog-service"));
+    properties.getAggregation().setServices(List.of(service));
+
+    WebClientRequestException timeoutFailure = new WebClientRequestException(
+        new java.util.concurrent.TimeoutException("Read timed out"),
+        HttpMethod.GET,
+        service.getUri().resolve(service.getHealthPath()),
+        HttpHeaders.EMPTY);
+
+    WebClient.Builder webClientBuilder = WebClient.builder()
+        .exchangeFunction(request -> Mono.error(timeoutFailure));
+
+    AdminAggregationService aggregationService = new AdminAggregationService(
+        webClientBuilder,
+        properties,
+        new GatewayRoutesProperties(),
+        provider(null),
+        provider(null),
+        provider(null));
+
+    StepVerifier.create(aggregationService.collectDownstreamSnapshots())
+        .assertNext(snapshots -> {
+          assertThat(snapshots).hasSize(1);
+          AdminServiceSnapshot snapshot = snapshots.getFirst();
+          assertThat(snapshot.state()).isEqualTo(AdminServiceState.DEGRADED);
+          assertThat(snapshot.status()).isEqualTo("DEGRADED");
+        })
+        .verifyComplete();
   }
 
   @Test

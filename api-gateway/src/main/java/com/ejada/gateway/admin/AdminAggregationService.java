@@ -15,8 +15,16 @@ import com.ejada.gateway.loadbalancer.LoadBalancerHealthCheckAggregator;
 import com.ejada.gateway.loadbalancer.LoadBalancerHealthCheckAggregator.Availability;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.micrometer.core.annotation.Timed;
+import io.netty.channel.ConnectTimeoutException;
+import io.netty.handler.timeout.ReadTimeoutException;
+import io.netty.handler.timeout.WriteTimeoutException;
 import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.UnknownHostException;
+import java.nio.channels.UnresolvedAddressException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
@@ -270,24 +278,25 @@ public class AdminAggregationService {
   private void logAggregationFailure(AdminAggregationProperties.Service service, Throwable failure) {
     String serviceId = service.getId();
     String deployment = service.getDeployment();
+    String endpoint = describeEndpoint(service);
     String failureMessage = Optional.ofNullable(failure.getMessage())
         .filter(StringUtils::hasText)
         .orElse(failure.getClass().getSimpleName());
-    String message = "Admin aggregation failed for {} (deployment: {})";
+    String message = "Admin aggregation failed for {} (deployment: {}) -> {}";
     if (service.isRequired()) {
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.warn(message, serviceId, deployment, failure);
+        LOGGER.warn(message, serviceId, deployment, endpoint, failure);
       } else {
-        LOGGER.warn(message + ": {}", serviceId, deployment, failureMessage);
+        LOGGER.warn(message + ": {}", serviceId, deployment, endpoint, failureMessage);
       }
       return;
     }
 
     String optionalMessage = "Optional " + message;
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug(optionalMessage, serviceId, deployment, failure);
+      LOGGER.debug(optionalMessage, serviceId, deployment, endpoint, failure);
     } else {
-      LOGGER.info(optionalMessage + ": {}", serviceId, deployment, failureMessage);
+      LOGGER.info(optionalMessage + ": {}", serviceId, deployment, endpoint, failureMessage);
     }
   }
 
@@ -297,25 +306,16 @@ public class AdminAggregationService {
       if (response.getStatusCode().is5xxServerError()) {
         return AdminServiceState.DOWN;
       }
-      return AdminServiceState.DEGRADED;
-    }
-    if (unwrapped instanceof WebClientRequestException requestException) {
-      Throwable cause = requestException.getCause();
-      if (cause instanceof SocketTimeoutException
-          || cause instanceof ConnectException) {
-        return AdminServiceState.UNKNOWN;
+      if (response.getStatusCode().is4xxClientError()) {
+        return AdminServiceState.DEGRADED;
       }
       return AdminServiceState.UNKNOWN;
     }
-    if (unwrapped instanceof TimeoutException
-        || unwrapped instanceof SocketTimeoutException
-        || unwrapped instanceof ConnectException) {
-      return AdminServiceState.UNKNOWN;
+    if (unwrapped instanceof WebClientRequestException requestException) {
+      Throwable cause = requestException.getCause();
+      return classifyTransportFailure(cause);
     }
-    if (unwrapped instanceof IllegalStateException) {
-      return AdminServiceState.UNKNOWN;
-    }
-    return AdminServiceState.UNKNOWN;
+    return classifyTransportFailure(unwrapped);
   }
 
   private String mapFailureStatus(AdminServiceState state) {
@@ -325,5 +325,40 @@ public class AdminAggregationService {
       case UNKNOWN -> "UNKNOWN";
       default -> "UNKNOWN";
     };
+  }
+
+  private AdminServiceState classifyTransportFailure(Throwable failure) {
+    if (failure == null) {
+      return AdminServiceState.UNKNOWN;
+    }
+    Throwable root = Exceptions.unwrap(failure);
+    if (root instanceof SocketTimeoutException
+        || root instanceof TimeoutException
+        || root instanceof ReadTimeoutException
+        || root instanceof WriteTimeoutException) {
+      return AdminServiceState.DEGRADED;
+    }
+    if (root instanceof ConnectException
+        || root instanceof ConnectTimeoutException
+        || root instanceof NoRouteToHostException
+        || root instanceof UnknownHostException
+        || root instanceof UnresolvedAddressException
+        || root instanceof SocketException) {
+      return AdminServiceState.DOWN;
+    }
+    return AdminServiceState.UNKNOWN;
+  }
+
+  private String describeEndpoint(AdminAggregationProperties.Service service) {
+    URI uri = service.getUri();
+    String healthPath = service.getHealthPath();
+    if (uri == null) {
+      return healthPath;
+    }
+    try {
+      return uri.resolve(healthPath).toString();
+    } catch (IllegalArgumentException ex) {
+      return uri + healthPath;
+    }
   }
 }
