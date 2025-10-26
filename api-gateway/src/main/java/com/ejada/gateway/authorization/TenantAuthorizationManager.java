@@ -6,6 +6,7 @@ import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.gateway.subscription.SubscriptionCacheService;
 import com.ejada.gateway.subscription.SubscriptionRecord;
 import com.ejada.starter_core.config.CoreAutoConfiguration;
+import com.ejada.starter_security.Role;
 import com.ejada.starter_security.SharedSecurityProps;
 import com.ejada.starter_core.web.FilterSkipUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -117,6 +118,15 @@ public class TenantAuthorizationManager implements ReactiveAuthorizationManager<
     String jwtTenant = extractTenantFromJwt(auth);
     boolean superAdmin = hasSuperAdminAuthority(auth.getAuthorities());
 
+    if (superAdmin
+        && !StringUtils.hasText(resolvedTenant)
+        && !StringUtils.hasText(headerTenant)
+        && !StringUtils.hasText(pathTenant)
+        && !StringUtils.hasText(jwtTenant)) {
+      exchange.getResponse().getHeaders().set("X-Tenant-Verified", "super-admin");
+      return Mono.just(new AuthorizationDecision(true));
+    }
+
     if (!superAdmin && StringUtils.hasText(jwtTenant)) {
       if (!matches(jwtTenant, resolvedTenant) || !matches(jwtTenant, headerTenant) || !matches(jwtTenant, pathTenant)) {
         LOGGER.debug("JWT tenant {} does not match request tenant (header={}, path={}, resolved={})",
@@ -141,6 +151,12 @@ public class TenantAuthorizationManager implements ReactiveAuthorizationManager<
     }
 
     String targetTenant = firstNonNull(resolvedTenant, headerTenant, pathTenant, jwtTenant);
+
+    if (superAdmin && !StringUtils.hasText(targetTenant)) {
+      exchange.getResponse().getHeaders().set("X-Tenant-Verified", "super-admin");
+      return Mono.just(new AuthorizationDecision(true));
+    }
+
     if (!StringUtils.hasText(targetTenant)) {
       LOGGER.debug("Unable to resolve tenant for request {} {}", exchange.getRequest().getMethod(),
           exchange.getRequest().getURI());
@@ -335,11 +351,22 @@ public class TenantAuthorizationManager implements ReactiveAuthorizationManager<
         continue;
       }
       String value = authority.getAuthority();
-      if ("SUPER_ADMIN".equalsIgnoreCase(value) || "ROLE_SUPER_ADMIN".equalsIgnoreCase(value)) {
+      if (isSuperAdminAuthority(value)) {
         return true;
       }
     }
     return false;
+  }
+
+  private boolean isSuperAdminAuthority(String value) {
+    if (!StringUtils.hasText(value)) {
+      return false;
+    }
+    String normalized = value.trim();
+    return "SUPER_ADMIN".equalsIgnoreCase(normalized)
+        || "ROLE_SUPER_ADMIN".equalsIgnoreCase(normalized)
+        || Role.EJADA_OFFICER.getAuthority().equalsIgnoreCase(normalized)
+        || Role.EJADA_OFFICER.name().equalsIgnoreCase(normalized);
   }
 
   private static String firstNonNull(String... values) {
