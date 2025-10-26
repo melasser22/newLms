@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.lang.Nullable;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import reactor.test.StepVerifier;
 
@@ -114,6 +115,24 @@ class GatewayErrorWebExceptionHandlerTest {
     assertThat(response.getData())
         .containsEntry("status", HttpStatus.NOT_FOUND.value())
         .containsEntry("path", "/missing");
+  }
+
+  @Test
+  void mapsAuthenticationFailuresToUnauthorized() throws Exception {
+    MockServerWebExchange exchange = MockServerWebExchange.from(
+        MockServerHttpRequest.post("/secure").build());
+
+    AuthenticationServiceException exception = new AuthenticationServiceException("Invalid credentials");
+
+    StepVerifier.create(handler.handle(exchange, exception)).verifyComplete();
+
+    assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    BaseResponse<Map<String, Object>> response = readBody(exchange);
+    assertThat(response.getCode()).isEqualTo("ERR_AUTHENTICATION");
+    assertThat(response.getMessage()).isEqualTo("Invalid credentials");
+    assertThat(response.getData())
+        .containsEntry("status", HttpStatus.UNAUTHORIZED.value())
+        .containsEntry("errorCode", "ERR_AUTHENTICATION");
   }
 
   private BaseResponse<Map<String, Object>> readBody(MockServerWebExchange exchange) throws Exception {

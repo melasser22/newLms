@@ -38,6 +38,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.AuthenticationException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -166,6 +167,9 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
         || ex instanceof IllegalArgumentException) {
       return HttpStatus.BAD_REQUEST;
     }
+    if (ex instanceof AuthenticationException) {
+      return HttpStatus.UNAUTHORIZED;
+    }
     if (ex instanceof org.springframework.security.access.AccessDeniedException) {
       return HttpStatus.FORBIDDEN;
     }
@@ -210,6 +214,9 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     if (ex instanceof IllegalStateException) {
       return "ERR_ILLEGAL_STATE";
     }
+    if (ex instanceof AuthenticationException) {
+      return "ERR_AUTHENTICATION";
+    }
     if (ex instanceof org.springframework.security.access.AccessDeniedException) {
       return "ERR_ACCESS_DENIED";
     }
@@ -253,6 +260,10 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     }
     if (ex instanceof DataIntegrityViolationException) {
       return "Data conflict occurred";
+    }
+    if (ex instanceof AuthenticationException authenticationException) {
+      String authMessage = authenticationException.getMessage();
+      return StringUtils.hasText(authMessage) ? authMessage : "Authentication failed";
     }
     if (ex instanceof org.springframework.security.access.AccessDeniedException) {
       return "Access denied";
