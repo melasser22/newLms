@@ -3,6 +3,11 @@ jasypt:
     password: test-secret
 
 spring:
+  jmx:
+    enabled: false
+  application:
+    admin:
+      enabled: false
   kafka:
     bootstrap-servers: localhost:65535
     listener:

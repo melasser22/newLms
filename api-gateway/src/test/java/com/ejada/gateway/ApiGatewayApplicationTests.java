@@ -20,7 +20,8 @@ import org.springframework.test.context.TestPropertySource;
     "shared.ratelimit.enabled=false",
     "spring.autoconfigure.exclude=com.ejada.shared_starter_ratelimit.RateLimitAutoConfiguration",
     "spring.kafka.bootstrap-servers=localhost:65535",
-    "spring.kafka.listener.auto-startup=false"
+    "spring.kafka.listener.auto-startup=false",
+    "spring.application.admin.enabled=false"
 })
 class ApiGatewayApplicationTests {
 

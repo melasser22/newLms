@@ -4,6 +4,8 @@ import com.ejada.common.constants.HeaderNames;
 import com.ejada.gateway.config.GatewayLoggingProperties;
 import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.gateway.observability.GatewayTracingHelper;
+import com.ejada.gateway.routes.model.RouteCallAuditRecord;
+import com.ejada.gateway.routes.service.RouteCallAuditService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.InetAddress;
@@ -26,6 +28,7 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Signal;
 
 /**
  * Emits structured JSON logs for all gateway ingress traffic suitable for ELK ingestion.
@@ -38,13 +41,16 @@ public class GatewayAccessLogFilter implements WebFilter, Ordered {
   private final ObjectMapper objectMapper;
   private final AntPathMatcher pathMatcher = new AntPathMatcher();
   private final GatewayTracingHelper tracingHelper;
+  private final RouteCallAuditService routeCallAuditService;
 
   public GatewayAccessLogFilter(GatewayLoggingProperties loggingProperties,
       ObjectMapper objectMapper,
-      GatewayTracingHelper tracingHelper) {
+      GatewayTracingHelper tracingHelper,
+      RouteCallAuditService routeCallAuditService) {
     this.loggingProperties = loggingProperties;
     this.objectMapper = objectMapper;
     this.tracingHelper = tracingHelper;
+    this.routeCallAuditService = routeCallAuditService;
   }
 
   @Override
@@ -66,10 +72,17 @@ public class GatewayAccessLogFilter implements WebFilter, Ordered {
 
     long start = System.nanoTime();
     return chain.filter(exchange)
-        .doFinally(signalType -> {
+        .materialize()
+        .flatMap(signal -> {
           long durationMs = (System.nanoTime() - start) / 1_000_000;
           writeAccessLog(exchange, durationMs);
           tracingHelper.tagExchange(exchange);
+          return routeCallAuditService.record(buildAuditRecord(exchange, durationMs, signal))
+              .onErrorResume(ex -> {
+                LOGGER.warn("Failed to audit route call for {}", exchange.getRequest().getPath(), ex);
+                return Mono.empty();
+              })
+              .then(signal.isOnError() ? Mono.error(signal.getThrowable()) : Mono.<Void>empty());
         });
   }
 
@@ -108,6 +121,28 @@ public class GatewayAccessLogFilter implements WebFilter, Ordered {
     } catch (JsonProcessingException ex) {
       LOGGER.info("{}", payload, ex);
     }
+  }
+
+  private RouteCallAuditRecord buildAuditRecord(ServerWebExchange exchange, long durationMs, Signal<Void> signal) {
+    String routeId = resolveRouteId(exchange);
+    String method = Optional.ofNullable(exchange.getRequest().getMethod())
+        .map(HttpMethod::name)
+        .orElse("UNKNOWN");
+    int status = Optional.ofNullable(exchange.getResponse().getStatusCode())
+        .map(code -> code.value())
+        .orElseGet(() -> signal.isOnError() ? 500 : 200);
+    String errorMessage = signal.getThrowable() != null ? signal.getThrowable().getMessage() : null;
+    return new RouteCallAuditRecord(
+        routeId,
+        exchange.getRequest().getPath().value(),
+        method,
+        status,
+        durationMs,
+        trimToNull(exchange.getAttribute(GatewayRequestAttributes.TENANT_ID)),
+        resolveCorrelationId(exchange),
+        resolveClientIp(exchange.getRequest()),
+        signal.getType().name(),
+        errorMessage);
   }
 
   private String resolveCorrelationId(ServerWebExchange exchange) {

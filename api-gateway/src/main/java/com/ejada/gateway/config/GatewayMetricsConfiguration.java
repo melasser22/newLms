@@ -5,6 +5,7 @@ import com.ejada.gateway.filter.GatewayMetricsFilter;
 import com.ejada.gateway.metrics.TenantRequestMetricsTracker;
 import com.ejada.gateway.observability.GatewayTracingHelper;
 import com.ejada.gateway.resilience.CircuitBreakerRecoveryTester;
+import com.ejada.gateway.routes.service.RouteCallAuditService;
 import com.ejada.gateway.routes.service.RouteVariantService;
 import com.ejada.gateway.resilience.TenantCircuitBreakerMetrics;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -60,8 +61,9 @@ public class GatewayMetricsConfiguration {
 
   @Bean
   public GatewayAccessLogFilter gatewayAccessLogFilter(ObjectMapper objectMapper,
-      GatewayTracingHelper tracingHelper) {
-    return new GatewayAccessLogFilter(loggingProperties, objectMapper, tracingHelper);
+      GatewayTracingHelper tracingHelper,
+      RouteCallAuditService routeCallAuditService) {
+    return new GatewayAccessLogFilter(loggingProperties, objectMapper, tracingHelper, routeCallAuditService);
   }
 
   @PostConstruct
