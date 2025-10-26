@@ -170,10 +170,13 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
         || ex instanceof IllegalArgumentException) {
       return HttpStatus.BAD_REQUEST;
     }
-    if (ex instanceof AuthenticationException) {
+    AuthenticationException authenticationException = findCause(ex, AuthenticationException.class);
+    if (authenticationException != null) {
       return HttpStatus.UNAUTHORIZED;
     }
-    if (ex instanceof org.springframework.security.access.AccessDeniedException) {
+    org.springframework.security.access.AccessDeniedException accessDeniedException =
+        findCause(ex, org.springframework.security.access.AccessDeniedException.class);
+    if (accessDeniedException != null) {
       return HttpStatus.FORBIDDEN;
     }
 
@@ -231,10 +234,13 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     if (ex instanceof IllegalStateException) {
       return "ERR_ILLEGAL_STATE";
     }
-    if (ex instanceof AuthenticationException) {
+    AuthenticationException authenticationException = findCause(ex, AuthenticationException.class);
+    if (authenticationException != null) {
       return "ERR_AUTHENTICATION";
     }
-    if (ex instanceof org.springframework.security.access.AccessDeniedException) {
+    org.springframework.security.access.AccessDeniedException accessDeniedException =
+        findCause(ex, org.springframework.security.access.AccessDeniedException.class);
+    if (accessDeniedException != null) {
       return "ERR_ACCESS_DENIED";
     }
     WebClientResponseException responseException = resolveWebClientResponseException(ex);
@@ -292,11 +298,14 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     if (ex instanceof DataIntegrityViolationException) {
       return "Data conflict occurred";
     }
-    if (ex instanceof AuthenticationException authenticationException) {
+    AuthenticationException authenticationException = findCause(ex, AuthenticationException.class);
+    if (authenticationException != null) {
       String authMessage = authenticationException.getMessage();
       return StringUtils.hasText(authMessage) ? authMessage : "Authentication failed";
     }
-    if (ex instanceof org.springframework.security.access.AccessDeniedException) {
+    org.springframework.security.access.AccessDeniedException accessDeniedException =
+        findCause(ex, org.springframework.security.access.AccessDeniedException.class);
+    if (accessDeniedException != null) {
       return "Access denied";
     }
     if (status == HttpStatus.SERVICE_UNAVAILABLE) {
@@ -378,6 +387,17 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
     }
     String trimmed = value.trim();
     return trimmed.isEmpty() ? null : trimmed;
+  }
+
+  private <T extends Throwable> T findCause(Throwable throwable, Class<T> type) {
+    Throwable current = throwable;
+    while (current != null) {
+      if (type.isInstance(current)) {
+        return type.cast(current);
+      }
+      current = current.getCause();
+    }
+    return null;
   }
 
   private String extractBindingMessage(WebExchangeBindException ex) {

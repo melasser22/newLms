@@ -186,6 +186,25 @@ class GatewayErrorWebExceptionHandlerTest {
         .containsEntry("errorCode", "ERR_AUTHENTICATION");
   }
 
+  @Test
+  void unwrapsAuthenticationFailureFromNestedException() throws Exception {
+    MockServerWebExchange exchange = MockServerWebExchange.from(
+        MockServerHttpRequest.post("/secure").build());
+
+    RuntimeException wrapper = new RuntimeException("Wrapper",
+        new AuthenticationServiceException("Token introspection unavailable"));
+
+    StepVerifier.create(handler.handle(exchange, wrapper)).verifyComplete();
+
+    assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    BaseResponse<Map<String, Object>> response = readBody(exchange);
+    assertThat(response.getCode()).isEqualTo("ERR_AUTHENTICATION");
+    assertThat(response.getMessage()).isEqualTo("Token introspection unavailable");
+    assertThat(response.getData())
+        .containsEntry("status", HttpStatus.UNAUTHORIZED.value())
+        .containsEntry("errorCode", "ERR_AUTHENTICATION");
+  }
+
   private BaseResponse<Map<String, Object>> readBody(MockServerWebExchange exchange) throws Exception {
     String body = exchange.getResponse()
         .getBodyAsString()
