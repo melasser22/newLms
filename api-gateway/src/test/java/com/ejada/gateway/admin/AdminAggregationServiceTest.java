@@ -322,6 +322,28 @@ class AdminAggregationServiceTest {
         .exchangeFunction(request -> Mono.just(ClientResponse.create(HttpStatus.INTERNAL_SERVER_ERROR)
             .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .body("{\"status\":\"DOWN\"}")
+            .build()));
+
+    AdminAggregationService aggregationService = new AdminAggregationService(
+        webClientBuilder,
+        properties,
+        new GatewayRoutesProperties(),
+        provider(null),
+        provider(null),
+        provider(null));
+
+    StepVerifier.create(aggregationService.collectDownstreamSnapshots())
+        .assertNext(snapshots -> {
+          assertThat(snapshots).hasSize(1);
+          AdminServiceSnapshot snapshot = snapshots.get(0);
+          assertThat(snapshot.serviceId()).isEqualTo("subscription-service");
+          assertThat(snapshot.state()).isEqualTo(AdminServiceState.DOWN);
+          assertThat(snapshot.status()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.name());
+        })
+        .verifyComplete();
+  }
+
+  @Test
   void collectDownstreamSnapshotsTreatsUnauthorizedAsUnknown() {
     AdminAggregationProperties properties = new AdminAggregationProperties();
     AdminAggregationProperties.Service downstream = new AdminAggregationProperties.Service();
@@ -347,14 +369,15 @@ class AdminAggregationServiceTest {
         .assertNext(snapshots -> {
           assertThat(snapshots).hasSize(1);
           AdminServiceSnapshot snapshot = snapshots.get(0);
-          assertThat(snapshot.state()).isEqualTo(AdminServiceState.DOWN);
-          assertThat(snapshot.status()).isEqualTo("UNAVAILABLE");
+          assertThat(snapshot.serviceId()).isEqualTo("setup-service");
+          assertThat(snapshot.state()).isEqualTo(AdminServiceState.UNKNOWN);
+          assertThat(snapshot.status()).isEqualTo(HttpStatus.UNAUTHORIZED.name());
         })
         .verifyComplete();
   }
 
   @Test
-  void collectDownstreamSnapshotsTreatsClientErrorsAsDegraded() {
+  void collectDownstreamSnapshotsTreatsClientErrorsAsDown() {
     AdminAggregationProperties properties = new AdminAggregationProperties();
     AdminAggregationProperties.Service downstream = new AdminAggregationProperties.Service();
     downstream.setId("catalog-service");
@@ -379,11 +402,9 @@ class AdminAggregationServiceTest {
         .assertNext(snapshots -> {
           assertThat(snapshots).hasSize(1);
           AdminServiceSnapshot snapshot = snapshots.get(0);
-          assertThat(snapshot.state()).isEqualTo(AdminServiceState.DEGRADED);
-          assertThat(snapshot.status()).isEqualTo("DEGRADED");
-          assertThat(snapshot.serviceId()).isEqualTo("setup-service");
-          assertThat(snapshot.state()).isEqualTo(AdminServiceState.UNKNOWN);
-          assertThat(snapshot.status()).isEqualTo(HttpStatus.UNAUTHORIZED.name());
+          assertThat(snapshot.serviceId()).isEqualTo("catalog-service");
+          assertThat(snapshot.state()).isEqualTo(AdminServiceState.DOWN);
+          assertThat(snapshot.status()).isEqualTo(HttpStatus.BAD_REQUEST.name());
         })
         .verifyComplete();
   }
@@ -419,8 +440,8 @@ class AdminAggregationServiceTest {
           assertThat(snapshots).hasSize(1);
           AdminServiceSnapshot snapshot = snapshots.get(0);
           assertThat(snapshot.serviceId()).isEqualTo("policy-service");
-          assertThat(snapshot.state()).isEqualTo(AdminServiceState.UNKNOWN);
-          assertThat(snapshot.status()).isEqualTo("UNKNOWN");
+          assertThat(snapshot.state()).isEqualTo(AdminServiceState.DOWN);
+          assertThat(snapshot.status()).isEqualTo("UNAVAILABLE");
           assertThat(snapshot.details()).containsEntry("message", "No service instances discovered");
         })
         .verifyComplete();

@@ -48,7 +48,7 @@ class TenantAuthorizationManagerTest {
         .method(HttpMethod.POST, "/api/auth/admin/login")
         .build();
     MockServerWebExchange exchange = MockServerWebExchange.from(request);
-    AuthorizationContext context = AuthorizationContext.from(exchange);
+    AuthorizationContext context = new AuthorizationContext(exchange);
 
     Mono<AuthorizationDecision> decision = manager.check(Mono.empty(), context);
 
@@ -80,7 +80,7 @@ class TenantAuthorizationManagerTest {
         .post("/api/v1/superadmin/admins/first-login")
         .build();
     MockServerWebExchange exchange = MockServerWebExchange.from(request);
-    AuthorizationContext context = AuthorizationContext.from(exchange);
+    AuthorizationContext context = new AuthorizationContext(exchange);
 
     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
         "superadmin",
