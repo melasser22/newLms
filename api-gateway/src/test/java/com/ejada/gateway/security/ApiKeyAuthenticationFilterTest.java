@@ -9,6 +9,7 @@ import com.ejada.gateway.config.GatewaySecurityProperties.EncryptionAlgorithm;
 import com.ejada.gateway.context.GatewayRequestAttributes;
 import com.ejada.gateway.security.apikey.ApiKeyCodec;
 import com.ejada.gateway.support.ReactiveRedisTestSupport;
+import com.ejada.starter_core.web.FilterSkipUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,6 +19,7 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
@@ -25,6 +27,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -169,6 +172,50 @@ class ApiKeyAuthenticationFilterTest {
     assertThat(body).contains("ERR_API_KEY_INVALID");
     double blocked = meterRegistry.get("gateway.security.blocked").counter().count();
     assertThat(blocked).isEqualTo(1.0d);
+  }
+
+  @Test
+  void skipPatternsBypassApiKeyValidation() {
+    ReactiveStringRedisTemplate redisTemplate = Mockito.mock(ReactiveStringRedisTemplate.class);
+    GatewaySecurityProperties securityProperties = new GatewaySecurityProperties();
+    securityProperties.getApiKey().setEnabled(true);
+    securityProperties.getApiKey().setSkipPatterns(new String[]{"/api/auth/**"});
+
+    GatewaySecurityMetrics localMetrics = new GatewaySecurityMetrics(new SimpleMeterRegistry());
+    GatewayRoutesProperties localRoutes = new GatewayRoutesProperties();
+    ApiKeyCodec codec = Mockito.mock(ApiKeyCodec.class);
+    ApiKeyAuthenticationFilter localFilter = new ApiKeyAuthenticationFilter(
+        redisTemplate,
+        localMetrics,
+        securityProperties,
+        localRoutes,
+        TestObjectProviders.of(new ObjectMapper()),
+        TestObjectProviders.of(new ObjectMapper()),
+        codec);
+
+    MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest
+        .get("/api/auth/superadmin/admins")
+        .header(HeaderNames.API_KEY, "test-key")
+        .build());
+
+    AtomicInteger chainInvocations = new AtomicInteger();
+    WebFilterChain chain = webExchange -> {
+      chainInvocations.incrementAndGet();
+      return Mono.empty();
+    };
+
+    StepVerifier.create(localFilter.filter(exchange, chain)).verifyComplete();
+    Mockito.verifyNoInteractions(redisTemplate);
+    Mockito.verifyNoInteractions(codec);
+    assertThat(chainInvocations.get()).isEqualTo(1);
+  }
+
+  @Test
+  void defaultSkipPatternsCoverSuperadminAuthEndpoints() {
+    GatewaySecurityProperties securityProperties = new GatewaySecurityProperties();
+    assertThat(FilterSkipUtils.shouldSkip(
+        "/api/auth/superadmin/admins",
+        securityProperties.getApiKey().getSkipPatterns())).isTrue();
   }
 
   private void configureRoutes() {
