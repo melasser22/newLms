@@ -14,6 +14,7 @@ public final class SkipPatternDefaults {
         "/actuator/**",
         "/swagger-ui/**",
         "/v3/api-docs/**",
+        "/api/v1/admin/**",
         "/static/**",
         "/webjars/**",
         "/error",
