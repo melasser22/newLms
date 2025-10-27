@@ -28,6 +28,11 @@ server:
     include-message: always
     include-binding-errors: always
 
+logging:
+  level:
+    org.springframework.web.servlet.DispatcherServlet: INFO
+    org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor: INFO
+
 shared:
   observability:
     application-name: security-service
