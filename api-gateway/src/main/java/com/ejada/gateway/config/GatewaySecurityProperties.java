@@ -223,6 +223,7 @@ public class GatewaySecurityProperties {
         "/status",
         "/api/auth/**",
         "/api/v1/auth/**",
+        "/api/v1/admin/**",
         "/api/v1/superadmin/**",
         "/sec/api/v1/auth/**",
         "/sec/api/v1/superadmin/**"

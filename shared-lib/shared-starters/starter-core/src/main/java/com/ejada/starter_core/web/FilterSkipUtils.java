@@ -21,6 +21,7 @@ public final class FilterSkipUtils {
             "/swagger/**",
             "/swagger-ui/**",
             "/docs/**",
+            "/api/v1/admin/**",
             "/static/**",
             "/webjars/**",
             "/favicon.ico"
