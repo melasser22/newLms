@@ -77,10 +77,9 @@ public class GatewayAccessLogFilter implements WebFilter, Ordered {
             tracingHelper.tagExchange(exchange);
           }
           return routeCallAuditService.record(buildAuditRecord(exchange, durationMs, signal))
-              .onErrorResume(ex -> {
-                LOGGER.warn("Failed to audit route call for {}", exchange.getRequest().getPath(), ex);
-                return Mono.empty();
-              })
+              .doOnError(ex ->
+                  LOGGER.warn(
+                      "Failed to audit route call for {}", exchange.getRequest().getPath(), ex))
               .then(signal.isOnError() ? Mono.error(signal.getThrowable()) : Mono.<Void>empty());
         });
   }
