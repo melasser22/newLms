@@ -3,13 +3,17 @@ package com.ejada.gateway.routes.service;
 import com.ejada.gateway.routes.model.RouteCallAuditRecord;
 import com.ejada.gateway.routes.repository.RouteCallAuditEntity;
 import com.ejada.gateway.routes.repository.RouteCallAuditR2dbcRepository;
+import io.r2dbc.spi.R2dbcTransientResourceException;
+import io.r2dbc.spi.R2dbcTimeoutException;
 import java.time.Instant;
+import java.time.Duration;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 @Service
 public class RouteCallAuditService {
@@ -40,8 +44,14 @@ public class RouteCallAuditService {
     entity.setErrorMessage(truncate(trimToNull(record.errorMessage())));
     entity.setOccurredAt(Instant.now());
     return repository.save(entity)
+        .retryWhen(Retry.backoff(3, Duration.ofMillis(100)).filter(this::isTransientFailure))
         .then()
         .doOnError(ex -> LOGGER.warn("Failed to persist route call audit entry", ex));
+  }
+
+  private boolean isTransientFailure(Throwable throwable) {
+    return throwable instanceof R2dbcTransientResourceException
+        || throwable instanceof R2dbcTimeoutException;
   }
 
   private UUID resolveRouteId(String routeId) {
