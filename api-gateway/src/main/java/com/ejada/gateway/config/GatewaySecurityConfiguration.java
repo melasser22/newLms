@@ -157,19 +157,23 @@ public class GatewaySecurityConfiguration {
     Set<String> validRoles = EnumSet.allOf(Role.class).stream().map(Enum::name)
         .collect(Collectors.toSet());
 
+    String rolePrefix = StringUtils.hasText(props.getRolePrefix())
+        ? props.getRolePrefix()
+        : "ROLE_";
+
     Object rolesObj = claimPath(jwt.getClaims(), props.getRolesClaim());
     if (rolesObj instanceof Collection<?> coll) {
       for (Object value : coll) {
         String role = String.valueOf(value).trim();
         if (!role.isEmpty() && validRoles.contains(role)) {
-          authorities.add(new SimpleGrantedAuthority(props.getRolePrefix() + role));
+          authorities.add(new SimpleGrantedAuthority(rolePrefix + role));
         }
       }
     } else if (rolesObj instanceof String str && StringUtils.hasText(str)) {
       for (String value : str.split("[,\\s]+")) {
         String role = value.trim();
         if (!role.isEmpty() && validRoles.contains(role)) {
-          authorities.add(new SimpleGrantedAuthority(props.getRolePrefix() + role));
+          authorities.add(new SimpleGrantedAuthority(rolePrefix + role));
         }
       }
     }
