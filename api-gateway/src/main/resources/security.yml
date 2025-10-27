@@ -14,8 +14,11 @@ security:
       - https://admin.lms.example.com
     permit-all: &security-permit-all
       - ${shared.patterns.auth.api-auth}
+      - ${shared.patterns.auth.api-auth-superadmin}
       - ${shared.patterns.auth.api-auth-v1}
       - ${shared.patterns.auth.api-auth-sec}
+      - ${shared.patterns.auth.api-v1-superadmin}
+      - ${shared.patterns.auth.api-sec-superadmin}
       - ${shared.patterns.auth.auth-admin}
       - ${shared.patterns.auth.auth-sec-admin}
       - ${shared.patterns.auth.auth-root}
