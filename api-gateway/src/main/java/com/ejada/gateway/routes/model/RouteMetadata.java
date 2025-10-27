@@ -26,6 +26,7 @@ public class RouteMetadata {
   private final Map<String, Object> attributes = new LinkedHashMap<>();
   private final Map<String, TenantRoutingRule> tenantRouting = new LinkedHashMap<>();
   private Map<String, String> requestHeaders = new LinkedHashMap<>();
+  private Map<String, String> setRequestHeaders = new LinkedHashMap<>();
   private List<String> methods = new ArrayList<>();
   private Integer stripPrefix;
   private String prefixPath;
@@ -71,6 +72,16 @@ public class RouteMetadata {
     this.requestHeaders = (requestHeaders == null)
         ? new LinkedHashMap<>()
         : new LinkedHashMap<>(requestHeaders);
+  }
+
+  public Map<String, String> getSetRequestHeaders() {
+    return setRequestHeaders;
+  }
+
+  public void setSetRequestHeaders(Map<String, String> setRequestHeaders) {
+    this.setRequestHeaders = (setRequestHeaders == null)
+        ? new LinkedHashMap<>()
+        : new LinkedHashMap<>(setRequestHeaders);
   }
 
   public List<String> getMethods() {
@@ -126,6 +137,7 @@ public class RouteMetadata {
     copy.getAttributes().putAll(attributes);
     copy.setTenantRouting(tenantRouting);
     copy.setRequestHeaders(requestHeaders);
+    copy.setSetRequestHeaders(setRequestHeaders);
     copy.setMethods(methods);
     copy.setStripPrefix(stripPrefix);
     copy.setPrefixPath(prefixPath);

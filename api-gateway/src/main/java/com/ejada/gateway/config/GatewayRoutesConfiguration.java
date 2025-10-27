@@ -25,10 +25,13 @@ import org.springframework.cloud.gateway.route.builder.BooleanSpec;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.util.StringUtils;
+import org.springframework.web.server.WebSession;
+import reactor.core.publisher.Mono;
 
 /**
  * Programmatic route configuration so we can reuse the shared properties and
@@ -41,6 +44,13 @@ public class GatewayRoutesConfiguration {
   private static final Logger LOGGER = LoggerFactory.getLogger(GatewayRoutesConfiguration.class);
 
   private static final Duration PROVIDER_TIMEOUT = Duration.ofSeconds(5);
+
+  private static final GatewayFilter STATELESS_SESSION_FILTER = (exchange, chain) ->
+      chain.filter(exchange)
+          .then(Mono.defer(() -> exchange.getSession()
+              .filter(WebSession::isStarted)
+              .flatMap(WebSession::invalidate)
+              .onErrorResume(ex -> Mono.empty())));
 
   @Bean
   @RefreshScope
@@ -161,6 +171,11 @@ public class GatewayRoutesConfiguration {
                 filters.filter(new ApiVersioningGatewayFilter(route.getVersioning()));
               }
               route.getRequestHeaders().forEach(filters::addRequestHeader);
+              route.getSetRequestHeaders().forEach((name, value) -> {
+                if (StringUtils.hasText(name) && value != null) {
+                  filters.setRequestHeader(name, value);
+                }
+              });
               requestTransformationFactory.ifAvailable(factory -> filters.filter(factory.apply(route.getId())));
               if (route.getSessionAffinity().isEnabled()) {
                 filters.filter(new SessionAffinityGatewayFilter(route.getSessionAffinity()));
@@ -168,6 +183,11 @@ public class GatewayRoutesConfiguration {
               if (route.getMaxRequestSize() != null) {
                 requestSizeFilterFactory.ifAvailable(factory ->
                     filters.filter(factory.apply(config -> config.setMaxSize(route.getMaxRequestSize()))));
+              }
+              if (route.isStatelessAuth()) {
+                filters.removeRequestHeader(HttpHeaders.COOKIE);
+                filters.removeResponseHeader(HttpHeaders.SET_COOKIE);
+                filters.filter(statelessSessionFilter());
               }
               responseTransformationFactory.ifAvailable(factory -> filters.filter(factory.apply(route.getId())));
               if (resilience.isEnabled()) {
@@ -260,6 +280,10 @@ public class GatewayRoutesConfiguration {
           .build();
       return chain.filter(exchange.mutate().request(mutatedRequest).build());
     };
+  }
+
+  private GatewayFilter statelessSessionFilter() {
+    return STATELESS_SESSION_FILTER;
   }
 
   private void logRouteRegistration(GatewayRoutesProperties.ServiceRoute route,
