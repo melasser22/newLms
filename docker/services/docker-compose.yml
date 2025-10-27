@@ -2,6 +2,7 @@ version: "3.8"
 
 services:
   tenant-service:
+    container_name: tenant-service
     build:
       context: ../../tenant-platform/tenant-service
     restart: unless-stopped
@@ -32,6 +33,7 @@ services:
           - tenant-service
 
   setup-service:
+    container_name: setup-service
     build:
       context: ../../setup-service
     restart: unless-stopped
@@ -62,6 +64,7 @@ services:
           - setup-service
 
   billing-service:
+    container_name: billing-service
     build:
       context: ../../tenant-platform/billing-service
     restart: unless-stopped
@@ -92,6 +95,7 @@ services:
           - billing-service
 
   analytics-service:
+    container_name: analytics-service
     build:
       context: ../../tenant-platform/analytics-service
     restart: unless-stopped
@@ -122,6 +126,7 @@ services:
           - analytics-service
 
   catalog-service:
+    container_name: catalog-service
     build:
       context: ../../tenant-platform/catalog-service
     restart: unless-stopped
@@ -152,6 +157,7 @@ services:
           - catalog-service
 
   subscription-service:
+    container_name: subscription-service
     build:
       context: ../../tenant-platform/subscription-service
     restart: unless-stopped
@@ -182,6 +188,7 @@ services:
           - subscription-service
 
   security-service:
+    container_name: security-service
     build:
       context: ../../sec-service
     restart: unless-stopped
@@ -217,6 +224,7 @@ services:
           - security-service
 
   api-gateway:
+    container_name: api-gateway
     build:
       context: ../../api-gateway
     restart: unless-stopped
