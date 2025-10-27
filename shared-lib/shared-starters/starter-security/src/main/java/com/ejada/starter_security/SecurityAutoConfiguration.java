@@ -111,20 +111,24 @@ public class SecurityAutoConfiguration {
     conv.setJwtGrantedAuthoritiesConverter(jwt -> {
       List<GrantedAuthority> out = new ArrayList<>();
 
+      String rolePrefix = StringUtils.hasText(props.getRolePrefix())
+          ? props.getRolePrefix()
+          : "ROLE_";
+
       // Roles (array or string, supports nested claim path like "realm_access.roles")
       Object rolesObj = claimPath(jwt.getClaims(), props.getRolesClaim());
       if (rolesObj instanceof Collection<?> coll) {
         for (Object r : coll) {
           String role = String.valueOf(r).trim();
           if (!role.isEmpty() && validRoles.contains(role)) {
-            out.add(new SimpleGrantedAuthority(props.getRolePrefix() + role));
+            out.add(new SimpleGrantedAuthority(rolePrefix + role));
           }
         }
       } else if (rolesObj instanceof String s && StringUtils.hasText(s)) {
         for (String role : s.split("[,\\s]+")) {
           String trimmed = role.trim();
           if (!trimmed.isBlank() && validRoles.contains(trimmed)) {
-            out.add(new SimpleGrantedAuthority(props.getRolePrefix() + trimmed));
+            out.add(new SimpleGrantedAuthority(rolePrefix + trimmed));
           }
         }
       }
