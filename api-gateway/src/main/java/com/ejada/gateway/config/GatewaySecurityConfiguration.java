@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -51,6 +52,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -345,10 +347,25 @@ public class GatewaySecurityConfiguration {
   }
 
   private Mono<org.springframework.security.oauth2.jwt.Jwt> tryDecode(List<ReactiveJwtDecoder> delegates, String token) {
+    AtomicReference<Throwable> lastError = new AtomicReference<>();
+
     return Flux.fromIterable(delegates)
-        .concatMap(decoder -> decoder.decode(token).onErrorResume(ex -> Mono.empty()))
+        .concatMap(decoder -> decoder.decode(token)
+            .onErrorResume(ex -> {
+              lastError.set(ex);
+              return Mono.empty();
+            }))
         .next()
-        .switchIfEmpty(Mono.error(new org.springframework.security.oauth2.jwt.JwtException("Unable to decode JWT")));
+        .switchIfEmpty(Mono.defer(() -> {
+          Throwable error = lastError.get();
+          if (error instanceof JwtException jwtException) {
+            return Mono.error(jwtException);
+          }
+          String message = (error != null && StringUtils.hasText(error.getMessage()))
+              ? "Unable to decode JWT: " + error.getMessage()
+              : "Unable to decode JWT";
+          return Mono.error(new JwtException(message, error));
+        }));
   }
 
   private ReactiveJwtDecoder buildOidcDecoder(SharedSecurityProps props) {
