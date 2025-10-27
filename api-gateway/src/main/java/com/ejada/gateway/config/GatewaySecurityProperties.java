@@ -218,6 +218,15 @@ public class GatewaySecurityProperties {
     private String keyPrefix = "gateway:api-key:";
     private String tenantIndexPrefix = "gateway:tenant:";
     private String tenantIndexSuffix = ":api-keys";
+    private String[] skipPatterns = new String[] {
+        "/actuator/**",
+        "/status",
+        "/api/auth/**",
+        "/api/v1/auth/**",
+        "/api/v1/superadmin/**",
+        "/sec/api/v1/auth/**",
+        "/sec/api/v1/superadmin/**"
+    };
     private final Encryption encryption = new Encryption();
     private final Rotation rotation = new Rotation();
     private final ScopeEnforcement scopeEnforcement = new ScopeEnforcement();
@@ -268,6 +277,14 @@ public class GatewaySecurityProperties {
 
     public String tenantIndexKey(String tenantId) {
       return tenantIndexPrefix + tenantId + tenantIndexSuffix;
+    }
+
+    public String[] getSkipPatterns() {
+      return skipPatterns;
+    }
+
+    public void setSkipPatterns(String[] skipPatterns) {
+      this.skipPatterns = (skipPatterns != null) ? skipPatterns : new String[0];
     }
 
     public Encryption getEncryption() {

@@ -10,6 +10,7 @@ import com.ejada.gateway.security.GatewaySecurityMetrics;
 import com.ejada.gateway.security.apikey.ApiKeyCodec;
 import com.ejada.gateway.security.apikey.ApiKeyCodec.DecodedApiKeyRecord;
 import com.ejada.gateway.security.apikey.ApiKeyRecord;
+import com.ejada.starter_core.web.FilterSkipUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -89,6 +90,11 @@ public class ApiKeyAuthenticationFilter implements WebFilter, Ordered {
   @Override
   public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
     if (!properties.getApiKey().isEnabled()) {
+      return chain.filter(exchange);
+    }
+
+    String path = exchange.getRequest().getPath().pathWithinApplication().value();
+    if (FilterSkipUtils.shouldSkip(path, properties.getApiKey().getSkipPatterns())) {
       return chain.filter(exchange);
     }
 
