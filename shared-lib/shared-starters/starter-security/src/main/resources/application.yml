@@ -7,7 +7,7 @@ shared:
   security:
     mode: ${SHARED_SECURITY_MODE:hs256}
     hs256:
-      secret: ${SHARED_SECURITY_HS256_SECRET:7c5b9f143e6d4a0f9b37c25d1a48f2e0}
+      secret: ${SHARED_SECURITY_HS256_SECRET:0w077MpVVbFHb4V59DNnF-OG8TaUqso0SKKCUSGG6hY=}
     resource-server:
       enabled: ${SHARED_SECURITY_RESOURCE_SERVER_ENABLED:true}
       verify-tenant-claim: ${SHARED_SECURITY_RESOURCE_SERVER_VERIFY_TENANT_CLAIM:false}
