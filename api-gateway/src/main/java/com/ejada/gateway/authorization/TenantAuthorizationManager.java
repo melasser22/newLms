@@ -53,11 +53,14 @@ public class TenantAuthorizationManager implements ReactiveAuthorizationManager<
   private static final String[] DEFAULT_PERMIT_ALL_PATTERNS = new String[]{
       "/auth/**",
       "/api/auth/**",
+      "/api/auth/superadmin/**",
       "/api/*/auth/**",
       "/api/v1/auth/**",
       "/api/v1/auth/admin/**",
+      "/api/v1/superadmin/**",
       "/api/sec/auth/**",
       "/sec/api/v1/auth/**",
+      "/sec/api/v1/superadmin/**",
       "/sec/auth/**"
   };
 

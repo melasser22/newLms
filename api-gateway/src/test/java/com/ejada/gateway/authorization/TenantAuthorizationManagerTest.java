@@ -58,6 +58,38 @@ class TenantAuthorizationManagerTest {
   }
 
   @Test
+  void superadminAuthPathsArePermittedWithoutAuthentication() {
+    CoreAutoConfiguration.CoreProps coreProps = new CoreAutoConfiguration.CoreProps();
+    coreProps.getTenant().setEnabled(true);
+
+    SharedSecurityProps securityProps = new SharedSecurityProps();
+
+    ReactiveStringRedisTemplate redisTemplate = Mockito.mock(ReactiveStringRedisTemplate.class);
+    SubscriptionCacheService subscriptionCacheService = Mockito.mock(SubscriptionCacheService.class);
+    GatewayRateLimitProperties rateLimitProperties = new GatewayRateLimitProperties();
+
+    TenantAuthorizationManager manager = new TenantAuthorizationManager(
+        coreProps,
+        securityProps,
+        redisTemplate,
+        subscriptionCacheService,
+        rateLimitProperties,
+        new ObjectMapper());
+
+    MockServerHttpRequest request = MockServerHttpRequest
+        .get("/api/auth/superadmin/admins")
+        .build();
+    MockServerWebExchange exchange = MockServerWebExchange.from(request);
+    AuthorizationContext context = new AuthorizationContext(exchange);
+
+    Mono<AuthorizationDecision> decision = manager.check(Mono.empty(), context);
+
+    StepVerifier.create(decision)
+        .expectNextMatches(AuthorizationDecision::isGranted)
+        .verifyComplete();
+  }
+
+  @Test
   void ejadaOfficerWithoutTenantInformationBypassesTenantChecks() {
     CoreAutoConfiguration.CoreProps coreProps = new CoreAutoConfiguration.CoreProps();
     coreProps.getTenant().setEnabled(true);
