@@ -125,6 +125,9 @@ public class GatewayRoutesProperties {
     /** Optional request headers to automatically append before forwarding. */
     private Map<String, String> requestHeaders = new LinkedHashMap<>();
 
+    /** Optional request headers that should override existing values before forwarding. */
+    private Map<String, String> setRequestHeaders = new LinkedHashMap<>();
+
     /** Optional tenant specific routing directives. */
     private Map<String, TenantRoutingRule> tenantRouting = new LinkedHashMap<>();
 
@@ -142,6 +145,9 @@ public class GatewayRoutesProperties {
 
     /** Required scopes that must be present on API keys accessing this route. */
     private Set<String> requiredScopes = new LinkedHashSet<>();
+
+    /** Whether the route should avoid creating or persisting WebFlux sessions. */
+    private boolean statelessAuth;
 
     public String getId() {
       return id;
@@ -257,6 +263,14 @@ public class GatewayRoutesProperties {
       this.requestHeaders = sanitiseHeaders(requestHeaders);
     }
 
+    public Map<String, String> getSetRequestHeaders() {
+      return setRequestHeaders;
+    }
+
+    public void setSetRequestHeaders(Map<String, String> setRequestHeaders) {
+      this.setRequestHeaders = sanitiseHeaders(setRequestHeaders);
+    }
+
     public Map<String, TenantRoutingRule> getTenantRouting() {
       return tenantRouting;
     }
@@ -329,6 +343,14 @@ public class GatewayRoutesProperties {
         return;
       }
       setRequiredScopes(Arrays.asList(scopes));
+    }
+
+    public boolean isStatelessAuth() {
+      return statelessAuth;
+    }
+
+    public void setStatelessAuth(boolean statelessAuth) {
+      this.statelessAuth = statelessAuth;
     }
 
     public void applyDefaults(RouteDefaults defaults) {
@@ -463,19 +485,24 @@ public class GatewayRoutesProperties {
     }
 
     private void validateHeaders(String key) {
-      for (Map.Entry<String, String> entry : requestHeaders.entrySet()) {
-        String headerName = entry.getKey();
-        if (!StringUtils.hasText(headerName)) {
-          throw new IllegalStateException("gateway.routes." + key + ".request-headers contains a blank header name");
-        }
-        if (!StringUtils.hasText(entry.getValue())) {
-          throw new IllegalStateException(
-              "gateway.routes." + key + ".request-headers." + headerName + " must have a value");
-        }
-      }
+      validateHeaderMap(key, "request-headers", requestHeaders);
+      validateHeaderMap(key, "set-request-headers", setRequestHeaders);
       for (String scope : requiredScopes) {
         if (!StringUtils.hasText(scope)) {
           throw new IllegalStateException("gateway.routes." + key + ".required-scopes contains a blank scope entry");
+        }
+      }
+    }
+
+    private void validateHeaderMap(String key, String property, Map<String, String> headers) {
+      for (Map.Entry<String, String> entry : headers.entrySet()) {
+        String headerName = entry.getKey();
+        if (!StringUtils.hasText(headerName)) {
+          throw new IllegalStateException("gateway.routes." + key + '.' + property + " contains a blank header name");
+        }
+        if (entry.getValue() == null) {
+          throw new IllegalStateException(
+              "gateway.routes." + key + '.' + property + '.' + headerName + " must have a value");
         }
       }
     }

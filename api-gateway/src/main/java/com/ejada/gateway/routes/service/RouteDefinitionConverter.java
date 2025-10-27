@@ -82,6 +82,9 @@ public class RouteDefinitionConverter {
     if (!metadata.getRequestHeaders().isEmpty()) {
       route.setRequestHeaders(metadata.getRequestHeaders());
     }
+    if (!metadata.getSetRequestHeaders().isEmpty()) {
+      route.setSetRequestHeaders(metadata.getSetRequestHeaders());
+    }
     DataSize maxRequestSize = resolveMaxRequestSize(metadata);
     if (maxRequestSize != null) {
       route.setMaxRequestSize(maxRequestSize);
@@ -101,6 +104,12 @@ public class RouteDefinitionConverter {
     List<String> requiredScopes = flatten(attribute);
     if (!requiredScopes.isEmpty()) {
       route.setRequiredScopes(requiredScopes);
+    }
+
+    Object stateless = metadata.getAttributes().getOrDefault("statelessAuth",
+        metadata.getAttributes().get("stateless-auth"));
+    if (stateless != null) {
+      route.setStatelessAuth(asBoolean(stateless));
     }
   }
 
@@ -161,6 +170,15 @@ public class RouteDefinitionConverter {
             route.setRequestHeaders(headers);
           }
         }
+        case "setrequestheader" -> {
+          String headerName = args.getOrDefault("name", args.get("_genkey_0"));
+          String headerValue = args.getOrDefault("value", args.get("_genkey_1"));
+          if (StringUtils.hasText(headerName) && headerValue != null) {
+            Map<String, String> headers = new LinkedHashMap<>(route.getSetRequestHeaders());
+            headers.put(headerName, headerValue);
+            route.setSetRequestHeaders(headers);
+          }
+        }
         default -> {
           // unsupported filter types are ignored for runtime registration but retained for UI
         }
@@ -217,6 +235,16 @@ public class RouteDefinitionConverter {
       }
     }
     return null;
+  }
+
+  private boolean asBoolean(Object value) {
+    if (value instanceof Boolean booleanValue) {
+      return booleanValue;
+    }
+    if (value instanceof String stringValue) {
+      return Boolean.parseBoolean(stringValue.trim());
+    }
+    return false;
   }
 
   private boolean isExcluded(String pattern) {
