@@ -48,6 +48,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
@@ -106,42 +107,80 @@ public class SecurityAutoConfiguration {
   @ConditionalOnMissingBean
   public JwtAuthenticationConverter jwtAuthenticationConverter(SharedSecurityProps props) {
     var conv = new JwtAuthenticationConverter();
-    // Only allow roles defined in the Role enum
-    var validRoles = EnumSet.allOf(Role.class).stream().map(Enum::name).collect(Collectors.toSet());
-    conv.setJwtGrantedAuthoritiesConverter(jwt -> {
-      List<GrantedAuthority> out = new ArrayList<>();
 
-      String rolePrefix = StringUtils.hasText(props.getRolePrefix())
+    JwtGrantedAuthoritiesConverter scopeConverter = new JwtGrantedAuthoritiesConverter();
+    scopeConverter.setAuthorityPrefix(StringUtils.hasText(props.getAuthorityPrefix())
+        ? props.getAuthorityPrefix()
+        : "SCOPE_");
+    scopeConverter.setAuthoritiesClaimName(StringUtils.hasText(props.getScopeClaim())
+        ? props.getScopeClaim()
+        : "scope");
+
+    JwtGrantedAuthoritiesConverter rolesConverter = null;
+    String rolesClaim = props.getRolesClaim();
+    boolean canUseDirectRolesConverter = StringUtils.hasText(rolesClaim) && !rolesClaim.contains(".");
+    if (canUseDirectRolesConverter) {
+      rolesConverter = new JwtGrantedAuthoritiesConverter();
+      rolesConverter.setAuthorityPrefix(StringUtils.hasText(props.getRolePrefix())
           ? props.getRolePrefix()
-          : "ROLE_";
+          : "ROLE_");
+      rolesConverter.setAuthoritiesClaimName(rolesClaim);
+    }
 
-      // Roles (array or string, supports nested claim path like "realm_access.roles")
-      Object rolesObj = claimPath(jwt.getClaims(), props.getRolesClaim());
-      if (rolesObj instanceof Collection<?> coll) {
-        for (Object r : coll) {
-          String role = String.valueOf(r).trim();
-          if (!role.isEmpty() && validRoles.contains(role)) {
-            out.add(new SimpleGrantedAuthority(rolePrefix + role));
+    String rolePrefix = StringUtils.hasText(props.getRolePrefix()) ? props.getRolePrefix() : "ROLE_";
+    var validRoles = EnumSet.allOf(Role.class).stream().map(Enum::name).collect(Collectors.toSet());
+    JwtGrantedAuthoritiesConverter finalRolesConverter = rolesConverter;
+
+    conv.setJwtGrantedAuthoritiesConverter(jwt -> {
+      LinkedHashSet<GrantedAuthority> authorities = new LinkedHashSet<>();
+
+      if (finalRolesConverter != null) {
+        Collection<GrantedAuthority> converted = finalRolesConverter.convert(jwt);
+        if (converted != null) {
+          for (GrantedAuthority ga : converted) {
+            String authority = ga.getAuthority();
+            if (!StringUtils.hasText(authority)) {
+              continue;
+            }
+            String candidate = authority;
+            if (StringUtils.hasText(rolePrefix) && authority.startsWith(rolePrefix)) {
+              candidate = authority.substring(rolePrefix.length());
+            }
+            if (validRoles.contains(candidate)) {
+              authorities.add(new SimpleGrantedAuthority(rolePrefix + candidate));
+            }
           }
         }
-      } else if (rolesObj instanceof String s && StringUtils.hasText(s)) {
-        for (String role : s.split("[,\\s]+")) {
-          String trimmed = role.trim();
-          if (!trimmed.isBlank() && validRoles.contains(trimmed)) {
-            out.add(new SimpleGrantedAuthority(rolePrefix + trimmed));
+      } else {
+        Object rolesObj = claimPath(jwt.getClaims(), rolesClaim);
+        if (rolesObj instanceof Collection<?> coll) {
+          for (Object r : coll) {
+            String role = String.valueOf(r).trim();
+            if (!role.isEmpty() && validRoles.contains(role)) {
+              authorities.add(new SimpleGrantedAuthority(rolePrefix + role));
+            }
+          }
+        } else if (rolesObj instanceof String s && StringUtils.hasText(s)) {
+          for (String role : s.split("[,\\s]+")) {
+            String trimmed = role.trim();
+            if (!trimmed.isBlank() && validRoles.contains(trimmed)) {
+              authorities.add(new SimpleGrantedAuthority(rolePrefix + trimmed));
+            }
           }
         }
       }
 
-      // Scopes (space-delimited string)
-      String scope = jwt.getClaimAsString(props.getScopeClaim());
-      if (StringUtils.hasText(scope)) {
-        for (String sc : scope.split("\\s+")) {
-          if (!sc.isBlank()) out.add(new SimpleGrantedAuthority(props.getAuthorityPrefix() + sc.trim()));
+      Collection<GrantedAuthority> scopeAuthorities = scopeConverter.convert(jwt);
+      if (scopeAuthorities != null) {
+        for (GrantedAuthority ga : scopeAuthorities) {
+          String authority = ga.getAuthority();
+          if (StringUtils.hasText(authority)) {
+            authorities.add(new SimpleGrantedAuthority(authority));
+          }
         }
       }
 
-      return out;
+      return new ArrayList<>(authorities);
     });
     return conv;
   }
