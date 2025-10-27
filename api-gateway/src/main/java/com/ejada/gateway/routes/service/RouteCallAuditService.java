@@ -46,7 +46,10 @@ public class RouteCallAuditService {
     return repository.save(entity)
         .retryWhen(Retry.backoff(3, Duration.ofMillis(100)).filter(this::isTransientFailure))
         .then()
-        .doOnError(ex -> LOGGER.warn("Failed to persist route call audit entry", ex));
+        .onErrorResume(ex -> {
+          LOGGER.warn("Failed to persist route call audit entry", ex);
+          return Mono.empty();
+        });
   }
 
   private boolean isTransientFailure(Throwable throwable) {
