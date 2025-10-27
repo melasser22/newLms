@@ -54,8 +54,8 @@ The compose file now:
 Bring the stack up using:
 
 ```bash
-export JWT_SECRET=local-dev-secret
-export JASYPT_ENCRYPTOR_PASSWORD=change-me
+export JWT_SECRET=7c5b9f143e6d4a0f9b37c25d1a48f2e0
+export JASYPT_ENCRYPTOR_PASSWORD=2d4a9f7c5b8e4d1c92a0f37b6c58e143
 
 # Infrastructure tools
 cd docker/tools
