@@ -61,22 +61,21 @@ public class GatewayAccessLogFilter implements WebFilter, Ordered {
   @Override
   public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
     GatewayLoggingProperties.AccessLog accessLog = loggingProperties.getAccessLog();
-    if (!accessLog.isEnabled()) {
-      return chain.filter(exchange);
-    }
-
     String path = exchange.getRequest().getPath().pathWithinApplication().value();
     if (shouldSkip(path, accessLog.getSkipPatterns())) {
       return chain.filter(exchange);
     }
 
+    boolean accessLogEnabled = accessLog.isEnabled();
     long start = System.nanoTime();
     return chain.filter(exchange)
         .materialize()
         .flatMap(signal -> {
           long durationMs = (System.nanoTime() - start) / 1_000_000;
-          writeAccessLog(exchange, durationMs);
-          tracingHelper.tagExchange(exchange);
+          if (accessLogEnabled) {
+            writeAccessLog(exchange, durationMs);
+            tracingHelper.tagExchange(exchange);
+          }
           return routeCallAuditService.record(buildAuditRecord(exchange, durationMs, signal))
               .onErrorResume(ex -> {
                 LOGGER.warn("Failed to audit route call for {}", exchange.getRequest().getPath(), ex);
