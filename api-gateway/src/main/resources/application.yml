@@ -75,8 +75,11 @@ shared:
     auth:
       login: &pattern-auth-login /auth/admin/login
       api-auth: &pattern-auth-api /api/auth/**
+      api-auth-superadmin: &pattern-auth-api-superadmin /api/auth/superadmin/**
       api-auth-v1: &pattern-auth-api-v1 /api/v1/auth/**
       api-auth-sec: &pattern-auth-sec /api/sec/auth/**
+      api-v1-superadmin: &pattern-auth-api-v1-superadmin /api/v1/superadmin/**
+      api-sec-superadmin: &pattern-auth-sec-superadmin /sec/api/v1/superadmin/**
       auth-admin: &pattern-auth-admin /api/auth/admin/login
       auth-sec-admin: &pattern-auth-sec-admin /api/sec/auth/admin/login
       auth-root: &pattern-auth-root /auth/**
