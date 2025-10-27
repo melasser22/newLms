@@ -1,7 +1,7 @@
 logging:
   level:
     root: INFO
-    com.ejada.gateway: DEBUG
+    com.ejada.gateway: INFO
   pattern:
     level: "%5p [${spring.application.name},trace=%X{traceId:-},span=%X{spanId:-},tenant=%X{tenantId:-}]"
 
