@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/auth/admins")
 @RequiredArgsConstructor
 @Tag(name = "Superadmin Management", description = "APIs for managing superadmin accounts")
-@PreAuthorize("hasRole('EJADA_OFFICER')")
+@PreAuthorize("@authorizationExpressions.isEjadaOfficer(authentication)")
 public class SuperadminController extends BaseResponseController {
 
     private final SuperadminService superadminService;
@@ -64,13 +64,13 @@ public class SuperadminController extends BaseResponseController {
     
 
     @PostMapping("/first-login")
-    @PreAuthorize("hasRole('EJADA_OFFICER')")
+    @PreAuthorize("@authorizationExpressions.isEjadaOfficer(authentication)")
     public ResponseEntity<BaseResponse<Void>> completeFirstLogin(@Valid @RequestBody FirstLoginRequest request) {
       return respond(() -> superadminService.completeFirstLogin(request));
     }
 
     @PostMapping("/change-password")
-    @PreAuthorize("hasRole('EJADA_OFFICER')")
+    @PreAuthorize("@authorizationExpressions.isEjadaOfficer(authentication)")
     public ResponseEntity<BaseResponse<Void>> changeSuperadminPassword(@Valid @RequestBody ChangePasswordRequest request) {
       return respond(() -> superadminService.changePassword(request));
     }

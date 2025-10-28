@@ -39,6 +39,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.util.ReflectionTestUtils;
+import com.ejada.starter_security.RoleChecker;
 
 @ExtendWith(MockitoExtension.class)
 class SuperadminServiceImplTest {
@@ -48,6 +49,7 @@ class SuperadminServiceImplTest {
     @Mock private JwtTokenService jwtTokenService;
     @Mock private SuperadminPasswordHistoryRepository passwordHistoryRepository;
     @Mock private SuperadminAuditService superadminAuditService;
+    @Mock private RoleChecker roleChecker;
 
     private SuperadminServiceImpl service;
 
@@ -58,7 +60,10 @@ class SuperadminServiceImplTest {
             superadminMapper,
             jwtTokenService,
             passwordHistoryRepository,
-            superadminAuditService);
+            superadminAuditService,
+            roleChecker);
+
+        when(roleChecker.hasRole(any(), any())).thenReturn(true);
 
         ReflectionTestUtils.setField(service, "passwordExpiryDays", 90);
         ReflectionTestUtils.setField(service, "minActiveSuperadmins", 1);
