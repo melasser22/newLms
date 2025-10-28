@@ -11,6 +11,8 @@ import com.ejada.sec.mapper.SuperadminMapper;
 import com.ejada.sec.repository.SuperadminPasswordHistoryRepository;
 import com.ejada.sec.repository.SuperadminRepository;
 import com.ejada.sec.service.SuperadminService;
+import com.ejada.starter_security.Role;
+import com.ejada.starter_security.RoleChecker;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -48,6 +50,7 @@ public class SuperadminServiceImpl implements SuperadminService {
     private final JwtTokenService jwtTokenService;
     private final SuperadminPasswordHistoryRepository passwordHistoryRepository;
     private final SuperadminAuditService superadminAuditService;
+    private final RoleChecker roleChecker;
 
     private static final Pattern BCRYPT_PATTERN =
         Pattern.compile("^\\$2[aby]\\$\\d\\d\\$[./0-9A-Za-z]{53}$");
@@ -494,10 +497,7 @@ public class SuperadminServiceImpl implements SuperadminService {
             throw new AuthenticationCredentialsNotFoundException("No authenticated user found");
         }
 
-        boolean isSuperadmin = authentication.getAuthorities().stream()
-            .anyMatch(auth -> auth.getAuthority().equals("ROLE_EJADA_OFFICER"));
-
-        if (!isSuperadmin) {
+        if (!roleChecker.hasRole(authentication, Role.EJADA_OFFICER)) {
             throw new AccessDeniedException("Access denied. Only superadmins can perform this action");
         }
 
