@@ -16,7 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/superadmin/admins")
+@RequestMapping("/api/v1/auth/admins")
 @RequiredArgsConstructor
 @Tag(name = "Superadmin Management", description = "APIs for managing superadmin accounts")
 @PreAuthorize("hasRole('EJADA_OFFICER')")
