@@ -28,4 +28,32 @@ class SharedSecurityPropsTest {
         .bind("shared.security", SharedSecurityProps.class).get();
     assertEquals(List.of("https://app.example.com"), props.getResourceServer().getAllowedOrigins());
   }
+
+  @Test
+  void defaultPermitAllSkipsPrivilegedAdminEndpoints() {
+    SharedSecurityProps props = new SharedSecurityProps();
+    String[] permitAll = props.getResourceServer().getPermitAll();
+
+    assertArrayEquals(new String[]{
+        "/actuator/health",
+        "/v3/api-docs/**",
+        "/api/*/v3/api-docs/**",
+        "/api/*/*/v3/api-docs/**",
+        "/swagger-ui/**",
+        "/api/*/swagger-ui/**",
+        "/api/*/*/swagger-ui/**",
+        "/swagger-ui.html",
+        "/api/*/swagger-ui.html",
+        "/api/*/*/swagger-ui.html",
+        "/auth/**",
+        "/api/auth/**",
+        "/api/v1/auth/login",
+        "/api/v1/auth/register",
+        "/api/v1/auth/refresh",
+        "/api/v1/auth/forgot-password",
+        "/api/v1/auth/reset-password",
+        "/api/v1/auth/admin/login",
+        "/config/**"
+    }, permitAll);
+  }
 }

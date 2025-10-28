@@ -116,11 +116,15 @@ public class SharedSecurityProps implements BaseStarterProperties {
         "/swagger-ui.html",
         "/api/*/swagger-ui.html",
         "/api/*/*/swagger-ui.html",
-        // common public endpoints (with and without /api version prefix):
-        "/auth/**", "/api/auth/**", "/api/auth/superadmin/**", "/api/*/auth/**",
-        "/api/v1/auth/**", "/api/v1/auth/admin/**", "/api/v1/superadmin/**",
-        "/api/sec/auth/**", "/sec/auth/**", "/sec/api/v1/auth/**", "/sec/api/v1/superadmin/**",
-        "/login", "/register",
+        // explicit public authentication endpoints (services can extend via configuration)
+        "/auth/**",
+        "/api/auth/**",
+        "/api/v1/auth/login",
+        "/api/v1/auth/register",
+        "/api/v1/auth/refresh",
+        "/api/v1/auth/forgot-password",
+        "/api/v1/auth/reset-password",
+        "/api/v1/auth/admin/login",
         "/config/**"
     };
 
