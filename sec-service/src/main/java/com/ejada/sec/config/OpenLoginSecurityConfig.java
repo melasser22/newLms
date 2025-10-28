@@ -17,8 +17,14 @@ import org.springframework.security.web.SecurityFilterChain;
 public class OpenLoginSecurityConfig {
 
   private static final String[] LOGIN_MATCHERS = {
-		  "/api/v1/auth/**",
-	      "/api/auth/**"
+      "/api/v1/auth/login",
+      "/api/v1/auth/register",
+      "/api/v1/auth/refresh",
+      "/api/v1/auth/logout",
+      "/api/v1/auth/forgot-password",
+      "/api/v1/auth/reset-password",
+      "/api/v1/auth/admin/login",
+      "/api/auth/**"
   };
 
   @Bean

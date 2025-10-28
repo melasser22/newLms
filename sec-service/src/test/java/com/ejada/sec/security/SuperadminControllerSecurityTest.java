@@ -45,7 +45,7 @@ class SuperadminControllerSecurityTest {
 
     @Test
     void superadminEndpointsRequireAuthentication() throws Exception {
-        mockMvc.perform(get("/api/v1/superadmin/admins"))
+        mockMvc.perform(get("/api/v1/auth/admins"))
             .andExpect(status().isUnauthorized());
     }
 
@@ -55,7 +55,7 @@ class SuperadminControllerSecurityTest {
         when(superadminService.listSuperadmins(any(Pageable.class)))
             .thenReturn(BaseResponse.success("ok", Page.empty()));
 
-        mockMvc.perform(get("/api/v1/superadmin/admins"))
+        mockMvc.perform(get("/api/v1/auth/admins"))
             .andExpect(status().isOk());
     }
 }
