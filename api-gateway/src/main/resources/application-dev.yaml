@@ -28,38 +28,24 @@ spring:
             setup-service:
               - uri: http://setup-service:8080
                 instance-id: setup-service-dev
-                metadata:
-                  management.context-path: /core
             tenant-service:
               - uri: http://tenant-service:8080
                 instance-id: tenant-service-dev
-                metadata:
-                  management.context-path: /tenant
             catalog-service:
               - uri: http://catalog-service:8080
                 instance-id: catalog-service-dev
-                metadata:
-                  management.context-path: /catalog
             subscription-service:
               - uri: http://subscription-service:8080
                 instance-id: subscription-service-dev
-                metadata:
-                  management.context-path: /subscription
             billing-service:
               - uri: http://billing-service:8080
                 instance-id: billing-service-dev
-                metadata:
-                  management.context-path: /billing
             analytics-service:
               - uri: http://analytics-service:8080
                 instance-id: analytics-service-dev
-                metadata:
-                  management.context-path: /
             security-service:
               - uri: http://security-service:8080
                 instance-id: security-service-dev
-                metadata:
-                  management.context-path: /sec
     gateway:
       discovery:
         locator:

@@ -13,8 +13,6 @@ spring:
 server:
   port: 8080
   shutdown: graceful
-  servlet:
-    context-path: /sec
   compression:
     enabled: true
     mime-types:

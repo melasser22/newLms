@@ -23,8 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "shared.security.jwt.secret=" + SystemParameterControllerSecurityTest.SECRET,
     "shared.security.resource-server.enabled=true",
     "shared.security.resource-server.disable-csrf=true",
-    "shared.security.resource-server.permit-all[0]=/actuator/health",
-    "server.servlet.context-path=/core"
+    "shared.security.resource-server.permit-all[0]=/actuator/health"
 })
 class SystemParameterControllerSecurityTest {
 
@@ -38,7 +37,7 @@ class SystemParameterControllerSecurityTest {
 
     @Test
     void protectedEndpointsReturnUnauthorizedWithoutToken() throws Exception {
-        mockMvc.perform(get("/core/setup/systemParameters"))
+        mockMvc.perform(get("/setup/systemParameters"))
             .andExpect(status().isUnauthorized());
     }
 }
