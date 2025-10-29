@@ -17,8 +17,6 @@ app:
 server:
   port: 8080
   shutdown: graceful
-  servlet:
-    context-path: /core
   compression:
     enabled: true
     mime-types:

@@ -26,8 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
     "shared.security.jwt.secret=" + TenantControllerSecurityTest.SECRET,
     "shared.security.resource-server.enabled=true",
     "shared.security.resource-server.disable-csrf=true",
-    "shared.security.resource-server.permit-all[0]=/actuator/health",
-    "server.servlet.context-path=/tenant"
+    "shared.security.resource-server.permit-all[0]=/actuator/health"
 })
 class TenantControllerSecurityTest {
 
@@ -46,8 +45,7 @@ class TenantControllerSecurityTest {
     void tenantEndpointsRequireAuthentication() {
         when(tenantAccessPolicy.isAllowed(any())).thenReturn(true);
 
-        assertThatThrownBy(() -> mockMvc.perform(get("/tenant/api/v1/tenants")
-                        .contextPath("/tenant")
+        assertThatThrownBy(() -> mockMvc.perform(get("/api/v1/tenants")
                         .header("X-Tenant-Id", "tenant-123")))
                 .hasRootCauseInstanceOf(AuthenticationCredentialsNotFoundException.class);
     }
