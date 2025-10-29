@@ -33,14 +33,14 @@ public class RouteCallAuditService {
     entity.setCallId(UUID.randomUUID());
     entity.setRouteIdRaw(trimToNull(record.routeId()));
     entity.setRouteId(resolveRouteId(record.routeId()));
-    entity.setPath(trimToNull(record.path()));
-    entity.setMethod(trimToNull(record.method()));
+    entity.setPath(defaultIfNull(trimToNull(record.path()), "unknown"));
+    entity.setMethod(defaultIfNull(trimToNull(record.method()), "UNKNOWN"));
     entity.setStatusCode(record.statusCode());
     entity.setDurationMs(record.durationMs());
     entity.setTenantId(trimToNull(record.tenantId()));
     entity.setCorrelationId(trimToNull(record.correlationId()));
     entity.setClientIp(trimToNull(record.clientIp()));
-    entity.setOutcome(trimToNull(record.outcome()));
+    entity.setOutcome(defaultIfNull(trimToNull(record.outcome()), "UNKNOWN"));
     entity.setErrorMessage(truncate(trimToNull(record.errorMessage())));
     entity.setOccurredAt(Instant.now());
     return repository.save(entity)
@@ -74,6 +74,10 @@ public class RouteCallAuditService {
       return null;
     }
     return value.trim();
+  }
+
+  private String defaultIfNull(String value, String defaultValue) {
+    return value != null ? value : defaultValue;
   }
 
   private String truncate(String value) {
