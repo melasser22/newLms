@@ -93,20 +93,20 @@ shared:
         - /api/auth/**
         - /swagger-ui/**
         - /v3/api-docs/**
-        - /sec/api/v1/auth/**
-        - /sec/api/auth/**
-        - /sec/swagger-ui/**
-        - /sec/v3/api-docs/**
+        - /api/v1/auth/**
+        - /api/auth/**
+        - /swagger-ui/**
+        - /v3/api-docs/**
     tenant-verification:
       strict-mode: true
       require-tenant-header: true
       header-optional-patterns:
         - /**
         - /api/v1/superadmin/**
-        - /sec/api/v1/auth/**
-        - /sec/api/v1/superadmin/**
-        - /sec/swagger-ui/**
-        - /sec/v3/api-docs/**
+        - /api/v1/auth/**
+        - /api/v1/superadmin/**
+        - /swagger-ui/**
+        - /v3/api-docs/**
         - /swagger-ui/**
         - /v3/api-docs/**
     jwt:

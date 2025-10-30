@@ -153,30 +153,30 @@ shared:
         - "/actuator/health"
         - "/api/v1/auth/**"
         - "/api/auth/**"
-        - "/sec/api/v1/auth/**"
-        - "/sec/api/auth/**"
+        - "/api/v1/auth/**"
+        - "/api/auth/**"
         - "/swagger-ui/**"
         - "/v3/api-docs/**"
-        - "/sec/swagger-ui/**"
-        - "/sec/v3/api-docs/**"
+        - "/swagger-ui/**"
+        - "/v3/api-docs/**"
       disable-csrf: false
       csrf-ignore:
         - "/api/v1/auth/**"
         - "/api/auth/**"
-        - "/sec/api/v1/auth/**"
-        - "/sec/api/auth/**"
+        - "/api/v1/auth/**"
+        - "/api/auth/**"
     tenant-verification:
       strict-mode: true
       require-tenant-header: true
       header-optional-patterns:
         - /api/v1/auth/admin/**
         - /api/v1/superadmin/**
-        - /sec/api/v1/auth/**
-        - /sec/api/v1/superadmin/**
+        - /api/v1/auth/**
+        - /api/v1/superadmin/**
         - /swagger-ui/**
         - /v3/api-docs/**
-        - /sec/swagger-ui/**
-        - /sec/v3/api-docs/**
+        - /swagger-ui/**
+        - /v3/api-docs/**
     stateless: true
     roles-claim: roles
     tenant-claim: tenant
