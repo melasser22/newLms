@@ -24,7 +24,8 @@ public class OpenLoginSecurityConfig {
       "/api/v1/auth/forgot-password",
       "/api/v1/auth/reset-password",
       "/api/v1/auth/admin/login",
-      "/api/auth/**"
+      "/api/auth/**",
+      "/sec/api/v1/auth/**"
   };
 
   @Bean
