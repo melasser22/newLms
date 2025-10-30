@@ -3,6 +3,7 @@ package com.ejada.gateway.routes.service;
 import com.ejada.gateway.routes.model.RouteCallAuditRecord;
 import com.ejada.gateway.routes.repository.RouteCallAuditEntity;
 import com.ejada.gateway.routes.repository.RouteCallAuditR2dbcRepository;
+import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.R2dbcTimeoutException;
 import java.time.Instant;
@@ -21,6 +22,8 @@ public class RouteCallAuditService {
   private static final Logger LOGGER = LoggerFactory.getLogger(RouteCallAuditService.class);
 
   private static final int MAX_ERROR_LENGTH = 2048;
+  private static final String ROUTE_FOREIGN_KEY_NAME = "fk_route_call_definition";
+  private static final String FOREIGN_KEY_VIOLATION_SQL_STATE = "23503";
 
   private final RouteCallAuditR2dbcRepository repository;
 
@@ -43,18 +46,53 @@ public class RouteCallAuditService {
     entity.setOutcome(defaultIfNull(trimToNull(record.outcome()), "UNKNOWN"));
     entity.setErrorMessage(truncate(trimToNull(record.errorMessage())));
     entity.setOccurredAt(Instant.now());
-    return repository.save(entity)
-        .retryWhen(Retry.backoff(3, Duration.ofMillis(100)).filter(this::isTransientFailure))
+    return saveWithRetry(entity)
         .then()
-        .onErrorResume(ex -> {
-          LOGGER.warn("Failed to persist route call audit entry", ex);
-          return Mono.empty();
-        });
+        .onErrorResume(ex -> handlePersistenceFailure(entity, ex));
+  }
+
+  private Mono<RouteCallAuditEntity> saveWithRetry(RouteCallAuditEntity entity) {
+    return repository
+        .save(entity)
+        .retryWhen(Retry.backoff(3, Duration.ofMillis(100)).filter(this::isTransientFailure));
+  }
+
+  private Mono<Void> handlePersistenceFailure(RouteCallAuditEntity entity, Throwable throwable) {
+    if (entity.getRouteId() != null && isForeignKeyViolation(throwable)) {
+      LOGGER.debug(
+          "Route definition {} not found; persisting audit entry without foreign key link",
+          entity.getRouteIdRaw());
+      entity.setRouteId(null);
+      return saveWithRetry(entity)
+          .then()
+          .onErrorResume(fallbackError -> {
+            LOGGER.warn("Failed to persist route call audit entry", fallbackError);
+            return Mono.empty();
+          });
+    }
+    LOGGER.warn("Failed to persist route call audit entry", throwable);
+    return Mono.empty();
   }
 
   private boolean isTransientFailure(Throwable throwable) {
     return throwable instanceof R2dbcTransientResourceException
         || throwable instanceof R2dbcTimeoutException;
+  }
+
+  private boolean isForeignKeyViolation(Throwable throwable) {
+    Throwable current = throwable;
+    while (current != null) {
+      if (current instanceof R2dbcException r2dbcException
+          && FOREIGN_KEY_VIOLATION_SQL_STATE.equals(r2dbcException.getSqlState())) {
+        return true;
+      }
+      String message = current.getMessage();
+      if (message != null && message.contains(ROUTE_FOREIGN_KEY_NAME)) {
+        return true;
+      }
+      current = current.getCause();
+    }
+    return false;
   }
 
   private UUID resolveRouteId(String routeId) {
