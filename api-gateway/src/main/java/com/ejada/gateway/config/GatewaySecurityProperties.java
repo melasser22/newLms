@@ -225,8 +225,8 @@ public class GatewaySecurityProperties {
         "/api/v1/auth/**",
         "/api/v1/admin/**",
         "/api/v1/superadmin/**",
-        "/sec/api/v1/auth/**",
-        "/sec/api/v1/superadmin/**"
+        "/api/v1/auth/**",
+        "/api/v1/superadmin/**"
     };
     private final Encryption encryption = new Encryption();
     private final Rotation rotation = new Rotation();

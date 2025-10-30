@@ -39,8 +39,8 @@ shared:
       default-policy: OPTIONAL
       echo-response-header: true
       skip-patterns:
-        - "/sec/api/auth/*"
-        - "/sec/api/superadmin/**"
+        - "/api/auth/*"
+        - "/api/superadmin/**"
     cors:
       enabled: true
       allowed-origins: http://localhost:3000
@@ -82,9 +82,9 @@ shared:
       x-download-options: noopen
       xss-protection: "0"
       exclude-paths:
-        - /sec/swagger-ui/**
-        - /sec/v3/api-docs/**
-        - /sec/actuator/**
+        - /swagger-ui/**
+        - /v3/api-docs/**
+        - /actuator/**
     propagation:
       enabled: true
       include:
@@ -192,7 +192,7 @@ shared:
     description: "security service endpoints for tenant/platform configuration."
     version: "1.0.0"
     servers:
-      - ${OPENAPI_SERVER_URL:http://localhost:8085/sec}
+      - ${OPENAPI_SERVER_URL:http://localhost:8085}
     group:
       name: security
       packages-to-scan:

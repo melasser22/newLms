@@ -58,10 +58,10 @@ public class TenantAuthorizationManager implements ReactiveAuthorizationManager<
       "/api/v1/auth/**",
       "/api/v1/auth/admin/**",
       "/api/v1/superadmin/**",
-      "/api/sec/auth/**",
-      "/sec/api/v1/auth/**",
-      "/sec/api/v1/superadmin/**",
-      "/sec/auth/**"
+      "/api/auth/**",
+      "/api/v1/auth/**",
+      "/api/v1/superadmin/**",
+      "/auth/**"
   };
 
   private static final Duration CACHE_TTL = Duration.ofMinutes(5);
