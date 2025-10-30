@@ -4,11 +4,14 @@ import com.ejada.gateway.routes.model.RouteCallAuditRecord;
 import com.ejada.gateway.routes.repository.RouteCallAuditEntity;
 import com.ejada.gateway.routes.repository.RouteCallAuditR2dbcRepository;
 import io.r2dbc.spi.R2dbcException;
-import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.R2dbcTimeoutException;
-import java.time.Instant;
+import io.r2dbc.spi.R2dbcTransientResourceException;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -24,14 +27,22 @@ public class RouteCallAuditService {
   private static final int MAX_ERROR_LENGTH = 2048;
   private static final String ROUTE_FOREIGN_KEY_NAME = "fk_route_call_definition";
   private static final String FOREIGN_KEY_VIOLATION_SQL_STATE = "23503";
+  private static final String AUDIT_TABLE_NAME = "route_call_audit";
+  private static final Set<String> TABLE_NOT_FOUND_SQL_STATES = Set.of("42P01", "42S02");
 
   private final RouteCallAuditR2dbcRepository repository;
+  private final AtomicBoolean auditingDisabled = new AtomicBoolean(false);
+  private final AtomicBoolean tableMissingLogged = new AtomicBoolean(false);
 
   public RouteCallAuditService(RouteCallAuditR2dbcRepository repository) {
     this.repository = repository;
   }
 
   public Mono<Void> record(RouteCallAuditRecord record) {
+    if (auditingDisabled.get()) {
+      return Mono.empty();
+    }
+
     RouteCallAuditEntity entity = new RouteCallAuditEntity();
     entity.setCallId(UUID.randomUUID());
     entity.setRouteIdRaw(trimToNull(record.routeId()));
@@ -46,6 +57,11 @@ public class RouteCallAuditService {
     entity.setOutcome(defaultIfNull(trimToNull(record.outcome()), "UNKNOWN"));
     entity.setErrorMessage(truncate(trimToNull(record.errorMessage())));
     entity.setOccurredAt(Instant.now());
+
+    if (auditingDisabled.get()) {
+      return Mono.empty();
+    }
+
     return saveWithRetry(entity)
         .then()
         .onErrorResume(ex -> handlePersistenceFailure(entity, ex));
@@ -58,6 +74,21 @@ public class RouteCallAuditService {
   }
 
   private Mono<Void> handlePersistenceFailure(RouteCallAuditEntity entity, Throwable throwable) {
+    if (isMissingAuditTable(throwable)) {
+      auditingDisabled.set(true);
+      if (tableMissingLogged.compareAndSet(false, true)) {
+        LOGGER.warn(
+            "Route call audit table '{}' is unavailable; disabling audit persistence until restart.",
+            AUDIT_TABLE_NAME,
+            throwable);
+      } else {
+        LOGGER.debug(
+            "Route call audit table '{}' is still unavailable; skipping audit persistence.",
+            AUDIT_TABLE_NAME);
+      }
+      return Mono.empty();
+    }
+
     if (entity.getRouteId() != null && isForeignKeyViolation(throwable)) {
       LOGGER.debug(
           "Route definition {} not found; persisting audit entry without foreign key link",
@@ -89,6 +120,27 @@ public class RouteCallAuditService {
       String message = current.getMessage();
       if (message != null && message.contains(ROUTE_FOREIGN_KEY_NAME)) {
         return true;
+      }
+      current = current.getCause();
+    }
+    return false;
+  }
+
+  private boolean isMissingAuditTable(Throwable throwable) {
+    Throwable current = throwable;
+    while (current != null) {
+      if (current instanceof R2dbcException r2dbcException) {
+        String sqlState = r2dbcException.getSqlState();
+        if (sqlState != null && TABLE_NOT_FOUND_SQL_STATES.contains(sqlState)) {
+          return true;
+        }
+      }
+      String message = current.getMessage();
+      if (message != null) {
+        String normalized = message.toLowerCase(Locale.ROOT);
+        if (normalized.contains(AUDIT_TABLE_NAME) && normalized.contains("does not exist")) {
+          return true;
+        }
       }
       current = current.getCause();
     }
