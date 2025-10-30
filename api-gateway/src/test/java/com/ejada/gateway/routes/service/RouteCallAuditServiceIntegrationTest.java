@@ -2,11 +2,14 @@ package com.ejada.gateway.routes.service;
 
 import com.ejada.gateway.routes.model.RouteCallAuditRecord;
 import com.ejada.gateway.routes.repository.RouteCallAuditR2dbcRepository;
+import java.util.UUID;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -23,6 +26,9 @@ class RouteCallAuditServiceIntegrationTest {
   @Container
   static final PostgreSQLContainer<?> POSTGRES =
       new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("lms");
+
+  private static final UUID AUTH_ROUTE_ID =
+      UUID.fromString("44444444-4444-4444-4444-444444444444");
 
   @DynamicPropertySource
   static void registerProperties(DynamicPropertyRegistry registry) {
@@ -43,9 +49,46 @@ class RouteCallAuditServiceIntegrationTest {
   @Autowired
   private RouteCallAuditR2dbcRepository repository;
 
+  @Autowired
+  private DatabaseClient databaseClient;
+
   @AfterEach
   void clean() {
     StepVerifier.create(repository.deleteAll()).verifyComplete();
+    StepVerifier.create(
+            databaseClient
+                .sql(
+                    """
+                        INSERT INTO public.route_definitions (
+                            id,
+                            path_pattern,
+                            service_uri,
+                            predicates,
+                            filters,
+                            metadata,
+                            enabled,
+                            version,
+                            created_at,
+                            updated_at)
+                        VALUES (
+                            $1,
+                            '/api/auth/**',
+                            'lb://security-service',
+                            '[]'::jsonb,
+                            '[]'::jsonb,
+                            '{}'::jsonb,
+                            TRUE,
+                            1,
+                            NOW(),
+                            NOW())
+                        ON CONFLICT (id) DO NOTHING
+                        """
+                        )
+                .bind("$1", AUTH_ROUTE_ID)
+                .fetch()
+                .rowsUpdated())
+        .expectNextCount(1)
+        .verifyComplete();
   }
 
   @Test
@@ -67,6 +110,39 @@ class RouteCallAuditServiceIntegrationTest {
 
     StepVerifier.create(repository.count())
         .expectNext(1L)
+        .verifyComplete();
+  }
+
+  @Test
+  void recordShouldPersistAuditEntryWhenRouteDefinitionMissing() {
+    StepVerifier.create(
+            databaseClient
+                .sql("DELETE FROM public.route_definitions WHERE id = $1")
+                .bind("$1", AUTH_ROUTE_ID)
+                .fetch()
+                .rowsUpdated())
+        .expectNextCount(1)
+        .verifyComplete();
+
+    RouteCallAuditRecord record = new RouteCallAuditRecord(
+        AUTH_ROUTE_ID.toString(),
+        "/api/auth/admins",
+        "GET",
+        401,
+        25L,
+        "tenant-1",
+        "corr-123",
+        "127.0.0.1",
+        "ON_COMPLETE",
+        null);
+
+    StepVerifier.create(routeCallAuditService.record(record)).verifyComplete();
+
+    StepVerifier.create(repository.findAll().single())
+        .assertNext(entity -> {
+          Assertions.assertThat(entity.getRouteId()).isNull();
+          Assertions.assertThat(entity.getRouteIdRaw()).isEqualTo(record.routeId());
+        })
         .verifyComplete();
   }
 }
