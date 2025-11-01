@@ -77,16 +77,12 @@ shared:
       api-auth: &pattern-auth-api /api/auth/**
       api-auth-superadmin: &pattern-auth-api-superadmin /api/auth/superadmin/**
       api-auth-v1: &pattern-auth-api-v1 /api/v1/auth/**
-      api-auth-sec: &pattern-auth-sec /api/auth/**
       api-v1-superadmin: &pattern-auth-api-v1-superadmin /api/v1/superadmin/**
-      api-sec-superadmin: &pattern-auth-sec-superadmin /api/v1/superadmin/**
       auth-admin: &pattern-auth-admin /api/auth/admin/login
-      auth-sec-admin: &pattern-auth-sec-admin /api/auth/admin/login
       auth-root: &pattern-auth-root /auth/**
     misc:
       favicon: &pattern-misc-favicon /favicon.ico
       fallback: &pattern-fallback /fallback/**
-      auth-root-sec: &pattern-auth-root-sec /api/v1/auth/**
 
 app:
   env: ${APP_ENV:${SPRING_PROFILES_ACTIVE:local}}
