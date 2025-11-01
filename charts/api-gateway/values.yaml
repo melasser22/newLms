@@ -79,16 +79,12 @@ config:
           api-auth: &pattern-auth-api /api/auth/**
           api-auth-superadmin: &pattern-auth-api-superadmin /api/auth/superadmin/**
           api-auth-v1: &pattern-auth-api-v1 /api/v1/auth/**
-          api-auth-sec: &pattern-auth-sec /api/auth/**
           api-v1-superadmin: &pattern-auth-api-v1-superadmin /api/v1/superadmin/**
-          api-sec-superadmin: &pattern-auth-sec-superadmin /api/v1/superadmin/**
           auth-admin: &pattern-auth-admin /api/auth/admin/login
-          auth-sec-admin: &pattern-auth-sec-admin /api/auth/admin/login
           auth-root: &pattern-auth-root /auth/**
         misc:
           favicon: &pattern-misc-favicon /favicon.ico
           fallback: &pattern-fallback /fallback/**
-          auth-root-sec: &pattern-auth-root-sec /api/v1/auth/**
     
     app:
       env: ${APP_ENV:${SPRING_PROFILES_ACTIVE:local}}
@@ -319,13 +315,10 @@ config:
           - ${shared.patterns.actuator.generic}
           - ${shared.patterns.misc.fallback}
           - ${shared.patterns.auth.auth-root}
-          - ${shared.patterns.misc.auth-root-sec}
           - ${shared.patterns.auth.api-auth}
           - ${shared.patterns.auth.api-auth-superadmin}
           - ${shared.patterns.auth.api-auth-v1}
-          - ${shared.patterns.auth.api-auth-sec}
           - ${shared.patterns.auth.api-v1-superadmin}
-          - ${shared.patterns.auth.api-sec-superadmin}
           - ${shared.patterns.docs.api-swagger-single}
           - ${shared.patterns.docs.api-swagger-double}
           - ${shared.patterns.docs.api-v3-single}
@@ -460,11 +453,8 @@ config:
           - ${shared.patterns.auth.api-auth}
           - ${shared.patterns.auth.api-auth-superadmin}
           - ${shared.patterns.auth.api-auth-v1}
-          - ${shared.patterns.auth.api-auth-sec}
           - ${shared.patterns.auth.api-v1-superadmin}
-          - ${shared.patterns.auth.api-sec-superadmin}
           - ${shared.patterns.auth.auth-admin}
-          - ${shared.patterns.auth.auth-sec-admin}
           - ${shared.patterns.auth.auth-root}
           - ${shared.patterns.auth.login}
           - ${shared.patterns.actuator.health}
@@ -507,9 +497,7 @@ config:
           - ${shared.patterns.docs.api-swagger-html-double}
           - ${shared.patterns.auth.api-auth}
           - ${shared.patterns.auth.api-auth-superadmin}
-          - ${shared.patterns.auth.api-auth-sec}
           - ${shared.patterns.auth.api-v1-superadmin}
-          - ${shared.patterns.auth.api-sec-superadmin}
           - ${shared.patterns.docs.root-v3}
           - ${shared.patterns.docs.root-swagger}
           - ${shared.patterns.docs.root-swagger-html}

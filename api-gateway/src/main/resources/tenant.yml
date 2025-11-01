@@ -19,9 +19,7 @@ core:
       - ${shared.patterns.docs.api-swagger-html-double}
       - ${shared.patterns.auth.api-auth}
       - ${shared.patterns.auth.api-auth-superadmin}
-      - ${shared.patterns.auth.api-auth-sec}
       - ${shared.patterns.auth.api-v1-superadmin}
-      - ${shared.patterns.auth.api-sec-superadmin}
       - ${shared.patterns.docs.root-v3}
       - ${shared.patterns.docs.root-swagger}
       - ${shared.patterns.docs.root-swagger-html}
