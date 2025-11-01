@@ -42,7 +42,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpMethod;
@@ -62,7 +61,6 @@ import org.springframework.security.oauth2.server.resource.authentication.Reacti
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 import org.springframework.security.web.server.csrf.CsrfWebFilter;
-import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.security.web.server.util.matcher.AndServerWebExchangeMatcher;
 import org.springframework.security.web.server.util.matcher.NegatedServerWebExchangeMatcher;
@@ -80,6 +78,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import com.ejada.common.constants.HeaderNames;
+import com.ejada.gateway.security.CookieAwareCsrfTokenRequestHandler;
 import com.ejada.gateway.security.CsrfTokenResponseWebFilter;
 
 /**
@@ -146,7 +145,7 @@ public class GatewaySecurityConfiguration {
       tokenRepository.setHeaderName(HeaderNames.CSRF_TOKEN);
       http.csrf(csrf -> {
         csrf.csrfTokenRepository(tokenRepository);
-        csrf.csrfTokenRequestHandler(new ServerCsrfTokenRequestAttributeHandler());
+        csrf.csrfTokenRequestHandler(new CookieAwareCsrfTokenRequestHandler());
         List<ServerWebExchangeMatcher> ignoreMatchers = buildCsrfIgnoreMatchers(rs.getCsrfIgnore());
         if (!ignoreMatchers.isEmpty()) {
           OrServerWebExchangeMatcher ignored = new OrServerWebExchangeMatcher(ignoreMatchers);
