@@ -8,6 +8,7 @@ import com.ejada.catalog.model.Feature;
 import com.ejada.catalog.repository.FeatureRepository;
 import com.ejada.catalog.service.FeatureService;
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.exception.DuplicateResourceException;
 import com.ejada.common.exception.NotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ public  class FeatureServiceImpl implements FeatureService {
     @Override
     public BaseResponse<FeatureRes> create(final FeatureCreateReq req) {
         if (repo.existsByFeatureKey(req.featureKey())) {
-            throw new IllegalStateException("featureKey already exists: " + req.featureKey());
+            throw new DuplicateResourceException("Feature key already exists", req.featureKey());
         }
         Feature e = mapper.toEntity(req);
         return BaseResponse.success("Feature created", mapper.toRes(repo.save(e)));
