@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 
 @AutoConfiguration
 @ConditionalOnClass(OpenAPI.class)
@@ -18,6 +19,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 @ConditionalOnProperty(prefix = "shared.openapi", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class SharedOpenApiAutoConfiguration {
 
+  @Bean
   @ConditionalOnMissingBean
   public OpenAPI openAPI(SharedOpenApiProperties props) {
     OpenAPI api = new OpenAPI()
@@ -42,6 +44,7 @@ public class SharedOpenApiAutoConfiguration {
     return api;
   }
 
+  @Bean(name = "sharedGroupedOpenApi")
   @ConditionalOnMissingBean(name = "sharedGroupedOpenApi")
   @ConditionalOnProperty(prefix = "shared.openapi.group", name = "enabled", havingValue = "true", matchIfMissing = true)
   public GroupedOpenApi sharedGroupedOpenApi(SharedOpenApiProperties props) {
