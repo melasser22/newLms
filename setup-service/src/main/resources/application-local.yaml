@@ -34,7 +34,7 @@ shared:
       verify-tenant-claim: true
       permit-all:
         - "/**"
-      disable-csrf: false
+      disable-csrf: true
     tenant-verification:
       strict-mode: true
       require-tenant-header: true

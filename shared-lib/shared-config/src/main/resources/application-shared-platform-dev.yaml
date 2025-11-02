@@ -73,7 +73,7 @@ shared:
         - "/api/*/swagger-ui/**"
         - "/api/v1/superadmin/**"
         - "/api/v1/superadmin/**"
-      disable-csrf: false
+      disable-csrf: true
       verify-tenant-claim: false
     stateless: true
     tenant-verification:

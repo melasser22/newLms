@@ -162,7 +162,7 @@ shared:
         - "/**/api/*/swagger-ui/**"
         - "/**/api/*/swagger-ui.html"
         - "/**/api/*/v3/api-docs/**"
-      disable-csrf: false
+      disable-csrf: true
       csrf-ignore:
         - "/api/v1/auth/**"
         - "/api/auth/**"

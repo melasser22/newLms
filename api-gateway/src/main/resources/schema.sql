@@ -172,31 +172,6 @@ VALUES
     )
 ON CONFLICT (id) DO NOTHING;
 
--- Data correction: ensure security-service routes do not forward with the
--- obsolete /sec prefix that blocks unauthenticated login flows.
-UPDATE public.route_definitions
-SET filters = '[{"name":"StripPrefix","args":{"parts":"1"}},{"name":"PrefixPath","args":{"prefix":"/api/v1"}},{"name":"RemoveRequestHeader","args":{"name":"Authorization"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
-    metadata = jsonb_build_object(
-      'methods', jsonb_build_array('GET','POST','PUT','PATCH','DELETE'),
-      'stripPrefix', 1,
-      'prefixPath', '/api/v1',
-      'requestHeaders', jsonb_build_object('X-Route-Seed','true'),
-      'removeRequestHeaders', jsonb_build_array('Authorization'),
-      'statelessAuth', true
-    )
-WHERE id = '44444444-4444-4444-4444-444444444444'
-  AND filters @> '[{"name":"PrefixPath","args":{"prefix":"/sec/api/v1"}}]'::jsonb;
-
-UPDATE public.route_definitions
-SET filters = '[{"name":"StripPrefix","args":{"parts":"2"}},{"name":"PrefixPath","args":{"prefix":"/api/v1"}},{"name":"AddRequestHeader","args":{"name":"X-Route-Source","value":"database"}}]'::jsonb,
-    metadata = jsonb_build_object(
-      'methods', jsonb_build_array('GET','POST','PUT','PATCH','DELETE'),
-      'stripPrefix', 2,
-      'prefixPath', '/api/v1',
-      'requestHeaders', jsonb_build_object('X-Route-Seed','true')
-    )
-WHERE id = '55555555-5555-5555-5555-555555555555'
-  AND filters @> '[{"name":"PrefixPath","args":{"prefix":"/sec/api/v1"}}]'::jsonb;
 
 INSERT INTO public.route_definition_audit (
     audit_id,
