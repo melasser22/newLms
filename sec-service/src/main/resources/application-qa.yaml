@@ -226,19 +226,28 @@ app:
       permit-all:
         - "/api/auth/**"
         - "/v3/api-docs/**"
+        - "/**/api/*/v3/api-docs/**"
         - "/swagger-ui/**"
+        - "/**/api/*/swagger-ui/**"
+        - "/**/api/*/swagger-ui.html"
         - "/actuator/health/**"
       disable-csrf: true
       csrf-ignore:
         - "/api/auth/**"
         - "/v3/api-docs/**"
         - "/swagger-ui/**"
+        - "/**/api/*/v3/api-docs/**"
+        - "/**/api/*/swagger-ui/**"
+        - "/**/api/*/swagger-ui.html"
     tenant-verification:
       strict-mode: true
       require-tenant-header: true
       header-optional-patterns:
         - /api/v1/auth/admin/**
         - /api/v1/superadmin/**
+        - /**/api/*/swagger-ui/**
+        - /**/api/*/swagger-ui.html
+        - /**/api/*/v3/api-docs/**
     stateless: true
     roles-claim: roles
     tenant-claim: tenant

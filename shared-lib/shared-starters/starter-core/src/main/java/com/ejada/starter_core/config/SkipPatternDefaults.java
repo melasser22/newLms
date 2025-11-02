@@ -13,7 +13,10 @@ public final class SkipPatternDefaults {
     private static final String[] CORRELATION_AND_TENANT_SKIP_PATTERNS = new String[] {
         "/actuator/**",
         "/swagger-ui/**",
+        "/**/api/*/swagger-ui/**",
+        "/**/api/*/swagger-ui.html",
         "/v3/api-docs/**",
+        "/**/api/*/v3/api-docs/**",
         "/api/v1/admin/**",
         "/static/**",
         "/webjars/**",

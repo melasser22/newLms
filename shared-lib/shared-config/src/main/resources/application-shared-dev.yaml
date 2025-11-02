@@ -201,11 +201,14 @@ shared:
       permit-all:
         - "/actuator/health"
         - "/v3/api-docs/**"
+        - "/**/api/*/v3/api-docs/**"
         - "/swagger-ui/**"
+        - "/**/api/*/swagger-ui/**"
         - "/api/auth/**"
         - "/api/auth/superadmin/**"
         - "/api/*/v3/api-docs/**"
         - "/api/*/swagger-ui/**"
+        - "/**/api/*/swagger-ui.html"
         - "/api/v1/superadmin/**"
         - "/api/v1/superadmin/**"
       disable-csrf: true

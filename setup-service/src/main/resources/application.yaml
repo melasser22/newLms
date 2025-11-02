@@ -41,11 +41,17 @@ shared:
       permit-all:
         - /swagger-ui/**
         - /v3/api-docs/**
+        - /**/api/*/swagger-ui/**
+        - /**/api/*/swagger-ui.html
+        - /**/api/*/v3/api-docs/**
     tenant-verification:
       strict-mode: true
       require-tenant-header: true
       header-optional-patterns:
         - /swagger-ui/**
         - /v3/api-docs/**
+        - /**/api/*/swagger-ui/**
+        - /**/api/*/swagger-ui.html
+        - /**/api/*/v3/api-docs/**
     jwt:
       token-period: 15m

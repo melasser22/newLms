@@ -207,6 +207,9 @@ shared:
         - /setup/systemParameters/**
         - /swagger-ui/**
         - /v3/api-docs/**
+        - /**/api/*/swagger-ui/**
+        - /**/api/*/swagger-ui.html
+        - /**/api/*/v3/api-docs/**
       disable-csrf: true
     tenant-verification:
       strict-mode: true
@@ -214,6 +217,9 @@ shared:
       header-optional-patterns:
         - /swagger-ui/**
         - /v3/api-docs/**
+        - /**/api/*/swagger-ui/**
+        - /**/api/*/swagger-ui.html
+        - /**/api/*/v3/api-docs/**
     stateless: true
     roles-claim: roles
     tenant-claim: tenant

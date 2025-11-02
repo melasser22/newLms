@@ -93,10 +93,16 @@ shared:
         - /api/auth/**
         - /swagger-ui/**
         - /v3/api-docs/**
+        - /**/api/*/swagger-ui/**
+        - /**/api/*/swagger-ui.html
+        - /**/api/*/v3/api-docs/**
         - /api/v1/auth/**
         - /api/auth/**
         - /swagger-ui/**
         - /v3/api-docs/**
+        - /**/api/*/swagger-ui/**
+        - /**/api/*/swagger-ui.html
+        - /**/api/*/v3/api-docs/**
     tenant-verification:
       strict-mode: true
       require-tenant-header: true

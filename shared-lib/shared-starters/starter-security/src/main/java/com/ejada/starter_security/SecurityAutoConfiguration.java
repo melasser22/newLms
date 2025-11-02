@@ -427,8 +427,11 @@ public class SecurityAutoConfiguration {
       LinkedHashSet<String> set = new LinkedHashSet<>();
       set.add("/actuator/health");
       set.add("/v3/api-docs/**");
+      set.add("/**/api/*/v3/api-docs/**");
       set.add("/swagger-ui/**");
+      set.add("/**/api/*/swagger-ui/**");
       set.add("/swagger-ui.html");
+      set.add("/**/api/*/swagger-ui.html");
       if (rs.getPermitAll() != null) {
         Collections.addAll(set, rs.getPermitAll());
       }
