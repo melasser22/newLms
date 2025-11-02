@@ -47,10 +47,16 @@ shared:
       permit-all:
         - /swagger-ui/**
         - /v3/api-docs/**
+        - /**/api/*/swagger-ui/**
+        - /**/api/*/swagger-ui.html
+        - /**/api/*/v3/api-docs/**
     tenant-verification:
       header-optional-patterns:
         - /swagger-ui/**
         - /v3/api-docs/**
+        - /**/api/*/swagger-ui/**
+        - /**/api/*/swagger-ui.html
+        - /**/api/*/v3/api-docs/**
   crypto:
     algorithm: AES_GCM
     key-provider: ${CRYPTO_KEY_PROVIDER:in-memory}

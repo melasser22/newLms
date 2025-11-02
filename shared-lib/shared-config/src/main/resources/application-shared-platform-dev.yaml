@@ -62,8 +62,11 @@ shared:
       permit-all:
         - "/actuator/**"
         - "/v3/api-docs/**"
+        - "/**/api/*/v3/api-docs/**"
         - "/swagger-ui/**"
+        - "/**/api/*/swagger-ui/**"
         - "/swagger-ui.html"
+        - "/**/api/*/swagger-ui.html"
         - "/api/auth/**"
         - "/api/auth/superadmin/**"
         - "/api/*/v3/api-docs/**"
