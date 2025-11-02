@@ -2,8 +2,8 @@
 
 The **newLms** repository hosts the multi-tenant Ejada SaaS Products Framework. It is built from
 Spring Boot microservices that share a common set of starters for security, observability,
-resilience, and Redis integration. An API Gateway fronts every service to provide a single edge
-entry point with authentication, tenant enforcement, subscription validation, and rate limiting.
+resilience, and Redis integration. Each service now exposes its HTTP API directly for
+local development and testing.
 
 ## Repository Layout
 
@@ -13,26 +13,21 @@ entry point with authentication, tenant enforcement, subscription validation, an
 | `tenant-platform` | Aggregator Maven project for the domain services (`tenant`, `catalog`, `subscription`, `billing`, `analytics`). |
 | `setup-service` | Platform bootstrap service for tenant provisioning, catalog metadata, and reference data. |
 | `sec-service` | Security service responsible for IAM, audit, and policy management. |
-| `api-gateway` | Spring Cloud Gateway instance that secures and routes all external traffic to the platform. |
 
 ## Runtime Topology
 
-All external traffic flows through the gateway on port **8000**. Downstream services listen on
-private container ports and are no longer exposed outside the Docker network.
+Each microservice is reachable from the host using a unique port mapping. The table below lists
+the default bindings defined in `docker/services/docker-compose.yml`.
 
 | Service | Container Port | Publicly Exposed? |
 | ------- | -------------- | ---------------- |
-| API Gateway | 8000 | ✅ (`localhost:8000`) |
-| Setup Service | 8080 | ❌ |
-| Tenant Service | 8080 | ❌ |
-| Catalog Service | 8080 | ❌ |
-| Subscription Service | 8080 | ❌ |
-| Billing Service | 8080 | ❌ |
-| Analytics Service | 8080 | ❌ |
-| Security Service | 8080 | ❌ |
-
-> **Tip:** Uncomment the commented `ports` entries in
-> `docker/services/docker-compose.yml` when you need to debug a service directly.
+| Tenant Service | 8080 | ✅ (`localhost:8081`) |
+| Setup Service | 8080 | ✅ (`localhost:8082`) |
+| Billing Service | 8080 | ✅ (`localhost:8083`) |
+| Analytics Service | 8080 | ✅ (`localhost:8084`) |
+| Catalog Service | 8080 | ✅ (`localhost:8085`) |
+| Subscription Service | 8080 | ✅ (`localhost:8086`) |
+| Security Service | 8080 | ✅ (`localhost:8087`) |
 
 ## Getting Started
 
@@ -47,7 +42,7 @@ mvn clean install
 
 ### 2. Build the Platform
 
-From the repository root you can build the entire platform, including the gateway, with:
+From the repository root you can build the entire platform with:
 
 ```bash
 mvn clean package
@@ -65,7 +60,7 @@ and application services.
    docker compose -f docker/tools/docker-compose.yml up -d
    ```
 
-2. Build and start the framework microservices and gateway:
+2. Build and start the framework microservices:
 
    ```bash
    docker compose -f docker/services/docker-compose.yml up --build
@@ -76,64 +71,35 @@ and application services.
    > stack first so PostgreSQL, Redis, Kafka, and the OpenTelemetry collector are ready when the
    > services boot.
 
-Once healthy, invoke the platform via the gateway:
+Once healthy, you can invoke service health checks directly. For example, to verify the tenant
+service is running:
 
 ```bash
-curl http://localhost:8000/actuator/health
+curl http://localhost:8081/actuator/health
 ```
 
 ### 4. Authentication Flow
 
-1. `POST /api/auth/login` – obtain a JWT from the security service routed via the gateway.
-2. Use the issued token to call downstream APIs, e.g.:
+1. `POST /api/auth/login` – obtain a JWT from the security service (`http://localhost:8087`).
+2. Use the issued token to call downstream APIs directly on each service, e.g.:
    ```bash
    curl -H "Authorization: Bearer $TOKEN" \
-        http://localhost:8000/api/tenant/tenants
+        http://localhost:8081/api/tenant/tenants
    ```
 
 ## Configuration Notes
 
-- The gateway port is configurable with the `SERVER_PORT` environment variable (defaults to `8000`).
 - Spring Boot lazy initialization is enabled by default across services to reduce container warm-up times; set
   `SPRING_MAIN_LAZY_INITIALIZATION=false` when eager bean creation is preferred (for example, in production load tests).
-- Each microservice disables its own resource server and trusts authentication performed by the
-  gateway (`shared.security.resource-server.enabled=false`).
+- Each microservice runs its own resource server (`shared.security.resource-server.enabled=true`)
+  and validates JWTs on inbound requests.
 - Redis is required for rate limiting and subscription cache validation. Configure `REDIS_HOST`
   and `REDIS_PORT` for non-Docker deployments.
-- To roll back quickly, stop the `api-gateway` service and (optionally) re-enable direct ports in
-  the service compose file.
-
-## Updating Client Integrations
-
-All client SDKs and API documentation should target the unified gateway base URL:
-
-```
-https://api.example.com/api/*
-```
-
-For example, the tenants API changed from `http://localhost:8080/tenant/api/v1/tenants` to
-`http://localhost:8000/api/tenant/tenants`.
 
 ## Testing
-
-Run unit tests for the gateway:
-
-```bash
-mvn -pl api-gateway test
-```
 
 Run a full platform build (all modules) with:
 
 ```bash
 mvn clean verify
 ```
-
-## Operational Checklist
-
-- ✅ JWT validated once at the gateway.
-- ✅ Tenant and subscription context propagated via gateway filters.
-- ✅ Redis-backed rate limiting enabled (tenant and IP resolvers).
-- ✅ Circuit breakers and fallbacks configured per route.
-- ✅ Prometheus metrics exposed at `/actuator/prometheus`.
-
-For in-depth implementation details see `docs/api-gateway-enhancement-plan.md`.

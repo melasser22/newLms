@@ -19,8 +19,8 @@ services:
       OTEL_SERVICE_NAME: tenant-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    expose:
-      - "8080"
+    ports:
+      - "8081:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
@@ -50,8 +50,8 @@ services:
       OTEL_SERVICE_NAME: setup-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    expose:
-      - "8080"
+    ports:
+      - "8082:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
@@ -81,8 +81,8 @@ services:
       OTEL_SERVICE_NAME: billing-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    expose:
-      - "8080"
+    ports:
+      - "8083:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
@@ -112,8 +112,8 @@ services:
       OTEL_SERVICE_NAME: analytics-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    expose:
-      - "8080"
+    ports:
+      - "8084:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
@@ -143,8 +143,8 @@ services:
       OTEL_SERVICE_NAME: catalog-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    expose:
-      - "8080"
+    ports:
+      - "8085:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
@@ -174,8 +174,8 @@ services:
       OTEL_SERVICE_NAME: subscription-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    expose:
-      - "8080"
+    ports:
+      - "8086:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
@@ -210,8 +210,8 @@ services:
       OTEL_SERVICE_NAME: security-service
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Riyadh
-    expose:
-      - "8080"
+    ports:
+      - "8087:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
@@ -222,64 +222,6 @@ services:
       backend:
         aliases:
           - security-service
-
-  api-gateway:
-    container_name: api-gateway
-    build:
-      context: ../../api-gateway
-    restart: unless-stopped
-    depends_on:
-      setup-service:
-        condition: service_healthy
-      tenant-service:
-        condition: service_healthy
-      catalog-service:
-        condition: service_healthy
-      subscription-service:
-        condition: service_healthy
-      billing-service:
-        condition: service_healthy
-      analytics-service:
-        condition: service_healthy
-      security-service:
-        condition: service_healthy
-    environment:
-      TZ: Asia/Riyadh
-      SERVER_PORT: 8000
-      JWT_SECRET: ${JWT_SECRET:-0w077MpVVbFHb4V59DNnF-OG8TaUqso0SKKCUSGG6hY=}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-      OTEL_TRACES_EXPORTER: otlp
-      OTEL_METRICS_EXPORTER: otlp
-      OTEL_SERVICE_NAME: api-gateway
-      SPRING_PROFILES_ACTIVE: dev
-      SHARED_SECURITY_MODE: hs256
-      SHARED_SECURITY_HS256_SECRET: ${JWT_SECRET:-0w077MpVVbFHb4V59DNnF-OG8TaUqso0SKKCUSGG6hY=}
-      SHARED_SECURITY_RESOURCE_SERVER_ENABLED: "false"
-      SPRING_CLOUD_DISCOVERY_CLIENT_SIMPLE_INSTANCES_SETUP_SERVICE_0_URI: http://setup-service:8080
-      SPRING_CLOUD_DISCOVERY_CLIENT_SIMPLE_INSTANCES_TENANT_SERVICE_0_URI: http://tenant-service:8080
-      SPRING_CLOUD_DISCOVERY_CLIENT_SIMPLE_INSTANCES_CATALOG_SERVICE_0_URI: http://catalog-service:8080
-      SPRING_CLOUD_DISCOVERY_CLIENT_SIMPLE_INSTANCES_SUBSCRIPTION_SERVICE_0_URI: http://subscription-service:8080
-      SPRING_CLOUD_DISCOVERY_CLIENT_SIMPLE_INSTANCES_BILLING_SERVICE_0_URI: http://billing-service:8080
-      SPRING_CLOUD_DISCOVERY_CLIENT_SIMPLE_INSTANCES_ANALYTICS_SERVICE_0_URI: http://analytics-service:8080
-      SPRING_CLOUD_DISCOVERY_CLIENT_SIMPLE_INSTANCES_SECURITY_SERVICE_0_URI: http://security-service:8080
-      SPRING_CLOUD_CONFIG_ENABLED: "false"
-      JASYPT_ENCRYPTOR_PASSWORD: ${JASYPT_ENCRYPTOR_PASSWORD:-2d4a9f7c5b8e4d1c92a0f37b6c58e143}
-    ports:
-      - "8000:8000"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/actuator/health"]
-      interval: 20s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      backend:
-        aliases:
-          - api-gateway
 
 networks:
   backend:
