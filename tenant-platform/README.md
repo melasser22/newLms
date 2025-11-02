@@ -29,4 +29,4 @@ From the project root, run:
 docker compose -f docker/tools/docker-compose.yml up -d
 docker compose -f docker/services/docker-compose.yml up --build
 ```
-Services listen on `localhost:8081`..`8084` via the shared gateway.
+Services listen directly on `localhost:8081`..`8087` when started with the provided compose file.
