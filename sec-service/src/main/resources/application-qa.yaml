@@ -228,7 +228,7 @@ app:
         - "/v3/api-docs/**"
         - "/swagger-ui/**"
         - "/actuator/health/**"
-      disable-csrf: false
+      disable-csrf: true
       csrf-ignore:
         - "/api/auth/**"
         - "/v3/api-docs/**"

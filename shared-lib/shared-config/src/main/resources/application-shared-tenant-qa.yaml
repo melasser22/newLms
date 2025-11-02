@@ -121,7 +121,7 @@ shared:
       enabled: true
       permit-all:
         - "**"
-      disable-csrf: false
+      disable-csrf: true
       verify-tenant-claim: true
     stateless: true
     tenant-verification:

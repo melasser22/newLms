@@ -32,7 +32,7 @@ security:
       - ${shared.patterns.docs.root-v3}
       - ${shared.patterns.docs.root-swagger}
       - ${shared.patterns.docs.root-swagger-html}
-    disable-csrf: false
+    disable-csrf: true
     jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}
     issuer-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}
   cors:
