@@ -3,6 +3,7 @@ package com.ejada.starter_security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.util.StringUtils;
 
 /**
  * Evaluates whether the current user satisfies the required role.
@@ -26,13 +27,49 @@ public class RoleChecker {
         if (authentication == null) {
             return false;
         }
+        String configuredPrefix = StringUtils.hasText(securityProps.getRolePrefix())
+            ? securityProps.getRolePrefix()
+            : "ROLE_";
+
         for (GrantedAuthority authority : authentication.getAuthorities()) {
+            String authorityValue = authority != null ? authority.getAuthority() : null;
+            if (!StringUtils.hasText(authorityValue)) {
+                continue;
+            }
+
+            String normalizedAuthority = normalizeAuthority(authorityValue, configuredPrefix);
+
             for (Role role : roles) {
-                if (role.getAuthority().equals(authority.getAuthority())) {
+                if (role == null) {
+                    continue;
+                }
+
+                String expectedAuthority = role.getAuthority();
+                if (authorityValue.equals(expectedAuthority)) {
+                    return true;
+                }
+
+                if (normalizedAuthority.equals(role.name())) {
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    private static String normalizeAuthority(String authority, String configuredPrefix) {
+        if (!StringUtils.hasText(authority)) {
+            return "";
+        }
+
+        if (StringUtils.hasText(configuredPrefix) && authority.startsWith(configuredPrefix)) {
+            return authority.substring(configuredPrefix.length());
+        }
+
+        if (authority.startsWith("ROLE_")) {
+            return authority.substring("ROLE_".length());
+        }
+
+        return authority;
     }
 }
