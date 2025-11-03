@@ -18,6 +18,10 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.ejada</groupId>
+      <artifactId>shared-common</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-sdk</artifactId>
       <optional>true</optional>
