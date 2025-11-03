@@ -5,6 +5,7 @@ import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
 import com.ejada.common.constants.HeaderNames;
+import com.ejada.common.logging.BomStrippingLogstashEncoder;
 import net.logstash.logback.encoder.LogstashEncoder;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -52,7 +53,7 @@ public class LoggingAutoConfiguration {
     @ConditionalOnProperty(prefix = "shared.logging.json", name = "enabled", havingValue = "true")
     @ConditionalOnMissingBean
     public LogstashEncoder logstashEncoder() {
-        LogstashEncoder encoder = new LogstashEncoder();
+        LogstashEncoder encoder = new BomStrippingLogstashEncoder();
         encoder.setIncludeMdc(true);
         encoder.setCustomFields("{\"app\":\"shared\"}");
         return encoder;
