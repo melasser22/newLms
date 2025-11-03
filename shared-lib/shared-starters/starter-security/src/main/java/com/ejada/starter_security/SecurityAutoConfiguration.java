@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
@@ -99,6 +100,7 @@ public class SecurityAutoConfiguration {
   public MethodSecurityExpressionHandler methodSecurityExpressionHandler(ApplicationContext applicationContext) {
     DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
     handler.setApplicationContext(applicationContext);
+    handler.setBeanResolver(new BeanFactoryResolver(applicationContext));
     return handler;
   }
 
