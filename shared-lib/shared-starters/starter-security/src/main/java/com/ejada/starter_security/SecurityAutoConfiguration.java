@@ -10,13 +10,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.aopalliance.intercept.MethodInvocation;
-import org.springframework.context.expression.BeanFactoryResolver;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
@@ -48,7 +44,6 @@ import com.ejada.starter_security.web.JsonAccessDeniedHandler;
 import com.ejada.starter_security.web.JsonAuthEntryPoint;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
@@ -101,7 +96,9 @@ public class SecurityAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean(MethodSecurityExpressionHandler.class)
   public MethodSecurityExpressionHandler methodSecurityExpressionHandler(ApplicationContext applicationContext) {
-    return new BeanAwareMethodSecurityExpressionHandler(applicationContext);
+    DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
+    handler.setApplicationContext(applicationContext);
+    return handler;
   }
 
   /* ---------------------------------------------------
@@ -471,24 +468,6 @@ public class SecurityAutoConfiguration {
         String path = URL_PATH_HELPER.getPathWithinApplication(request);
         return ANT_PATH_MATCHER.match(pattern, path);
       }
-    }
-  }
-
-  private static final class BeanAwareMethodSecurityExpressionHandler extends DefaultMethodSecurityExpressionHandler {
-    private final ApplicationContext applicationContext;
-
-    BeanAwareMethodSecurityExpressionHandler(ApplicationContext applicationContext) {
-      this.applicationContext = applicationContext;
-      setApplicationContext(applicationContext);
-      setBeanResolver(new BeanFactoryResolver(applicationContext));
-    }
-
-    @Override
-    public StandardEvaluationContext createEvaluationContextInternal(Authentication authentication,
-                                                                     MethodInvocation invocation) {
-      StandardEvaluationContext context = super.createEvaluationContextInternal(authentication, invocation);
-      context.setBeanResolver(new BeanFactoryResolver(applicationContext));
-      return context;
     }
   }
 
