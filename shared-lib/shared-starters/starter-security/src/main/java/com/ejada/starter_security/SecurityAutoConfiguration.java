@@ -10,9 +10,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.aopalliance.intercept.MethodInvocation;
+import org.springframework.context.expression.BeanFactoryResolver;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
@@ -97,9 +101,7 @@ public class SecurityAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean(MethodSecurityExpressionHandler.class)
   public MethodSecurityExpressionHandler methodSecurityExpressionHandler(ApplicationContext applicationContext) {
-    DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
-    handler.setApplicationContext(applicationContext);
-    return handler;
+    return new BeanAwareMethodSecurityExpressionHandler(applicationContext);
   }
 
   /* ---------------------------------------------------
@@ -469,6 +471,23 @@ public class SecurityAutoConfiguration {
         String path = URL_PATH_HELPER.getPathWithinApplication(request);
         return ANT_PATH_MATCHER.match(pattern, path);
       }
+    }
+  }
+
+  private static final class BeanAwareMethodSecurityExpressionHandler extends DefaultMethodSecurityExpressionHandler {
+    private final ApplicationContext applicationContext;
+
+    BeanAwareMethodSecurityExpressionHandler(ApplicationContext applicationContext) {
+      this.applicationContext = applicationContext;
+      setApplicationContext(applicationContext);
+    }
+
+    @Override
+    public StandardEvaluationContext createEvaluationContextInternal(Authentication authentication,
+                                                                     MethodInvocation invocation) {
+      StandardEvaluationContext context = super.createEvaluationContextInternal(authentication, invocation);
+      context.setBeanResolver(new BeanFactoryResolver(applicationContext));
+      return context;
     }
   }
 
