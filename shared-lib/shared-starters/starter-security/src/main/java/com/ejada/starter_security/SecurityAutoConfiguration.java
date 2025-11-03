@@ -480,6 +480,7 @@ public class SecurityAutoConfiguration {
     BeanAwareMethodSecurityExpressionHandler(ApplicationContext applicationContext) {
       this.applicationContext = applicationContext;
       setApplicationContext(applicationContext);
+      setBeanResolver(new BeanFactoryResolver(applicationContext));
     }
 
     @Override
