@@ -33,14 +33,14 @@ shared:
       generate-if-missing: true
       echo-response-header: true
     tenant:
-      enabled: false
+      enabled: true
       header-name: X-Tenant-Id
       query-param: tenantId
       default-policy: OPTIONAL
       echo-response-header: true
       skip-patterns:
-        - "/api/auth/*"
-        - "/api/superadmin/**"
+        - /api/auth/admin/login
+        - /**/admins/**
     cors:
       enabled: true
       allowed-origins: http://localhost:3000
@@ -150,39 +150,15 @@ shared:
       enabled: true
       verify-tenant-claim: true
       permit-all:
-        - "/actuator/health"
         - "/api/v1/auth/**"
-        - "/api/auth/**"
-        - "/api/v1/auth/**"
-        - "/api/auth/**"
-        - "/swagger-ui/**"
-        - "/v3/api-docs/**"
-        - "/swagger-ui/**"
-        - "/v3/api-docs/**"
-        - "/**/api/*/swagger-ui/**"
-        - "/**/api/*/swagger-ui.html"
-        - "/**/api/*/v3/api-docs/**"
-      disable-csrf: true
+      disable-csrf: false
       csrf-ignore:
-        - "/api/v1/auth/**"
-        - "/api/auth/**"
-        - "/api/v1/auth/**"
-        - "/api/auth/**"
+        - "/api/v1/auth/admin/login"
     tenant-verification:
       strict-mode: true
       require-tenant-header: true
       header-optional-patterns:
-        - /api/v1/auth/admin/**
-        - /api/v1/superadmin/**
-        - /api/v1/auth/**
-        - /api/v1/superadmin/**
-        - /swagger-ui/**
-        - /v3/api-docs/**
-        - /swagger-ui/**
-        - /v3/api-docs/**
-        - /**/api/*/swagger-ui/**
-        - /**/api/*/swagger-ui.html
-        - /**/api/*/v3/api-docs/**
+        - /api/v1/auth/admin/login
     stateless: true
     roles-claim: roles
     tenant-claim: tenant
@@ -198,7 +174,7 @@ shared:
     description: "security service endpoints for tenant/platform configuration."
     version: "1.0.0"
     servers:
-      - ${OPENAPI_SERVER_URL:http://localhost:8085}
+      - ${OPENAPI_SERVER_URL:http://localhost:8087}
     group:
       name: security
       packages-to-scan:
@@ -215,15 +191,15 @@ app:
 
 logging:
   level:
-    root: ERROR
-    com.ejada: ERROR
-    com.ejada.audit.starter: ERROR
-    com.ejada.audit.starter.core.dispatch: ERROR
-    com.ejada.audit.starter.core.dispatch.sinks: ERROR
-    org.hibernate.tool.schema: ERROR
-    org.hibernate.SQL: ERROR
-    org.hibernate.orm.jdbc.bind: ERROR
-    org.springframework.cache: ERROR
-    org.springframework.cache.interceptor.CacheAspectSupport: ERROR
+    root: INFO
+    com.ejada: INFO
+    com.ejada.audit.starter: INFO
+    com.ejada.audit.starter.core.dispatch: INFO
+    com.ejada.audit.starter.core.dispatch.sinks: INFO
+    org.hibernate.tool.schema: INFO
+    org.hibernate.SQL: INFO
+    org.hibernate.orm.jdbc.bind: INFO
+    org.springframework.cache: INFO
+    org.springframework.cache.interceptor.CacheAspectSupport: INFO
 
-debug: false
+debug: true

@@ -47,9 +47,7 @@ shared:
       coep: require-corp
       x-download-options: noopen
       exclude-paths:
-        - /actuator/**
-        - /v3/api-docs/**
-        - /swagger-ui/**
+        - /api/v1/auth/**
   audit:
     enabled: true
     web:
@@ -87,34 +85,13 @@ shared:
     enable-role-check: true
     resource-server:
       enabled: true
-      verify-tenant-claim: true
-      permit-all:
-        - /**
-        - /api/auth/**
-        - /swagger-ui/**
-        - /v3/api-docs/**
-        - /**/api/*/swagger-ui/**
-        - /**/api/*/swagger-ui.html
-        - /**/api/*/v3/api-docs/**
-        - /api/v1/auth/**
-        - /api/auth/**
-        - /swagger-ui/**
-        - /v3/api-docs/**
-        - /**/api/*/swagger-ui/**
-        - /**/api/*/swagger-ui.html
-        - /**/api/*/v3/api-docs/**
+      verify-tenant-claim: true      
+       
     tenant-verification:
       strict-mode: true
       require-tenant-header: true
       header-optional-patterns:
-        - /**
-        - /api/v1/superadmin/**
         - /api/v1/auth/**
-        - /api/v1/superadmin/**
-        - /swagger-ui/**
-        - /v3/api-docs/**
-        - /swagger-ui/**
-        - /v3/api-docs/**
     jwt:
       secret: ${SHARED_SECURITY_JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
       token-period: 15m

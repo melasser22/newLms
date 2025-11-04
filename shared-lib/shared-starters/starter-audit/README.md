@@ -19,7 +19,7 @@ shared:
       kafka:
         enabled: true
         topic: audit.events.v1
-        bootstrapServers: kafka:9092
+        bootstrapServers: http://localhost:29092
       db:
         enabled: true
 ```
