@@ -35,6 +35,8 @@
     <plugin.spotless.version>2.43.0</plugin.spotless.version>
     <plugin.checkstyle.version>3.5.0</plugin.checkstyle.version>
     <plugin.spotbugs.version>4.8.6.5</plugin.spotbugs.version>
+
+    <checkerframework.version>3.49.3</checkerframework.version>
   </properties>
 
   <dependencyManagement>
@@ -45,6 +47,11 @@
         <version>${ejada.shared.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.checkerframework</groupId>
+        <artifactId>checker-qual</artifactId>
+        <version>${checkerframework.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
