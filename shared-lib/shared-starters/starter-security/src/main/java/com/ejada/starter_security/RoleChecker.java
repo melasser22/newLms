@@ -1,6 +1,7 @@
 package com.ejada.starter_security;
 
 import lombok.RequiredArgsConstructor;
+import java.util.Collection;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.util.StringUtils;
@@ -31,7 +32,12 @@ public class RoleChecker {
             ? securityProps.getRolePrefix()
             : "ROLE_";
 
-        for (GrantedAuthority authority : authentication.getAuthorities()) {
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        if (authorities == null) {
+            return false;
+        }
+
+        for (GrantedAuthority authority : authorities) {
             String authorityValue = authority != null ? authority.getAuthority() : null;
             if (!StringUtils.hasText(authorityValue)) {
                 continue;

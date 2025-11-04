@@ -38,4 +38,14 @@ class RoleCheckerTest {
 
         assertThat(checker.hasRole(authentication, Role.EJADA_OFFICER)).isTrue();
     }
+
+    @Test
+    void hasRoleReturnsFalseWhenAuthenticationHasNoAuthorities() {
+        RoleChecker checker = newRoleChecker();
+        TestingAuthenticationToken authentication =
+            new TestingAuthenticationToken("principal", "credentials");
+        authentication.setAuthenticated(true);
+
+        assertThat(checker.hasRole(authentication, Role.EJADA_OFFICER)).isFalse();
+    }
 }
