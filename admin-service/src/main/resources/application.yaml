@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: system-admin-service
+  profiles:
+    active: dev
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 0
+    schemas: public,admin
+    default-schema: admin
+server:
+  port: 8080
+  shutdown: graceful
+  servlet:
+    context-path: /admin
+  compression:
+    enabled: true
+    mime-types:
+      - text/html
+      - text/plain
+      - text/css
+      - application/json
+      - application/javascript
+    min-response-size: 2KB
+  error:
+    include-message: always
+    include-binding-errors: always
+
+shared:
+  observability:
+    application-name: system-admin-service
+  security:
+    enable-role-check: true
+    jwt:
+      token-period: 15m
