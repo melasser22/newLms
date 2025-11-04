@@ -198,7 +198,7 @@ logging:
     com.ejada.audit.starter.core.dispatch: INFO
     com.ejada.audit.starter.core.dispatch.sinks: INFO
     org.hibernate.tool.schema: INFO
-    com.ejada.sec.security.AuthorizationExpressions: DEBUG
+    com.ejada.starter_security.authorization.AuthorizationExpressions: DEBUG
     org.springframework.security.access.expression: TRACE
     org.springframework.expression: TRACE
     org.hibernate.SQL: INFO

@@ -3,6 +3,9 @@ package com.ejada.sec.security;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.ejada.starter_security.RoleChecker;
+import com.ejada.starter_security.SharedSecurityProps;
+import com.ejada.starter_security.authorization.AuthorizationExpressions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
@@ -13,7 +16,9 @@ class AuthorizationExpressionsTest {
 
     @BeforeEach
     void setUp() {
-        expressions = new AuthorizationExpressions();
+        SharedSecurityProps securityProps = new SharedSecurityProps();
+        RoleChecker roleChecker = new RoleChecker(securityProps);
+        expressions = new AuthorizationExpressions(roleChecker);
     }
 
     @Test
