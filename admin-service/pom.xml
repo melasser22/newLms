@@ -19,38 +19,31 @@
     <!-- Java language level -->
     <properties>
         <java.version>21</java.version>
-        <spring-boot.run.skip>false</spring-boot.run.skip>
-        <qa.flyway.vendor>postgresql</qa.flyway.vendor>
-        <qa.flyway.schemas>security</qa.flyway.schemas>
-        <qa.flyway.defaultSchema>security</qa.flyway.defaultSchema>
-        <qa.flyway.locations>classpath:db/migration/common,classpath:db/migration/${qa.flyway.vendor}</qa.flyway.locations>
-        <qa.flyway.url>jdbc:postgresql://localhost:5432/ejada</qa.flyway.url>
-        <qa.flyway.user>postgres</qa.flyway.user>
-        <qa.flyway.password>postgres</qa.flyway.password>
+        <!-- Import shared BOM version so we use the same versions of shared libraries as other services -->
+        <ejada.shared.version>1.0.0</ejada.shared.version>
+        <plugin.spotbugs.version>4.8.6.5</plugin.spotbugs.version>
+
     </properties>
 
+  <!-- Import shared  to pin internal starter & shared-lib versions -->
+   <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.ejada</groupId>
+        <artifactId>shared-lib</artifactId>
+        <version>${ejada.shared.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
-    <dependency>
-      <groupId>com.github.ben-manes.caffeine</groupId>
-      <artifactId>caffeine</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-cache</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-redis</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.micrometer</groupId>
-      <artifactId>micrometer-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <scope>runtime</scope>
-    </dependency>
+<dependency>
+  <groupId>org.postgresql</groupId>
+  <artifactId>postgresql</artifactId>
+  <scope>runtime</scope>
+</dependency>
 <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
@@ -74,15 +67,7 @@
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
-      <artifactId>starter-resilience</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.ejada</groupId>
       <artifactId>shared-config</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>shared-data</artifactId>
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
@@ -91,10 +76,6 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-aop</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -156,16 +137,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-testcontainers</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>shared-test-support</artifactId>
       <scope>test</scope>
@@ -173,71 +144,171 @@
   </dependencies>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>3.5.0</version>
+          <executions>
+            <execution>
+              <id>enforce</id>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+              <configuration>
+                <rules>
+                  <dependencyConvergence/>
+                  <requireJavaVersion>
+                    <version>[21,)</version>
+                  </requireJavaVersion>
+                </rules>
+                <fail>true</fail>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>0.8.12</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>2.43.0</version>
         <configuration>
-          <release>${java.version}</release>
-          <annotationProcessorPaths>
-            <path>
-              <groupId>org.projectlombok</groupId>
-              <artifactId>lombok</artifactId>
-              <version>${lombok.version}</version>
-            </path>
-            <path>
-              <groupId>org.projectlombok</groupId>
-              <artifactId>lombok-mapstruct-binding</artifactId>
-              <version>${lombokMapstruct.version}</version>
-            </path>
-            <path>
-              <groupId>org.mapstruct</groupId>
-              <artifactId>mapstruct-processor</artifactId>
-              <version>${mapstruct.version}</version>
-            </path>
-          </annotationProcessorPaths>
-          <compilerArgs>
-            <arg>-Amapstruct.defaultComponentModel=spring</arg>
-            <arg>-Amapstruct.unmappedTargetPolicy=IGNORE</arg>
-          </compilerArgs>
+          <java>
+            <googleJavaFormat/>
+            <removeUnusedImports/>
+            <importOrder/>
+          </java>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
         <executions>
           <execution>
             <goals>
-              <goal>repackage</goal>
+              <goal>apply</goal>
             </goals>
           </execution>
         </executions>
       </plugin>
-    </plugins>
-  </build>
+     <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-checkstyle-plugin</artifactId>
+    <version>3.5.0</version>
+    <configuration>
+        <configLocation>../shared-lib/shared-quality/checkstyle.xml</configLocation>
+        <suppressionsLocation>${project.basedir}/../shared-lib/shared-quality/suppressions.xml</suppressionsLocation>
+        <consoleOutput>true</consoleOutput>
+        <failOnViolation>false</failOnViolation>
+    </configuration>
+    <executions>
+        <execution>
+            <phase>verify</phase>
+            <goals>
+                <goal>check</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+  <plugin>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-maven-plugin</artifactId>
+            <version>${plugin.spotbugs.version}</version>
+            <configuration>
+              <effort>Max</effort>
+              <threshold>Low</threshold>
+              <xmlOutput>true</xmlOutput>
+              <htmlOutput>true</htmlOutput>
+              <outputDirectory>${project.build.directory}/spotbugs</outputDirectory>
+              <excludeFilterFile>${maven.multiModuleProjectDirectory}/shared-lib/shared-quality/spotbugs-exclude.xml</excludeFilterFile>
+            </configuration>
+            <dependencies>
+              <dependency>
+                <groupId>com.h3xstream.findsecbugs</groupId>
+                <artifactId>findsecbugs-plugin</artifactId>
+                <version>1.12.0</version>
+              </dependency>
+            </dependencies>
+          </plugin>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <configuration>
+        <release>${java.version}</release>
+      </configuration>
+      <executions>
+        <execution>
+          <id>compile</id>
+          <goals><goal>compile</goal></goals>
+          <configuration>
+            <annotationProcessorPaths>
+              <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+              </path>
+              <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-mapstruct-binding</artifactId>
+                <version>${lombok.mapstruct.binding.version}</version>
+              </path>
+              <path>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-processor</artifactId>
+                <version>${mapstruct.version}</version>
+              </path>
+            </annotationProcessorPaths>
+            <compilerArgs>
+              <arg>-Amapstruct.defaultComponentModel=spring</arg>
+              <arg>-Amapstruct.unmappedTargetPolicy=IGNORE</arg>
+            </compilerArgs>
+          </configuration>
+        </execution>
 
-    <profiles>
-        <profile>
-            <id>qa</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.flywaydb</groupId>
-                        <artifactId>flyway-maven-plugin</artifactId>
-                        <version>${flyway.version}</version>
-                        <configuration>
-                            <url>${qa.flyway.url}</url>
-                            <user>${qa.flyway.user}</user>
-                            <password>${qa.flyway.password}</password>
-                            <schemas>${qa.flyway.schemas}</schemas>
-                            <defaultSchema>${qa.flyway.defaultSchema}</defaultSchema>
-                            <locations>${qa.flyway.locations}</locations>
-                            <baselineOnMigrate>true</baselineOnMigrate>
-                            <connectRetries>10</connectRetries>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+        <execution>
+          <id>test-compile</id>
+          <goals><goal>testCompile</goal></goals>
+          <configuration>
+            <annotationProcessorPaths>
+              <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+              </path>
+              <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-mapstruct-binding</artifactId>
+                <version>${lombok.mapstruct.binding.version}</version>
+              </path>
+              <path>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-processor</artifactId>
+                <version>${mapstruct.version}</version>
+              </path>
+            </annotationProcessorPaths>
+            <compilerArgs>
+              <arg>-Amapstruct.defaultComponentModel=spring</arg>
+              <arg>-Amapstruct.unmappedTargetPolicy=IGNORE</arg>
+            </compilerArgs>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+    <plugin>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-maven-plugin</artifactId>
+      <executions>
+        <execution>
+          <goals>
+            <goal>repackage</goal>
+          </goals>
+        </execution>
+      </executions>
+    </plugin>
+  </plugins> 
+</build>
 </project>

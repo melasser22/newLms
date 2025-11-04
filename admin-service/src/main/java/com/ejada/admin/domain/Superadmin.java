@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 
+import com.ejada.starter_data.jpa.BaseEntity;
+
 @Entity
 @Table(
   name = "superadmins",
@@ -14,7 +16,7 @@ import java.time.LocalDateTime;
   }
 )
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class Superadmin extends AuditableEntity {
+public class Superadmin extends BaseEntity {
     
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY)

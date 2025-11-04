@@ -1,7 +1,8 @@
 package com.ejada.admin.controller;
 
+import com.ejada.admin.dto.SuperadminAuthResponse;
+import com.ejada.admin.service.SuperadminService;
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.http.BaseResponseController;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,13 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-public class AuthController extends BaseResponseController {
+public class AuthController  {
 
   private final SuperadminService superadminService;
 
   
   @PostMapping("/admin/login")
   public ResponseEntity<BaseResponse<SuperadminAuthResponse>> Adminlogin(@Valid @RequestBody SuperadminLoginRequest request) {
-    return respond(() -> superadminService.login(request));
+    return ResponseEntity.ok( superadminService.login(request));
   }
 }

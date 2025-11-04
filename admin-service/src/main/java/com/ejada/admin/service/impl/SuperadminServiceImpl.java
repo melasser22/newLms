@@ -1,16 +1,16 @@
-package com.ejada.sec.service.impl;
+package com.ejada.admin.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.crypto.JwtTokenService;
 import com.ejada.crypto.password.PasswordHasher;
-import com.ejada.sec.domain.Superadmin;
-import com.ejada.sec.domain.SuperadminPasswordHistory;
-import com.ejada.sec.dto.admin.*;
-import com.ejada.sec.exception.PasswordHistoryUnavailableException;
-import com.ejada.sec.mapper.SuperadminMapper;
-import com.ejada.sec.repository.SuperadminPasswordHistoryRepository;
-import com.ejada.sec.repository.SuperadminRepository;
-import com.ejada.sec.service.SuperadminService;
+import com.ejada.admin.domain.Superadmin;
+import com.ejada.admin.domain.SuperadminPasswordHistory;
+import com.ejada.admin.dto.admin.*;
+import com.ejada.admin.exception.PasswordHistoryUnavailableException;
+import com.ejada.admin.mapper.SuperadminMapper;
+import com.ejada.admin.repository.SuperadminPasswordHistoryRepository;
+import com.ejada.admin.repository.SuperadminRepository;
+import com.ejada.admin.service.SuperadminService;
 import com.ejada.starter_security.Role;
 import com.ejada.starter_security.RoleChecker;
 import java.time.Duration;
