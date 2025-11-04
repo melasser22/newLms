@@ -97,8 +97,20 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-    	<groupId>com.ejada</groupId>
-    	<artifactId>shared-common</artifactId>
+        <groupId>com.ejada</groupId>
+        <artifactId>shared-common</artifactId>
+    </dependency>
+
+    <!-- Test support -->
+    <dependency>
+      <groupId>com.ejada</groupId>
+      <artifactId>shared-test-support</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

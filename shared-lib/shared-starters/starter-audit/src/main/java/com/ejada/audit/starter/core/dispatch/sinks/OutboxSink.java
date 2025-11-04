@@ -1,7 +1,7 @@
 package com.ejada.audit.starter.core.dispatch.sinks;
 
 import com.ejada.audit.starter.api.AuditEvent;
-import com.ejada.common.json.JsonUtils;
+import com.ejada.audit.starter.core.dispatch.support.AuditEventJsonSerializer;
 import com.ejada.common.exception.JsonSerializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +51,7 @@ public class OutboxSink implements Sink {
       // Pre-serialize the payload. Handle checked serialization exceptions explicitly.
       String payload;
       try {
-        payload = JsonUtils.toJson(event);
+        payload = AuditEventJsonSerializer.toRedactedJson(event);
       } catch (JsonSerializationException jsonEx) {
         log.warn("Failed to serialize outbox event {} to JSON.", event.getEventId(), jsonEx);
         return;
