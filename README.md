@@ -87,6 +87,26 @@ curl http://localhost:8081/actuator/health
         http://localhost:8081/api/tenant/tenants
    ```
 
+### 5. Security Service Authorization Requirements
+
+The superadmin management APIs exposed by the security service (`/api/v1/auth/admins/**`) are
+guarded by Spring Security method expressions and require:
+
+- A JWT that includes the `ROLE_EJADA_OFFICER` authority.
+- An `X-Tenant-Id` header when tenant verification is enabled (default in development profiles).
+
+You can verify access with the following example request:
+
+```bash
+curl -X GET "http://localhost:8087/api/v1/auth/admins?page=0&size=20" \
+  -H "Authorization: Bearer $EJADA_OFFICER_JWT" \
+  -H "X-Tenant-Id: tenant-1" \
+  -H "Accept: application/json"
+```
+
+A token missing `ROLE_EJADA_OFFICER` (or omitting the tenant header when required) will
+receive a `403 Forbidden` response.
+
 ## Configuration Notes
 
 - Spring Boot lazy initialization is enabled by default across services to reduce container warm-up times; set
