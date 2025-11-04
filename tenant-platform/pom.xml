@@ -74,8 +74,22 @@
     <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>starter-observability</artifactId>
-    </dependency> 
+    </dependency>
   </dependencies>
+
+  <repositories>
+    <repository>
+      <id>central</id>
+      <name>Maven Central</name>
+      <url>https://repo.maven.apache.org/maven2</url>
+      <releases>
+        <updatePolicy>always</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
 
   <build>
     <pluginManagement>
