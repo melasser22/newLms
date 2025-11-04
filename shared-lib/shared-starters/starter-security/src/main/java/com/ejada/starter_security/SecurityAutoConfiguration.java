@@ -1,7 +1,9 @@
 package com.ejada.starter_security;
 
 import com.ejada.starter_security.authorization.AuthorizationExpressions;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -99,6 +101,19 @@ public class SecurityAutoConfiguration {
     DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
     handler.setApplicationContext(applicationContext);
     return handler;
+  }
+
+  @Bean
+  public BeanPostProcessor methodSecurityExpressionHandlerCustomizer(ApplicationContext applicationContext) {
+    return new BeanPostProcessor() {
+      @Override
+      public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        if (bean instanceof DefaultMethodSecurityExpressionHandler handler) {
+          handler.setApplicationContext(applicationContext);
+        }
+        return bean;
+      }
+    };
   }
 
   /* ---------------------------------------------------
