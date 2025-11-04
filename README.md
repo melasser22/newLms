@@ -48,6 +48,25 @@ cd ../lms-setup && mvn test
 
 The build pulls dependencies from Maven Central; ensure network access is available.
 
+### Docker Compose environments
+
+Containerised tooling and application services are now split across two compose files:
+
+- `docker-compose.tools.yml` — infrastructure dependencies such as PostgreSQL, Redis, Kafka, and the OpenTelemetry collector.
+- `docker-compose.apps.yml` — LMS application microservices.
+
+Start the full stack by composing both files together:
+
+```bash
+docker compose -f docker-compose.tools.yml -f docker-compose.apps.yml up --build
+```
+
+You can also start just the shared tooling dependencies when needed:
+
+```bash
+docker compose -f docker-compose.tools.yml up -d
+```
+
 ## Contributing
 Contributions are welcome. Please fork the repository and submit pull requests. Ensure tests pass before submitting.
 
