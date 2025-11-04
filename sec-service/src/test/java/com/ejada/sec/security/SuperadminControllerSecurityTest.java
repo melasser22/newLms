@@ -1,6 +1,7 @@
 package com.ejada.sec.security;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.sec.config.MethodSecurityConfig;
 import com.ejada.sec.controller.SuperadminController;
 import com.ejada.sec.service.SuperadminService;
 import com.ejada.starter_security.SecurityAutoConfiguration;
@@ -23,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = SuperadminController.class)
-@Import(SecurityAutoConfiguration.class)
+@Import({SecurityAutoConfiguration.class, MethodSecurityConfig.class})
 @TestPropertySource(properties = {
     "spring.main.allow-bean-definition-overriding=true",
     "shared.security.mode=hs256",
