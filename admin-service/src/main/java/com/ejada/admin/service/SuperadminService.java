@@ -1,7 +1,7 @@
 package com.ejada.admin.service;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.sec.dto.admin.*;
+import com.ejada.admin.dto.*;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

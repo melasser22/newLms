@@ -5,8 +5,7 @@ import com.ejada.crypto.JwtTokenService;
 import com.ejada.crypto.password.PasswordHasher;
 import com.ejada.admin.domain.Superadmin;
 import com.ejada.admin.domain.SuperadminPasswordHistory;
-import com.ejada.admin.dto.admin.*;
-import com.ejada.admin.exception.PasswordHistoryUnavailableException;
+import com.ejada.admin.dto.*;
 import com.ejada.admin.mapper.SuperadminMapper;
 import com.ejada.admin.repository.SuperadminPasswordHistoryRepository;
 import com.ejada.admin.repository.SuperadminRepository;
@@ -104,9 +103,9 @@ public class SuperadminServiceImpl implements SuperadminService {
         
         // Set audit fields (only if they exist in your AuditableEntity)
         // If AuditableEntity handles these automatically, you can remove these lines
-        if (superadmin.getCreatedAt() == null) {
-            superadmin.setCreatedAt(LocalDateTime.now());
-        }
+//        if (superadmin.getCreatedAt() == null) {
+//            superadmin.setCreatedAt(Instant.now());
+//        }
         // Remove these if your AuditableEntity doesn't have createdBy/updatedBy
         // superadmin.setCreatedBy(getCurrentSuperadminUsername());
         
@@ -156,7 +155,7 @@ public class SuperadminServiceImpl implements SuperadminService {
         superadminMapper.updateEntity(superadmin, request);
         
         // Update audit fields
-        superadmin.setUpdatedAt(LocalDateTime.now());
+//        superadmin.setUpdatedAt(Instant.now());
         // Remove this if your AuditableEntity doesn't have updatedBy
         // superadmin.setUpdatedBy(getCurrentSuperadminUsername());
         
@@ -204,7 +203,7 @@ public class SuperadminServiceImpl implements SuperadminService {
         // Soft delete (disable and lock the account instead of hard delete)
         superadmin.setEnabled(false);
         superadmin.setLocked(true);
-        superadmin.setUpdatedAt(LocalDateTime.now());
+        //superadmin.setUpdatedAt(Instant.now());
         // Remove this if your AuditableEntity doesn't have updatedBy
         // superadmin.setUpdatedBy(getCurrentSuperadminUsername());
         

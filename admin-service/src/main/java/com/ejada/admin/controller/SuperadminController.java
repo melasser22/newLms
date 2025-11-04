@@ -1,7 +1,11 @@
 package com.ejada.admin.controller;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.http.BaseResponseController;
+import com.ejada.admin.dto.ChangePasswordRequest;
+import com.ejada.admin.dto.CreateSuperadminRequest;
+import com.ejada.admin.dto.FirstLoginRequest;
+import com.ejada.admin.dto.SuperadminDto;
+import com.ejada.admin.dto.UpdateSuperadminRequest;
 import com.ejada.admin.service.SuperadminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

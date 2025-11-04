@@ -1,9 +1,9 @@
 package com.ejada.admin.mapper;
 
-import com.ejada.sec.domain.Superadmin;
-import com.ejada.sec.dto.admin.CreateSuperadminRequest;
-import com.ejada.sec.dto.admin.SuperadminDto;
-import com.ejada.sec.dto.admin.UpdateSuperadminRequest;
+import com.ejada.admin.domain.Superadmin;
+import com.ejada.admin.dto.CreateSuperadminRequest;
+import com.ejada.admin.dto.SuperadminDto;
+import com.ejada.admin.dto.UpdateSuperadminRequest;
 import org.mapstruct.*;
 
 import java.time.Instant;
