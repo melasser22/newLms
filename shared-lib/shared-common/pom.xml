@@ -15,6 +15,15 @@
   <packaging>jar</packaging>
   <name>Shared Common</name>
   <description>Shared core types and utilities</description>
+  <properties>
+    <!-- Common IO -->
+    <commonIo.version>2.16.1</commonIo.version>
+
+    <!--   Common Lang   -->
+    <commonLang.version>3.18.0</commonLang.version>
+    <!--      Guava-->
+    <guava.version>33.3.1-jre</guava.version>
+  </properties>
 
   <dependencies>
     <!-- Only if you truly need Boot basics; keep optional so apps choose their stack -->
@@ -52,6 +61,22 @@
       <optional>true</optional>
     </dependency>
 
+    <!-- Common Utilities-->
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>${commonIo.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>${commonLang.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
+    </dependency>
   
     <dependency>
     <groupId>net.logstash.logback</groupId>

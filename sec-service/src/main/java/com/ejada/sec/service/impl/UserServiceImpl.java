@@ -1,6 +1,7 @@
 package com.ejada.sec.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.exception.ValidationException;
 import com.ejada.sec.domain.User;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.mapper.ReferenceResolver;
@@ -69,8 +70,14 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public BaseResponse<List<UserDto>> listByTenant() {
-    UUID tenantId = UUID.fromString(ContextManager.Tenant.get());
-    return BaseResponse.success("Users listed",
+	  String tenantIdStr = ContextManager.Tenant.get();
+	    UUID tenantId;
+	    try {
+	      tenantId = UUID.fromString(tenantIdStr);
+	    } catch (RuntimeException ex) {
+	      throw new ValidationException("Invalid tenant ID format", ex.getMessage());
+	    }
+	        return BaseResponse.success("Users listed",
         userMapper.toDto(userRepository.findAllByTenantId(tenantId), resolver));
   }
 

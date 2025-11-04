@@ -7,9 +7,7 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
     default-schema: subscription
-    schemas:
-      - public
-      - subscription
+    schemas: subscription
 
 server:
   port: 8080

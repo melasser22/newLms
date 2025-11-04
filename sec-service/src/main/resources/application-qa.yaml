@@ -1,7 +1,4 @@
 spring:
-  config:
-    import:
-      - classpath:application-shared-api-gateway.yaml
   datasource:
     url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ejada}?currentSchema=security}"
     username: ${DB_USERNAME}
@@ -14,9 +11,10 @@ spring:
       idle-timeout: 30000        # 30s
       connection-timeout: 300000 # 300s
       max-lifetime: 1800000      # 30m
+
   jpa:
     open-in-view: false
-    show-sql: true
+    show-sql: true              
     hibernate:
       ddl-auto: update
     properties:
@@ -29,38 +27,144 @@ spring:
     enabled: false
     baseline-on-migrate: true
   kafka:
+    bootstrap-servers: kafka:9092
     client-id: ejada-security-qa
     consumer:
       group-id: ejada-backend-qa
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        max.poll.interval.ms: 300000
+        max.poll.records: 500
+    producer:
+      acks: all
+      retries: 3
+      batch-size: 16384
+      compression-type: gzip
+      properties:
+        linger.ms: 5
+
+
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus,beans,conditions,configprops,loggers,threaddump
+  endpoint:
+    health:
+      show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    display-request-duration: true
+    filter: true
+    operationsSorter: method
+    tagsSorter: alpha
 
 shared:
   core:
+    correlation:
+      header-name: X-Correlation-Id
+      generate-if-missing: true
+      echo-response-header: true
     tenant:
       enabled: true
       header-name: x_tenant_id
       query-param: tenantId
       default-policy: OPTIONAL
       echo-response-header: true
+    cors:
+      enabled: true
+      allowed-origins: http://localhost:3000
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: "*"
   headers:
+    enabled: true
+
+    correlation:
+      header: X-Correlation-Id
+      auto-generate: true
+      mandatory: true
+    request:
+      header: X-Request-ID
+      auto-generate: true
+      mandatory: true
     tenant:
       header: x_tenant_id
       auto-generate: false
       mandatory: false
+    user:
+      header: X-User-Id
+      auto-generate: false
+      mandatory: false
+    mdc:
+      enabled: true
     security:
+      enabled: true
+      hsts:
+        enabled: true
+        max-age: 31536000
+        include-subdomains: true
+      frame-options: SAMEORIGIN
+      content-type-options: nosniff
+      referrer-policy: no-referrer
       xss-protection: "1; mode=block"
     propagation:
+      enabled: true
       include:
         - X-Correlation-Id
         - X-Request-ID
         - x_tenant_id
         - X-User-Id
   audit:
+    enabled: true
+    web:
+      enabled: true
+      include-headers: true
+      track-bodies: true
+    aop:
+      enabled: true
+    dispatcher:
+      async: true
+    retention:
+      enabled: true
+      days: 90
+    masking:
+      enabled: true
+      fields-by-key:
+        - password
+        - secret
+        - token
+        - ssn
     sinks:
       db:
+        enabled: true
         schema: security
+        table: audit_logs
+      kafka:
+        enabled: true
+        topic: audit_logs
+      otlp:
+        enabled: false
+      outbox:
+        enabled: false
+
   openapi:
     enabled: true
-    title: " security Service API"
+    title: "Ejada - security Service API"
     description: "security service endpoints for tenant/platform configuration."
     version: "1.0.0"
     servers:
@@ -69,9 +173,15 @@ shared:
       name: security
       packages-to-scan:
         - com.ejada.security
+
     jwt-security: true
   redis:
+    host: redis
+    port: 6379
+    timeout: 2s
     key-prefix: ejada
+    default-ttl: 600s
+    reactive: false
   crypto:
     algorithm: AES_GCM
     in-memory:
@@ -79,21 +189,28 @@ shared:
       keys:
         local-qa-key: ${CRYPTO_LOCAL_QA_KEY}
   security:
+    mode: hs256
     jwt:
       secret: ${JWT_SECRET}
+      token-period: 15m
     hs256:
       secret: ${JWT_SECRET}
     resource-server:
-      permit-all: ["/security/systemParameters/**"]
+      enabled: true
+      permit-all: ["/*"]
+      disable-csrf: false
+    stateless: true
+    roles-claim: roles
+    tenant-claim: tenant
     enable-role-check: true
 
 logging:
   level:
-    root: WARN
-    com.ejada: WARN
-    org.hibernate.SQL: WARN
-    org.hibernate.orm.jdbc.bind: WARN
-    org.springframework.cache: WARN
-    org.springframework.cache.interceptor.CacheAspectSupport: WARN
+    root: ERROR                
+    com.ejada: ERROR
+    org.hibernate.SQL: ERROR   
+    org.hibernate.orm.jdbc.bind: ERROR
+    org.springframework.cache: ERROR
+    org.springframework.cache.interceptor.CacheAspectSupport: ERROR
 
 debug: false

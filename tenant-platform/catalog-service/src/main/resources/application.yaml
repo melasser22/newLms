@@ -7,9 +7,7 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
     default-schema: catalog
-    schemas:
-      - public
-      - catalog
+    schemas: catalog
 
 server:
   port: 8080

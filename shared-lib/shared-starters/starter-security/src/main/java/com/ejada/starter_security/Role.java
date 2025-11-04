@@ -4,7 +4,6 @@ package com.ejada.starter_security;
  * Enumeration of application roles.
  */
 public enum Role {
-    EJADA_SUPERADMIN("ROLE_EJADA_SUPERADMIN"),
     EJADA_OFFICER("ROLE_EJADA_OFFICER"),
     TENANT_ADMIN("ROLE_TenantAdmin"),
     TENANT_OFFICER("ROLE_TenantOfficer");

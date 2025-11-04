@@ -2,6 +2,7 @@ package com.ejada.sec.controller;
 
 import com.ejada.common.context.ContextManager;
 import com.ejada.common.dto.BaseResponse;
+import com.ejada.common.exception.ValidationException;
 import com.ejada.sec.domain.EffectivePrivilegeProjection;
 import com.ejada.sec.repository.EffectivePrivilegeViewRepository;
 import com.ejada.starter_core.tenant.RequireTenant;
@@ -23,8 +24,14 @@ public class EffectivePrivilegesController {
 
   @GetMapping("/{userId}")
   public ResponseEntity<BaseResponse<List<EffectivePrivilegeProjection>>> list(@PathVariable Long userId) {
-    UUID tenantId = UUID.fromString(ContextManager.Tenant.get());
-    return ResponseEntity.ok(
+	  String tenantIdStr = ContextManager.Tenant.get();
+	    UUID tenantId;
+	    try {
+	      tenantId = UUID.fromString(tenantIdStr);
+	    } catch (RuntimeException ex) {
+	      throw new ValidationException("Invalid tenant ID format", ex.getMessage());
+	    }
+	        return ResponseEntity.ok(
         BaseResponse.success("Effective privileges listed",
             viewRepo.findEffectiveByUserAndTenant(userId, tenantId)));
   }
