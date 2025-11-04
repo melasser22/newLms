@@ -1,9 +1,9 @@
 // NEW VERSION – uses TransactionTemplate (REQUIRES_NEW)
 package com.ejada.audit.starter.core.dispatch.sinks;
 
-import com.ejada.common.constants.HeaderNames;
 import com.ejada.audit.starter.api.AuditEvent;
-import com.ejada.common.json.JsonUtils;
+import com.ejada.audit.starter.core.dispatch.support.AuditEventJsonSerializer;
+import com.ejada.common.constants.HeaderNames;
 import com.ejada.common.exception.JsonSerializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,15 +15,15 @@ public class DatabaseSink implements Sink {
 
   private final JdbcTemplate jdbc;
   private final TransactionTemplate tx;
-  private final String table;
+  private final String qualifiedTable;
   private final String insertSql;
 
   public DatabaseSink(JdbcTemplate jdbc, TransactionTemplate tx, String schema, String table) {
     this.jdbc = jdbc;
     this.tx = tx; // preconfigured with REQUIRES_NEW
-    this.table = (schema == null || schema.isBlank() ? "public" : schema) + "." + table;
+    this.qualifiedTable = qualify(schema, table);
     this.insertSql =
-        "INSERT INTO " + this.table + " (" +
+        "INSERT INTO " + this.qualifiedTable + " (" +
         " id, ts_utc, x_tenant_id, actor_id, actor_username, action, entity_type, entity_id, outcome," +
         " data_class, sensitivity, resource_path, resource_method, correlation_id, span_id, message, payload) " +
         "VALUES (? , ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb))";
@@ -35,9 +35,8 @@ public class DatabaseSink implements Sink {
       // Pre-serialize outside of the transactional lambda to handle checked exceptions
       String payload;
       try {
-        payload = JsonUtils.toJson(e);
+        payload = AuditEventJsonSerializer.toRedactedJson(e);
       } catch (JsonSerializationException jsonEx) {
-        // Don’t propagate; log and abort persisting this event
         log.warn("Failed to serialize audit event {} to JSON.", e.getEventId(), jsonEx);
         return;
       }
@@ -68,7 +67,19 @@ public class DatabaseSink implements Sink {
       });
     } catch (Exception ex) {
       // Never break the request because of audit persistence
-      log.warn("Failed to persist audit event {} to {}.", e.getEventId(), table, ex);
+      log.warn("Failed to persist audit event {} to {}.", e.getEventId(), qualifiedTable, ex);
     }
+  }
+
+  private static String qualify(String schema, String table) {
+    String effectiveSchema = (schema == null || schema.isBlank()) ? "public" : schema;
+    return quote(effectiveSchema) + "." + quote(table);
+  }
+
+  private static String quote(String identifier) {
+    if (identifier == null || identifier.isBlank()) {
+      throw new IllegalArgumentException("Identifier must not be null or blank");
+    }
+    return "\"" + identifier.replace("\"", "\"\"") + "\"";
   }
 }
