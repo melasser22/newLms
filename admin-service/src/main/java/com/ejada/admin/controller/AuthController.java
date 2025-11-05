@@ -1,12 +1,12 @@
 package com.ejada.admin.controller;
 
 import com.ejada.admin.dto.SuperadminAuthResponse;
+import com.ejada.admin.dto.SuperadminLoginRequest;
 import com.ejada.admin.service.SuperadminService;
 import com.ejada.common.dto.BaseResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

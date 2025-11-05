@@ -6,6 +6,7 @@ import com.ejada.crypto.password.PasswordHasher;
 import com.ejada.admin.domain.Superadmin;
 import com.ejada.admin.domain.SuperadminPasswordHistory;
 import com.ejada.admin.dto.*;
+import com.ejada.admin.exception.PasswordHistoryUnavailableException;
 import com.ejada.admin.mapper.SuperadminMapper;
 import com.ejada.admin.repository.SuperadminPasswordHistoryRepository;
 import com.ejada.admin.repository.SuperadminRepository;
