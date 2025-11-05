@@ -4,7 +4,7 @@ import com.ejada.common.constants.HeaderNames;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ejada.starter_security.web.JsonAccessDeniedHandler;
 import com.ejada.starter_security.web.JsonAuthEntryPoint;
-import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -138,7 +138,7 @@ public class SecurityAutoConfiguration {
       case "hs256" -> {
         String secret = Optional.ofNullable(props.getHs256()).map(SharedSecurityProps.Hs256::getSecret).orElse(null);
         require(StringUtils.hasText(secret), "shared.security.hs256.secret is required when mode=hs256");
-        SecretKey key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        SecretKey key = buildHs256Key(secret);
         decoder = NimbusJwtDecoder.withSecretKey(key).macAlgorithm(MacAlgorithm.HS256).build();
       }
       default -> throw new IllegalArgumentException("Invalid shared.security.mode: " + mode);
@@ -156,6 +156,21 @@ public class SecurityAutoConfiguration {
     }
     decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(validators));
     return decoder;
+  }
+
+  private SecretKey buildHs256Key(String secret) {
+    byte[] decoded;
+    try {
+      decoded = Base64.getDecoder().decode(secret);
+    } catch (IllegalArgumentException ex) {
+      throw new IllegalArgumentException(
+          "shared.security.hs256.secret must be a Base64-encoded string", ex);
+    }
+    if (decoded.length < 32) {
+      throw new IllegalArgumentException(
+          "shared.security.hs256.secret must decode to at least 32 bytes");
+    }
+    return new SecretKeySpec(decoded, "HmacSHA256");
   }
 
   /* ---------------------------------------------------

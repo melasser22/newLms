@@ -14,10 +14,10 @@ class SharedSecurityPropsTest {
   @Test
   void bindsHs256Secret() {
     MapConfigurationPropertySource source = new MapConfigurationPropertySource(
-        Map.of("shared.security.hs256.secret", "s3cr3t"));
+        Map.of("shared.security.hs256.secret", "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE="));
     SharedSecurityProps props = new Binder(source)
         .bind("shared.security", SharedSecurityProps.class).get();
-    assertEquals("s3cr3t", props.getHs256().getSecret());
+    assertEquals("MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=", props.getHs256().getSecret());
   }
 
   @Test
