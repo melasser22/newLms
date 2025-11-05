@@ -71,6 +71,18 @@ public class BaseResponse<T> {
         return build(ApiStatus.ERROR, code, message, null);
     }
 
+    /**
+     * Create an error response with a payload.
+     *
+     * @param code    error code identifier
+     * @param message human-readable description
+     * @param data    optional payload containing additional error context
+     * @return a new BaseResponse with status ERROR
+     */
+    public static <T> BaseResponse<T> error(String code, String message, T data) {
+        return build(ApiStatus.ERROR, code, message, data);
+    }
+
     public static <T> BaseResponse<T> warning(String code, String message, T data) {
         return build(ApiStatus.WARNING, code, message, data);
     }
