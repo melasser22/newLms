@@ -31,6 +31,8 @@ spring:
     locations: classpath:db/migration/common,classpath:db/migration/{vendor}
     schemas: public,admin
     default-schema: admin
+    placeholders:
+      superadminPasswordHash: '${SUPERADMIN_PASSWORD_HASH:$2b$12$ySQKTgxd1J24X3Y9PE/Hw.oNYwR.aLalMKtoWh/5okcE5I3ciSzQO}'
 
   kafka:
     bootstrap-servers: kafka:9092
