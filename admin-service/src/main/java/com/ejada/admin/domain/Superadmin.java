@@ -9,14 +9,13 @@ import com.ejada.starter_data.jpa.BaseEntity;
 @Entity
 @Table(
   name = "superadmins",
-  schema = "security",
   uniqueConstraints = {
     @UniqueConstraint(name = "ux_superadmins_username", columnNames = {"username"}),
     @UniqueConstraint(name = "ux_superadmins_email", columnNames = {"email"})
   }
 )
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class Superadmin extends BaseEntity {
+public class Superadmin {
     
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY)

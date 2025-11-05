@@ -13,23 +13,21 @@ import com.ejada.admin.repository.SuperadminRepository;
 import com.ejada.admin.service.SuperadminService;
 import com.ejada.starter_security.Role;
 import com.ejada.starter_security.RoleChecker;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.regex.Pattern;
+
+import com.ejada.audit.starter.api.AuditAction;
+import com.ejada.audit.starter.api.DataClass;
+import com.ejada.audit.starter.api.annotations.Audited;
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -37,751 +35,531 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
 public class SuperadminServiceImpl implements SuperadminService {
-    
+
     private final SuperadminRepository superadminRepository;
     private final SuperadminMapper superadminMapper;
     private final JwtTokenService jwtTokenService;
     private final SuperadminPasswordHistoryRepository passwordHistoryRepository;
-    private final SuperadminAuditService superadminAuditService;
     private final RoleChecker roleChecker;
 
     private static final Pattern BCRYPT_PATTERN =
-        Pattern.compile("^\\$2[aby]\\$\\d\\d\\$[./0-9A-Za-z]{53}$");
-    
+            Pattern.compile("^\\$2[aby]\\$\\d\\d\\$[./0-9A-Za-z]{53}$");
+
     @Value("${shared.security.superadmin.password-expiry-days:90}")
     private int passwordExpiryDays;
-    
+
     @Value("${shared.security.superadmin.min-active-admins:1}")
     private int minActiveSuperadmins;
-    
+
     @Value("${shared.security.jwt.superadmin-ttl:PT24H}")
     private Duration superadminTokenTtl;
-    
+
     @Value("${shared.security.superadmin.max-failed-attempts:5}")
     private int maxFailedAttempts;
-    
+
     @Value("${shared.security.superadmin.lockout-duration-minutes:30}")
     private int lockoutDurationMinutes;
-    
+
+    /* ========= Raw (cacheable) readers ========= */
+
+    @Cacheable(cacheNames = "superadmins:byId", key = "#id")
+    public Superadmin getRawById(Long id) {
+        return superadminRepository.findById(id).orElse(null);
+    }
+
+    @Cacheable(cacheNames = "superadmins:byIdentifier", key = "#identifier")
+    public Superadmin getRawByIdentifier(String identifier) {
+        return superadminRepository.findByIdentifier(identifier).orElse(null);
+    }
+
+    public Page<Superadmin> getRawPage(Pageable pageable) {
+        return superadminRepository.findAll(pageable);
+    }
+
+    /* ========= API methods (audited + safe responses) ========= */
+
     @Override
+    @Audited(action = AuditAction.CREATE, entity = "Superadmin", dataClass = DataClass.CREDENTIALS, message = "Create superadmin")
+    @CacheEvict(cacheNames = {"superadmins:byId", "superadmins:byIdentifier", "superadmins:list"}, allEntries = true)
     public BaseResponse<SuperadminDto> createSuperadmin(CreateSuperadminRequest request) {
-        log.info("Creating new superadmin with username: {}", request.getUsername());
-        
-        // Validate that the current user is a superadmin
-        validateSuperadminAccess();
-        
-        // Check if username already exists
-        if (superadminRepository.existsByUsername(request.getUsername())) {
-            log.error("Username already exists: {}", request.getUsername());
-            throw new IllegalArgumentException("Username already exists: " + request.getUsername());
-        }
-        
-        // Check if email already exists
-        if (superadminRepository.existsByEmail(request.getEmail())) {
-            log.error("Email already exists: {}", request.getEmail());
-            throw new IllegalArgumentException("Email already exists: " + request.getEmail());
-        }
-        
-        // Validate password complexity
-        validatePasswordComplexity(request.getPassword());
-        
-        // Map request to entity
-        Superadmin superadmin = superadminMapper.toEntity(request);
-        
-        // Set password hash
-        superadmin.setPasswordHash(PasswordHasher.bcrypt(request.getPassword()));
-        
-        // Set initial password tracking
-        superadmin.setPasswordExpiresAt(LocalDateTime.now().plusDays(passwordExpiryDays));
-        superadmin.setPasswordChangedAt(LocalDateTime.now());
-        
-        // Set audit fields (only if they exist in your AuditableEntity)
-        // If AuditableEntity handles these automatically, you can remove these lines
-//        if (superadmin.getCreatedAt() == null) {
-//            superadmin.setCreatedAt(Instant.now());
-//        }
-        // Remove these if your AuditableEntity doesn't have createdBy/updatedBy
-        // superadmin.setCreatedBy(getCurrentSuperadminUsername());
-        
-        // Save to database
-        superadmin = superadminRepository.save(superadmin);
+        try {
+            if (!validateSuperadminAccessSafe()) {
+                return BaseResponse.error("ERR_FORBIDDEN", "Access denied. Only superadmins can perform this action");
+            }
 
-        recordPasswordHistory(superadmin);
-
-        // Log the action for audit
-        logSuperadminAction(
-            "CREATE_SUPERADMIN",
-            getCurrentSuperadminIdOrNull(),
-            getCurrentSuperadminUsername(),
-            String.format("Created new superadmin: %s (%s)", request.getUsername(), request.getEmail()));
-        
-        // Send welcome email (optional)
-        sendWelcomeEmail(superadmin);
-        
-        log.info("Superadmin created successfully with ID: {}", superadmin.getId());
-        
-        // Map to DTO and return
-        SuperadminDto dto = superadminMapper.toDto(superadmin);
-        BaseResponse<SuperadminDto> response = BaseResponse.success("Superadmin created successfully", dto);
-        response.setCode("SUCCESS-201");
-        return response;
-    }
-    
-    @Override
-    public BaseResponse<SuperadminDto> updateSuperadmin(Long id, UpdateSuperadminRequest request) {
-        log.info("Updating superadmin with ID: {}", id);
-        
-        // Validate superadmin access
-        validateSuperadminAccess();
-        
-        // Find existing superadmin
-        Superadmin superadmin = superadminRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("Superadmin not found with ID: " + id));
-        
-        // Check if email is being changed and if it's already taken
-        if (request.getEmail() != null && !request.getEmail().equals(superadmin.getEmail())) {
+            if (superadminRepository.existsByUsername(request.getUsername())) {
+                return BaseResponse.error("ERR_USERNAME_EXISTS", "Username already exists: " + request.getUsername());
+            }
             if (superadminRepository.existsByEmail(request.getEmail())) {
-                throw new IllegalArgumentException("Email already exists: " + request.getEmail());
+                return BaseResponse.error("ERR_EMAIL_EXISTS", "Email already exists: " + request.getEmail());
             }
+
+            try {
+                validatePasswordComplexity(request.getPassword());
+            } catch (IllegalArgumentException iae) {
+                return BaseResponse.error("ERR_PASSWORD_POLICY", iae.getMessage());
+            }
+
+            Superadmin entity = superadminMapper.toEntity(request);
+            entity.setPasswordHash(PasswordHasher.bcrypt(request.getPassword()));
+            entity.setPasswordChangedAt(LocalDateTime.now());
+            entity.setPasswordExpiresAt(LocalDateTime.now().plusDays(passwordExpiryDays));
+
+            entity = superadminRepository.save(entity);
+            recordPasswordHistorySafe(entity);
+
+            BaseResponse<SuperadminDto> resp =
+                    BaseResponse.success("Superadmin created successfully", superadminMapper.toDto(entity));
+            resp.setCode("SUCCESS-201");
+            return resp;
+
+        } catch (Exception ex) {
+            log.error("Create superadmin failed", ex);
+            return BaseResponse.error("ERR_SUPERADMIN_CREATE", "Failed to create superadmin");
         }
-        
-        // Update entity fields
-        superadminMapper.updateEntity(superadmin, request);
-        
-        // Update audit fields
-//        superadmin.setUpdatedAt(Instant.now());
-        // Remove this if your AuditableEntity doesn't have updatedBy
-        // superadmin.setUpdatedBy(getCurrentSuperadminUsername());
-        
-        // Save changes
-        superadmin = superadminRepository.save(superadmin);
-        
-        // Log the action
-        logSuperadminAction(
-            "UPDATE_SUPERADMIN",
-            getCurrentSuperadminIdOrNull(),
-            getCurrentSuperadminUsername(),
-            String.format("Updated superadmin ID: %d", id));
-        
-        log.info("Superadmin updated successfully");
-        
-        return BaseResponse.success("Superadmin updated successfully", 
-            superadminMapper.toDto(superadmin));
     }
-    
+
     @Override
+    @Audited(action = AuditAction.UPDATE, entity = "Superadmin", dataClass = DataClass.CREDENTIALS, message = "Update superadmin")
+    @CacheEvict(cacheNames = {"superadmins:byId", "superadmins:byIdentifier", "superadmins:list"}, allEntries = true)
+    public BaseResponse<SuperadminDto> updateSuperadmin(Long id, UpdateSuperadminRequest request) {
+        try {
+            if (!validateSuperadminAccessSafe()) {
+                return BaseResponse.error("ERR_FORBIDDEN", "Access denied. Only superadmins can perform this action");
+            }
+
+            Superadmin superadmin = getRawById(id);
+            if (superadmin == null) {
+                return BaseResponse.error("ERR_NOT_FOUND", "Superadmin not found with ID: " + id);
+            }
+
+            if (request.getEmail() != null && !request.getEmail().equals(superadmin.getEmail())) {
+                if (superadminRepository.existsByEmail(request.getEmail())) {
+                    return BaseResponse.error("ERR_EMAIL_EXISTS", "Email already exists: " + request.getEmail());
+                }
+            }
+
+            superadminMapper.updateEntity(superadmin, request);
+            superadmin = superadminRepository.save(superadmin);
+
+            return BaseResponse.success("Superadmin updated successfully", superadminMapper.toDto(superadmin));
+        } catch (Exception ex) {
+            log.error("Update superadmin failed", ex);
+            return BaseResponse.error("ERR_SUPERADMIN_UPDATE", "Failed to update superadmin");
+        }
+    }
+
+    @Override
+    @Audited(action = AuditAction.DELETE, entity = "Superadmin", dataClass = DataClass.CREDENTIALS, message = "Disable (soft delete) superadmin")
+    @CacheEvict(cacheNames = {"superadmins:byId", "superadmins:byIdentifier", "superadmins:list"}, allEntries = true)
     public BaseResponse<Void> deleteSuperadmin(Long id) {
-        log.info("Attempting to delete superadmin with ID: {}", id);
-        
-        // Validate superadmin access
-        validateSuperadminAccess();
-        
-        // Prevent deleting yourself
-        Long currentSuperadminId = getCurrentSuperadminId();
-        if (id.equals(currentSuperadminId)) {
-            throw new IllegalStateException("Cannot delete your own superadmin account");
-        }
-        
-        // Check minimum superadmin count
-        long activeSuperadmins = superadminRepository.countActiveSuperadmins();
-        if (activeSuperadmins <= minActiveSuperadmins) {
-            throw new IllegalStateException(
-                String.format("Cannot delete superadmin. At least %d active superadmin(s) must exist", 
-                    minActiveSuperadmins));
-        }
-        
-        // Find superadmin
-        Superadmin superadmin = superadminRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("Superadmin not found with ID: " + id));
-        
-        // Soft delete (disable and lock the account instead of hard delete)
-        superadmin.setEnabled(false);
-        superadmin.setLocked(true);
-        //superadmin.setUpdatedAt(Instant.now());
-        // Remove this if your AuditableEntity doesn't have updatedBy
-        // superadmin.setUpdatedBy(getCurrentSuperadminUsername());
-        
-        superadminRepository.save(superadmin);
-        
-        // Log the action
-        logSuperadminAction(
-            "DELETE_SUPERADMIN",
-            getCurrentSuperadminIdOrNull(),
-            getCurrentSuperadminUsername(),
-            String.format("Deleted (disabled) superadmin: %s", superadmin.getUsername()));
-        
-        log.info("Superadmin deleted (disabled) successfully");
-        
-        return BaseResponse.success("Superadmin deleted successfully", null);
-    }
-    
-    @Override
-    public BaseResponse<SuperadminDto> getSuperadmin(Long id) {
-        log.debug("Fetching superadmin with ID: {}", id);
-        
-        // Validate superadmin access
-        validateSuperadminAccess();
-        
-        Superadmin superadmin = superadminRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("Superadmin not found with ID: " + id));
-        
-        return BaseResponse.success("Superadmin fetched successfully", 
-            superadminMapper.toDto(superadmin));
-    }
-    
-    @Override
-    public BaseResponse<Page<SuperadminDto>> listSuperadmins(Pageable pageable) {
-        log.debug("Listing all superadmins with pagination: {}", pageable);
-        
-        // Validate superadmin access
-        validateSuperadminAccess();
-        
-        Page<Superadmin> superadminPage = superadminRepository.findAll(pageable);
-
-        if (superadminPage.isEmpty()
-            && superadminPage.getTotalElements() > 0
-            && pageable.getPageNumber() >= superadminPage.getTotalPages()) {
-            int lastPageIndex = Math.max(0, superadminPage.getTotalPages() - 1);
-            Pageable lastPageable = PageRequest.of(lastPageIndex, pageable.getPageSize(), pageable.getSort());
-            superadminPage = superadminRepository.findAll(lastPageable);
-        }
-
-        Page<SuperadminDto> dtoPage = superadminPage.map(superadminMapper::toDto);
-
-        return BaseResponse.success("Superadmins listed successfully", dtoPage);
-    }
-    
-    @Override
-    @Transactional(noRollbackFor = NoSuchElementException.class)
-    public BaseResponse<SuperadminAuthResponse> login(SuperadminLoginRequest request) {
-        log.info("Superadmin login attempt for: {}", request.getIdentifier());
-        
-        // Find superadmin by username or email
-        Superadmin superadmin = superadminRepository
-            .findByIdentifier(request.getIdentifier())
-            .orElseThrow(() -> {
-                log.warn("Login failed: User not found - {}", request.getIdentifier());
-                return new NoSuchElementException("Invalid credentials");
-            });
-        
-        // Check if account is temporarily locked
-        if (superadmin.getLockedUntil() != null && 
-            LocalDateTime.now().isBefore(superadmin.getLockedUntil())) {
-            log.warn("Login denied: Account temporarily locked for {}", superadmin.getUsername());
-            throw new IllegalStateException("Account is temporarily locked. Please try again later.");
-        }
-        
-        // Verify password
-        String currentPasswordHash = requirePasswordHash(superadmin);
-
-        if (!PasswordHasher.matchesBcrypt(request.getPassword(), currentPasswordHash)) {
-            handleFailedLogin(superadmin);
-            log.warn("Invalid password for superadmin: {}", request.getIdentifier());
-            throw new NoSuchElementException("Invalid credentials");
-        }
-        
-        // Check if account is enabled
-        if (!superadmin.isEnabled()) {
-            log.warn("Login denied: Account disabled for {}", superadmin.getUsername());
-            throw new IllegalStateException("Account is disabled. Please contact system administrator.");
-        }
-        
-        if (superadmin.isLocked()) {
-            log.warn("Login denied: Account locked for {}", superadmin.getUsername());
-            throw new IllegalStateException("Account is locked. Please contact system administrator.");
-        }
-        
-        // Check if first login is required
-        if (!superadmin.isFirstLoginCompleted()) {
-            log.info("First login detected for superadmin: {}", superadmin.getUsername());
-            String firstLoginToken = generateFirstLoginToken(superadmin);
-            
-            return BaseResponse.success("First login - password change required",
-                SuperadminAuthResponse.builder()
-                    .accessToken(firstLoginToken)
-                    .tokenType("Bearer")
-                    .expiresInSeconds(superadminTokenTtl.getSeconds())
-                    .role("EJADA_OFFICER")
-                    .permissions(List.of("CHANGE_PASSWORD"))
-                    .requiresPasswordChange(true)
-                    .build());
-        }
-        
-        // Check if password has expired
-        if (superadmin.getPasswordExpiresAt() != null && 
-            LocalDateTime.now().isAfter(superadmin.getPasswordExpiresAt())) {
-            log.info("Password expired for superadmin: {}", superadmin.getUsername());
-            String expiredPasswordToken = generateExpiredPasswordToken(superadmin);
-            
-            return BaseResponse.success("Password expired - change required",
-                SuperadminAuthResponse.builder()
-                    .accessToken(expiredPasswordToken)
-                    .tokenType("Bearer")
-                    .expiresInSeconds(superadminTokenTtl.getSeconds())
-                    .role("EJADA_OFFICER")
-                    .permissions(List.of("CHANGE_PASSWORD"))
-                    .passwordExpired(true)
-                    .build());
-        }
-        
-        // Successful login
-        superadmin.setFailedLoginAttempts(0);
-        superadmin.setLockedUntil(null);
-        superadmin.setLastLoginAt(LocalDateTime.now());
-        superadminRepository.save(superadmin);
-        
-        // Generate full access JWT token
-        String token = generateSuperadminToken(superadmin);
-        
-        log.info("Superadmin {} logged in successfully", superadmin.getUsername());
-        
-        return BaseResponse.success("Login successful", 
-            SuperadminAuthResponse.builder()
-                .accessToken(token)
-                .tokenType("Bearer")
-                .expiresInSeconds(superadminTokenTtl.getSeconds())
-                .role("EJADA_OFFICER")
-                .permissions(List.of(
-                    "TENANT_CREATE", "TENANT_UPDATE", "TENANT_DELETE", 
-                    "TENANT_VIEW", "GLOBAL_CONFIG", "SYSTEM_ADMIN"))
-                .requiresPasswordChange(false)
-                .passwordExpired(false)
-                .build());
-    }
-    
-    @Override
-    public BaseResponse<Void> completeFirstLogin(FirstLoginRequest request) {
-        log.info("Processing first login completion");
-        
-        // Get the current authenticated superadmin from the JWT token
-        Long superadminId = getCurrentSuperadminId();
-        
-        Superadmin superadmin = superadminRepository.findById(superadminId)
-            .orElseThrow(() -> new NoSuchElementException("Superadmin not found"));
-        
-        // Verify this is actually a first login scenario
-        if (superadmin.isFirstLoginCompleted()) {
-            log.warn("First login already completed for: {}", superadmin.getUsername());
-            throw new IllegalStateException("First login has already been completed");
-        }
-        
-        // Verify current password
-        String currentPasswordHash = requirePasswordHash(superadmin);
-
-        if (!PasswordHasher.matchesBcrypt(request.getCurrentPassword(), currentPasswordHash)) {
-            log.warn("Invalid current password during first login for: {}", superadmin.getUsername());
-            throw new IllegalArgumentException("Current password is incorrect");
-        }
-        
-        // Validate new password is different
-        if (request.getCurrentPassword().equals(request.getNewPassword())) {
-            throw new IllegalArgumentException("New password must be different from current password");
-        }
-        
-        // Validate password confirmation
-        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            throw new IllegalArgumentException("New password and confirmation do not match");
-        }
-        
-        // Validate password complexity
-        validatePasswordComplexity(request.getNewPassword());
-        
-        ensurePasswordNotReused(superadmin.getId(), request.getNewPassword());
-
-        // Update superadmin record
-        superadmin.setPasswordHash(PasswordHasher.bcrypt(request.getNewPassword()));
-        superadmin.setFirstLoginCompleted(true);
-        superadmin.setPasswordChangedAt(LocalDateTime.now());
-        superadmin.setPasswordExpiresAt(LocalDateTime.now().plusDays(passwordExpiryDays));
-        
-        // Update profile if provided
-        if (request.getFirstName() != null && !request.getFirstName().isBlank()) {
-            superadmin.setFirstName(request.getFirstName());
-        }
-        if (request.getLastName() != null && !request.getLastName().isBlank()) {
-            superadmin.setLastName(request.getLastName());
-        }
-        if (request.getPhoneNumber() != null && !request.getPhoneNumber().isBlank()) {
-            superadmin.setPhoneNumber(request.getPhoneNumber());
-        }
-        
-        superadminRepository.save(superadmin);
-        recordPasswordHistory(superadmin);
-
-        // Log the action
-        logSuperadminAction(
-            "FIRST_LOGIN_COMPLETED",
-            superadmin.getId(),
-            superadmin.getUsername(),
-            "First login completed and password changed");
-        
-        log.info("First login completed successfully for: {}", superadmin.getUsername());
-        
-        return BaseResponse.success(
-            "First login completed successfully. Please login again with your new password.", 
-            null);
-    }
-    
-    @Override
-    public BaseResponse<Void> changePassword(ChangePasswordRequest request) {
-        log.info("Processing password change request");
-        
-        Long superadminId = getCurrentSuperadminId();
-        
-        Superadmin superadmin = superadminRepository.findById(superadminId)
-            .orElseThrow(() -> new NoSuchElementException("Superadmin not found"));
-        
-        // Verify current password
-        String currentPasswordHash = requirePasswordHash(superadmin);
-
-        if (!PasswordHasher.matchesBcrypt(request.getCurrentPassword(), currentPasswordHash)) {
-            log.warn("Invalid current password for password change: {}", superadmin.getUsername());
-            throw new IllegalArgumentException("Current password is incorrect");
-        }
-        
-        // Validate new password
-        if (request.getCurrentPassword().equals(request.getNewPassword())) {
-            throw new IllegalArgumentException("New password must be different from current password");
-        }
-        
-        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            throw new IllegalArgumentException("New password and confirmation do not match");
-        }
-        
-        validatePasswordComplexity(request.getNewPassword());
-        ensurePasswordNotReused(superadmin.getId(), request.getNewPassword());
-
-        // Update password
-        superadmin.setPasswordHash(PasswordHasher.bcrypt(request.getNewPassword()));
-        superadmin.setPasswordChangedAt(LocalDateTime.now());
-        superadmin.setPasswordExpiresAt(LocalDateTime.now().plusDays(passwordExpiryDays));
-
-        superadminRepository.save(superadmin);
-        recordPasswordHistory(superadmin);
-
-        // Log the action
-        logSuperadminAction(
-            "PASSWORD_CHANGED",
-            superadmin.getId(),
-            superadmin.getUsername(),
-            "Password changed successfully");
-        
-        log.info("Password changed successfully for: {}", superadmin.getUsername());
-        
-        return BaseResponse.success("Password changed successfully", null);
-    }
-    
-    // Helper methods
-    
-    private String requirePasswordHash(Superadmin superadmin) {
-        String passwordHash = superadmin.getPasswordHash();
-        if (passwordHash == null || passwordHash.isBlank()) {
-            log.error("Missing password hash for superadmin id={} username={}",
-                superadmin.getId(), superadmin.getUsername());
-            throw new IllegalStateException(
-                "The account password is not set. Please contact a system administrator.");
-        }
-        return passwordHash;
-    }
-
-    private void validateSuperadminAccess() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new AuthenticationCredentialsNotFoundException("No authenticated user found");
-        }
-
-        if (!roleChecker.hasRole(authentication, Role.EJADA_OFFICER)) {
-            throw new AccessDeniedException("Access denied. Only superadmins can perform this action");
-        }
-
-        if (authentication.getPrincipal() instanceof Jwt jwt) {
-            Long superadminId = resolveSuperadminIdFromJwt(jwt);
-            if (superadminId == null) {
-                throw new AuthenticationCredentialsNotFoundException("No authenticated superadmin found");
+        try {
+            if (!validateSuperadminAccessSafe()) {
+                return BaseResponse.error("ERR_FORBIDDEN", "Access denied. Only superadmins can perform this action");
             }
+
+            Long currentId = getCurrentSuperadminIdOrNull();
+            if (currentId != null && id.equals(currentId)) {
+                return BaseResponse.error("ERR_DELETE_SELF", "Cannot delete your own superadmin account");
+            }
+
+            long active = superadminRepository.countActiveSuperadmins();
+            if (active <= minActiveSuperadmins) {
+                return BaseResponse.error("ERR_MIN_ACTIVE",
+                        String.format("Cannot delete superadmin. At least %d active superadmin(s) must exist", minActiveSuperadmins));
+            }
+
+            Superadmin superadmin = getRawById(id);
+            if (superadmin == null) {
+                return BaseResponse.error("ERR_NOT_FOUND", "Superadmin not found with ID: " + id);
+            }
+
+            superadmin.setEnabled(false);
+            superadmin.setLocked(true);
+            superadminRepository.save(superadmin);
+
+            return BaseResponse.success("Superadmin deleted successfully", null);
+        } catch (Exception ex) {
+            log.error("Delete superadmin failed", ex);
+            return BaseResponse.error("ERR_SUPERADMIN_DELETE", "Failed to delete superadmin");
         }
+    }
+
+    @Override
+    @Audited(action = AuditAction.READ, entity = "Superadmin", dataClass = DataClass.CREDENTIALS, message = "Get superadmin by id")
+    public BaseResponse<SuperadminDto> getSuperadmin(Long id) {
+        try {
+            if (!validateSuperadminAccessSafe()) {
+                return BaseResponse.error("ERR_FORBIDDEN", "Access denied. Only superadmins can perform this action");
+            }
+            Superadmin s = getRawById(id);
+            if (s == null) {
+                return BaseResponse.error("ERR_NOT_FOUND", "Superadmin not found with ID: " + id);
+            }
+            return BaseResponse.success("Superadmin fetched successfully", superadminMapper.toDto(s));
+        } catch (Exception ex) {
+            log.error("Fetch superadmin failed", ex);
+            return BaseResponse.error("ERR_SUPERADMIN_GET", "Failed to fetch superadmin");
+        }
+    }
+
+    @Override
+    @Audited(action = AuditAction.READ, entity = "Superadmin", dataClass = DataClass.CREDENTIALS, message = "List superadmins")
+    public BaseResponse<Page<SuperadminDto>> listSuperadmins(Pageable pageable) {
+        try {
+            if (!validateSuperadminAccessSafe()) {
+                return BaseResponse.error("ERR_FORBIDDEN", "Access denied. Only superadmins can perform this action");
+            }
+
+            Page<Superadmin> page = getRawPage(pageable);
+
+            if (page.isEmpty() && page.getTotalElements() > 0 && pageable.getPageNumber() >= page.getTotalPages()) {
+                int last = Math.max(0, page.getTotalPages() - 1);
+                page = getRawPage(
+                    PageRequest.of(last, pageable.getPageSize(), pageable.getSort())
+                );            }
+
+            Page<SuperadminDto> dtoPage = page.map(superadminMapper::toDto);
+            return BaseResponse.success("Superadmins listed successfully", dtoPage);
+        } catch (Exception ex) {
+            log.error("List superadmins failed", ex);
+            return BaseResponse.success("Superadmins listed successfully",
+                    new PageImpl<>(Collections.emptyList(), pageable, 0));
+        }
+    }
+
+    @Override
+    @Audited(action = AuditAction.ACCESS, entity = "Superadmin", dataClass = DataClass.CREDENTIALS, message = "Superadmin login")
+    public BaseResponse<SuperadminAuthResponse> login(SuperadminLoginRequest request) {
+        try {
+            Superadmin superadmin = getRawByIdentifier(request.getIdentifier());
+            if (superadmin == null) {
+                log.warn("Login failed: user not found {}", request.getIdentifier());
+                return BaseResponse.error("ERR_LOGIN_INVALID", "Invalid credentials");
+            }
+
+            if (superadmin.getLockedUntil() != null && LocalDateTime.now().isBefore(superadmin.getLockedUntil())) {
+                return BaseResponse.error("ERR_ACCOUNT_TEMP_LOCKED", "Account is temporarily locked. Please try again later.");
+            }
+
+            String currentHash = requirePasswordHash(superadmin);
+            if (!PasswordHasher.matchesBcrypt(request.getPassword(), currentHash)) {
+                handleFailedLogin(superadmin);
+                return BaseResponse.error("ERR_LOGIN_INVALID", "Invalid credentials");
+            }
+
+            if (!superadmin.isEnabled()) {
+                return BaseResponse.error("ERR_ACCOUNT_DISABLED", "Account is disabled. Please contact system administrator.");
+            }
+            if (superadmin.isLocked()) {
+                return BaseResponse.error("ERR_ACCOUNT_LOCKED", "Account is locked. Please contact system administrator.");
+            }
+
+            if (!superadmin.isFirstLoginCompleted()) {
+                String firstLoginToken = generateFirstLoginToken(superadmin);
+                return BaseResponse.success("First login - password change required",
+                        SuperadminAuthResponse.builder()
+                                .accessToken(firstLoginToken)
+                                .tokenType("Bearer")
+                                .expiresInSeconds(superadminTokenTtl.getSeconds())
+                                .role("EJADA_OFFICER")
+                                .permissions(List.of("CHANGE_PASSWORD"))
+                                .requiresPasswordChange(true)
+                                .build());
+            }
+
+            if (superadmin.getPasswordExpiresAt() != null &&
+                    LocalDateTime.now().isAfter(superadmin.getPasswordExpiresAt())) {
+                String expiredToken = generateExpiredPasswordToken(superadmin);
+                return BaseResponse.success("Password expired - change required",
+                        SuperadminAuthResponse.builder()
+                                .accessToken(expiredToken)
+                                .tokenType("Bearer")
+                                .expiresInSeconds(superadminTokenTtl.getSeconds())
+                                .role("EJADA_OFFICER")
+                                .permissions(List.of("CHANGE_PASSWORD"))
+                                .passwordExpired(true)
+                                .build());
+            }
+
+            superadmin.setFailedLoginAttempts(0);
+            superadmin.setLockedUntil(null);
+            superadmin.setLastLoginAt(LocalDateTime.now());
+            superadminRepository.save(superadmin);
+
+            String token = generateSuperadminToken(superadmin);
+            return BaseResponse.success("Login successful",
+                    SuperadminAuthResponse.builder()
+                            .accessToken(token)
+                            .tokenType("Bearer")
+                            .expiresInSeconds(superadminTokenTtl.getSeconds())
+                            .role("EJADA_OFFICER")
+                            .permissions(List.of(
+                                    "TENANT_CREATE", "TENANT_UPDATE", "TENANT_DELETE",
+                                    "TENANT_VIEW", "GLOBAL_CONFIG", "SYSTEM_ADMIN"))
+                            .requiresPasswordChange(false)
+                            .passwordExpired(false)
+                            .build());
+        } catch (Exception ex) {
+            log.error("Login failed", ex);
+            return BaseResponse.error("ERR_LOGIN", "Failed to login");
+        }
+    }
+
+    @Override
+    @Audited(action = AuditAction.UPDATE, entity = "Superadmin", dataClass = DataClass.CREDENTIALS, message = "Complete first login")
+    @CacheEvict(cacheNames = {"superadmins:byId", "superadmins:byIdentifier", "superadmins:list"}, allEntries = true)
+    public BaseResponse<Void> completeFirstLogin(FirstLoginRequest request) {
+        try {
+            Long id = getCurrentSuperadminId();
+            Superadmin superadmin = getRawById(id);
+            if (superadmin == null) {
+                return BaseResponse.error("ERR_NOT_FOUND", "Superadmin not found");
+            }
+            if (superadmin.isFirstLoginCompleted()) {
+                return BaseResponse.error("ERR_ALREADY_DONE", "First login has already been completed");
+            }
+
+            String currentHash = requirePasswordHash(superadmin);
+            if (!PasswordHasher.matchesBcrypt(request.getCurrentPassword(), currentHash)) {
+                return BaseResponse.error("ERR_CURRENT_PASSWORD", "Current password is incorrect");
+            }
+            if (request.getCurrentPassword().equals(request.getNewPassword())) {
+                return BaseResponse.error("ERR_SAME_PASSWORD", "New password must be different from current password");
+            }
+            if (!Objects.equals(request.getNewPassword(), request.getConfirmPassword())) {
+                return BaseResponse.error("ERR_CONFIRM_PASSWORD", "New password and confirmation do not match");
+            }
+
+            try {
+                validatePasswordComplexity(request.getNewPassword());
+                ensurePasswordNotReused(superadmin.getId(), request.getNewPassword());
+            } catch (PasswordHistoryUnavailableException phe) {
+                return BaseResponse.error("ERR_PASSWORD_HISTORY", phe.getMessage());
+            } catch (IllegalArgumentException iae) {
+                return BaseResponse.error("ERR_PASSWORD_POLICY", iae.getMessage());
+            }
+
+            superadmin.setPasswordHash(PasswordHasher.bcrypt(request.getNewPassword()));
+            superadmin.setFirstLoginCompleted(true);
+            superadmin.setPasswordChangedAt(LocalDateTime.now());
+            superadmin.setPasswordExpiresAt(LocalDateTime.now().plusDays(passwordExpiryDays));
+
+            if (request.getFirstName() != null && !request.getFirstName().isBlank()) {
+                superadmin.setFirstName(request.getFirstName());
+            }
+            if (request.getLastName() != null && !request.getLastName().isBlank()) {
+                superadmin.setLastName(request.getLastName());
+            }
+            if (request.getPhoneNumber() != null && !request.getPhoneNumber().isBlank()) {
+                superadmin.setPhoneNumber(request.getPhoneNumber());
+            }
+
+            superadminRepository.save(superadmin);
+            recordPasswordHistorySafe(superadmin);
+
+            return BaseResponse.success(
+                    "First login completed successfully. Please login again with your new password.", null);
+        } catch (AuthenticationCredentialsNotFoundException | AccessDeniedException sec) {
+            return BaseResponse.error("ERR_UNAUTHENTICATED", sec.getMessage());
+        } catch (Exception ex) {
+            log.error("Complete first login failed", ex);
+            return BaseResponse.error("ERR_FIRST_LOGIN", "Failed to complete first login");
+        }
+    }
+
+    @Override
+    @Audited(action = AuditAction.UPDATE, entity = "Superadmin", dataClass = DataClass.CREDENTIALS, message = "Change password")
+    @CacheEvict(cacheNames = {"superadmins:byId", "superadmins:byIdentifier", "superadmins:list"}, allEntries = true)
+    public BaseResponse<Void> changePassword(ChangePasswordRequest request) {
+        try {
+            Long id = getCurrentSuperadminId();
+            Superadmin superadmin = getRawById(id);
+            if (superadmin == null) {
+                return BaseResponse.error("ERR_NOT_FOUND", "Superadmin not found");
+            }
+
+            String currentHash = requirePasswordHash(superadmin);
+            if (!PasswordHasher.matchesBcrypt(request.getCurrentPassword(), currentHash)) {
+                return BaseResponse.error("ERR_CURRENT_PASSWORD", "Current password is incorrect");
+            }
+            if (request.getCurrentPassword().equals(request.getNewPassword())) {
+                return BaseResponse.error("ERR_SAME_PASSWORD", "New password must be different from current password");
+            }
+            if (!Objects.equals(request.getNewPassword(), request.getConfirmPassword())) {
+                return BaseResponse.error("ERR_CONFIRM_PASSWORD", "New password and confirmation do not match");
+            }
+
+            try {
+                validatePasswordComplexity(request.getNewPassword());
+                ensurePasswordNotReused(superadmin.getId(), request.getNewPassword());
+            } catch (PasswordHistoryUnavailableException phe) {
+                return BaseResponse.error("ERR_PASSWORD_HISTORY", phe.getMessage());
+            } catch (IllegalArgumentException iae) {
+                return BaseResponse.error("ERR_PASSWORD_POLICY", iae.getMessage());
+            }
+
+            superadmin.setPasswordHash(PasswordHasher.bcrypt(request.getNewPassword()));
+            superadmin.setPasswordChangedAt(LocalDateTime.now());
+            superadmin.setPasswordExpiresAt(LocalDateTime.now().plusDays(passwordExpiryDays));
+
+            superadminRepository.save(superadmin);
+            recordPasswordHistorySafe(superadmin);
+
+            return BaseResponse.success("Password changed successfully", null);
+        } catch (AuthenticationCredentialsNotFoundException | AccessDeniedException sec) {
+            return BaseResponse.error("ERR_UNAUTHENTICATED", sec.getMessage());
+        } catch (Exception ex) {
+            log.error("Change password failed", ex);
+            return BaseResponse.error("ERR_PASSWORD_CHANGE", "Failed to change password");
+        }
+    }
+
+    /* ========= Helpers ========= */
+
+    private boolean validateSuperadminAccessSafe() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getPrincipal() == null) return false;
+        if (!roleChecker.hasRole(authentication, Role.EJADA_OFFICER)) return false;
+        if (authentication.getPrincipal() instanceof Jwt jwt) {
+            Long id = resolveSuperadminIdFromJwt(jwt);
+            return id != null;
+        }
+        return true;
     }
 
     private Long getCurrentSuperadminId() {
         Long id = getCurrentSuperadminIdOrNull();
-        if (id != null) {
-            return id;
-        }
+        if (id != null) return id;
         throw new AuthenticationCredentialsNotFoundException("No authenticated superadmin found");
     }
 
     private Long getCurrentSuperadminIdOrNull() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            return null;
-        }
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return null;
 
-        if (authentication.getPrincipal() instanceof Jwt jwt) {
+        if (auth.getPrincipal() instanceof Jwt jwt) {
             return resolveSuperadminIdFromJwt(jwt);
         }
-
-        String authenticationName = authentication.getName();
-        if (authenticationName != null && !authenticationName.isBlank()) {
-            return resolveSuperadminId(authenticationName);
+        String name = auth.getName();
+        if (name != null && !name.isBlank()) {
+            return superadminRepository.findByIdentifier(name).map(Superadmin::getId).orElse(null);
         }
-
         return null;
     }
 
-    private Long extractIdFromUidClaim(Jwt jwt) {
-        Object uid = jwt.getClaim("uid");
-        if (uid == null) {
-            return null;
-        }
-        try {
-            return Long.valueOf(uid.toString());
-        } catch (NumberFormatException ex) {
-            log.warn("Invalid uid claim: {}", uid);
-            return null;
-        }
-    }
-
     private Long resolveSuperadminIdFromJwt(Jwt jwt) {
-        Superadmin superadmin = null;
+        Superadmin s = null;
 
-        Long idFromClaim = extractIdFromUidClaim(jwt);
-        if (idFromClaim != null) {
-            superadmin = superadminRepository.findById(idFromClaim).orElse(null);
-        }
-
-        if (superadmin == null) {
-            String subject = jwt.getSubject();
-            if (subject != null && !subject.isBlank()) {
-                superadmin = superadminRepository.findByIdentifier(subject).orElse(null);
+        Object uid = jwt.getClaim("uid");
+        if (uid != null) {
+            try {
+                Long id = Long.valueOf(uid.toString());
+                s = superadminRepository.findById(id).orElse(null);
+            } catch (NumberFormatException ignored) {
+                log.warn("Invalid uid claim: {}", uid);
             }
         }
 
-        if (superadmin == null) {
-            return null;
+        if (s == null) {
+            String sub = jwt.getSubject();
+            if (sub != null && !sub.isBlank()) {
+                s = superadminRepository.findByIdentifier(sub).orElse(null);
+            }
         }
 
-        ensureTokenFreshness(jwt, superadmin);
-        return superadmin.getId();
+        if (s == null) return null;
+
+        ensureTokenFreshness(jwt, s);
+        return s.getId();
     }
 
-    private void ensureTokenFreshness(Jwt jwt, Superadmin superadmin) {
-        LocalDateTime passwordChangedAt = superadmin.getPasswordChangedAt();
-        if (passwordChangedAt == null) {
-            return;
-        }
+    private void ensureTokenFreshness(Jwt jwt, Superadmin s) {
+        LocalDateTime changed = s.getPasswordChangedAt();
+        if (changed == null) return;
 
-        Instant issuedAt = jwt.getIssuedAt();
-        Instant passwordChangedInstant = passwordChangedAt
-            .atZone(ZoneId.systemDefault())
-            .toInstant()
-            .truncatedTo(ChronoUnit.MILLIS);
+        Instant iat = jwt.getIssuedAt();
+        Instant changedInstant = changed.atZone(ZoneId.systemDefault()).toInstant().truncatedTo(ChronoUnit.MILLIS);
 
-        if (issuedAt == null || issuedAt.isBefore(passwordChangedInstant)) {
-            log.info("Rejecting stale JWT for superadmin {} issued at {} (password changed at {})",
-                superadmin.getUsername(), issuedAt, passwordChangedAt);
+        if (iat == null || iat.isBefore(changedInstant)) {
             throw new AuthenticationCredentialsNotFoundException(
-                "Authentication token is no longer valid because the password was changed. Please sign in again.");
+                    "Authentication token is no longer valid because the password was changed. Please sign in again.");
         }
     }
 
-    private Long resolveSuperadminId(String identifier) {
-        if (identifier == null || identifier.isBlank()) {
-            return null;
+    private String requirePasswordHash(Superadmin s) {
+        String hash = s.getPasswordHash();
+        if (hash == null || hash.isBlank()) {
+            throw new IllegalStateException("The account password is not set. Please contact a system administrator.");
         }
-
-        return superadminRepository.findByIdentifier(identifier)
-            .map(Superadmin::getId)
-            .orElse(null);
-    }
-    
-    private String getCurrentSuperadminUsername() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null) {
-            return authentication.getName();
-        }
-        return "system";
-    }
-    
-    private void validatePasswordComplexity(String password) {
-        List<String> errors = new ArrayList<>();
-        
-        if (password == null || password.length() < 8) {
-            errors.add("Password must be at least 8 characters long");
-        }
-        
-        if (!Pattern.compile("[A-Z]").matcher(password).find()) {
-            errors.add("Password must contain at least one uppercase letter");
-        }
-        
-        if (!Pattern.compile("[a-z]").matcher(password).find()) {
-            errors.add("Password must contain at least one lowercase letter");
-        }
-        
-        if (!Pattern.compile("\\d").matcher(password).find()) {
-            errors.add("Password must contain at least one digit");
-        }
-        
-        if (!Pattern.compile("[@$!%*?&]").matcher(password).find()) {
-            errors.add("Password must contain at least one special character (@$!%*?&)");
-        }
-        
-        // Check for common passwords
-        Set<String> commonPasswords = Set.of(
-            "Password123!", "Admin123!", "Welcome123!", 
-            "Password@123", "Admin@123", "Welcome@123"
-        );
-        
-        if (commonPasswords.stream().anyMatch(common -> common.equalsIgnoreCase(password))) {
-            errors.add("This password is too common. Please choose a more unique password");
-        }
-        
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(
-                "Password validation failed: " + String.join(", ", errors));
-        }
-    }
-    
-    private void handleFailedLogin(Superadmin superadmin) {
-        superadmin.setFailedLoginAttempts(superadmin.getFailedLoginAttempts() + 1);
-        
-        if (superadmin.getFailedLoginAttempts() >= maxFailedAttempts) {
-            superadmin.setLockedUntil(LocalDateTime.now().plusMinutes(lockoutDurationMinutes));
-            log.warn("Account temporarily locked due to {} failed attempts: {}", 
-                maxFailedAttempts, superadmin.getUsername());
-        }
-        
-        superadminRepository.save(superadmin);
-        
-        logSuperadminAction(
-            "LOGIN_FAILED",
-            superadmin.getId(),
-            superadmin.getUsername(),
-            "Failed login attempt #" + superadmin.getFailedLoginAttempts());
-    }
-    
-    private String generateFirstLoginToken(Superadmin superadmin) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", superadmin.getUsername());
-        claims.put("uid", superadmin.getId());
-        claims.put("email", superadmin.getEmail());
-        claims.put("roles", List.of("EJADA_OFFICER"));
-        claims.put("isSuperadmin", true);
-        claims.put("requiresPasswordChange", true);
-        claims.put("accountState", "FIRST_LOGIN");
-
-        return jwtTokenService.createToken(
-            superadmin.getUsername(),
-            null,
-            List.of("EJADA_OFFICER"),
-            claims,
-            superadminTokenTtl);
+        return hash;
     }
 
-    private String generateExpiredPasswordToken(Superadmin superadmin) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", superadmin.getUsername());
-        claims.put("uid", superadmin.getId());
-        claims.put("email", superadmin.getEmail());
-        claims.put("roles", List.of("EJADA_OFFICER"));
-        claims.put("isSuperadmin", true);
-        claims.put("passwordExpired", true);
-        claims.put("accountState", "PASSWORD_EXPIRED");
-
-        return jwtTokenService.createToken(
-            superadmin.getUsername(),
-            null,
-            List.of("EJADA_OFFICER"),
-            claims,
-            superadminTokenTtl);
-    }
-    
-    private String generateSuperadminToken(Superadmin superadmin) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", superadmin.getUsername());
-        claims.put("uid", superadmin.getId());
-        claims.put("email", superadmin.getEmail());
-        claims.put("roles", List.of("EJADA_OFFICER"));
-        claims.put("isSuperadmin", true);
-        claims.put("accountState", "ACTIVE");
-        
-        String fullName = "";
-        if (superadmin.getFirstName() != null && superadmin.getLastName() != null) {
-            fullName = superadmin.getFirstName() + " " + superadmin.getLastName();
+    private void handleFailedLogin(Superadmin s) {
+        s.setFailedLoginAttempts(s.getFailedLoginAttempts() + 1);
+        if (s.getFailedLoginAttempts() >= maxFailedAttempts) {
+            s.setLockedUntil(LocalDateTime.now().plusMinutes(lockoutDurationMinutes));
+            log.warn("Account temporarily locked due to {} failed attempts: {}", maxFailedAttempts, s.getUsername());
         }
-        claims.put("fullName", fullName);
-        
-        return jwtTokenService.createToken(
-            superadmin.getUsername(),
-            null,
-            List.of("EJADA_OFFICER"),
-            claims,
-            superadminTokenTtl);
+        superadminRepository.save(s);
     }
-    
-    private void logSuperadminAction(String action, Long superadminId, String username, String details) {
+
+    private void recordPasswordHistorySafe(Superadmin s) {
+        if (s.getId() == null) return;
         try {
-            superadminAuditService.logSuperadminAction(action, superadminId, details);
+            SuperadminPasswordHistory h = SuperadminPasswordHistory.builder()
+                    .superadminId(s.getId())
+                    .passwordHash(s.getPasswordHash())
+                    .build();
+            passwordHistoryRepository.save(h);
         } catch (DataAccessException ex) {
-            log.warn("Failed to persist superadmin audit entry for action {}", action, ex);
-        }
-        log.info("SUPERADMIN_AUDIT: Action={}, User={}, Details={}", action, username, details);
-    }
-
-    private void recordPasswordHistory(Superadmin superadmin) {
-        if (superadmin.getId() == null) {
-            return;
-        }
-        SuperadminPasswordHistory history = SuperadminPasswordHistory.builder()
-            .superadminId(superadmin.getId())
-            .passwordHash(superadmin.getPasswordHash())
-            .build();
-        try {
-            passwordHistoryRepository.save(history);
-        } catch (DataAccessException ex) {
-            log.warn("Failed to record password history for superadmin {}", superadmin.getId(), ex);
+            log.warn("Failed to record password history for superadmin {}", s.getId(), ex);
         }
     }
 
     private void ensurePasswordNotReused(Long superadminId, String candidatePassword) {
-        if (superadminId == null) {
-            return;
-        }
+        if (superadminId == null) return;
+
         try {
-            List<SuperadminPasswordHistory> recentPasswords =
-                passwordHistoryRepository.findTop5BySuperadminIdOrderByCreatedAtDesc(superadminId);
-            for (SuperadminPasswordHistory entry : recentPasswords) {
+            List<SuperadminPasswordHistory> recent =
+                    passwordHistoryRepository.findTop5BySuperadminIdOrderByCreatedAtDesc(superadminId);
+
+            for (SuperadminPasswordHistory entry : recent) {
                 String historicalHash = entry.getPasswordHash();
                 if (historicalHash == null || historicalHash.isBlank()) {
                     log.warn("Skipping password history entry {} for superadmin {} due to empty hash",
-                        entry.getId(), superadminId);
+                            entry.getId(), superadminId);
                     continue;
                 }
 
                 if (!BCRYPT_PATTERN.matcher(historicalHash).matches()) {
-                    log.error("Invalid password hash detected for superadmin {} in history entry {}",
-                        superadminId, entry.getId());
+                    log.error("Invalid password hash format in history entry {} for superadmin {}", entry.getId(), superadminId);
                     throw new PasswordHistoryUnavailableException(
-                        "Unable to verify password history at the moment. Please try again later or contact support.",
-                        new IllegalStateException(
-                            "Invalid password hash format for history entry " + entry.getId()));
+                            "Unable to verify password history at the moment. Please try again later.",
+                            new IllegalStateException("Invalid password hash format for history entry " + entry.getId()));
                 }
 
                 boolean matches;
                 try {
                     matches = PasswordHasher.matchesBcrypt(candidatePassword, historicalHash);
                 } catch (IllegalArgumentException ex) {
-                    log.error("Invalid password hash detected for superadmin {} in history entry {}",
-                        superadminId, entry.getId(), ex);
+                    log.error("Invalid password hash detected for superadmin {} in history entry {}", superadminId, entry.getId(), ex);
                     throw new PasswordHistoryUnavailableException(
-                        "Unable to verify password history at the moment. Please try again later or contact support.",
-                        ex);
+                            "Unable to verify password history at the moment. Please try again later.", ex);
                 }
 
                 if (matches) {
@@ -791,14 +569,70 @@ public class SuperadminServiceImpl implements SuperadminService {
         } catch (DataAccessException ex) {
             log.error("Unable to verify password history for superadmin {}", superadminId, ex);
             throw new PasswordHistoryUnavailableException(
-                "Unable to verify password history at the moment. Please try again later or contact support.", ex);
+                    "Unable to verify password history at the moment. Please try again later.", ex);
         }
     }
-    
-    private void sendWelcomeEmail(Superadmin superadmin) {
-        // Email service implementation
-        log.info("Welcome email sent to: {}", superadmin.getEmail());
-        // In production, integrate with email service:
-        // emailService.sendSuperadminWelcome(superadmin.getEmail(), superadmin.getUsername());
+
+    private String generateFirstLoginToken(Superadmin s) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("sub", s.getUsername());
+        claims.put("uid", s.getId());
+        claims.put("email", s.getEmail());
+        claims.put("roles", List.of("EJADA_OFFICER"));
+        claims.put("isSuperadmin", true);
+        claims.put("requiresPasswordChange", true);
+        claims.put("accountState", "FIRST_LOGIN");
+
+        return jwtTokenService.createToken(s.getUsername(), null, List.of("EJADA_OFFICER"), claims, superadminTokenTtl);
+    }
+
+    private String generateExpiredPasswordToken(Superadmin s) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("sub", s.getUsername());
+        claims.put("uid", s.getId());
+        claims.put("email", s.getEmail());
+        claims.put("roles", List.of("EJADA_OFFICER"));
+        claims.put("isSuperadmin", true);
+        claims.put("passwordExpired", true);
+        claims.put("accountState", "PASSWORD_EXPIRED");
+
+        return jwtTokenService.createToken(s.getUsername(), null, List.of("EJADA_OFFICER"), claims, superadminTokenTtl);
+    }
+
+    private String generateSuperadminToken(Superadmin s) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("sub", s.getUsername());
+        claims.put("uid", s.getId());
+        claims.put("email", s.getEmail());
+        claims.put("roles", List.of("EJADA_OFFICER"));
+        claims.put("isSuperadmin", true);
+        claims.put("accountState", "ACTIVE");
+
+        String fullName = "";
+        if (s.getFirstName() != null && s.getLastName() != null) {
+            fullName = s.getFirstName() + " " + s.getLastName();
+        }
+        claims.put("fullName", fullName);
+
+        return jwtTokenService.createToken(s.getUsername(), null, List.of("EJADA_OFFICER"), claims, superadminTokenTtl);
+    }
+
+    private void validatePasswordComplexity(String password) {
+        List<String> errors = new ArrayList<>();
+
+        if (password == null || password.length() < 8) errors.add("Password must be at least 8 characters long");
+        if (!Pattern.compile("[A-Z]").matcher(password).find()) errors.add("Password must contain at least one uppercase letter");
+        if (!Pattern.compile("[a-z]").matcher(password).find()) errors.add("Password must contain at least one lowercase letter");
+        if (!Pattern.compile("\\d").matcher(password).find()) errors.add("Password must contain at least one digit");
+        if (!Pattern.compile("[@$!%*?&]").matcher(password).find()) errors.add("Password must contain at least one special character (@$!%*?&)");
+
+        Set<String> commonPasswords = Set.of("Password123!", "Admin123!", "Welcome123!", "Password@123", "Admin@123", "Welcome@123");
+        if (commonPasswords.stream().anyMatch(common -> common.equalsIgnoreCase(password))) {
+            errors.add("This password is too common. Please choose a more unique password");
+        }
+
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException("Password validation failed: " + String.join(", ", errors));
+        }
     }
 }

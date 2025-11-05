@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "superadmin_password_history", schema = "security")
+@Table(name = "superadmin_password_history")
 @Getter
 @Setter
 @NoArgsConstructor

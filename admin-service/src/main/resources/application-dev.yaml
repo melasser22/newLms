@@ -8,9 +8,10 @@ spring:
       pool-name: HikariPool-ejada
       maximum-pool-size: 10
       minimum-idle: 2
-      idle-timeout: 30000        # 30s
-      connection-timeout: 300000 # 300s
-      max-lifetime: 1800000      # 30m
+      idle-timeout: 30000          # 30s
+      connection-timeout: 300000   # 300s
+      max-lifetime: 1800000        # 30m
+
   jpa:
     open-in-view: false
     show-sql: true
@@ -18,13 +19,11 @@ spring:
       ddl-auto: none
     properties:
       hibernate:
-        ddl-auto: none
-      properties:
-        hibernate:
-          default_schema: admin
-          hbm2ddl.create_namespaces: true
-          format_sql: true
-        jdbc.time_zone: UTC
+        default_schema: admin
+        hbm2ddl.create_namespaces: true
+        format_sql: true
+      jdbc.time_zone: UTC
+
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -32,11 +31,11 @@ spring:
     schemas: public,admin
     default-schema: admin
     placeholders:
-      superadminPasswordHash: '${SUPERADMIN_PASSWORD_HASH:$2b$12$ySQKTgxd1J24X3Y9PE/Hw.oNYwR.aLalMKtoWh/5okcE5I3ciSzQO}'
+      superadminPasswordHash: '${SUPERADMIN_PASSWORD_HASH:$2b$12$lElUGMoVB/2.JiJ48GX9u.tiwz9jOKxyK6BEr1I9sqJG9/DlnZK4W}'
 
   kafka:
-    bootstrap-servers: kafka:9092
-    client-id: ejada-security-dev
+    bootstrap-servers: localhost:29092
+    client-id: ejada-admin-dev
     consumer:
       group-id: ejada-backend-dev
       auto-offset-reset: earliest
@@ -88,7 +87,7 @@ shared:
       generate-if-missing: true
       echo-response-header: true
     tenant:
-      enabled: true
+      enabled: false               # Admin service is system-owner; disable tenant resolution
       header-name: x_tenant_id
       query-param: tenantId
       default-policy: OPTIONAL
@@ -98,6 +97,12 @@ shared:
       allowed-origins: http://localhost:3000
       allowed-methods: GET,POST,PUT,DELETE,OPTIONS
       allowed-headers: "*"
+
+  # IMPORTANT: disable data-layer multi-tenancy so Hibernate filter is not enabled
+  data:
+    tenant:
+      enabled: false               # Prevents TenantHibernateFilterAspect from enabling 'tenantFilter'
+
   headers:
     enabled: true
     correlation:
@@ -135,6 +140,7 @@ shared:
         - X-Request-ID
         - x_tenant_id
         - X-User-Id
+
   audit:
     enabled: true
     web:
@@ -158,7 +164,7 @@ shared:
     sinks:
       db:
         enabled: true
-        schema: security
+        schema: admin
         table: audit_logs
       kafka:
         enabled: true
@@ -167,10 +173,11 @@ shared:
         enabled: false
       outbox:
         enabled: true
+
   openapi:
     enabled: true
-    title: " security Service API"
-    description: "security service endpoints for tenant/platform configuration."
+    title: "System Owner Service API"
+    description: "System Owner service endpoints for tenant/platform configuration."
     version: "1.0.0"
     servers:
       - http://localhost:8080/admin
@@ -179,6 +186,7 @@ shared:
       packages-to-scan:
         - com.ejada.admin
     jwt-security: false
+
   redis:
     host: redis
     port: 6379
@@ -186,12 +194,14 @@ shared:
     key-prefix: admin
     default-ttl: 600s
     reactive: false
+
   crypto:
     algorithm: AES_GCM
     in-memory:
       activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
       keys:
         local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
+
   security:
     mode: hs256
     jwt:
@@ -202,24 +212,24 @@ shared:
     resource-server:
       enabled: true
       permit-all:
-        - "/**"
-      disable-csrf: false
+        - "/**"                 # Allow all (adjust in production)
+      disable-csrf: true
     stateless: true
     roles-claim: roles
     tenant-claim: tenant
-    enable-role-check: false
+    enable-role-check: true
 
 logging:
   level:
-    root: ERROR
-    com.ejada: ERROR
-    com.ejada.audit.starter: ERROR
-    com.ejada.audit.starter.core.dispatch: ERROR
-    com.ejada.audit.starter.core.dispatch.sinks: ERROR
-    org.hibernate.tool.schema: ERROR
-    org.hibernate.SQL: ERROR
-    org.hibernate.orm.jdbc.bind: ERROR
-    org.springframework.cache: ERROR
-    org.springframework.cache.interceptor.CacheAspectSupport: ERROR
+    root: INFO
+    com.ejada: INFO
+    com.ejada.audit.starter: INFO
+    com.ejada.audit.starter.core.dispatch: INFO
+    com.ejada.audit.starter.core.dispatch.sinks: INFO
+    org.hibernate.tool.schema: INFO
+    org.hibernate.SQL: INFO
+    org.hibernate.orm.jdbc.bind: INFO
+    org.springframework.cache: INFO
+    org.springframework.cache.interceptor.CacheAspectSupport: INFO
 
 debug: true
