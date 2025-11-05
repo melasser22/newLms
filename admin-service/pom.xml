@@ -26,7 +26,7 @@
     </properties>
 
   <!-- Import shared  to pin internal starter & shared-lib versions -->
-   <dependencyManagement>
+  <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>com.ejada</groupId>
@@ -34,6 +34,11 @@
         <version>${ejada.shared.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.checkerframework</groupId>
+        <artifactId>checker-qual</artifactId>
+        <version>3.43.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
