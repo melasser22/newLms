@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -57,18 +59,25 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<BaseResponse<Map<String, String>>> handleValidationErrors(
+    public ResponseEntity<BaseResponse<List<Map<String, String>>>> handleValidationErrors(
             MethodArgumentNotValidException ex, WebRequest request) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
+        List<Map<String, String>> errors = new ArrayList<>();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName = error instanceof FieldError fieldError
+                    ? fieldError.getField()
+                    : error.getObjectName();
             String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
+            Map<String, String> errorDetails = new HashMap<>();
+            errorDetails.put("field", fieldName);
+            errorDetails.put("message", errorMessage);
+            errors.add(errorDetails);
         });
 
         log.warn("Validation errors: {}", errors);
         return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_VALIDATION", "Validation failed with " + errors.size() + " errors"));
+                .body(BaseResponse.error("ERR_VALIDATION",
+                        "Validation failed with " + errors.size() + " errors",
+                        errors));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
