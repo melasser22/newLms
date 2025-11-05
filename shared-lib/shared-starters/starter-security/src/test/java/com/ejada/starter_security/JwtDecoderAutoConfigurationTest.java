@@ -29,4 +29,26 @@ class JwtDecoderAutoConfigurationTest {
           .hasMessageContaining("shared.security.jwks.uri");
     });
   }
+
+  @Test
+  void invalidBase64SecretIsRejected() {
+    contextRunner.withPropertyValues("shared.security.hs256.secret=not-base64!!!").run(context -> {
+      assertThat(context).hasFailed();
+      assertThat(context.getStartupFailure())
+          .hasRootCauseInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Base64-encoded");
+    });
+  }
+
+  @Test
+  void shortDecodedSecretIsRejected() {
+    contextRunner
+        .withPropertyValues("shared.security.hs256.secret=dG9vLXNob3J0")
+        .run(context -> {
+          assertThat(context).hasFailed();
+          assertThat(context.getStartupFailure())
+              .hasRootCauseInstanceOf(IllegalArgumentException.class)
+              .hasMessageContaining("at least 32 bytes");
+        });
+  }
 }

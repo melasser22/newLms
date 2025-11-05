@@ -1,6 +1,6 @@
 package com.ejada.starter_security;
 
-import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -25,7 +25,22 @@ public class JwtDecoderAutoConfiguration {
 
     String secret = props.getHs256().getSecret();
     Assert.hasText(secret, "shared.security.hs256.secret must not be null or empty when mode=hs256");
-    SecretKey key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+    SecretKey key = buildHs256Key(secret);
     return NimbusJwtDecoder.withSecretKey(key).build();
+  }
+
+  private SecretKey buildHs256Key(String secret) {
+    byte[] decoded;
+    try {
+      decoded = Base64.getDecoder().decode(secret);
+    } catch (IllegalArgumentException ex) {
+      throw new IllegalArgumentException(
+          "shared.security.hs256.secret must be a Base64-encoded string", ex);
+    }
+    if (decoded.length < 32) {
+      throw new IllegalArgumentException(
+          "shared.security.hs256.secret must decode to at least 32 bytes");
+    }
+    return new SecretKeySpec(decoded, "HmacSHA256");
   }
 }
