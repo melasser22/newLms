@@ -303,34 +303,38 @@ public class SuperadminServiceImpl implements SuperadminService {
             log.info("First login detected for superadmin: {}", superadmin.getUsername());
             String firstLoginToken = generateFirstLoginToken(superadmin);
             
+            String role = resolveSuperadminRole(superadmin);
+
             return BaseResponse.success("First login - password change required",
                 SuperadminAuthResponse.builder()
                     .accessToken(firstLoginToken)
                     .tokenType("Bearer")
                     .expiresInSeconds(superadminTokenTtl.getSeconds())
-                    .role("EJADA_OFFICER")
+                    .role(role)
                     .permissions(List.of("CHANGE_PASSWORD"))
                     .requiresPasswordChange(true)
                     .build());
         }
-        
+
         // Check if password has expired
         if (superadmin.getPasswordExpiresAt() != null && 
             LocalDateTime.now().isAfter(superadmin.getPasswordExpiresAt())) {
             log.info("Password expired for superadmin: {}", superadmin.getUsername());
             String expiredPasswordToken = generateExpiredPasswordToken(superadmin);
             
+            String role = resolveSuperadminRole(superadmin);
+
             return BaseResponse.success("Password expired - change required",
                 SuperadminAuthResponse.builder()
                     .accessToken(expiredPasswordToken)
                     .tokenType("Bearer")
                     .expiresInSeconds(superadminTokenTtl.getSeconds())
-                    .role("EJADA_OFFICER")
+                    .role(role)
                     .permissions(List.of("CHANGE_PASSWORD"))
                     .passwordExpired(true)
                     .build());
         }
-        
+
         // Successful login
         superadmin.setFailedLoginAttempts(0);
         superadmin.setLockedUntil(null);
@@ -342,14 +346,16 @@ public class SuperadminServiceImpl implements SuperadminService {
         
         log.info("Superadmin {} logged in successfully", superadmin.getUsername());
         
-        return BaseResponse.success("Login successful", 
+        String role = resolveSuperadminRole(superadmin);
+
+        return BaseResponse.success("Login successful",
             SuperadminAuthResponse.builder()
                 .accessToken(token)
                 .tokenType("Bearer")
                 .expiresInSeconds(superadminTokenTtl.getSeconds())
-                .role("EJADA_OFFICER")
+                .role(role)
                 .permissions(List.of(
-                    "TENANT_CREATE", "TENANT_UPDATE", "TENANT_DELETE", 
+                    "TENANT_CREATE", "TENANT_UPDATE", "TENANT_DELETE",
                     "TENANT_VIEW", "GLOBAL_CONFIG", "SYSTEM_ADMIN"))
                 .requiresPasswordChange(false)
                 .passwordExpired(false)
@@ -667,11 +673,13 @@ public class SuperadminServiceImpl implements SuperadminService {
     }
     
     private String generateFirstLoginToken(Superadmin superadmin) {
+        String role = resolveSuperadminRole(superadmin);
+
         Map<String, Object> claims = new HashMap<>();
         claims.put("sub", superadmin.getUsername());
         claims.put("uid", superadmin.getId());
         claims.put("email", superadmin.getEmail());
-        claims.put("roles", List.of("EJADA_OFFICER"));
+        claims.put("roles", List.of(role));
         claims.put("isSuperadmin", true);
         claims.put("requiresPasswordChange", true);
         claims.put("accountState", "FIRST_LOGIN");
@@ -679,17 +687,19 @@ public class SuperadminServiceImpl implements SuperadminService {
         return jwtTokenService.createToken(
             superadmin.getUsername(),
             null,
-            List.of("EJADA_OFFICER"),
+            List.of(role),
             claims,
             superadminTokenTtl);
     }
 
     private String generateExpiredPasswordToken(Superadmin superadmin) {
+        String role = resolveSuperadminRole(superadmin);
+
         Map<String, Object> claims = new HashMap<>();
         claims.put("sub", superadmin.getUsername());
         claims.put("uid", superadmin.getId());
         claims.put("email", superadmin.getEmail());
-        claims.put("roles", List.of("EJADA_OFFICER"));
+        claims.put("roles", List.of(role));
         claims.put("isSuperadmin", true);
         claims.put("passwordExpired", true);
         claims.put("accountState", "PASSWORD_EXPIRED");
@@ -697,32 +707,42 @@ public class SuperadminServiceImpl implements SuperadminService {
         return jwtTokenService.createToken(
             superadmin.getUsername(),
             null,
-            List.of("EJADA_OFFICER"),
+            List.of(role),
             claims,
             superadminTokenTtl);
     }
-    
+
     private String generateSuperadminToken(Superadmin superadmin) {
+        String role = resolveSuperadminRole(superadmin);
+
         Map<String, Object> claims = new HashMap<>();
         claims.put("sub", superadmin.getUsername());
         claims.put("uid", superadmin.getId());
         claims.put("email", superadmin.getEmail());
-        claims.put("roles", List.of("EJADA_OFFICER"));
+        claims.put("roles", List.of(role));
         claims.put("isSuperadmin", true);
         claims.put("accountState", "ACTIVE");
-        
+
         String fullName = "";
         if (superadmin.getFirstName() != null && superadmin.getLastName() != null) {
             fullName = superadmin.getFirstName() + " " + superadmin.getLastName();
         }
         claims.put("fullName", fullName);
-        
+
         return jwtTokenService.createToken(
             superadmin.getUsername(),
             null,
-            List.of("EJADA_OFFICER"),
+            List.of(role),
             claims,
             superadminTokenTtl);
+    }
+
+    private String resolveSuperadminRole(Superadmin superadmin) {
+        String role = superadmin.getRole();
+        if (role == null || role.isBlank()) {
+            return Role.EJADA_OFFICER.name();
+        }
+        return role;
     }
     
     private void logSuperadminAction(String action, Long superadminId, String username, String details) {
