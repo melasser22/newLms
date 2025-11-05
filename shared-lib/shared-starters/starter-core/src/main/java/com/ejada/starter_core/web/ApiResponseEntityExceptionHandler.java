@@ -179,6 +179,7 @@ public class ApiResponseEntityExceptionHandler extends ResponseEntityExceptionHa
                 header(req, HeaderNames.CORRELATION_ID),
                 header(req, HeaderNames.REQUEST_ID)
         );
+        err.setCorrelationId(cid);
         if (req instanceof ServletWebRequest swr && cid != null) {
             swr.getResponse().setHeader(HeaderNames.CORRELATION_ID, cid);
         }

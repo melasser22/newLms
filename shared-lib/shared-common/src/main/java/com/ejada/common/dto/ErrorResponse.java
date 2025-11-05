@@ -34,6 +34,9 @@ public class ErrorResponse {
     /** Tenant ID (multi-tenant awareness) */
     private String tenantId;
 
+    /** Correlation identifier for tracing */
+    private String correlationId;
+
     /** Timestamp of error */
     @Builder.Default
     private Instant timestamp = Instant.now();
