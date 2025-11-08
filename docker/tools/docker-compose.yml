@@ -123,7 +123,7 @@ services:
     image: otel/opentelemetry-collector:latest
     <<: [*restart_policy, *resources_light]
     volumes:
-      - "./shared-lib/shared-starters/starter-observability/src/main/resources:/etc/otelcol:ro"
+      - "../../shared-lib/shared-starters/starter-observability/src/main/resources:/etc/otelcol:ro"
     command: ["--config=/etc/otelcol/otel-collector-config.yaml"]
     ports:
       - "4317:4317" # OTLP gRPC

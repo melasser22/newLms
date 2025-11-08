@@ -31,7 +31,7 @@ spring:
     schemas: public,admin
     default-schema: admin
     placeholders:
-      superadminPasswordHash: '${SUPERADMIN_PASSWORD_HASH:$2b$12$lElUGMoVB/2.JiJ48GX9u.tiwz9jOKxyK6BEr1I9sqJG9/DlnZK4W}'
+      superadminPasswordHash: '${SUPERADMIN_PASSWORD_HASH:$2b$12$lElUGMoVB/2.JiJ48GX9u.tiwz9jOKxyK6BEr1I9sqJG9/DlnZK4W}'   #Ca44H6H!2giu&!U9
 
   kafka:
     bootstrap-servers: localhost:29092
@@ -231,5 +231,9 @@ logging:
     org.hibernate.orm.jdbc.bind: INFO
     org.springframework.cache: INFO
     org.springframework.cache.interceptor.CacheAspectSupport: INFO
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.security.oauth2.server.resource: DEBUG
+    org.springframework.security.oauth2.jwt: DEBUG
 
 debug: true
