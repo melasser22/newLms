@@ -4,46 +4,85 @@ import com.ejada.admin.domain.Superadmin;
 import com.ejada.admin.dto.CreateSuperadminRequest;
 import com.ejada.admin.dto.SuperadminDto;
 import com.ejada.admin.dto.UpdateSuperadminRequest;
-import org.mapstruct.*;
-
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import org.springframework.stereotype.Component;
 
-@Mapper(componentModel = "spring",
-        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
-        builder = @Builder(disableBuilder = false))
-public interface SuperadminMapper {
+@Component
+public class SuperadminMapper {
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "passwordHash", ignore = true)
-    @Mapping(target = "enabled", constant = "true")
-    @Mapping(target = "locked", constant = "false")
-    @Mapping(target = "role", constant = "EJADA_OFFICER")
-    @Mapping(target = "firstLoginCompleted", constant = "false")
-    @Mapping(target = "failedLoginAttempts", constant = "0")
-    @Mapping(target = "lastLoginAt", ignore = true)
-    @Mapping(target = "passwordChangedAt", ignore = true)
-    @Mapping(target = "passwordExpiresAt", ignore = true)
-    @Mapping(target = "lockedUntil", ignore = true)
-    @Mapping(target = "twoFactorEnabled", constant = "false")
-    @Mapping(target = "twoFactorSecret", ignore = true)
-    Superadmin toEntity(CreateSuperadminRequest request);
+    public Superadmin toEntity(CreateSuperadminRequest request) {
+        if (request == null) {
+            return null;
+        }
 
-    SuperadminDto toDto(Superadmin entity);
-
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "username", ignore = true)
-    @Mapping(target = "passwordHash", ignore = true)
-    @Mapping(target = "role", ignore = true)
-    void updateEntity(@MappingTarget Superadmin entity, UpdateSuperadminRequest request);
-
-    // 🔥 Custom mappers for Instant ↔ LocalDateTime
-    default LocalDateTime map(Instant instant) {
-        return instant == null ? null : LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+        return Superadmin.builder()
+            .username(request.getUsername())
+            .email(request.getEmail())
+            .firstName(request.getFirstName())
+            .lastName(request.getLastName())
+            .phoneNumber(request.getPhoneNumber())
+            .enabled(true)
+            .locked(false)
+            .role("EJADA_OFFICER")
+            .firstLoginCompleted(false)
+            .failedLoginAttempts(0)
+            .twoFactorEnabled(false)
+            .build();
     }
 
-    default Instant map(LocalDateTime localDateTime) {
-        return localDateTime == null ? null : localDateTime.atZone(ZoneId.systemDefault()).toInstant();
+    public SuperadminDto toDto(Superadmin entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        return SuperadminDto.builder()
+            .id(entity.getId())
+            .username(entity.getUsername())
+            .email(entity.getEmail())
+            .role(entity.getRole())
+            .enabled(entity.isEnabled())
+            .locked(entity.isLocked())
+            .lastLoginAt(entity.getLastLoginAt())
+            .createdAt(toLocalDateTime(entity.getCreatedAt()))
+            .updatedAt(toLocalDateTime(entity.getUpdatedAt()))
+            .firstName(entity.getFirstName())
+            .lastName(entity.getLastName())
+            .phoneNumber(entity.getPhoneNumber())
+            .firstLoginCompleted(entity.isFirstLoginCompleted())
+            .passwordChangedAt(entity.getPasswordChangedAt())
+            .passwordExpiresAt(entity.getPasswordExpiresAt())
+            .twoFactorEnabled(entity.isTwoFactorEnabled())
+            .build();
+    }
+
+    public void updateEntity(Superadmin entity, UpdateSuperadminRequest request) {
+        if (entity == null || request == null) {
+            return;
+        }
+
+        if (request.getEmail() != null) {
+            entity.setEmail(request.getEmail());
+        }
+        if (request.getFirstName() != null) {
+            entity.setFirstName(request.getFirstName());
+        }
+        if (request.getLastName() != null) {
+            entity.setLastName(request.getLastName());
+        }
+        if (request.getPhoneNumber() != null) {
+            entity.setPhoneNumber(request.getPhoneNumber());
+        }
+        if (request.getEnabled() != null) {
+            entity.setEnabled(request.getEnabled());
+        }
+        if (request.getLocked() != null) {
+            entity.setLocked(request.getLocked());
+        }
+    }
+
+    private LocalDateTime toLocalDateTime(Instant instant) {
+        return instant == null ? null : LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
     }
 }
