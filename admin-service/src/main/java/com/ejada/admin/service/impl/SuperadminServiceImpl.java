@@ -11,6 +11,7 @@ import com.ejada.admin.mapper.SuperadminMapper;
 import com.ejada.admin.repository.SuperadminPasswordHistoryRepository;
 import com.ejada.admin.repository.SuperadminRepository;
 import com.ejada.admin.service.SuperadminService;
+import com.ejada.common.constants.ErrorCodes;
 import com.ejada.starter_security.Role;
 import com.ejada.starter_security.RoleChecker;
 import java.time.Duration;
@@ -143,7 +144,11 @@ public class SuperadminServiceImpl implements SuperadminService {
         
         // Find existing superadmin
         Superadmin superadmin = superadminRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("Superadmin not found with ID: " + id));
+            .orElse(null);
+
+        if (superadmin == null) {
+            return superadminNotFound(id);
+        }
         
         // Check if email is being changed and if it's already taken
         if (request.getEmail() != null && !request.getEmail().equals(superadmin.getEmail())) {
@@ -199,7 +204,11 @@ public class SuperadminServiceImpl implements SuperadminService {
         
         // Find superadmin
         Superadmin superadmin = superadminRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("Superadmin not found with ID: " + id));
+            .orElse(null);
+
+        if (superadmin == null) {
+            return superadminNotFound(id);
+        }
         
         // Soft delete (disable and lock the account instead of hard delete)
         superadmin.setEnabled(false);
@@ -230,7 +239,11 @@ public class SuperadminServiceImpl implements SuperadminService {
         validateSuperadminAccess();
         
         Superadmin superadmin = superadminRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("Superadmin not found with ID: " + id));
+            .orElse(null);
+
+        if (superadmin == null) {
+            return superadminNotFound(id);
+        }
         
         return BaseResponse.success("Superadmin fetched successfully", 
             superadminMapper.toDto(superadmin));
@@ -370,7 +383,12 @@ public class SuperadminServiceImpl implements SuperadminService {
         Long superadminId = getCurrentSuperadminId();
         
         Superadmin superadmin = superadminRepository.findById(superadminId)
-            .orElseThrow(() -> new NoSuchElementException("Superadmin not found"));
+            .orElse(null);
+
+        if (superadmin == null) {
+            return superadminNotFound(superadminId,
+                "Unable to locate the authenticated superadmin with ID: " + superadminId);
+        }
         
         // Verify this is actually a first login scenario
         if (superadmin.isFirstLoginCompleted()) {
@@ -438,11 +456,16 @@ public class SuperadminServiceImpl implements SuperadminService {
     @Override
     public BaseResponse<Void> changePassword(ChangePasswordRequest request) {
         log.info("Processing password change request");
-        
+
         Long superadminId = getCurrentSuperadminId();
-        
+
         Superadmin superadmin = superadminRepository.findById(superadminId)
-            .orElseThrow(() -> new NoSuchElementException("Superadmin not found"));
+            .orElse(null);
+
+        if (superadmin == null) {
+            return superadminNotFound(superadminId,
+                "Unable to locate the authenticated superadmin with ID: " + superadminId);
+        }
         
         // Verify current password
         String currentPasswordHash = requirePasswordHash(superadmin);
@@ -483,8 +506,21 @@ public class SuperadminServiceImpl implements SuperadminService {
         
         return BaseResponse.success("Password changed successfully", null);
     }
-    
+
     // Helper methods
+
+    private <T> BaseResponse<T> superadminNotFound(Long superadminId) {
+        return superadminNotFound(superadminId,
+            "Superadmin not found with ID: " + superadminId);
+    }
+
+    private <T> BaseResponse<T> superadminNotFound(Long superadminId, String message) {
+        String resolvedMessage = (message == null || message.isBlank())
+            ? "Superadmin not found with ID: " + superadminId
+            : message;
+        log.warn(resolvedMessage);
+        return BaseResponse.error(ErrorCodes.NOT_FOUND, resolvedMessage);
+    }
     
     private String requirePasswordHash(Superadmin superadmin) {
         String passwordHash = superadmin.getPasswordHash();

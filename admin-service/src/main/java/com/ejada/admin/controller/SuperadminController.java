@@ -1,5 +1,6 @@
 package com.ejada.admin.controller;
 
+import com.ejada.common.constants.ErrorCodes;
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.admin.dto.ChangePasswordRequest;
 import com.ejada.admin.dto.CreateSuperadminRequest;
@@ -29,7 +30,7 @@ public class SuperadminController {
   @SuperAdminAuthorized
   public ResponseEntity<BaseResponse<SuperadminDto>> createSuperadmin(
       @Valid @RequestBody CreateSuperadminRequest request) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(superadminService.createSuperadmin(request));
+    return buildResponse(superadminService.createSuperadmin(request), HttpStatus.CREATED);
   }
 
   @PutMapping("/{id}")
@@ -37,39 +38,53 @@ public class SuperadminController {
   public ResponseEntity<BaseResponse<SuperadminDto>> updateSuperadmin(
       @PathVariable Long id,
       @Valid @RequestBody UpdateSuperadminRequest request) {
-    return ResponseEntity.ok(superadminService.updateSuperadmin(id, request));
+    return buildResponse(superadminService.updateSuperadmin(id, request), HttpStatus.OK);
   }
 
   @DeleteMapping("/{id}")
   @SuperAdminAuthorized
   public ResponseEntity<BaseResponse<Void>> deleteSuperadmin(@PathVariable Long id) {
-    return ResponseEntity.ok(superadminService.deleteSuperadmin(id));
+    return buildResponse(superadminService.deleteSuperadmin(id), HttpStatus.OK);
   }
 
   @GetMapping("/{id}")
   @SuperAdminAuthorized
   public ResponseEntity<BaseResponse<SuperadminDto>> getSuperadmin(@PathVariable Long id) {
-    return ResponseEntity.ok(superadminService.getSuperadmin(id));
+    return buildResponse(superadminService.getSuperadmin(id), HttpStatus.OK);
   }
 
   @GetMapping
   @SuperAdminAuthorized
   public ResponseEntity<BaseResponse<Page<SuperadminDto>>> listSuperadmins(Pageable pageable) {
-    return ResponseEntity.ok(superadminService.listSuperadmins(pageable));
+    return buildResponse(superadminService.listSuperadmins(pageable), HttpStatus.OK);
   }
 
   @PostMapping("/complete-login")
   @SuperAdminAuthorized
   public ResponseEntity<BaseResponse<Void>> completeFirstLogin(
       @Valid @RequestBody FirstLoginRequest request) {
-    return ResponseEntity.ok(superadminService.completeFirstLogin(request));
+    return buildResponse(superadminService.completeFirstLogin(request), HttpStatus.OK);
   }
 
   @PostMapping("/change-password")
   @SuperAdminAuthorized
   public ResponseEntity<BaseResponse<Void>> changeSuperadminPassword(
       @Valid @RequestBody ChangePasswordRequest request) {
-    return ResponseEntity.ok(superadminService.changePassword(request));
+    return buildResponse(superadminService.changePassword(request), HttpStatus.OK);
+  }
+
+  private <T> ResponseEntity<BaseResponse<T>> buildResponse(
+      BaseResponse<T> response,
+      HttpStatus successStatus) {
+    if (response == null || response.isSuccess()) {
+      return ResponseEntity.status(successStatus).body(response);
+    }
+
+    HttpStatus errorStatus = ErrorCodes.NOT_FOUND.equals(response.getCode())
+        ? HttpStatus.NOT_FOUND
+        : HttpStatus.BAD_REQUEST;
+
+    return ResponseEntity.status(errorStatus).body(response);
   }
   
   @PostMapping("/login")
