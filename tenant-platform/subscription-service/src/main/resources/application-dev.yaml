@@ -198,6 +198,15 @@ shared:
       secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
     resource-server:
       enabled: true
+
+subscription:
+  security:
+    jwt:
+      secret: ${SUBSCRIPTION_JWT_SECRET:change-me-change-me-change-me-change}
+      expiration: 30m
+    users:
+      - loginName: demo
+        password: b03ddf3ca2e714a6548e7495e2a03f5e824eaac9837cd7f159c67b90fb4b7342
       permit-all:
         - "/**"
       disable-csrf: false
