@@ -46,6 +46,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -127,10 +128,13 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
                     .findByExtSubscriptionIdAndExtCustomerId(si.subscriptionId(), si.customerId())
                     .orElse(null);
 
+            boolean isNewSubscription;
             if (sub == null) {
                 sub = subscriptionMapper.toEntity(si);
+                isNewSubscription = true;
             } else {
                 subscriptionMapper.update(sub, si);
+                isNewSubscription = false;
             }
 
             if (sub.getEndDt() == null) {
@@ -142,6 +146,10 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             replaceFeatures(sub, si.subscriptionFeatureLst());
             replaceAdditionalServices(sub, si.subscriptionAdditionalServicesLst());
             replaceProductProperties(sub, rq.productProperties());
+
+            if (isNewSubscription) {
+                emitOnboardingEvents(sub, rq);
+            }
 
             // 5) (Optional) environment identifiers (if provisioning already occurred)
             List<SubscriptionEnvironmentIdentifier> envIds =
@@ -263,6 +271,64 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             }
             propertyRepo.saveAll(mapped);
         }
+    }
+
+    private void emitOnboardingEvents(
+            final Subscription sub,
+            final ReceiveSubscriptionNotificationRq rq) {
+
+        SubscriptionInfoDto info = rq.subscriptionInfo();
+        Map<String, Object> basePayload = baseOnboardingPayload(sub, info);
+
+        Map<String, Object> tenantPayload = new LinkedHashMap<>(basePayload);
+        tenantPayload.put("customerInfo", rq.customerInfo());
+        emitOutbox("ONBOARDING", sub.getSubscriptionId().toString(), "TENANT_CREATE_REQUESTED", tenantPayload);
+
+        Map<String, Object> catalogPayload = new LinkedHashMap<>(basePayload);
+        catalogPayload.put("features", info.subscriptionFeatureLst());
+        catalogPayload.put("additionalServices", info.subscriptionAdditionalServicesLst());
+        catalogPayload.put("productProperties", rq.productProperties());
+        emitOutbox("ONBOARDING", sub.getSubscriptionId().toString(), "CATALOG_SETUP_REQUESTED", catalogPayload);
+
+        Map<String, Object> billingPayload = new LinkedHashMap<>(basePayload);
+        billingPayload.put("subscriptionAmount", info.subscriptionAmount());
+        billingPayload.put("totalBilledAmount", info.totalBilledAmount());
+        billingPayload.put("totalPaidAmount", info.totalPaidAmount());
+        billingPayload.put("startDt", info.startDt());
+        billingPayload.put("endDt", info.endDt());
+        billingPayload.put("createChannel", info.createChannel());
+        billingPayload.put("unlimitedUsersFlag", info.unlimitedUsersFlag());
+        billingPayload.put("usersLimit", info.usersLimit());
+        billingPayload.put("usersLimitResetType", info.usersLimitResetType());
+        billingPayload.put("unlimitedTransFlag", info.unlimitedTransFlag());
+        billingPayload.put("transactionsLimit", info.transactionsLimit());
+        billingPayload.put("transLimitResetType", info.transLimitResetType());
+        billingPayload.put("balanceLimit", info.balanceLimit());
+        billingPayload.put("balanceLimitResetType", info.balanceLimitResetType());
+        emitOutbox("ONBOARDING", sub.getSubscriptionId().toString(), "BILLING_SETUP_REQUESTED", billingPayload);
+
+        Map<String, Object> adminPayload = new LinkedHashMap<>(basePayload);
+        adminPayload.put("adminUserInfo", rq.adminUserInfo());
+        emitOutbox("ONBOARDING", sub.getSubscriptionId().toString(), "TENANT_ADMIN_CREATE_REQUESTED", adminPayload);
+    }
+
+    private Map<String, Object> baseOnboardingPayload(
+            final Subscription sub,
+            final SubscriptionInfoDto info) {
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("subscriptionId", sub.getSubscriptionId());
+        payload.put("extSubscriptionId", sub.getExtSubscriptionId());
+        payload.put("extCustomerId", sub.getExtCustomerId());
+        payload.put("productId", info.productId());
+        payload.put("tierId", info.tierId());
+        payload.put("tierNameEn", info.tierNameEn());
+        payload.put("tierNameAr", info.tierNameAr());
+        payload.put("environmentSizeCd", info.environmentSizeCd());
+        payload.put("isAutoProvEnabled", info.isAutoProvEnabled());
+        payload.put("prevSubscriptionId", info.prevSubscriptionId());
+        payload.put("prevSubscriptionUpdateAction", info.prevSubscriptionUpdateAction());
+        return payload;
     }
 
     // String-based version (kept for flexibility)
