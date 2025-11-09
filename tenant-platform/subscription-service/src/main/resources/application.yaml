@@ -34,3 +34,12 @@ shared:
     enable-role-check: true
     jwt:
       token-period: 15m
+
+subscription:
+  security:
+    jwt:
+      secret: ${SUBSCRIPTION_JWT_SECRET:change-me-change-me-change-me-change}
+      expiration: 30m
+    users:
+      - loginName: demo
+        password: b03ddf3ca2e714a6548e7495e2a03f5e824eaac9837cd7f159c67b90fb4b7342

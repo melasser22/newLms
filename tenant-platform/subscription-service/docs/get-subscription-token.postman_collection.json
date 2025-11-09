@@ -1,0 +1,36 @@
+{
+  "info": {
+    "name": "Subscription - Get Token",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection containing the /subscription/get-token request"
+  },
+  "item": [
+    {
+      "name": "Get Subscription Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "rqUID",
+            "value": "c73bcdcc-2669-4bf6-81d3-e4ae73fb11fd"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/subscription/get-token",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["subscription", "get-token"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loginName\": \"demo\",\n  \"password\": \"b03ddf3ca2e714a6548e7495e2a03f5e824eaac9837cd7f159c67b90fb4b7342\"\n}"
+        }
+      }
+    }
+  ]
+}
