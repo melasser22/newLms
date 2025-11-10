@@ -36,12 +36,14 @@ import com.ejada.subscription.security.JwtValidator;
 import com.ejada.subscription.service.impl.SubscriptionInboundServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -122,6 +124,38 @@ class SubscriptionInboundServiceImplTest {
   }
 
   @Test
+  void receiveSubscriptionNotificationNormalizesBearerToken() {
+    String jwt = "header.payload.signature";
+    when(jwtValidator.isValid(jwt)).thenReturn(false);
+
+    ReceiveSubscriptionNotificationRq request = notificationRequest();
+
+    service.receiveSubscriptionNotification(RQ_UID, "Bearer " + jwt, request);
+
+    verify(jwtValidator).isValid(jwt);
+    ArgumentCaptor<InboundNotificationAudit> auditCaptor =
+        ArgumentCaptor.forClass(InboundNotificationAudit.class);
+    verify(auditRepository).save(auditCaptor.capture());
+    assertThat(auditCaptor.getValue().getTokenHash()).isEqualTo(sha256(jwt));
+  }
+
+  @Test
+  void receiveSubscriptionNotificationExtractsTokenFromCommaSeparatedHeader() {
+    String jwt = "header.payload.signature";
+    when(jwtValidator.isValid(jwt)).thenReturn(false);
+
+    ReceiveSubscriptionNotificationRq request = notificationRequest();
+
+    service.receiveSubscriptionNotification(RQ_UID, "placeholder, Bearer " + jwt, request);
+
+    verify(jwtValidator).isValid(jwt);
+    ArgumentCaptor<InboundNotificationAudit> auditCaptor =
+        ArgumentCaptor.forClass(InboundNotificationAudit.class);
+    verify(auditRepository).save(auditCaptor.capture());
+    assertThat(auditCaptor.getValue().getTokenHash()).isEqualTo(sha256(jwt));
+  }
+
+  @Test
   void receiveSubscriptionUpdateRejectsInvalidToken() {
     when(jwtValidator.isValid(null)).thenReturn(false);
 
@@ -197,5 +231,22 @@ class SubscriptionInboundServiceImplTest {
         subscriptionProductPropertyMapper,
         subscriptionEnvironmentIdentifierMapper,
         subscriptionUpdateEventMapper);
+  }
+
+  private String sha256(final String value) {
+    if (value == null) {
+      return null;
+    }
+    try {
+      var digest = java.security.MessageDigest.getInstance("SHA-256");
+      byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+      StringBuilder sb = new StringBuilder(hash.length * 2);
+      for (byte b : hash) {
+        sb.append(String.format("%02x", b));
+      }
+      return sb.toString();
+    } catch (java.security.NoSuchAlgorithmException e) {
+      throw new IllegalStateException(e);
+    }
   }
 }
