@@ -6,6 +6,7 @@ import com.ejada.subscription.repository.SubscriptionUserRepository;
 import jakarta.annotation.PostConstruct;
 import java.util.Locale;
 import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -16,18 +17,20 @@ import org.springframework.stereotype.Repository;
 public class InMemorySubscriptionUserRepository implements SubscriptionUserRepository {
 
   private static final Logger log = LoggerFactory.getLogger(InMemorySubscriptionUserRepository.class);
-  private final SubscriptionSecurityProperties properties;
+  private final List<SubscriptionUser> configuredUsers;
   private final Map<String, SubscriptionUser> users = new ConcurrentHashMap<>();
 
   public InMemorySubscriptionUserRepository(final SubscriptionSecurityProperties properties) {
-    this.properties = properties;
+    this.configuredUsers = properties.users().stream()
+        .map(user -> new SubscriptionUser(user.loginName(), user.password()))
+        .toList();
   }
 
   @PostConstruct
   void loadUsers() {
-    properties.getUsers().forEach(user -> {
-      String key = normalize(user.getLoginName());
-      users.put(key, new SubscriptionUser(user.getLoginName(), user.getPassword()));
+    configuredUsers.forEach(user -> {
+      String key = normalize(user.loginName());
+      users.put(key, user);
     });
     log.info("Loaded {} subscription authentication users", users.size());
   }

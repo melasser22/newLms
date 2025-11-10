@@ -34,6 +34,11 @@ public record ServiceResult<T>(
     statusDtls = statusDtls == null ? Collections.emptyList() : List.copyOf(statusDtls);
   }
 
+  @Override
+  public List<String> statusDtls() {
+    return statusDtls == null ? List.of() : List.copyOf(statusDtls);
+  }
+
   public static <T> ServiceResult<T> success(final String rqUid, final T returnedObject) {
     return new ServiceResult<>(rqUid, SUCCESS_CODE, SUCCESS_DESC, returnedObject, null, List.of(), true);
   }

@@ -25,8 +25,8 @@ public class SecurityConfig {
 
   @Bean
   public JwtSigner jwtSigner(final SubscriptionSecurityProperties properties, final Clock clock) {
-    SecretKey key = Keys.hmacShaKeyFor(properties.getJwt().getSecret().getBytes(StandardCharsets.UTF_8));
-    final Duration expiry = properties.getJwt().getExpiration();
+    SecretKey key = Keys.hmacShaKeyFor(properties.jwt().secret().getBytes(StandardCharsets.UTF_8));
+    final Duration expiry = properties.jwt().expiration();
     return subject -> {
       Instant now = clock.instant();
       Instant expiration = now.plus(expiry);
