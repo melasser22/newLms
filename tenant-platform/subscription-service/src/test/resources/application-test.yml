@@ -4,7 +4,7 @@ spring:
     allow-bean-definition-overriding: true
 
   datasource:
-    url: 'jdbc:h2:mem:${random.uuid};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;INIT=CREATE SCHEMA IF NOT EXISTS catalog\\;SET SCHEMA catalog'
+    url: 'jdbc:h2:mem:${random.uuid};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;INIT=CREATE SCHEMA IF NOT EXISTS subscription\\;SET SCHEMA subscription'
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -16,7 +16,7 @@ spring:
       ddl-auto: create-drop
     properties:
       hibernate:
-        default_schema: catalog
+        default_schema: subscription
         hbm2ddl.create_namespaces: true
         format_sql: true
 

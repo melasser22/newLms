@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ejada-catalog
+  name: subscription-service
   labels:
-    app: ejada-catalog
+    app: subscription-service
     version: 1.0.0
 spec:
   selector:
-    app: ejada-catalog
+    app: subscription-service
   ports:
     - protocol: TCP
       port: 80
