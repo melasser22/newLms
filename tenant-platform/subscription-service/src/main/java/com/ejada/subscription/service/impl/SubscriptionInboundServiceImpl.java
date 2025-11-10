@@ -31,6 +31,7 @@ import com.ejada.subscription.repository.SubscriptionFeatureRepository;
 import com.ejada.subscription.repository.SubscriptionProductPropertyRepository;
 import com.ejada.subscription.repository.SubscriptionRepository;
 import com.ejada.subscription.repository.SubscriptionUpdateEventRepository;
+import com.ejada.subscription.security.JwtValidator;
 import com.ejada.subscription.service.SubscriptionInboundService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -86,9 +87,13 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     // JSON
     @SuppressFBWarnings("EI_EXPOSE_REP2")
     private final ObjectMapper objectMapper;
+    private final JwtValidator jwtValidator;
 
     private static final String EP_NOTIFICATION = "RECEIVE_NOTIFICATION";
     private static final String EP_UPDATE       = "RECEIVE_UPDATE";
+    private static final String ERR_UNAUTHORIZED_CODE = "ESEC401";
+    private static final String ERR_UNAUTHORIZED_DESC = "Unauthorized";
+    private static final String INVALID_TOKEN_MESSAGE = "invalid or expired token";
 
     // -------------------------------------------------------------------------
     // Public API
@@ -100,6 +105,11 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             final UUID rqUid,
             final String token,
             final ReceiveSubscriptionNotificationRq rq) {
+
+        if (!jwtValidator.isValid(token)) {
+            log.warn("Rejecting {} due to invalid subscription token", EP_NOTIFICATION);
+            return unauthorized(rqUid, token, rq, EP_NOTIFICATION);
+        }
 
         // 1) Idempotency shortcut (replay same response)
         var existingAudit = auditRepo.findByRqUidAndEndpoint(rqUid, EP_NOTIFICATION).orElse(null);
@@ -177,6 +187,11 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             final UUID rqUid,
             final String token,
             final ReceiveSubscriptionUpdateRq rq) {
+
+        if (!jwtValidator.isValid(token)) {
+            log.warn("Rejecting {} due to invalid subscription token", EP_UPDATE);
+            return unauthorized(rqUid, token, rq, EP_UPDATE);
+        }
 
         // 1) Idempotency by rqUID
         if (updateEventRepo.findByRqUid(rqUid).isPresent()) {
@@ -414,5 +429,23 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     }
     private static <T> ServiceResult<T> err(final String code, final String desc, final String details) {
         return new ServiceResult<>(code, desc, details, null);
+    }
+
+    private <T> ServiceResult<T> unauthorized(
+            final UUID rqUid,
+            final String token,
+            final Object payload,
+            final String endpoint) {
+
+        InboundNotificationAudit audit = new InboundNotificationAudit();
+        audit.setRqUid(rqUid);
+        audit.setEndpoint(endpoint);
+        audit.setTokenHash(sha256(token));
+        audit.setPayload(writeJson(payload));
+        audit = auditRepo.save(audit);
+
+        String details = jsonMsg(INVALID_TOKEN_MESSAGE);
+        markAuditFailure(audit.getInboundNotificationAuditId(), ERR_UNAUTHORIZED_CODE, ERR_UNAUTHORIZED_DESC, details);
+        return err(ERR_UNAUTHORIZED_CODE, ERR_UNAUTHORIZED_DESC, details);
     }
 }
