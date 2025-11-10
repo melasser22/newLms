@@ -2,6 +2,8 @@ package com.ejada.subscription.config;
 
 import com.ejada.subscription.properties.SubscriptionSecurityProperties;
 import com.ejada.subscription.security.JwtSigner;
+import com.ejada.subscription.security.JwtValidator;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
@@ -25,7 +27,7 @@ public class SecurityConfig {
 
   @Bean
   public JwtSigner jwtSigner(final SubscriptionSecurityProperties properties, final Clock clock) {
-    SecretKey key = Keys.hmacShaKeyFor(properties.jwt().secret().getBytes(StandardCharsets.UTF_8));
+    SecretKey key = secretKey(properties);
     final Duration expiry = properties.jwt().expiration();
     return subject -> {
       Instant now = clock.instant();
@@ -38,5 +40,26 @@ public class SecurityConfig {
           .signWith(key)
           .compact();
     };
+  }
+
+  @Bean
+  public JwtValidator jwtValidator(final SubscriptionSecurityProperties properties) {
+    SecretKey key = secretKey(properties);
+    var parser = Jwts.parser().verifyWith(key).build();
+    return token -> {
+      if (token == null || token.isBlank()) {
+        return false;
+      }
+      try {
+        var claims = parser.parseSignedClaims(token).getPayload();
+        return "subscription".equals(claims.get("scope", String.class));
+      } catch (JwtException | IllegalArgumentException ex) {
+        return false;
+      }
+    };
+  }
+
+  private SecretKey secretKey(final SubscriptionSecurityProperties properties) {
+    return Keys.hmacShaKeyFor(properties.jwt().secret().getBytes(StandardCharsets.UTF_8));
   }
 }
