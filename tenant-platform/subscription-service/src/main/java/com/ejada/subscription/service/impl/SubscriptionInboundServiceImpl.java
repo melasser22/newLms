@@ -108,7 +108,9 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
 
         var existingAudit = auditRepo.findByRqUidAndEndpoint(rqUid, EP_NOTIFICATION).orElse(null);
 
-        if (!jwtValidator.isValid(token)) {
+        String normalizedToken = normalizeToken(token);
+
+        if (!jwtValidator.isValid(normalizedToken)) {
             log.warn("Rejecting {} due to invalid subscription token", EP_NOTIFICATION);
             if (existingAudit != null) {
                 if (!Boolean.TRUE.equals(existingAudit.getProcessed())) {
@@ -119,7 +121,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
                         .orElse(jsonMsg(INVALID_TOKEN_MESSAGE));
                 return err(ERR_UNAUTHORIZED_CODE, ERR_UNAUTHORIZED_DESC, details);
             }
-            return unauthorized(rqUid, token, rq, EP_NOTIFICATION);
+            return unauthorized(rqUid, normalizedToken, rq, EP_NOTIFICATION);
         }
 
         // 1) Idempotency shortcut (replay same response)
@@ -144,7 +146,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             audit.setRqUid(rqUid);
             audit.setEndpoint(EP_NOTIFICATION);
         }
-        audit.setTokenHash(sha256(token));
+        audit.setTokenHash(sha256(normalizedToken));
         audit.setPayload(writeJson(rq));
         audit.setProcessed(Boolean.FALSE);
         audit.setProcessedAt(null);
@@ -212,7 +214,9 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
 
         var existingAudit = auditRepo.findByRqUidAndEndpoint(rqUid, EP_UPDATE).orElse(null);
 
-        if (!jwtValidator.isValid(token)) {
+        String normalizedToken = normalizeToken(token);
+
+        if (!jwtValidator.isValid(normalizedToken)) {
             log.warn("Rejecting {} due to invalid subscription token", EP_UPDATE);
             if (existingAudit != null) {
                 if (!Boolean.TRUE.equals(existingAudit.getProcessed())) {
@@ -223,7 +227,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
                         .orElse(jsonMsg(INVALID_TOKEN_MESSAGE));
                 return err(ERR_UNAUTHORIZED_CODE, ERR_UNAUTHORIZED_DESC, details);
             }
-            return unauthorized(rqUid, token, rq, EP_UPDATE);
+            return unauthorized(rqUid, normalizedToken, rq, EP_UPDATE);
         }
 
         // 1) Idempotency by rqUID
@@ -237,7 +241,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             audit.setRqUid(rqUid);
             audit.setEndpoint(EP_UPDATE);
         }
-        audit.setTokenHash(sha256(token));
+        audit.setTokenHash(sha256(normalizedToken));
         audit.setPayload(writeJson(rq));
         audit.setProcessed(Boolean.FALSE);
         audit.setProcessedAt(null);
@@ -415,6 +419,34 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         } catch (Exception e) {
             return "{\"error\":\"serialize\"}";
         }
+    }
+
+    private String normalizeToken(final String rawToken) {
+        if (rawToken == null) {
+            return null;
+        }
+
+        String fallback = null;
+        String[] parts = rawToken.split(",");
+        for (String part : parts) {
+            String candidate = part == null ? null : part.trim();
+            if (candidate == null || candidate.isEmpty()) {
+                continue;
+            }
+            if (candidate.regionMatches(true, 0, "Bearer ", 0, 7)) {
+                candidate = candidate.substring(7).trim();
+            }
+            if (candidate.isEmpty()) {
+                continue;
+            }
+            if (candidate.indexOf('.') > 0) {
+                return candidate;
+            }
+            if (fallback == null) {
+                fallback = candidate;
+            }
+        }
+        return fallback;
     }
 
     private String sha256(final String s) {
