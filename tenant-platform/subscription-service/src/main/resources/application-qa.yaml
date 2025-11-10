@@ -1,11 +1,11 @@
 spring:
   datasource:
-    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ejada}?currentSchema=subscription}"
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lms}?currentSchema=subscription}"
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
-      pool-name: HikariPool-Ejada
+      pool-name: HikariPool-ejada
       maximum-pool-size: 10
       minimum-idle: 2
       idle-timeout: 30000        # 30s
@@ -14,23 +14,28 @@ spring:
 
   jpa:
     open-in-view: false
-    show-sql: true              
+    show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     properties:
       hibernate:
         default_schema: subscription
         hbm2ddl.create_namespaces: true
         format_sql: true
         jdbc.time_zone: UTC
+
   flyway:
-    enabled: false
+    enabled: true
     baseline-on-migrate: true
+    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
+    schemas: public,subscription
+    default-schema: subscription
+
   kafka:
-    bootstrap-servers: kafka:9092
-    client-id: ejada-subscription-qa
+    bootstrap-servers: localhost:29092
+    client-id: ejada-subscription-dev
     consumer:
-      group-id: ejada-backend-qa
+      group-id: ejada-backend-dev
       auto-offset-reset: earliest
       enable-auto-commit: false
       properties:
@@ -43,7 +48,6 @@ spring:
       compression-type: gzip
       properties:
         linger.ms: 5
-
 
   data:
     redis:
@@ -93,7 +97,6 @@ shared:
       allowed-headers: "*"
   headers:
     enabled: true
-
     correlation:
       header: X-Correlation-Id
       auto-generate: true
@@ -121,7 +124,7 @@ shared:
       frame-options: SAMEORIGIN
       content-type-options: nosniff
       referrer-policy: no-referrer
-      xss-protection: "1; mode=block"
+      xss-protection: "0"
     propagation:
       enabled: true
       include:
@@ -160,11 +163,10 @@ shared:
       otlp:
         enabled: false
       outbox:
-        enabled: false
-
+        enabled: true
   openapi:
     enabled: true
-    title: "Ejada - subscription Service API"
+    title: " subscription Service API"
     description: "subscription service endpoints for subscription/platform configuration."
     version: "1.0.0"
     servers:
@@ -173,30 +175,37 @@ shared:
       name: subscription
       packages-to-scan:
         - com.ejada.subscription
-
-    jwt-security: true
+    jwt-security: false
   redis:
     host: redis
     port: 6379
     timeout: 2s
-    key-prefix: ejada
+    key-prefix: subscription
     default-ttl: 600s
     reactive: false
   crypto:
     algorithm: AES_GCM
     in-memory:
-      activeKid: ${CRYPTO_ACTIVE_KID:local-qa-key}
+      activeKid: ${CRYPTO_ACTIVE_KID:local-dev-key}
       keys:
-        local-qa-key: ${CRYPTO_LOCAL_QA_KEY}
+        local-dev-key: ${CRYPTO_LOCAL_DEV_KEY:4J8bfqUaEqzJCQakoJPM3w==}
   security:
     mode: hs256
     jwt:
-      secret: ${JWT_SECRET}
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
       token-period: 15m
     hs256:
-      secret: ${JWT_SECRET}
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
     resource-server:
       enabled: true
+      permit-all:
+       - "/subscription/get-token"                
+      disable-csrf: true
+      stateless: true
+      roles-claim: roles
+      tenant-claim: tenant
+      enable-role-check: true
+
 
 subscription:
   security:
@@ -204,22 +213,24 @@ subscription:
       secret: ${SUBSCRIPTION_JWT_SECRET:c3VwZXJzZWNyZXQtZGVtby1rZXktZm9yLXN1YnNjcmlwdGlvbi1hcGktMjAyNSEh}
       expiration: 30m
     users:
-      - loginName: demo
-        password: b03ddf3ca2e714a6548e7495e2a03f5e824eaac9837cd7f159c67b90fb4b7342
-      permit-all: ["**"]
-      disable-csrf: false
-    stateless: true
-    roles-claim: roles
-    subscription-claim: subscription
-    enable-role-check: true
+      - loginName: ${EHUB_ACCOUNT_USERNAME:demo}
+        password: ${EHUB_ACCOUNT_PASSWORD:b03ddf3ca2e714a6548e7495e2a03f5e824eaac9837cd7f159c67b90fb4b7342}
 
 logging:
-  level:
-    root: ERROR                
-    com.ejada: ERROR
-    org.hibernate.SQL: ERROR   
-    org.hibernate.orm.jdbc.bind: ERROR
-    org.springframework.cache: ERROR
-    org.springframework.cache.interceptor.CacheAspectSupport: ERROR
+ level:
+   root: INFO
+   com.ejada: INFO
+   com.ejada.audit.starter: INFO
+   com.ejada.audit.starter.core.dispatch: INFO
+   com.ejada.audit.starter.core.dispatch.sinks: INFO
+   org.hibernate.tool.schema: INFO
+   org.hibernate.SQL: INFO
+   org.hibernate.orm.jdbc.bind: INFO
+   org.springframework.cache: INFO
+   org.springframework.cache.interceptor.CacheAspectSupport: INFO
+   org.springframework.security: INFO
+   org.springframework.security.oauth2: INFO
+   org.springframework.security.oauth2.server.resource: INFO
+   org.springframework.security.oauth2.jwt: INFO
 
-debug: false
+debug: true
