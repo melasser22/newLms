@@ -106,14 +106,29 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             final String token,
             final ReceiveSubscriptionNotificationRq rq) {
 
+        var existingAudit = auditRepo.findByRqUidAndEndpoint(rqUid, EP_NOTIFICATION).orElse(null);
+
         if (!jwtValidator.isValid(token)) {
             log.warn("Rejecting {} due to invalid subscription token", EP_NOTIFICATION);
+            if (existingAudit != null) {
+                if (!Boolean.TRUE.equals(existingAudit.getProcessed())) {
+                    markAuditFailure(existingAudit.getInboundNotificationAuditId(), ERR_UNAUTHORIZED_CODE,
+                            ERR_UNAUTHORIZED_DESC, jsonMsg(INVALID_TOKEN_MESSAGE));
+                }
+                String details = Optional.ofNullable(existingAudit.getStatusDtls())
+                        .orElse(jsonMsg(INVALID_TOKEN_MESSAGE));
+                return err(ERR_UNAUTHORIZED_CODE, ERR_UNAUTHORIZED_DESC, details);
+            }
             return unauthorized(rqUid, token, rq, EP_NOTIFICATION);
         }
 
         // 1) Idempotency shortcut (replay same response)
-        var existingAudit = auditRepo.findByRqUidAndEndpoint(rqUid, EP_NOTIFICATION).orElse(null);
         if (existingAudit != null && Boolean.TRUE.equals(existingAudit.getProcessed())) {
+            if (ERR_UNAUTHORIZED_CODE.equals(existingAudit.getStatusCode())) {
+                String details = Optional.ofNullable(existingAudit.getStatusDtls())
+                        .orElse(jsonMsg(INVALID_TOKEN_MESSAGE));
+                return err(ERR_UNAUTHORIZED_CODE, ERR_UNAUTHORIZED_DESC, details);
+            }
             var maybeSub = subscriptionRepo.findByExtSubscriptionIdAndExtCustomerId(
                     rq.subscriptionInfo().subscriptionId(), rq.subscriptionInfo().customerId());
             List<SubscriptionEnvironmentIdentifier> ids = maybeSub
@@ -124,11 +139,18 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         }
 
         // 2) Persist inbound audit row
-        InboundNotificationAudit audit = new InboundNotificationAudit();
-        audit.setRqUid(rqUid);
-        audit.setEndpoint(EP_NOTIFICATION);
+        InboundNotificationAudit audit = Optional.ofNullable(existingAudit).orElseGet(InboundNotificationAudit::new);
+        if (audit.getInboundNotificationAuditId() == null) {
+            audit.setRqUid(rqUid);
+            audit.setEndpoint(EP_NOTIFICATION);
+        }
         audit.setTokenHash(sha256(token));
         audit.setPayload(writeJson(rq));
+        audit.setProcessed(Boolean.FALSE);
+        audit.setProcessedAt(null);
+        audit.setStatusCode(null);
+        audit.setStatusDesc(null);
+        audit.setStatusDtls(null);
         audit = auditRepo.save(audit);
 
         try {
@@ -188,8 +210,19 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             final String token,
             final ReceiveSubscriptionUpdateRq rq) {
 
+        var existingAudit = auditRepo.findByRqUidAndEndpoint(rqUid, EP_UPDATE).orElse(null);
+
         if (!jwtValidator.isValid(token)) {
             log.warn("Rejecting {} due to invalid subscription token", EP_UPDATE);
+            if (existingAudit != null) {
+                if (!Boolean.TRUE.equals(existingAudit.getProcessed())) {
+                    markAuditFailure(existingAudit.getInboundNotificationAuditId(), ERR_UNAUTHORIZED_CODE,
+                            ERR_UNAUTHORIZED_DESC, jsonMsg(INVALID_TOKEN_MESSAGE));
+                }
+                String details = Optional.ofNullable(existingAudit.getStatusDtls())
+                        .orElse(jsonMsg(INVALID_TOKEN_MESSAGE));
+                return err(ERR_UNAUTHORIZED_CODE, ERR_UNAUTHORIZED_DESC, details);
+            }
             return unauthorized(rqUid, token, rq, EP_UPDATE);
         }
 
@@ -199,11 +232,18 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         }
 
         // 2) Audit row
-        InboundNotificationAudit audit = new InboundNotificationAudit();
-        audit.setRqUid(rqUid);
-        audit.setEndpoint(EP_UPDATE);
+        InboundNotificationAudit audit = Optional.ofNullable(existingAudit).orElseGet(InboundNotificationAudit::new);
+        if (audit.getInboundNotificationAuditId() == null) {
+            audit.setRqUid(rqUid);
+            audit.setEndpoint(EP_UPDATE);
+        }
         audit.setTokenHash(sha256(token));
         audit.setPayload(writeJson(rq));
+        audit.setProcessed(Boolean.FALSE);
+        audit.setProcessedAt(null);
+        audit.setStatusCode(null);
+        audit.setStatusDesc(null);
+        audit.setStatusDtls(null);
         audit = auditRepo.save(audit);
 
         try {
