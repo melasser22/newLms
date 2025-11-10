@@ -32,11 +32,11 @@ public class SubscriptionInboundController {
     )
     public ResponseEntity<ServiceResult<ReceiveSubscriptionNotificationRs>> receiveSubscriptionNotification(
             @RequestHeader("rqUID") final UUID rqUid,
-            @RequestHeader(value = "token", required = false) final String token,
+            @RequestHeader(value = "token", required = false) final java.util.List<String> tokenHeaders,
             @Valid @RequestBody final ReceiveSubscriptionNotificationRq body) {
 
         ServiceResult<ReceiveSubscriptionNotificationRs> result =
-                service.receiveSubscriptionNotification(rqUid, token, body);
+                service.receiveSubscriptionNotification(rqUid, collapseTokenHeaders(tokenHeaders), body);
         return ResponseEntity.ok(result);
     }
 
@@ -46,10 +46,23 @@ public class SubscriptionInboundController {
     )
     public ResponseEntity<ServiceResult<Void>> receiveSubscriptionUpdate(
             @RequestHeader("rqUID") final UUID rqUid,
-            @RequestHeader(value = "token", required = false) final String token,
+            @RequestHeader(value = "token", required = false) final java.util.List<String> tokenHeaders,
             @Valid @RequestBody final ReceiveSubscriptionUpdateRq body) {
 
-        ServiceResult<Void> result = service.receiveSubscriptionUpdate(rqUid, token, body);
+        ServiceResult<Void> result =
+                service.receiveSubscriptionUpdate(rqUid, collapseTokenHeaders(tokenHeaders), body);
         return ResponseEntity.ok(result);
+    }
+
+    private String collapseTokenHeaders(final java.util.List<String> tokenHeaders) {
+        if (tokenHeaders == null || tokenHeaders.isEmpty()) {
+            return null;
+        }
+        return tokenHeaders.stream()
+                .filter(java.util.Objects::nonNull)
+                .map(String::trim)
+                .filter(token -> !token.isEmpty())
+                .reduce((left, right) -> left + "," + right)
+                .orElse(null);
     }
 }
