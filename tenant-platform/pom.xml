@@ -71,10 +71,7 @@
       <artifactId>spotbugs-annotations</artifactId>
       <optional>true</optional>
     </dependency>
-    <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>starter-observability</artifactId>
-    </dependency>
+   
   </dependencies>
 
   <repositories>

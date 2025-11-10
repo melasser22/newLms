@@ -201,7 +201,7 @@ shared:
 subscription:
   security:
     jwt:
-      secret: ${SUBSCRIPTION_JWT_SECRET:change-me-change-me-change-me-change}
+      secret: ${SUBSCRIPTION_JWT_SECRET:c3VwZXJzZWNyZXQtZGVtby1rZXktZm9yLXN1YnNjcmlwdGlvbi1hcGktMjAyNSEh}
       expiration: 30m
     users:
       - loginName: demo

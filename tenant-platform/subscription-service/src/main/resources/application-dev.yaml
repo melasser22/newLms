@@ -32,7 +32,7 @@ spring:
     default-schema: subscription
 
   kafka:
-    bootstrap-servers: kafka:9092
+    bootstrap-servers: localhost:29092
     client-id: ejada-subscription-dev
     consumer:
       group-id: ejada-backend-dev
@@ -198,34 +198,39 @@ shared:
       secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
     resource-server:
       enabled: true
+      permit-all:
+       - "/**"                 # Allow all (adjust in production)
+      disable-csrf: true
+      stateless: true
+      roles-claim: roles
+      tenant-claim: tenant
+      enable-role-check: true
+
 
 subscription:
   security:
     jwt:
-      secret: ${SUBSCRIPTION_JWT_SECRET:change-me-change-me-change-me-change}
+      secret: ${SUBSCRIPTION_JWT_SECRET:c3VwZXJzZWNyZXQtZGVtby1rZXktZm9yLXN1YnNjcmlwdGlvbi1hcGktMjAyNSEh}
       expiration: 30m
     users:
       - loginName: demo
         password: b03ddf3ca2e714a6548e7495e2a03f5e824eaac9837cd7f159c67b90fb4b7342
-      permit-all:
-        - "/**"
-      disable-csrf: false
-    stateless: true
-    roles-claim: roles
-    subscription-claim: subscription
-    enable-role-check: false
 
 logging:
-  level:
-    root: ERROR
-    com.ejada: ERROR
-    com.ejada.audit.starter: ERROR
-    com.ejada.audit.starter.core.dispatch: ERROR
-    com.ejada.audit.starter.core.dispatch.sinks: ERROR
-    org.hibernate.tool.schema: ERROR
-    org.hibernate.SQL: ERROR
-    org.hibernate.orm.jdbc.bind: ERROR
-    org.springframework.cache: ERROR
-    org.springframework.cache.interceptor.CacheAspectSupport: ERROR
+ level:
+   root: INFO
+   com.ejada: INFO
+   com.ejada.audit.starter: INFO
+   com.ejada.audit.starter.core.dispatch: INFO
+   com.ejada.audit.starter.core.dispatch.sinks: INFO
+   org.hibernate.tool.schema: INFO
+   org.hibernate.SQL: INFO
+   org.hibernate.orm.jdbc.bind: INFO
+   org.springframework.cache: INFO
+   org.springframework.cache.interceptor.CacheAspectSupport: INFO
+   org.springframework.security: INFO
+   org.springframework.security.oauth2: INFO
+   org.springframework.security.oauth2.server.resource: INFO
+   org.springframework.security.oauth2.jwt: INFO
 
 debug: true
