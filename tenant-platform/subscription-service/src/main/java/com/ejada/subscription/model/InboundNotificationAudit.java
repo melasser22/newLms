@@ -12,6 +12,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -43,6 +45,7 @@ public class InboundNotificationAudit {
     @Column(name = "endpoint", length = 64, nullable = false)
     private String endpoint; // RECEIVE_NOTIFICATION | RECEIVE_UPDATE
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
     private String payload;
 
@@ -61,6 +64,7 @@ public class InboundNotificationAudit {
     @Column(name = "status_desc", length = 64)
     private String statusDesc;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "status_dtls", columnDefinition = "jsonb")
     private String statusDtls;
 
