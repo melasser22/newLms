@@ -22,6 +22,8 @@ public interface TenantRepository extends JpaRepository<Tenant, Integer> {
 
     Page<Tenant> findByNameContainingIgnoreCaseAndActiveAndIsDeletedFalse(String name, boolean active, Pageable pageable);
 
+    Optional<Tenant> findByCode(String code);
+
     boolean existsByCode(String code);
 
     boolean existsByCodeAndIdNot(String code, Integer id);
