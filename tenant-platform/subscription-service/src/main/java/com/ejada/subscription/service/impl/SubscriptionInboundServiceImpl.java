@@ -22,6 +22,7 @@ import com.ejada.subscription.model.SubscriptionAdditionalService;
 import com.ejada.subscription.model.SubscriptionEnvironmentIdentifier;
 import com.ejada.subscription.model.SubscriptionFeature;
 import com.ejada.subscription.model.SubscriptionProductProperty;
+import com.ejada.subscription.messaging.TenantOnboardingProducer;
 import com.ejada.subscription.repository.InboundNotificationAuditRepository;
 import com.ejada.subscription.repository.IdempotentRequestRepository;
 import com.ejada.subscription.repository.OutboxEventRepository;
@@ -83,6 +84,8 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     private final SubscriptionProductPropertyMapper propertyMapper;
     private final SubscriptionEnvironmentIdentifierMapper envIdMapper;
     private final SubscriptionUpdateEventMapper updateEventMapper;
+
+    private final TenantOnboardingProducer tenantOnboardingProducer;
 
     // JSON
     @SuppressFBWarnings("EI_EXPOSE_REP2")
@@ -341,6 +344,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
 
         Map<String, Object> tenantPayload = new LinkedHashMap<>(basePayload);
         tenantPayload.put("customerInfo", rq.customerInfo());
+        tenantOnboardingProducer.publishTenantCreateRequested(sub, rq.customerInfo());
         emitOutbox("ONBOARDING", sub.getSubscriptionId().toString(), "TENANT_CREATE_REQUESTED", tenantPayload);
 
         Map<String, Object> catalogPayload = new LinkedHashMap<>(basePayload);
