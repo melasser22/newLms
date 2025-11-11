@@ -43,13 +43,20 @@ public class TenantOnboardingProducer {
                 customerInfo.email(),
                 customerInfo.mobileNo());
 
+        String extSubscriptionId = subscription.getExtSubscriptionId() == null
+                ? null
+                : subscription.getExtSubscriptionId().toString();
+        String extCustomerId = subscription.getExtCustomerId() == null
+                ? null
+                : subscription.getExtCustomerId().toString();
+
         TenantProvisioningEvent event = new TenantProvisioningEvent(
                 subscription.getSubscriptionId(),
-                subscription.getExtSubscriptionId(),
-                subscription.getExtCustomerId(),
+                extSubscriptionId,
+                extCustomerId,
                 payloadCustomer);
 
-        String key = subscription.getExtCustomerId();
+        String key = extCustomerId;
         kafkaTemplate.send(topics.tenantOnboarding(), key, event)
                 .whenComplete((result, ex) -> {
                     if (ex != null) {
