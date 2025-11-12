@@ -45,9 +45,9 @@ create table IF NOT EXISTS subscription (
   constraint ux_sub_unique_ext unique (ext_subscription_id, ext_customer_id)
 );
 
-create index idx_sub_ext_customer on subscription(ext_customer_id) where is_deleted=false;
-create index idx_sub_ext_product  on subscription(ext_product_id)  where is_deleted=false;
-create index idx_sub_status_cd    on subscription(subscription_stts_cd) where is_deleted=false;
+create index IF NOT EXISTS idx_sub_ext_customer on subscription(ext_customer_id) where is_deleted=false;
+create index IF NOT EXISTS idx_sub_ext_product  on subscription(ext_product_id)  where is_deleted=false;
+create index IF NOT EXISTS idx_sub_status_cd    on subscription(subscription_stts_cd) where is_deleted=false;
 
 -- ========= Subscription Features (from subscriptionInfo.SubscriptionFeatureLst[]) =========
 create table IF NOT EXISTS subscription_feature (
@@ -60,7 +60,7 @@ create table IF NOT EXISTS subscription_feature (
   constraint fk_sf_sub foreign key (subscription_id) references subscription(subscription_id) on delete cascade,
   constraint ux_sf unique (subscription_id, feature_cd)
 );
-create index idx_sf_sub on subscription_feature(subscription_id);
+create index IF NOT EXISTS idx_sf_sub on subscription_feature(subscription_id);
 
 -- ========= Subscription Additional Services (from subscriptionAdditionalServicesLst[]) =========
 create table IF NOT EXISTS subscription_additional_service (
@@ -86,7 +86,7 @@ create table IF NOT EXISTS subscription_additional_service (
   updated_at              timestamptz,
   constraint fk_sas_sub foreign key (subscription_id) references subscription(subscription_id) on delete cascade
 );
-create index idx_sas_sub on subscription_additional_service(subscription_id);
+create index IF NOT EXISTS idx_sas_sub on subscription_additional_service(subscription_id);
 
 -- ========= Product Properties (from productProperties[] at root of notification request) =========
 create table IF NOT EXISTS subscription_product_property (
@@ -98,7 +98,7 @@ create table IF NOT EXISTS subscription_product_property (
   constraint fk_spp_sub foreign key (subscription_id) references subscription(subscription_id) on delete cascade,
   constraint ux_spp unique (subscription_id, property_cd)
 );
-create index idx_spp_sub on subscription_product_property(subscription_id);
+create index IF NOT EXISTS idx_spp_sub on subscription_product_property(subscription_id);
 
 -- ========= Provisioning Environment Identifiers we return (ReceiveSubscriptionNotificationRs.environmentIdentiferLst) =========
 create table IF NOT EXISTS subscription_environment_identifier (
@@ -110,4 +110,4 @@ create table IF NOT EXISTS subscription_environment_identifier (
   constraint fk_sei_sub foreign key (subscription_id) references subscription(subscription_id) on delete cascade,
   constraint ux_sei unique (subscription_id, identifier_cd)
 );
-create index idx_sei_sub on subscription_environment_identifier(subscription_id);
+create index IF NOT EXISTS idx_sei_sub on subscription_environment_identifier(subscription_id);
