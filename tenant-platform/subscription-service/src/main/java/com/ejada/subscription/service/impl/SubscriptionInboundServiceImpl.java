@@ -344,7 +344,7 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
 
         Map<String, Object> tenantPayload = new LinkedHashMap<>(basePayload);
         tenantPayload.put("customerInfo", rq.customerInfo());
-        tenantOnboardingProducer.publishTenantCreateRequested(sub, rq.customerInfo());
+        tenantOnboardingProducer.publishTenantCreateRequested(sub, rq.customerInfo(), rq.adminUserInfo());
         emitOutbox("ONBOARDING", sub.getSubscriptionId().toString(), "TENANT_CREATE_REQUESTED", tenantPayload);
 
         Map<String, Object> catalogPayload = new LinkedHashMap<>(basePayload);

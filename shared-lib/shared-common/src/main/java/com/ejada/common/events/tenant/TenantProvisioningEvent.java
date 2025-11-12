@@ -10,7 +10,8 @@ public record TenantProvisioningEvent(
         Long subscriptionId,
         String extSubscriptionId,
         String extCustomerId,
-        TenantCustomerInfo customerInfo
+        TenantCustomerInfo customerInfo,
+        TenantAdminInfo adminInfo
 ) implements Serializable {
 
     public TenantProvisioningEvent {
@@ -31,5 +32,13 @@ public record TenantProvisioningEvent(
             String addressAr,
             String email,
             String mobileNo
+    ) implements Serializable { }
+
+    /** Admin user details forwarded from the marketplace payload. */
+    public record TenantAdminInfo(
+            String adminUserName,
+            String email,
+            String mobileNo,
+            String preferredLang
     ) implements Serializable { }
 }

@@ -30,7 +30,8 @@ class TenantOnboardingServiceTest {
                 "SUB-42",
                 "CUST-1",
                 new TenantCustomerInfo("Ejada EN", "Ejada AR", "COMPANY", null, null, null, null, null,
-                        "ops@example.com", "+966500000000"));
+                        "ops@example.com", "+966500000000"),
+                null);
 
         service.createOrUpdateTenant(event);
 
@@ -63,7 +64,8 @@ class TenantOnboardingServiceTest {
                 "SUB-77",
                 "CUST-2",
                 new TenantCustomerInfo(null, "Ejada Arabic", null, null, null, null, null, null,
-                        "new@example.com", null));
+                        "new@example.com", null),
+                null);
 
         service.createOrUpdateTenant(event);
 
@@ -81,7 +83,8 @@ class TenantOnboardingServiceTest {
                 1L,
                 "SUB-1",
                 "  ",
-                new TenantCustomerInfo(null, null, null, null, null, null, null, null, null, null));
+                new TenantCustomerInfo(null, null, null, null, null, null, null, null, null, null),
+                null);
 
         service.createOrUpdateTenant(event);
 
