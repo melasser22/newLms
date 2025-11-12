@@ -23,6 +23,7 @@ import com.ejada.subscription.mapper.SubscriptionMapper;
 import com.ejada.subscription.mapper.SubscriptionProductPropertyMapper;
 import com.ejada.subscription.mapper.SubscriptionUpdateEventMapper;
 import com.ejada.subscription.model.InboundNotificationAudit;
+import com.ejada.subscription.messaging.TenantOnboardingProducer;
 import com.ejada.subscription.repository.IdempotentRequestRepository;
 import com.ejada.subscription.repository.InboundNotificationAuditRepository;
 import com.ejada.subscription.repository.OutboxEventRepository;
@@ -67,6 +68,7 @@ class SubscriptionInboundServiceImplTest {
   @Mock private SubscriptionProductPropertyMapper subscriptionProductPropertyMapper;
   @Mock private SubscriptionEnvironmentIdentifierMapper subscriptionEnvironmentIdentifierMapper;
   @Mock private SubscriptionUpdateEventMapper subscriptionUpdateEventMapper;
+  @Mock private TenantOnboardingProducer tenantOnboardingProducer;
   @Mock private JwtValidator jwtValidator;
 
   private SubscriptionInboundServiceImpl service;
@@ -97,6 +99,7 @@ class SubscriptionInboundServiceImplTest {
             subscriptionProductPropertyMapper,
             subscriptionEnvironmentIdentifierMapper,
             subscriptionUpdateEventMapper,
+            tenantOnboardingProducer,
             new ObjectMapper(),
             jwtValidator);
   }
