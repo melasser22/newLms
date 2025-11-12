@@ -1,7 +1,6 @@
 package com.ejada.subscription.messaging;
 
 import com.ejada.common.events.tenant.TenantProvisioningEvent;
-import com.ejada.common.events.tenant.TenantProvisioningEvent.TenantAdminInfo;
 import com.ejada.common.events.tenant.TenantProvisioningEvent.TenantCustomerInfo;
 import com.ejada.subscription.dto.CustomerInfoDto;
 import com.ejada.subscription.dto.AdminUserInfoDto;
@@ -14,6 +13,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.Constructor;
 import java.util.concurrent.CompletableFuture;
 
 @Component
@@ -51,13 +51,10 @@ public class TenantOnboardingProducer {
                 customerInfo.email(),
                 customerInfo.mobileNo());
 
-        TenantAdminInfo payloadAdmin = adminUserInfo == null
+        Class<?> adminInfoClass = resolveAdminInfoClass();
+        Object payloadAdmin = adminInfoClass == null
                 ? null
-                : new TenantAdminInfo(
-                        adminUserInfo.adminUserName(),
-                        adminUserInfo.email(),
-                        adminUserInfo.mobileNo(),
-                        adminUserInfo.preferredLang());
+                : buildAdminInfoPayload(adminInfoClass, adminUserInfo);
 
         String extSubscriptionId = subscription.getExtSubscriptionId() == null
                 ? null
@@ -66,12 +63,13 @@ public class TenantOnboardingProducer {
                 ? null
                 : subscription.getExtCustomerId().toString();
 
-        TenantProvisioningEvent event = new TenantProvisioningEvent(
-                subscription.getSubscriptionId(),
+        TenantProvisioningEvent event = buildEvent(
+                subscription,
                 extSubscriptionId,
                 extCustomerId,
                 payloadCustomer,
-                payloadAdmin);
+                payloadAdmin,
+                adminInfoClass);
 
         String topic = topics.tenantOnboarding();
         String key = extCustomerId;
@@ -86,5 +84,78 @@ public class TenantOnboardingProducer {
                 log.info("Published tenant onboarding event to {} partition {} offset {}", result.getRecordMetadata().topic(), result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
             }
         });
+    }
+
+    private Class<?> resolveAdminInfoClass() {
+        try {
+            return Class.forName("com.ejada.common.events.tenant.TenantProvisioningEvent$TenantAdminInfo");
+        } catch (ClassNotFoundException ex) {
+            log.debug("Tenant admin info payload type not present; proceeding without admin details");
+            return null;
+        }
+    }
+
+    private Object buildAdminInfoPayload(final Class<?> adminInfoClass, final AdminUserInfoDto adminUserInfo) {
+        if (adminUserInfo == null) {
+            return null;
+        }
+        try {
+            Constructor<?> constructor = adminInfoClass.getDeclaredConstructor(
+                    String.class, String.class, String.class, String.class);
+            return constructor.newInstance(
+                    adminUserInfo.adminUserName(),
+                    adminUserInfo.email(),
+                    adminUserInfo.mobileNo(),
+                    adminUserInfo.preferredLang());
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException("Failed to construct tenant admin info payload", ex);
+        }
+    }
+
+    private TenantProvisioningEvent buildEvent(
+            final Subscription subscription,
+            final String extSubscriptionId,
+            final String extCustomerId,
+            final TenantCustomerInfo payloadCustomer,
+            final Object payloadAdmin,
+            final Class<?> adminInfoClass) {
+
+        if (adminInfoClass != null) {
+            try {
+                Constructor<?> constructor = TenantProvisioningEvent.class.getDeclaredConstructor(
+                        Long.class,
+                        String.class,
+                        String.class,
+                        TenantCustomerInfo.class,
+                        adminInfoClass);
+                return (TenantProvisioningEvent) constructor.newInstance(
+                        subscription.getSubscriptionId(),
+                        extSubscriptionId,
+                        extCustomerId,
+                        payloadCustomer,
+                        payloadAdmin);
+            } catch (NoSuchMethodException ex) {
+                log.debug(
+                        "TenantProvisioningEvent does not expose admin payload constructor; falling back to customer-only payload",
+                        ex);
+            } catch (ReflectiveOperationException ex) {
+                throw new IllegalStateException("Failed to construct tenant provisioning event with admin payload", ex);
+            }
+        }
+
+        try {
+            Constructor<TenantProvisioningEvent> constructor = TenantProvisioningEvent.class.getDeclaredConstructor(
+                    Long.class,
+                    String.class,
+                    String.class,
+                    TenantCustomerInfo.class);
+            return constructor.newInstance(
+                    subscription.getSubscriptionId(),
+                    extSubscriptionId,
+                    extCustomerId,
+                    payloadCustomer);
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException("Failed to construct tenant provisioning event", ex);
+        }
     }
 }
