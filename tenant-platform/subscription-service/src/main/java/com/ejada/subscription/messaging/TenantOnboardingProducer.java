@@ -20,7 +20,7 @@ import java.util.concurrent.CompletableFuture;
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "KafkaTemplate is a Spring-managed bean and safe to retain")
 public class TenantOnboardingProducer {
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, TenantProvisioningEvent> kafkaTemplate;
     private final SubscriptionKafkaTopicsProperties topics;
 
     public void publishTenantCreateRequested(final Subscription subscription,
@@ -64,7 +64,7 @@ public class TenantOnboardingProducer {
         String topic = topics.tenantOnboarding();
         String key = extCustomerId;
 
-        CompletableFuture<SendResult<String, Object>> sendResultFuture =
+        CompletableFuture<SendResult<String, TenantProvisioningEvent>> sendResultFuture =
                 key == null ? kafkaTemplate.send(topic, event) : kafkaTemplate.send(topic, key, event);
 
         sendResultFuture.whenComplete((result, ex) -> {
