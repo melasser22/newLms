@@ -26,7 +26,7 @@ public class TenantOnboardingListener {
         this.topics = topics;
     }
 
-    @KafkaListener(topics = "#{@tenantKafkaTopicsProperties.tenantOnboarding()}")
+    @KafkaListener(topics = "${tenant.kafka.topics.tenant-onboarding}")
     public void handleTenantProvisioning(@Payload final Map<String, Object> payload) {
         try {
             TenantProvisioningEvent event = objectMapper.convertValue(payload, TenantProvisioningEvent.class);
