@@ -4,20 +4,27 @@ import com.ejada.common.events.tenant.TenantProvisioningEvent;
 import com.ejada.tenant.properties.TenantKafkaTopicsProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class TenantOnboardingListener {
 
     private final ObjectMapper objectMapper;
     private final TenantOnboardingService onboardingService;
     private final TenantKafkaTopicsProperties topics;
+
+    public TenantOnboardingListener(
+            final ObjectMapper objectMapper,
+            final TenantOnboardingService onboardingService,
+            final TenantKafkaTopicsProperties topics) {
+        this.objectMapper = objectMapper.copy();
+        this.onboardingService = onboardingService;
+        this.topics = topics;
+    }
 
     @KafkaListener(topics = "#{@tenantKafkaTopicsProperties.tenantOnboarding()}")
     public void handleTenantProvisioning(@Payload final Map<String, Object> payload) {
