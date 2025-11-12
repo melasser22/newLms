@@ -1,6 +1,7 @@
 package com.ejada.common.events.tenant;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * Event published by the subscription service to kick off tenant onboarding in
@@ -8,6 +9,7 @@ import java.io.Serializable;
  */
 public record TenantProvisioningEvent(
         Long subscriptionId,
+        UUID tenantId,
         String extSubscriptionId,
         String extCustomerId,
         TenantCustomerInfo customerInfo,

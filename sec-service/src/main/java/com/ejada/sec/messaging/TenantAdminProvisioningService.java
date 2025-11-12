@@ -57,7 +57,11 @@ public class TenantAdminProvisioningService {
             return;
         }
 
-        UUID tenantId = tenantIdFromExternal(extCustomerId);
+        UUID tenantId = event.tenantId() != null ? event.tenantId() : tenantIdFromExternal(extCustomerId);
+        if (tenantId == null) {
+            log.warn("Skipping admin provisioning for customer {}: unable to determine tenant id", extCustomerId);
+            return;
+        }
         Optional<User> existing = userRepository.findByTenantIdAndUsername(tenantId, username);
         if (existing.isPresent()) {
             updateExistingAdmin(existing.get(), email, tenantId);

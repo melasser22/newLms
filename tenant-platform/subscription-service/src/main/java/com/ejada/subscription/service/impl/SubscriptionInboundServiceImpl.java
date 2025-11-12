@@ -340,11 +340,12 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             final ReceiveSubscriptionNotificationRq rq) {
 
         SubscriptionInfoDto info = rq.subscriptionInfo();
-        Map<String, Object> basePayload = baseOnboardingPayload(sub, info);
+        UUID tenantId = resolveTenantId(sub);
+        Map<String, Object> basePayload = baseOnboardingPayload(sub, info, tenantId);
 
         Map<String, Object> tenantPayload = new LinkedHashMap<>(basePayload);
         tenantPayload.put("customerInfo", rq.customerInfo());
-        tenantOnboardingProducer.publishTenantCreateRequested(sub, rq.customerInfo(), rq.adminUserInfo());
+        tenantOnboardingProducer.publishTenantCreateRequested(sub, tenantId, rq.customerInfo(), rq.adminUserInfo());
         emitOutbox("ONBOARDING", sub.getSubscriptionId().toString(), "TENANT_CREATE_REQUESTED", tenantPayload);
 
         Map<String, Object> catalogPayload = new LinkedHashMap<>(basePayload);
@@ -372,17 +373,22 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
 
         Map<String, Object> adminPayload = new LinkedHashMap<>(basePayload);
         adminPayload.put("adminUserInfo", rq.adminUserInfo());
+        if (tenantId != null) {
+            adminPayload.put("tenantId", tenantId.toString());
+        }
         emitOutbox("ONBOARDING", sub.getSubscriptionId().toString(), "TENANT_ADMIN_CREATE_REQUESTED", adminPayload);
     }
 
     private Map<String, Object> baseOnboardingPayload(
             final Subscription sub,
-            final SubscriptionInfoDto info) {
+            final SubscriptionInfoDto info,
+            final UUID tenantId) {
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("subscriptionId", sub.getSubscriptionId());
         payload.put("extSubscriptionId", sub.getExtSubscriptionId());
         payload.put("extCustomerId", sub.getExtCustomerId());
+        payload.put("tenantId", tenantId == null ? null : tenantId.toString());
         payload.put("productId", info.productId());
         payload.put("tierId", info.tierId());
         payload.put("tierNameEn", info.tierNameEn());
@@ -392,6 +398,14 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
         payload.put("prevSubscriptionId", info.prevSubscriptionId());
         payload.put("prevSubscriptionUpdateAction", info.prevSubscriptionUpdateAction());
         return payload;
+    }
+
+    private UUID resolveTenantId(final Subscription sub) {
+        if (sub == null || sub.getExtCustomerId() == null) {
+            return null;
+        }
+        String key = "tenant:" + sub.getExtCustomerId();
+        return UUID.nameUUIDFromBytes(key.getBytes(StandardCharsets.UTF_8));
     }
 
     // String-based version (kept for flexibility)

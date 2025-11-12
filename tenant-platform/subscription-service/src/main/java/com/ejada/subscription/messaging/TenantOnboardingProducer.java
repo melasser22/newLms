@@ -14,6 +14,8 @@ import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Constructor;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Component
@@ -26,6 +28,7 @@ public class TenantOnboardingProducer {
     private final SubscriptionKafkaTopicsProperties topics;
 
     public void publishTenantCreateRequested(final Subscription subscription,
+            final UUID tenantId,
             final CustomerInfoDto customerInfo,
             final AdminUserInfoDto adminUserInfo) {
 
@@ -63,8 +66,11 @@ public class TenantOnboardingProducer {
                 ? null
                 : subscription.getExtCustomerId().toString();
 
+        UUID resolvedTenantId = tenantId != null ? tenantId : deriveTenantId(subscription);
+
         TenantProvisioningEvent event = buildEvent(
                 subscription,
+                resolvedTenantId,
                 extSubscriptionId,
                 extCustomerId,
                 payloadCustomer,
@@ -114,6 +120,7 @@ public class TenantOnboardingProducer {
 
     private TenantProvisioningEvent buildEvent(
             final Subscription subscription,
+            final UUID tenantId,
             final String extSubscriptionId,
             final String extCustomerId,
             final TenantCustomerInfo payloadCustomer,
@@ -124,12 +131,14 @@ public class TenantOnboardingProducer {
             try {
                 Constructor<?> constructor = TenantProvisioningEvent.class.getDeclaredConstructor(
                         Long.class,
+                        UUID.class,
                         String.class,
                         String.class,
                         TenantCustomerInfo.class,
                         adminInfoClass);
                 return (TenantProvisioningEvent) constructor.newInstance(
                         subscription.getSubscriptionId(),
+                        tenantId,
                         extSubscriptionId,
                         extCustomerId,
                         payloadCustomer,
@@ -146,16 +155,26 @@ public class TenantOnboardingProducer {
         try {
             Constructor<TenantProvisioningEvent> constructor = TenantProvisioningEvent.class.getDeclaredConstructor(
                     Long.class,
+                    UUID.class,
                     String.class,
                     String.class,
                     TenantCustomerInfo.class);
             return constructor.newInstance(
                     subscription.getSubscriptionId(),
+                    tenantId,
                     extSubscriptionId,
                     extCustomerId,
                     payloadCustomer);
         } catch (ReflectiveOperationException ex) {
             throw new IllegalStateException("Failed to construct tenant provisioning event", ex);
         }
+    }
+
+    private UUID deriveTenantId(final Subscription subscription) {
+        if (subscription == null || subscription.getExtCustomerId() == null) {
+            return null;
+        }
+        String key = "tenant:" + subscription.getExtCustomerId();
+        return UUID.nameUUIDFromBytes(key.getBytes(StandardCharsets.UTF_8));
     }
 }
