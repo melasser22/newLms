@@ -5,6 +5,7 @@ import com.ejada.common.events.tenant.TenantProvisioningEvent.TenantCustomerInfo
 import com.ejada.tenant.model.Tenant;
 import com.ejada.tenant.repository.TenantRepository;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -27,6 +28,7 @@ class TenantOnboardingServiceTest {
 
         TenantProvisioningEvent event = new TenantProvisioningEvent(
                 42L,
+                UUID.fromString("00000000-0000-0000-0000-000000000042"),
                 "SUB-42",
                 "CUST-1",
                 new TenantCustomerInfo("Ejada EN", "Ejada AR", "COMPANY", null, null, null, null, null,
@@ -61,6 +63,7 @@ class TenantOnboardingServiceTest {
 
         TenantProvisioningEvent event = new TenantProvisioningEvent(
                 77L,
+                UUID.fromString("00000000-0000-0000-0000-000000000077"),
                 "SUB-77",
                 "CUST-2",
                 new TenantCustomerInfo(null, "Ejada Arabic", null, null, null, null, null, null,
@@ -81,6 +84,7 @@ class TenantOnboardingServiceTest {
     void skipsEventWithoutCustomerId() {
         TenantProvisioningEvent event = new TenantProvisioningEvent(
                 1L,
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
                 "SUB-1",
                 "  ",
                 new TenantCustomerInfo(null, null, null, null, null, null, null, null, null, null),

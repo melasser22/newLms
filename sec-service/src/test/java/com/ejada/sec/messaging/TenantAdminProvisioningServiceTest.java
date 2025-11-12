@@ -45,7 +45,7 @@ class TenantAdminProvisioningServiceTest {
     @Test
     void createsAdminUserWhenNotPresent() {
         TenantProvisioningEvent event = provisioningEvent();
-        UUID tenantId = UUID.nameUUIDFromBytes("tenant:9054".getBytes(StandardCharsets.UTF_8));
+        UUID tenantId = event.tenantId();
 
         when(userRepository.findByTenantIdAndUsername(tenantId, "m.alqahtani")).thenReturn(Optional.empty());
         when(userRepository.existsByTenantIdAndEmail(tenantId, "m.alqahtani@alnoursolutions.com")).thenReturn(false);
@@ -81,7 +81,7 @@ class TenantAdminProvisioningServiceTest {
 
     @Test
     void skipsWhenAdminInfoMissing() {
-        TenantProvisioningEvent event = new TenantProvisioningEvent(5178L, "5178", "9054", customerInfo(), null);
+        TenantProvisioningEvent event = new TenantProvisioningEvent(5178L, UUID.randomUUID(), "5178", "9054", customerInfo(), null);
 
         service.provisionTenantAdmin(event);
 
@@ -91,7 +91,7 @@ class TenantAdminProvisioningServiceTest {
     @Test
     void updatesEmailForExistingAdmin() {
         TenantProvisioningEvent event = provisioningEvent();
-        UUID tenantId = UUID.nameUUIDFromBytes("tenant:9054".getBytes(StandardCharsets.UTF_8));
+        UUID tenantId = event.tenantId();
 
         User existing = new User();
         existing.setId(11L);
@@ -115,7 +115,8 @@ class TenantAdminProvisioningServiceTest {
     }
 
     private TenantProvisioningEvent provisioningEvent() {
-        return new TenantProvisioningEvent(5178L, "5178", "9054", customerInfo(),
+        UUID tenantId = UUID.nameUUIDFromBytes("tenant:9054".getBytes(StandardCharsets.UTF_8));
+        return new TenantProvisioningEvent(5178L, tenantId, "5178", "9054", customerInfo(),
                 new TenantAdminInfo("m.alqahtani", "m.alqahtani@alnoursolutions.com", "+966501234567", "AR"));
     }
 
