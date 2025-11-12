@@ -1,8 +1,10 @@
 package com.ejada.subscription.messaging;
 
 import com.ejada.common.events.tenant.TenantProvisioningEvent;
+import com.ejada.common.events.tenant.TenantProvisioningEvent.TenantAdminInfo;
 import com.ejada.common.events.tenant.TenantProvisioningEvent.TenantCustomerInfo;
 import com.ejada.subscription.dto.CustomerInfoDto;
+import com.ejada.subscription.dto.AdminUserInfoDto;
 import com.ejada.subscription.model.Subscription;
 import com.ejada.subscription.properties.SubscriptionKafkaTopicsProperties;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -24,7 +26,8 @@ public class TenantOnboardingProducer {
     private final SubscriptionKafkaTopicsProperties topics;
 
     public void publishTenantCreateRequested(final Subscription subscription,
-            final CustomerInfoDto customerInfo) {
+            final CustomerInfoDto customerInfo,
+            final AdminUserInfoDto adminUserInfo) {
 
         if (subscription == null) {
             log.warn("Skipping tenant onboarding publish: subscription is null");
@@ -48,6 +51,14 @@ public class TenantOnboardingProducer {
                 customerInfo.email(),
                 customerInfo.mobileNo());
 
+        TenantAdminInfo payloadAdmin = adminUserInfo == null
+                ? null
+                : new TenantAdminInfo(
+                        adminUserInfo.adminUserName(),
+                        adminUserInfo.email(),
+                        adminUserInfo.mobileNo(),
+                        adminUserInfo.preferredLang());
+
         String extSubscriptionId = subscription.getExtSubscriptionId() == null
                 ? null
                 : subscription.getExtSubscriptionId().toString();
@@ -59,7 +70,8 @@ public class TenantOnboardingProducer {
                 subscription.getSubscriptionId(),
                 extSubscriptionId,
                 extCustomerId,
-                payloadCustomer);
+                payloadCustomer,
+                payloadAdmin);
 
         String topic = topics.tenantOnboarding();
         String key = extCustomerId;

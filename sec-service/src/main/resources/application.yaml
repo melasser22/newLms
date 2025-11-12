@@ -33,3 +33,8 @@ shared:
     enable-role-check: true
     jwt:
       token-period: 15m
+
+sec:
+  kafka:
+    topics:
+      tenant-onboarding: ${SEC_KAFKA_TENANT_TOPIC:tenant-platform.onboarding.tenants}
