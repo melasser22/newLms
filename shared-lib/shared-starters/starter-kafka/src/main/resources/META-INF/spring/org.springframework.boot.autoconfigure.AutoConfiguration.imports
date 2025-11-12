@@ -1,1 +1,2 @@
 com.ejada.kafka_starter.config.KafkaAutoConfiguration
+com.ejada.kafka_starter.config.KafkaTopicConfig
