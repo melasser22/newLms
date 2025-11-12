@@ -5,14 +5,19 @@ import com.ejada.common.events.tenant.TenantProvisioningEvent.TenantCustomerInfo
 import com.ejada.subscription.dto.CustomerInfoDto;
 import com.ejada.subscription.model.Subscription;
 import com.ejada.subscription.properties.SubscriptionKafkaTopicsProperties;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.CompletableFuture;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "KafkaTemplate is a Spring-managed bean and safe to retain")
 public class TenantOnboardingProducer {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -56,14 +61,18 @@ public class TenantOnboardingProducer {
                 extCustomerId,
                 payloadCustomer);
 
+        String topic = topics.tenantOnboarding();
         String key = extCustomerId;
-        kafkaTemplate.send(topics.tenantOnboarding(), key, event)
-                .whenComplete((result, ex) -> {
-                    if (ex != null) {
-                        log.error("Failed to publish tenant onboarding event for subscription {}", subscription.getSubscriptionId(), ex);
-                    } else if (result != null) {
-                        log.info("Published tenant onboarding event to {} partition {} offset {}", result.getRecordMetadata().topic(), result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
-                    }
-                });
+
+        CompletableFuture<SendResult<String, Object>> sendResultFuture =
+                key == null ? kafkaTemplate.send(topic, event) : kafkaTemplate.send(topic, key, event);
+
+        sendResultFuture.whenComplete((result, ex) -> {
+            if (ex != null) {
+                log.error("Failed to publish tenant onboarding event for subscription {}", subscription.getSubscriptionId(), ex);
+            } else if (result != null) {
+                log.info("Published tenant onboarding event to {} partition {} offset {}", result.getRecordMetadata().topic(), result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
+            }
+        });
     }
 }
