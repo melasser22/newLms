@@ -2,16 +2,21 @@ package com.ejada.tenant.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(
@@ -69,12 +74,23 @@ public class Tenant {
     @Column(name = "updated_at", insertable = false)
     private java.time.OffsetDateTime updatedAt;
 
+    @OneToMany(mappedBy = "tenant", fetch = FetchType.LAZY)
+    private Set<TenantIntegrationKey> integrationKeys = new HashSet<>();
+
     public final boolean isActive() {
         return Boolean.TRUE.equals(active);
     }
 
     public final boolean isDeleted() {
         return Boolean.TRUE.equals(isDeleted);
+    }
+
+    public final Set<TenantIntegrationKey> getIntegrationKeys() {
+        return integrationKeys;
+    }
+
+    public final void setIntegrationKeys(final Set<TenantIntegrationKey> integrationKeys) {
+        this.integrationKeys = integrationKeys == null ? new HashSet<>() : new HashSet<>(integrationKeys);
     }
 
     /** id-only reference helper */
