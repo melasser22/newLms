@@ -28,4 +28,4 @@ create table IF NOT EXISTS subscription_update_event (
   constraint ux_su_unique unique (rq_uid)
 );
 
-create index idx_sue_sub on subscription_update_event(ext_subscription_id);
+create index if not exists idx_sue_sub on subscription_update_event(ext_subscription_id);
