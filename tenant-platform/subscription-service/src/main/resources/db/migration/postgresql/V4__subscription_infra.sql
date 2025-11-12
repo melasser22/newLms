@@ -9,7 +9,7 @@ create table IF NOT EXISTS outbox_event (
   created_at     timestamptz not null default now(),
   processed_at   timestamptz
 );
-create index idx_outbox_unprocessed on outbox_event(aggregate_type, aggregate_id) where processed_at is null;
+create index if not exists idx_outbox_unprocessed on outbox_event(aggregate_type, aggregate_id) where processed_at is null;
 
 -- ========= Idempotent request keys for write paths (rqUID) =========
 create table IF NOT EXISTS idempotent_request (
