@@ -18,7 +18,7 @@ public class YesNoBooleanDeserializer extends JsonDeserializer<Boolean> {
     public Boolean deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException {
         JsonToken token = p.getCurrentToken();
         if (token == JsonToken.VALUE_NULL) {
-            return null;
+            return getNullValue(ctxt);
         }
         if (token == JsonToken.VALUE_TRUE) {
             return Boolean.TRUE;
@@ -29,11 +29,11 @@ public class YesNoBooleanDeserializer extends JsonDeserializer<Boolean> {
         if (token == JsonToken.VALUE_STRING) {
             String text = p.getText();
             if (text == null) {
-                return null;
+                return getNullValue(ctxt);
             }
             String normalized = text.trim();
             if (normalized.isEmpty()) {
-                return null;
+                return getNullValue(ctxt);
             }
             if ("Y".equalsIgnoreCase(normalized) || "YES".equalsIgnoreCase(normalized)) {
                 return Boolean.TRUE;
