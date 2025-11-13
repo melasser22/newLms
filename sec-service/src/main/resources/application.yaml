@@ -37,4 +37,4 @@ shared:
 sec:
   kafka:
     topics:
-      tenant-onboarding: ${SEC_KAFKA_TENANT_TOPIC:tenant-platform.onboarding.tenants}
+      tenant-onboarding: "${SEC_KAFKA_TENANT_TOPIC:tenant-platform.onboarding.tenants}"
