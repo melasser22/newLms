@@ -1,5 +1,7 @@
 package com.ejada.subscription.dto;
 
+import com.ejada.subscription.json.YesNoBooleanDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -31,10 +33,12 @@ public record SubscriptionInfoDto(
         String createChannel, // optional (PORTAL | GCP_MARKETPLACE)
 
         // Limits (we use Boolean here; entities handle Y/N conversion)
+        @JsonDeserialize(using = YesNoBooleanDeserializer.class)
         Boolean unlimitedUsersFlag,
         Long usersLimit,
         String usersLimitResetType, // FULL_SUBSCRIPTION_PERIOD | PAYMENT_FREQUENCY_PERIOD
 
+        @JsonDeserialize(using = YesNoBooleanDeserializer.class)
         Boolean unlimitedTransFlag,
         Long transactionsLimit,
         String transLimitResetType,
@@ -44,6 +48,7 @@ public record SubscriptionInfoDto(
 
         String environmentSizeCd, // L | XL
 
+        @JsonDeserialize(using = YesNoBooleanDeserializer.class)
         Boolean isAutoProvEnabled,
         Long prevSubscriptionId,
         String prevSubscriptionUpdateAction, // UPGRADE | DOWNGRADE | RENEWAL

@@ -1,5 +1,7 @@
 package com.ejada.subscription.dto;
 
+import com.ejada.subscription.json.YesNoBooleanDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -16,6 +18,7 @@ public record SubscriptionAdditionalServiceDto(
     BigDecimal totalAmount,
     String currency,
 
+    @JsonDeserialize(using = YesNoBooleanDeserializer.class)
     Boolean isCountable,    // entity will persist Y/N
     Long requestedCount,
 
