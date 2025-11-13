@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -86,7 +87,7 @@ public class Tenant {
     }
 
     public final Set<TenantIntegrationKey> getIntegrationKeys() {
-        return integrationKeys;
+        return Collections.unmodifiableSet(new HashSet<>(integrationKeys));
     }
 
     public final void setIntegrationKeys(final Set<TenantIntegrationKey> integrationKeys) {
