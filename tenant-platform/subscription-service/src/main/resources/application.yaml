@@ -51,4 +51,4 @@ subscription:
         password: b03ddf3ca2e714a6548e7495e2a03f5e824eaac9837cd7f159c67b90fb4b7342
   kafka:
     topics:
-      tenant-onboarding: ${SUBSCRIPTION_KAFKA_TENANT_TOPIC:tenant-platform.onboarding.tenants}
+      tenant-onboarding: "${SUBSCRIPTION_KAFKA_TENANT_TOPIC:tenant-platform.onboarding.tenants}"
