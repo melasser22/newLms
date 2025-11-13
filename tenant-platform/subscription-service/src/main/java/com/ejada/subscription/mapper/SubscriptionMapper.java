@@ -16,7 +16,7 @@ public interface SubscriptionMapper {
     @Mapping(target = "subscriptionId", ignore = true)
     @Mapping(target = "extSubscriptionId", source = "subscriptionId")
     @Mapping(target = "extCustomerId",    source = "customerId")
-    @Mapping(target = "internalTenantId", ignore = true)
+    @Mapping(target = "internalTenantId", expression = "java((java.util.UUID) null)")
     @Mapping(target = "extProductId",     source = "productId")
     @Mapping(target = "extTierId",        source = "tierId")
     @Mapping(target = "tierNmEn",         source = "tierNameEn")
