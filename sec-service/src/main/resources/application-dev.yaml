@@ -33,7 +33,7 @@ spring:
     default-schema: security
 
   kafka:
-    bootstrap-servers: kafka:9092
+    bootstrap-servers: localhost:29092
     client-id: ejada-security-dev
     consumer:
       group-id: ejada-backend-dev
