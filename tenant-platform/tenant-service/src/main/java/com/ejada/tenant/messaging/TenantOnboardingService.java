@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -35,6 +38,14 @@ public class TenantOnboardingService {
             created.setCode(code);
             return created;
         });
+
+        UUID internalTenantId = event.internalTenantId();
+        if (internalTenantId != null) {
+            tenant.setInternalTenantId(internalTenantId);
+        } else if (tenant.getInternalTenantId() == null) {
+            String derivedKey = "tenant:" + code;
+            tenant.setInternalTenantId(UUID.nameUUIDFromBytes(derivedKey.getBytes(StandardCharsets.UTF_8)));
+        }
 
         TenantCustomerInfo customer = event.customerInfo();
         tenant.setName(determineName(customer, code));

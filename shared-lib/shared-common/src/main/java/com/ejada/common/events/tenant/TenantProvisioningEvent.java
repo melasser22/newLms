@@ -22,6 +22,10 @@ public record TenantProvisioningEvent(
         }
     }
 
+    public UUID internalTenantId() {
+        return tenantId;
+    }
+
     /** Customer details forwarded from the marketplace payload. */
     public record TenantCustomerInfo(
             String customerNameEn,

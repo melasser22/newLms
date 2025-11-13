@@ -57,25 +57,28 @@ public class TenantAdminProvisioningService {
             return;
         }
 
-        UUID tenantId = event.tenantId() != null ? event.tenantId() : tenantIdFromExternal(extCustomerId);
-        if (tenantId == null) {
+        UUID internalTenantId = event.internalTenantId() != null
+                ? event.internalTenantId()
+                : tenantIdFromExternal(extCustomerId);
+        if (internalTenantId == null) {
             log.warn("Skipping admin provisioning for customer {}: unable to determine tenant id", extCustomerId);
             return;
         }
-        Optional<User> existing = userRepository.findByTenantIdAndUsername(tenantId, username);
+        Optional<User> existing = userRepository.findByTenantIdAndUsername(internalTenantId, username);
         if (existing.isPresent()) {
-            updateExistingAdmin(existing.get(), email, tenantId);
-            ensureRoleAssignment(existing.get(), tenantId);
+            updateExistingAdmin(existing.get(), email, internalTenantId);
+            ensureRoleAssignment(existing.get(), internalTenantId);
             return;
         }
 
-        if (userRepository.existsByTenantIdAndEmail(tenantId, email)) {
-            log.warn("Skipping admin creation for tenant {}: email {} already in use", tenantId, email);
+        if (userRepository.existsByTenantIdAndEmail(internalTenantId, email)) {
+            log.warn("Skipping admin creation for tenant {}: email {} already in use", internalTenantId, email);
             return;
         }
 
         User user = new User();
-        user.setTenantId(tenantId);
+        user.setTenantId(internalTenantId);
+        user.setInternalTenantId(internalTenantId);
         user.setUsername(username);
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(generateRandomPassword()));
@@ -83,8 +86,8 @@ public class TenantAdminProvisioningService {
         user.setLocked(false);
 
         user = userRepository.save(user);
-        ensureRoleAssignment(user, tenantId);
-        log.info("Provisioned tenant admin '{}' for tenant {}", username, tenantId);
+        ensureRoleAssignment(user, internalTenantId);
+        log.info("Provisioned tenant admin '{}' for tenant {}", username, internalTenantId);
     }
 
     private void updateExistingAdmin(final User user, final String email, final UUID tenantId) {

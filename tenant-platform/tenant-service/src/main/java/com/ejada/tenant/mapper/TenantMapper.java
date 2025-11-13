@@ -20,6 +20,7 @@ public interface TenantMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "active", source = "active")
     @Mapping(target = "isDeleted", constant = "false")
+    @Mapping(target = "internalTenantId", source = "internalTenantId")
     @Mapping(target = "integrationKeys", ignore = true)
     // DB-managed timestamps
     @Mapping(target = "createdAt", ignore = true)
@@ -35,6 +36,9 @@ public interface TenantMapper {
         if (e.getIsDeleted() == null) {
             e.setIsDeleted(Boolean.FALSE);
         }
+        if (e.getInternalTenantId() == null && e.getCode() != null) {
+            e.setInternalTenantId(generateInternalTenantId(e.getCode()));
+        }
     }
 
     // ---------- Update (PATCH/PUT with IGNORE nulls) ----------
@@ -44,7 +48,15 @@ public interface TenantMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "integrationKeys", ignore = true)
+    @Mapping(target = "internalTenantId", ignore = true)
     void update(@MappingTarget @NonNull Tenant entity, @NonNull TenantUpdateReq req);
+
+    @AfterMapping
+    default void applyInternalTenantId(@MappingTarget Tenant entity, TenantUpdateReq req) {
+        if (req.internalTenantId() != null) {
+            entity.setInternalTenantId(req.internalTenantId());
+        }
+    }
 
     // ---------- Response ----------
     @Mapping(target = "isDeleted", source = "isDeleted")
@@ -53,5 +65,13 @@ public interface TenantMapper {
     // ---------- Helpers ----------
     static Tenant ref(Integer id) {
         return Tenant.ref(id);
+    }
+
+    private static java.util.UUID generateInternalTenantId(String code) {
+        if (code == null) {
+            return null;
+        }
+        String key = "tenant:" + code;
+        return java.util.UUID.nameUUIDFromBytes(key.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 }

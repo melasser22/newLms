@@ -9,6 +9,7 @@ import static com.ejada.tenant.model.Tenant.PHONE_LENGTH;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
+import java.util.UUID;
 
 @Schema(name = "TenantUpdateReq")
 public record TenantUpdateReq(
@@ -33,5 +34,8 @@ public record TenantUpdateReq(
         String logoUrl,
 
         @Schema(description = "Active flag")
-        Boolean active
+        Boolean active,
+
+        @Schema(description = "Internal tenant identifier used across services")
+        UUID internalTenantId
 ) { }

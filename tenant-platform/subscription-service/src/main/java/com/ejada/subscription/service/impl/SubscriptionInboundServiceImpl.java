@@ -168,9 +168,13 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
             boolean isNewSubscription;
             if (sub == null) {
                 sub = subscriptionMapper.toEntity(si);
+                sub.setInternalTenantId(deriveInternalTenantId(si.customerId()));
                 isNewSubscription = true;
             } else {
                 subscriptionMapper.update(sub, si);
+                if (sub.getInternalTenantId() == null) {
+                    sub.setInternalTenantId(deriveInternalTenantId(si.customerId()));
+                }
                 isNewSubscription = false;
             }
 
@@ -401,10 +405,26 @@ public class SubscriptionInboundServiceImpl implements SubscriptionInboundServic
     }
 
     private UUID resolveTenantId(final Subscription sub) {
-        if (sub == null || sub.getExtCustomerId() == null) {
+        if (sub == null) {
             return null;
         }
-        String key = "tenant:" + sub.getExtCustomerId();
+        UUID internalTenantId = sub.getInternalTenantId();
+        if (internalTenantId != null) {
+            return internalTenantId;
+        }
+        if (sub.getExtCustomerId() == null) {
+            return null;
+        }
+        UUID derived = deriveInternalTenantId(sub.getExtCustomerId());
+        sub.setInternalTenantId(derived);
+        return derived;
+    }
+
+    private UUID deriveInternalTenantId(final Long extCustomerId) {
+        if (extCustomerId == null) {
+            return null;
+        }
+        String key = "tenant:" + extCustomerId;
         return UUID.nameUUIDFromBytes(key.getBytes(StandardCharsets.UTF_8));
     }
 

@@ -29,6 +29,9 @@ public class User extends AuditableEntity {
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 
+    @Column(name = "internal_tenant_id", nullable = false)
+    private UUID internalTenantId;
+
     @Column(nullable = false, length = 120)
     private String username;
 

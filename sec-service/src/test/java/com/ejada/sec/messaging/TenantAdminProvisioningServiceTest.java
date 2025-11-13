@@ -45,7 +45,7 @@ class TenantAdminProvisioningServiceTest {
     @Test
     void createsAdminUserWhenNotPresent() {
         TenantProvisioningEvent event = provisioningEvent();
-        UUID tenantId = event.tenantId();
+        UUID tenantId = event.internalTenantId();
 
         when(userRepository.findByTenantIdAndUsername(tenantId, "m.alqahtani")).thenReturn(Optional.empty());
         when(userRepository.existsByTenantIdAndEmail(tenantId, "m.alqahtani@alnoursolutions.com")).thenReturn(false);
@@ -58,6 +58,7 @@ class TenantAdminProvisioningServiceTest {
         User saved = new User();
         saved.setId(42L);
         saved.setTenantId(tenantId);
+        saved.setInternalTenantId(tenantId);
         saved.setUsername("m.alqahtani");
         saved.setEmail("m.alqahtani@alnoursolutions.com");
         saved.setPasswordHash("hashed");
@@ -91,11 +92,12 @@ class TenantAdminProvisioningServiceTest {
     @Test
     void updatesEmailForExistingAdmin() {
         TenantProvisioningEvent event = provisioningEvent();
-        UUID tenantId = event.tenantId();
+        UUID tenantId = event.internalTenantId();
 
         User existing = new User();
         existing.setId(11L);
         existing.setTenantId(tenantId);
+        existing.setInternalTenantId(tenantId);
         existing.setUsername("m.alqahtani");
         existing.setEmail("old@example.com");
 
