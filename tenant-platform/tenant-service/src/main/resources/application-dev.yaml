@@ -35,7 +35,7 @@ spring:
     bootstrap-servers: localhost:29092
     client-id: ejada-tenant-dev
     consumer:
-      group-id: ejada-backend-dev
+      group-id: ejada-tenant-dev
       auto-offset-reset: earliest
       enable-auto-commit: false
       properties:

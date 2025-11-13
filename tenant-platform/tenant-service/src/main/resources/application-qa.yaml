@@ -30,7 +30,7 @@ spring:
     bootstrap-servers: kafka:9092
     client-id: ejada-tenant-qa
     consumer:
-      group-id: ejada-backend-qa
+      group-id: ejada-tenant-qa
       auto-offset-reset: earliest
       enable-auto-commit: false
       properties:
