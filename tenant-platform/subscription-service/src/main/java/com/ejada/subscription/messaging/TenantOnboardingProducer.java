@@ -171,10 +171,19 @@ public class TenantOnboardingProducer {
     }
 
     private UUID deriveTenantId(final Subscription subscription) {
-        if (subscription == null || subscription.getExtCustomerId() == null) {
+        if (subscription == null) {
+            return null;
+        }
+        UUID internalTenantId = subscription.getInternalTenantId();
+        if (internalTenantId != null) {
+            return internalTenantId;
+        }
+        if (subscription.getExtCustomerId() == null) {
             return null;
         }
         String key = "tenant:" + subscription.getExtCustomerId();
-        return UUID.nameUUIDFromBytes(key.getBytes(StandardCharsets.UTF_8));
+        internalTenantId = UUID.nameUUIDFromBytes(key.getBytes(StandardCharsets.UTF_8));
+        subscription.setInternalTenantId(internalTenantId);
+        return internalTenantId;
     }
 }

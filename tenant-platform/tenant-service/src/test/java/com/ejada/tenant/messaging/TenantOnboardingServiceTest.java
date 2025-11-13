@@ -46,6 +46,7 @@ class TenantOnboardingServiceTest {
         assertThat(saved.getContactPhone()).isEqualTo("+966500000000");
         assertThat(saved.isActive()).isTrue();
         assertThat(saved.isDeleted()).isFalse();
+        assertThat(saved.getInternalTenantId()).isEqualTo(event.internalTenantId());
     }
 
     @Test
@@ -57,6 +58,7 @@ class TenantOnboardingServiceTest {
         existing.setContactPhone("1111");
         existing.setActive(false);
         existing.setIsDeleted(true);
+        existing.setInternalTenantId(UUID.fromString("00000000-0000-0000-0000-000000000999"));
 
         when(tenantRepository.findByCode("CUST-2")).thenReturn(Optional.of(existing));
         when(tenantRepository.save(existing)).thenReturn(existing);
@@ -77,6 +79,7 @@ class TenantOnboardingServiceTest {
         assertThat(existing.getContactPhone()).isNull();
         assertThat(existing.isActive()).isTrue();
         assertThat(existing.isDeleted()).isFalse();
+        assertThat(existing.getInternalTenantId()).isEqualTo(event.internalTenantId());
         verify(tenantRepository).save(existing);
     }
 

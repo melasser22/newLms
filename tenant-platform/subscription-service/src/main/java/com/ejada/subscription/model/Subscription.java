@@ -20,6 +20,7 @@ import org.hibernate.type.SqlTypes;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(
@@ -50,6 +51,9 @@ public class Subscription {
 
     @Column(name = "ext_customer_id", nullable = false)
     private Long extCustomerId;
+
+    @Column(name = "internal_tenant_id", nullable = false)
+    private UUID internalTenantId;
 
     @Column(name = "ext_product_id", nullable = false)
     private Long extProductId;

@@ -36,6 +36,10 @@ public class TenantServiceImpl implements TenantService {
         if (repo.existsByNameIgnoreCaseAndIsDeletedFalse(req.name())) {
             throw new IllegalStateException("tenant name exists: " + req.name());
         }
+        if (req.internalTenantId() != null
+                && repo.findByInternalTenantId(req.internalTenantId()).isPresent()) {
+            throw new IllegalStateException("internal tenant id exists: " + req.internalTenantId());
+        }
         Tenant e = mapper.toEntity(req);
         e = repo.save(e);
         return BaseResponse.success("Tenant created", mapper.toRes(e));
@@ -53,6 +57,12 @@ public class TenantServiceImpl implements TenantService {
         if (req.name() != null && !req.name().equalsIgnoreCase(e.getName())
                 && repo.existsByNameIgnoreCaseAndIdNot(req.name(), id)) {
             throw new IllegalStateException("tenant name exists: " + req.name());
+        }
+        if (req.internalTenantId() != null
+                && repo.findByInternalTenantId(req.internalTenantId())
+                        .filter(other -> !other.getId().equals(id))
+                        .isPresent()) {
+            throw new IllegalStateException("internal tenant id exists: " + req.internalTenantId());
         }
 
         mapper.update(e, req);

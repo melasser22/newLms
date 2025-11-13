@@ -18,6 +18,7 @@ import org.hibernate.annotations.DynamicUpdate;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(
@@ -49,6 +50,9 @@ public class Tenant {
 
     @Column(name = "code", length = CODE_LENGTH, nullable = false)
     private String code;
+
+    @Column(name = "internal_tenant_id", nullable = false)
+    private UUID internalTenantId;
 
     @Column(name = "name", length = NAME_LENGTH, nullable = false)
     private String name;
