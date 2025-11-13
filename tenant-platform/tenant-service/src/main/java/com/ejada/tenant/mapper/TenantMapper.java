@@ -19,6 +19,7 @@ public interface TenantMapper {
     // ---------- Create ----------
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "active", source = "active")
+    @Mapping(target = "integrationKeys", ignore = true)
     @Mapping(target = "isDeleted", constant = "false")
     @Mapping(target = "integrationKeys", ignore = true)
     // DB-managed timestamps
