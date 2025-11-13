@@ -19,6 +19,7 @@ public interface TenantMapper {
     // ---------- Create ----------
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "active", source = "active")
+    @Mapping(target = "integrationKeys", ignore = true)
     @Mapping(target = "isDeleted", constant = "false")
     // DB-managed timestamps
     @Mapping(target = "createdAt", ignore = true)
@@ -42,6 +43,7 @@ public interface TenantMapper {
     @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "integrationKeys", ignore = true)
     void update(@MappingTarget @NonNull Tenant entity, @NonNull TenantUpdateReq req);
 
     // ---------- Response ----------
