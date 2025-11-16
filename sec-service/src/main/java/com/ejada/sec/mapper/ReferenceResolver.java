@@ -53,13 +53,17 @@ public class ReferenceResolver {
       return rolePrivileges.stream().map(rp -> rp.getPrivilege().getCode()).toList();
   }
 
-  public Set<UserRole> toUserRoles(Long userId, List<Role> roles) {
-      if (roles == null) {
+  public Set<UserRole> toUserRoles(User user, List<Role> roles) {
+      if (roles == null || roles.isEmpty()) {
         return Set.of();
       }
       return roles.stream().map(r -> {
-      var id = new UserRoleId(userId, r.getId());
-      return UserRole.builder().id(id).role(r).build();
+      var id = new UserRoleId(user.getId(), r.getId());
+      return UserRole.builder()
+          .id(id)
+          .user(user)
+          .role(r)
+          .build();
     }).collect(Collectors.toSet());
   }
 

@@ -26,7 +26,7 @@ public interface GrantMapper {
   default void applyAssignRoles(User user, AssignRolesToUserRequest req,
                                 @Context ReferenceResolver resolver) {
     var roles = resolver.rolesByCodes(req.getTenantId(), req.getRoleCodes());
-    user.setRoles(resolver.toUserRoles(user.getId(), roles));
+    user.setRoles(resolver.toUserRoles(user, roles));
   }
 
   default void applyRevokeRoles(User user, RevokeRolesFromUserRequest req) {
