@@ -1,6 +1,5 @@
 package com.ejada.common.dto;
 
-import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,10 +18,8 @@ import lombok.experimental.SuperBuilder;
 public class BaseRequest {
 
     /** Tenant identifier for multi-tenant requests. */
-    @NotNull
     private UUID tenantId;
 
     /** Internal tenant identifier aligned with platform services. */
-    @NotNull
     private UUID internalTenantId;
 }
