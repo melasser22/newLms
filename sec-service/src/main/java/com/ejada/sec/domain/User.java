@@ -51,6 +51,16 @@ public class User extends AuditableEntity {
 
     @Column(name = "last_login_at") private Instant lastLoginAt;
 
+    @Column(name = "first_login_completed", nullable = false)
+    @Builder.Default
+    private boolean firstLoginCompleted = false;
+
+    @Column(name = "password_changed_at")
+    private Instant passwordChangedAt;
+
+    @Column(name = "password_expires_at")
+    private Instant passwordExpiresAt;
+
     // relations
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

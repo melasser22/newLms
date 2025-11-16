@@ -21,6 +21,9 @@ public interface UserMapper {
   @Mapping(target = "enabled", constant = "true")
   @Mapping(target = "locked", constant = "false")
   @Mapping(target = "lastLoginAt", ignore = true)
+  @Mapping(target = "firstLoginCompleted", constant = "false")
+  @Mapping(target = "passwordChangedAt", ignore = true)
+  @Mapping(target = "passwordExpiresAt", ignore = true)
   @Mapping(target = "roles", ignore = true)
   @Mapping(target = "refreshTokens", ignore = true)
   @Mapping(target = "resetTokens", ignore = true)
@@ -29,7 +32,10 @@ public interface UserMapper {
   User toEntity(CreateUserRequest req);
 
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-  @Mapping(target = "roles", ignore = true) 
+  @Mapping(target = "roles", ignore = true)
+  @Mapping(target = "firstLoginCompleted", ignore = true)
+  @Mapping(target = "passwordChangedAt", ignore = true)
+  @Mapping(target = "passwordExpiresAt", ignore = true)
   void updateEntity(@MappingTarget User user, UpdateUserRequest req);
 
   default void setRolesByCodes(User user, List<String> roleCodes, UUID tenantId,

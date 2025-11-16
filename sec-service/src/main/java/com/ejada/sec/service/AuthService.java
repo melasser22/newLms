@@ -8,4 +8,5 @@ public interface AuthService {
   BaseResponse<AuthResponse> login(AuthRequest req);
   BaseResponse<AuthResponse> refresh(RefreshTokenRequest req);
   BaseResponse<Void> logout(String refreshToken); // revoke
+  BaseResponse<Void> completeFirstLogin(CompleteFirstLoginRequest req);
 }

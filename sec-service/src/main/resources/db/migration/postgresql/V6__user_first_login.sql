@@ -1,0 +1,4 @@
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS first_login_completed BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS password_expires_at TIMESTAMPTZ;
