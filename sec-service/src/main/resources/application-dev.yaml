@@ -201,11 +201,11 @@ shared:
       enabled: true
       permit-all:
         - "/**"
-      disable-csrf: false
+      disable-csrf: true
     stateless: true
     roles-claim: roles
     tenant-claim: tenant
-    enable-role-check: false
+    enable-role-check: true
 
 logging:
   level:

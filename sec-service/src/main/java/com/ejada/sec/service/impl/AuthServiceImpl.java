@@ -49,23 +49,21 @@ public class AuthServiceImpl implements AuthService {
   @Transactional
   @Override
   public BaseResponse<AuthResponse> login(AuthRequest req) {
-    UUID tenantId = req.getTenantId();
-    log.info("User '{}' attempting login for tenant {}", req.getIdentifier(), tenantId);
     // identifier can be username or email
-    User user = userRepository.findByTenantIdAndUsername(tenantId, req.getIdentifier())
-        .or(() -> userRepository.findByTenantIdAndEmail(tenantId, req.getIdentifier()))
+    User user = userRepository.findByUsername(req.getIdentifier())
+        .or(() -> userRepository.findByEmail( req.getIdentifier()))
         .orElseThrow(() -> new NoSuchElementException("Invalid credentials"));
 
     if (!user.isEnabled() || user.isLocked()) {
-      log.warn("Login denied for user '{}' in tenant {}: disabled or locked", user.getUsername(), tenantId);
+      log.warn("Login denied for user '{}' in tenant {}: disabled or locked", user.getUsername(), user.getTenantId());
       throw new IllegalStateException("Account disabled or locked");
     }
     if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
-      log.warn("Invalid credentials for user '{}' in tenant {}", req.getIdentifier(), tenantId);
+      log.warn("Invalid credentials for user '{}' in tenant {}", req.getIdentifier(), user.getTenantId());
       throw new NoSuchElementException("Invalid credentials");
     }
     var tokens = issueTokens(user.getTenantId(), user.getUsername(), user.getId());
-    log.info("User '{}' logged in for tenant {}", user.getUsername(), tenantId);
+    log.info("User '{}' logged in for tenant {}", user.getUsername(), user.getTenantId());
     return BaseResponse.success("Login successful", tokens);
   }
 

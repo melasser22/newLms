@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     revoked_at     TIMESTAMPTZ,
     rotated_from   VARCHAR(255),              -- previous token id/string if rotating
     user_agent     VARCHAR(512),
-    ip_address     INET,
+    ip_address     VARCHAR(45),
     CONSTRAINT ck_refresh_not_past CHECK (expires_at > issued_at)
 );
 

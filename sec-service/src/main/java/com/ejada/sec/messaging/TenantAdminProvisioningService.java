@@ -136,6 +136,8 @@ public class TenantAdminProvisioningService {
     }
 
     private String generateRandomPassword() {
-        return UUID.randomUUID().toString().replaceAll("-", "");
+    	String RandomPassword=  UUID.randomUUID().toString().replaceAll("-", "");
+    	System.out.print(RandomPassword);
+    	return RandomPassword;
     }
 }

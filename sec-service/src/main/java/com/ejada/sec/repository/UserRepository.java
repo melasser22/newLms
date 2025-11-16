@@ -9,13 +9,22 @@ import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    Optional<User> findByTenantIdAndUsername(UUID tenantId, String username);
+    Optional<User> findByUsername( String username);
 
-    Optional<User> findByTenantIdAndEmail(UUID tenantId, String email);
+    Optional<User> findByEmail(String email);
+
+    boolean existsByUsername( String username);
+
+    boolean existsByEmail(String email);
+
+    List<User> findAllByTenantId(UUID tenantId);
+    
+    boolean existsByTenantIdAndEmail(UUID tenantId, String email);
 
     boolean existsByTenantIdAndUsername(UUID tenantId, String username);
 
-    boolean existsByTenantIdAndEmail(UUID tenantId, String email);
+    Optional<User> findByTenantIdAndEmail(UUID tenantId, String email);
 
-    List<User> findAllByTenantId(UUID tenantId);
+    Optional<User> findByTenantIdAndUsername(UUID tenantId, String username);
+
 }

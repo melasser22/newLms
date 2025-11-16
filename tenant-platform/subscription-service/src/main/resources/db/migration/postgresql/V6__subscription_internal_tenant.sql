@@ -1,10 +1,9 @@
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 ALTER TABLE subscription
     ADD COLUMN IF NOT EXISTS internal_tenant_id UUID;
 
+-- Use random UUIDs instead of UUID v5
 UPDATE subscription
-   SET internal_tenant_id = uuid_generate_v5('6ba7b810-9dad-11d1-80b4-00c04fd430c8', 'tenant:' || ext_customer_id::text)
+   SET internal_tenant_id = gen_random_uuid()
  WHERE internal_tenant_id IS NULL;
 
 ALTER TABLE subscription

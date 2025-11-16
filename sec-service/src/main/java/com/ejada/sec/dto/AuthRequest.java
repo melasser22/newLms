@@ -1,6 +1,5 @@
 package com.ejada.sec.dto;
 
-import com.ejada.common.dto.BaseRequest;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -9,9 +8,8 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
 @SuperBuilder
-public class AuthRequest extends BaseRequest {
+public class AuthRequest {
   @NotBlank private String identifier; // username or email
   @NotBlank private String password;
 }
