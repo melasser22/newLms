@@ -3,6 +3,7 @@ package com.ejada.sec.service.impl;
 import com.ejada.crypto.JwtTokenService;
 import com.ejada.sec.service.TokenIssuer;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -23,11 +24,17 @@ public class JwtTokenIssuer implements TokenIssuer {
   private long accessTtlSeconds;
 
   @Override
-  public String issueAccessToken(UUID tenantId, Long userId, String username) {
-    Map<String, Object> claims =
-        Map.of("iss", issuer, "uid", userId, "tid", tenantId.toString());
+  public String issueAccessToken(UUID tenantId, Long userId, String username, List<String> roles) {
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("iss", issuer);
+    claims.put("uid", userId);
+    claims.put("tid", tenantId.toString());
     return jwtTokenService.createToken(
-        username, tenantId.toString(), List.of(), claims, Duration.ofSeconds(accessTtlSeconds));
+        username,
+        tenantId.toString(),
+        roles,
+        claims,
+        Duration.ofSeconds(accessTtlSeconds));
   }
 
   @Override

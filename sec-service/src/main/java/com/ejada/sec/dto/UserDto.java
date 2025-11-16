@@ -1,9 +1,10 @@
 package com.ejada.sec.dto;
 
 import jakarta.validation.constraints.*;
-import lombok.*;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import lombok.*;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class UserDto {
@@ -14,6 +15,9 @@ public class UserDto {
   @Email @NotBlank @Size(max = 255) private String email;
   private boolean enabled;
   private boolean locked;
+  private boolean firstLoginCompleted;
+  private Instant passwordChangedAt;
+  private Instant passwordExpiresAt;
   private List<String> roles;
   private List<String> privileges;
 }

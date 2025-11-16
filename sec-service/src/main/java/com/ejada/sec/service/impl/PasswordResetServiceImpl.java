@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -28,6 +29,9 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
   @Value("${security.reset.ttl-seconds:900}") // 15 minutes
   private long resetTtl;
+
+  @Value("${security.password.expiry-days:90}")
+  private long passwordExpiryDays;
 
   @Transactional
   @Override
@@ -57,8 +61,18 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
     var user = prt.getUser();
     user.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
+    user.setFirstLoginCompleted(true);
+    user.setPasswordChangedAt(Instant.now());
+    user.setPasswordExpiresAt(calculatePasswordExpiry());
     prt.setUsedAt(Instant.now());
     // repositories will update through transaction
     return BaseResponse.success("Password reset", null);
+  }
+
+  private Instant calculatePasswordExpiry() {
+    if (passwordExpiryDays <= 0) {
+      return null;
+    }
+    return Instant.now().plus(passwordExpiryDays, ChronoUnit.DAYS);
   }
 }

@@ -47,4 +47,10 @@ public class AuthController {
   public ResponseEntity<BaseResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
     return ResponseEntity.ok(passwordResetService.reset(req));
   }
+
+  @PostMapping("/first-login/complete")
+  public ResponseEntity<BaseResponse<Void>> completeFirstLogin(
+      @Valid @RequestBody CompleteFirstLoginRequest req) {
+    return ResponseEntity.ok(authService.completeFirstLogin(req));
+  }
 }
