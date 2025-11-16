@@ -23,6 +23,7 @@
     <commonLang.version>3.18.0</commonLang.version>
     <!--      Guava-->
     <guava.version>33.3.1-jre</guava.version>
+    <swagger.annotations.version>2.2.22</swagger.annotations.version>
   </properties>
 
   <dependencies>
@@ -93,6 +94,13 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <optional>true</optional>
+    </dependency>
+
+    <!-- OpenAPI annotations used by shared DTOs -->
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-annotations</artifactId>
+      <version>${swagger.annotations.version}</version>
     </dependency>
 
     <!-- Validation API for jakarta.validation annotations like @NotNull -->
