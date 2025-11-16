@@ -23,7 +23,7 @@
     <commonLang.version>3.18.0</commonLang.version>
     <!--      Guava-->
     <guava.version>33.3.1-jre</guava.version>
-    <swagger.annotations.version>2.2.22</swagger.annotations.version>
+    <swagger.annotations.version>2.2.25</swagger.annotations.version>
   </properties>
 
   <dependencies>
