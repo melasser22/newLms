@@ -44,8 +44,12 @@ public class GraphQlGatewayController {
     if (matcher.find()) {
       String tenantId = matcher.group("tenant");
       ensureTenantContextMatches(tenantId);
-      LocalDate from = matcher.group("from") != null ? LocalDate.parse(matcher.group("from")) : LocalDate.now().minusDays(30);
-      LocalDate to = matcher.group("to") != null ? LocalDate.parse(matcher.group("to")) : LocalDate.now();
+      LocalDate from =
+          matcher.group("from") != null
+              ? LocalDate.parse(matcher.group("from"))
+              : LocalDate.now().minusDays(30);
+      LocalDate to =
+          matcher.group("to") != null ? LocalDate.parse(matcher.group("to")) : LocalDate.now();
       rateLimiter.assertWithinQuota(tenantId, "graphql-portal");
       TenantPortalView view = tenantExperienceService.buildTenantPortal(tenantId, from, to);
       auditLogger.logTenantAction(tenantId, "GRAPHQL_PORTAL", from + "-" + to);
