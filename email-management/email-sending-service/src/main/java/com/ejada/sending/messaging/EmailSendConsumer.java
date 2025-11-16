@@ -83,7 +83,7 @@ public class EmailSendConsumer {
     kafkaTemplate.send(
         MessageBuilder.withPayload(envelope)
             .setHeader(KafkaHeaders.TOPIC, topic)
-            .setHeader(KafkaHeaders.MESSAGE_KEY, envelope.tenantId())
+            .setHeader(KafkaHeaders.KEY, envelope.tenantId())
             .setHeader("x-attempt", attempt)
             .build());
   }

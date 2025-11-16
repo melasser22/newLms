@@ -82,7 +82,7 @@ public class EmailDispatchServiceImpl implements EmailDispatchService {
       String topic, String tenantId, EmailEnvelope envelope, int attempt) {
     return MessageBuilder.withPayload(envelope)
         .setHeader(KafkaHeaders.TOPIC, topic)
-        .setHeader(KafkaHeaders.MESSAGE_KEY, tenantId)
+        .setHeader(KafkaHeaders.KEY, tenantId)
         .setHeader("x-attempt", attempt)
         .build();
   }

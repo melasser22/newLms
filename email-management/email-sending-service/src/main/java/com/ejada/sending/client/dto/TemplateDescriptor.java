@@ -7,6 +7,6 @@ public record TemplateDescriptor(
     String templateKey, List<AttachmentMetadataDto> defaultAttachments, boolean sandboxEnabled) {
 
   public TemplateDescriptor {
-    this.defaultAttachments = defaultAttachments == null ? List.of() : defaultAttachments;
+    defaultAttachments = defaultAttachments == null ? List.of() : defaultAttachments;
   }
 }
