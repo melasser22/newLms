@@ -44,7 +44,8 @@ public class BaseResponse<T> {
     private String tenantId;
 
     /** Correlation identifier echoed back to clients */
-    private String correlationId;
+    @Builder.Default
+    private String correlationId = CorrelationContextUtil.getCorrelationId();
 
     @JsonProperty("tenantId")
     public String getTenantId() {
