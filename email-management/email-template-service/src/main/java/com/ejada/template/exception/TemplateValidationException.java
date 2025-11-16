@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 public class TemplateValidationException extends RuntimeException {
-  private final TemplateValidationResponse validation;
+  private final transient TemplateValidationResponse validation;
 
   public TemplateValidationException(TemplateValidationResponse validation) {
     super("Dynamic data failed validation against allowed variables");

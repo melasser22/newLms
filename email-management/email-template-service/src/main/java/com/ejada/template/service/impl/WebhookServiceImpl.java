@@ -56,7 +56,6 @@ public class WebhookServiceImpl implements WebhookService {
     if (publicKeyValue == null || publicKeyValue.isBlank()) {
       throw new IllegalStateException("SendGrid webhook public key is not configured");
     }
-    byte[] publicKey = publicKeyValue.getBytes();
     try {
       boolean valid =
           eventWebhook.VerifySignature(
@@ -64,7 +63,7 @@ public class WebhookServiceImpl implements WebhookService {
       if (!valid) {
         throw new IllegalArgumentException("Invalid webhook signature");
       }
-    } catch (Exception ex) {
+    } catch (RuntimeException ex) {
       throw new IllegalArgumentException("Unable to verify webhook signature", ex);
     }
   }
