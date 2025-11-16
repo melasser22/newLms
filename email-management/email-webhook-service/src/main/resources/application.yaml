@@ -13,3 +13,6 @@ sendgrid:
   webhook:
     signing-secret: change-me
     tolerance-seconds: 300
+    allowed-ips: []
+    kafka-topic: sendgrid.email-events
+    deduplication-ttl-seconds: 86400
