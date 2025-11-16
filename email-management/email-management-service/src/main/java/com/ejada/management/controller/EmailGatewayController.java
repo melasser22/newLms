@@ -34,7 +34,7 @@ public class EmailGatewayController {
   public EmailSendResponse sendEmail(
       @PathVariable String tenantId, @Valid @RequestBody EmailSendRequest request) {
     rateLimiter.assertWithinQuota(tenantId, "email-send");
-    auditLogger.logTenantAction(tenantId, "EMAIL_SEND", request.subject());
+    auditLogger.logTenantAction(tenantId, "EMAIL_SEND", request.templateKey());
     return service.sendEmail(tenantId, request);
   }
 }
