@@ -38,8 +38,10 @@ class ChildServiceInvokerTest {
 
   @Test
   void getShouldInvokeRestClientAndReturnResponse() {
-    RestClient.RequestHeadersUriSpec<?> requestSpec = mock(RestClient.RequestHeadersUriSpec.class);
-    RestClient.RequestHeadersSpec<?> requestHeadersSpec = mock(RestClient.RequestHeadersSpec.class);
+    @SuppressWarnings("rawtypes")
+    RestClient.RequestHeadersUriSpec requestSpec = mock(RestClient.RequestHeadersUriSpec.class);
+    @SuppressWarnings("rawtypes")
+    RestClient.RequestHeadersSpec requestHeadersSpec = mock(RestClient.RequestHeadersSpec.class);
     RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
 
     when(restClient.get()).thenReturn(requestSpec);

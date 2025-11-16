@@ -3,10 +3,10 @@ package com.ejada.email.webhook.service;
 import com.ejada.email.webhook.SendgridWebhookProperties;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Base64;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Base64Utils;
 
 @Component
 public class SignatureValidator {
@@ -30,7 +30,7 @@ public class SignatureValidator {
       Mac mac = Mac.getInstance(HMAC_SHA256);
       mac.init(new SecretKeySpec(properties.getSigningSecret().getBytes(StandardCharsets.UTF_8), HMAC_SHA256));
       byte[] expected = mac.doFinal((timestamp + payload).getBytes(StandardCharsets.UTF_8));
-      String expectedSignature = Base64Utils.encodeToString(expected);
+      String expectedSignature = Base64.getEncoder().encodeToString(expected);
       return constantTimeEquals(expectedSignature, signature);
     } catch (Exception e) {
       return false;
