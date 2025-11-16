@@ -62,7 +62,7 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public BaseResponse<UserDto> get(Long userId) {
-    return userRepository.findById(userId)
+    return userRepository.findByIdWithRoles(userId)
         .map(u -> userMapper.toDto(u, resolver))
         .map(dto -> BaseResponse.success("User fetched", dto))
         .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
