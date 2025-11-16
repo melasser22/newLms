@@ -16,7 +16,10 @@ public class TenantRateLimiter {
   private final Map<String, RequestWindow> windows = new ConcurrentHashMap<>();
 
   public TenantRateLimiter(TenantSecurityProperties properties) {
-    this.properties = properties;
+    this.properties = new TenantSecurityProperties();
+    this.properties.setAuthenticationRequired(properties.isAuthenticationRequired());
+    this.properties.setTokens(properties.getTokens());
+    this.properties.setRateLimit(properties.getRateLimit());
   }
 
   public void assertWithinQuota(String tenantId, String bucket) {

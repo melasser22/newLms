@@ -15,6 +15,12 @@ public record EmailSendRequest(
     @NotNull SendMode mode,
     String idempotencyKey) {
 
+  public EmailSendRequest {
+    recipients = List.copyOf(recipients);
+    dynamicData = dynamicData == null ? Map.of() : Map.copyOf(dynamicData);
+    attachments = attachments == null ? List.of() : List.copyOf(attachments);
+  }
+
   public enum SendMode {
     PRODUCTION,
     TEST,
@@ -22,5 +28,10 @@ public record EmailSendRequest(
   }
 
   public record AttachmentRequest(
-      @NotBlank String fileName, @NotBlank String contentType, @NotBlank String url) {}
+      @NotBlank String fileName, @NotBlank String contentType, @NotBlank String url) {
+
+    public AttachmentRequest {
+      // record validation already enforced by annotations
+    }
+  }
 }

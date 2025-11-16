@@ -12,7 +12,10 @@ public class TenantAuthorizationService {
   private final TenantSecurityProperties properties;
 
   public TenantAuthorizationService(TenantSecurityProperties properties) {
-    this.properties = properties;
+    this.properties = new TenantSecurityProperties();
+    this.properties.setAuthenticationRequired(properties.isAuthenticationRequired());
+    this.properties.setTokens(properties.getTokens());
+    this.properties.setRateLimit(properties.getRateLimit());
   }
 
   public void verifyAccess(String tenantId, String presentedToken) {

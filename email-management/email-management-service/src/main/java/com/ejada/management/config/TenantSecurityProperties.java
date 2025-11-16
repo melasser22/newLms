@@ -2,6 +2,7 @@ package com.ejada.management.config;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "tenant-security")
@@ -20,19 +21,19 @@ public class TenantSecurityProperties {
   }
 
   public Map<String, String> getTokens() {
-    return tokens;
+    return Map.copyOf(tokens);
   }
 
   public void setTokens(Map<String, String> tokens) {
-    this.tokens = tokens;
+    this.tokens = new HashMap<>(tokens);
   }
 
   public RateLimit getRateLimit() {
-    return rateLimit;
+    return new RateLimit(rateLimit);
   }
 
   public void setRateLimit(RateLimit rateLimit) {
-    this.rateLimit = rateLimit;
+    this.rateLimit = new RateLimit(rateLimit);
   }
 
   public static class RateLimit {
@@ -40,6 +41,17 @@ public class TenantSecurityProperties {
     private int defaultQuota = 120;
     private long windowSeconds = 60;
     private Map<String, Integer> tenantQuotas = new HashMap<>();
+
+    public RateLimit() {
+      // default constructor
+    }
+
+    private RateLimit(RateLimit other) {
+      this.enabled = other.enabled;
+      this.defaultQuota = other.defaultQuota;
+      this.windowSeconds = other.windowSeconds;
+      this.tenantQuotas = new HashMap<>(other.tenantQuotas);
+    }
 
     public boolean isEnabled() {
       return enabled;
@@ -66,11 +78,12 @@ public class TenantSecurityProperties {
     }
 
     public Map<String, Integer> getTenantQuotas() {
-      return tenantQuotas;
+      return Map.copyOf(tenantQuotas);
     }
 
     public void setTenantQuotas(Map<String, Integer> tenantQuotas) {
-      this.tenantQuotas = tenantQuotas;
+      this.tenantQuotas = tenantQuotas.entrySet().stream()
+          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, HashMap::new));
     }
 
     public int resolveLimitForTenant(String tenantId) {

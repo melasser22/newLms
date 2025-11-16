@@ -11,7 +11,7 @@ public class GlobalConfigService {
   private final GlobalConfigProperties properties;
 
   public GlobalConfigService(GlobalConfigProperties properties) {
-    this.properties = properties;
+    this.properties = copyOf(properties);
   }
 
   public boolean isFeatureEnabled(String feature) {
@@ -25,5 +25,13 @@ public class GlobalConfigService {
       merged.putAll(overrides);
     }
     return merged;
+  }
+
+  private GlobalConfigProperties copyOf(GlobalConfigProperties source) {
+    GlobalConfigProperties copy = new GlobalConfigProperties();
+    copy.setFeatureFlags(source.getFeatureFlags());
+    copy.setSharedSettings(source.getSharedSettings());
+    copy.setTenantSettings(source.getTenantSettings());
+    return copy;
   }
 }

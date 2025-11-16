@@ -13,7 +13,7 @@ public class ChildServiceInvoker {
   private final RestClient restClient;
 
   public ChildServiceInvoker(RestClient restClient) {
-    this.restClient = restClient;
+    this.restClient = restClient.mutate().build();
   }
 
   public <T> T get(URI baseUrl, String path, Class<T> responseType) {
