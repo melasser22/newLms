@@ -1,6 +1,7 @@
 package com.ejada.sec.repository;
 
 import com.ejada.sec.domain.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -17,6 +18,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
+    @EntityGraph(attributePaths = {"roles", "roles.role"})
     List<User> findAllByTenantId(UUID tenantId);
     
     boolean existsByTenantIdAndEmail(UUID tenantId, String email);
