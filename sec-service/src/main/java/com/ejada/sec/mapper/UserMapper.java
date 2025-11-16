@@ -41,6 +41,6 @@ public interface UserMapper {
   default void setRolesByCodes(User user, List<String> roleCodes, UUID tenantId,
                                @Context ReferenceResolver resolver) {
     var roles = resolver.rolesByCodes(tenantId, roleCodes);
-    user.setRoles(resolver.toUserRoles(user.getId(), roles));
+    user.setRoles(resolver.toUserRoles(user, roles));
   }
 }
