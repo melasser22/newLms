@@ -43,7 +43,7 @@ public class TemplateGatewayController {
   public void syncTemplates(
       @PathVariable String tenantId, @Valid @RequestBody TemplateSyncRequest request) {
     rateLimiter.assertWithinQuota(tenantId, "template-sync");
-    auditLogger.logTenantAction(tenantId, "TEMPLATE_SYNC", request.syncType());
+    auditLogger.logTenantAction(tenantId, "TEMPLATE_SYNC", request.versionTag());
     service.requestSync(tenantId, request);
   }
 }
