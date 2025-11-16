@@ -61,7 +61,7 @@ public class TemplateServiceImpl implements TemplateService {
   }
 
   @Override
-  @CacheEvict(value = "templates", key = "#templateId")
+  @CacheEvict(value = {"templates", "activeTemplateVersions"}, key = "#templateId")
   public TemplateDto updateTemplate(Long templateId, UpdateTemplateRequest request) {
     TemplateEntity entity = templateRepository.findById(templateId).orElseThrow(() -> new TemplateNotFoundException(templateId));
     if (request.getDescription() != null) {
@@ -77,7 +77,7 @@ public class TemplateServiceImpl implements TemplateService {
   }
 
   @Override
-  @CacheEvict(value = "templates", key = "#templateId")
+  @CacheEvict(value = {"templates", "activeTemplateVersions"}, key = "#templateId")
   public TemplateDto archiveTemplate(Long templateId) {
     TemplateEntity entity = templateRepository.findById(templateId).orElseThrow(() -> new TemplateNotFoundException(templateId));
     entity.setArchived(true);
@@ -128,7 +128,9 @@ public class TemplateServiceImpl implements TemplateService {
   }
 
   @Override
-  @CacheEvict(value = {"templates", "templateVersions"}, allEntries = true)
+  @CacheEvict(
+      value = {"templates", "templateVersions", "activeTemplateVersions"},
+      allEntries = true)
   public TemplateVersionDto publishVersion(Long templateId, Long versionId) {
     TemplateEntity template = templateRepository.findById(templateId).orElseThrow(() -> new TemplateNotFoundException(templateId));
     TemplateVersionEntity version = versionRepository.findById(versionId).orElseThrow(() -> new TemplateVersionNotFoundException(templateId, versionId));

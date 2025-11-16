@@ -6,7 +6,6 @@ import com.ejada.template.domain.entity.TemplateEntity;
 import com.ejada.template.domain.entity.TemplateVersionEntity;
 import com.ejada.template.domain.enums.EmailSendMode;
 import com.ejada.template.domain.enums.EmailSendStatus;
-import com.ejada.template.domain.enums.TemplateVersionStatus;
 import com.ejada.template.domain.value.AttachmentMetadata;
 import com.ejada.template.dto.AttachmentMetadataDto;
 import com.ejada.template.dto.BulkEmailSendRequest;
@@ -14,12 +13,15 @@ import com.ejada.template.dto.EmailSendRequest;
 import com.ejada.template.dto.EmailSendResponse;
 import com.ejada.template.exception.TemplateNotFoundException;
 import com.ejada.template.exception.TemplateVersionNotFoundException;
+import com.ejada.template.exception.TemplateValidationException;
 import com.ejada.template.messaging.model.EmailSendMessage;
 import com.ejada.template.messaging.producer.EmailSendProducer;
 import com.ejada.template.repository.EmailSendRepository;
 import com.ejada.template.repository.TemplateRepository;
 import com.ejada.template.repository.TemplateVersionRepository;
 import com.ejada.template.service.EmailSendService;
+import com.ejada.template.service.support.TemplateLookupService;
+import com.ejada.template.service.support.TemplateValidator;
 import com.ejada.template.service.support.RateLimiterService;
 import com.ejada.template.service.support.RedisIdempotencyService;
 import jakarta.transaction.Transactional;
@@ -43,6 +45,8 @@ public class EmailSendServiceImpl implements EmailSendService {
   private final EmailSendProducer emailSendProducer;
   private final RedisIdempotencyService idempotencyService;
   private final RateLimiterService rateLimiterService;
+  private final TemplateValidator templateValidator;
+  private final TemplateLookupService templateLookupService;
 
   @Override
   public EmailSendResponse sendEmail(EmailSendRequest request) {
@@ -61,6 +65,8 @@ public class EmailSendServiceImpl implements EmailSendService {
     }
 
     TemplateVersionEntity version = resolveVersion(request);
+    validateDynamicData(version, request);
+
     EmailSendEntity entity = new EmailSendEntity();
     entity.setTemplateVersion(version);
     entity.setRecipients(request.getRecipients());
@@ -108,9 +114,14 @@ public class EmailSendServiceImpl implements EmailSendService {
           .orElseThrow(() -> new TemplateVersionNotFoundException(request.getTemplateId(), request.getTemplateVersionId()));
     }
     TemplateEntity template = templateRepository.findById(request.getTemplateId()).orElseThrow(() -> new TemplateNotFoundException(request.getTemplateId()));
-    return templateVersionRepository
-        .findFirstByTemplateIdAndStatusOrderByVersionNumberDesc(template.getId(), TemplateVersionStatus.PUBLISHED)
-        .orElseThrow(() -> new TemplateVersionNotFoundException(request.getTemplateId(), null));
+    return templateLookupService.getActivePublishedVersion(template.getId());
+  }
+
+  private void validateDynamicData(TemplateVersionEntity version, EmailSendRequest request) {
+    var validation = templateValidator.validate(version, request.getDynamicData());
+    if (!validation.isValid()) {
+      throw new TemplateValidationException(validation);
+    }
   }
 
   private Set<AttachmentMetadata> mergeAttachments(
