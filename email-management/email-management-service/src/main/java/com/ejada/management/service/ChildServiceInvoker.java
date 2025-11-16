@@ -24,7 +24,7 @@ public class ChildServiceInvoker {
           .accept(MediaType.APPLICATION_JSON)
           .retrieve()
           .body(responseType);
-    } catch (RestClientException ex) {
+    } catch (Exception ex) {
       throw new ChildServiceException("Failed to call child service: " + baseUrl, ex);
     }
   }
@@ -39,7 +39,7 @@ public class ChildServiceInvoker {
           .body(body)
           .retrieve()
           .body(responseType);
-    } catch (RestClientException ex) {
+    } catch (Exception ex) {
       throw new ChildServiceException("Failed to call child service: " + baseUrl, ex);
     }
   }
