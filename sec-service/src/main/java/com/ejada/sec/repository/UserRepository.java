@@ -3,6 +3,8 @@ package com.ejada.sec.repository;
 import com.ejada.sec.domain.User;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +32,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByTenantIdAndUsername(UUID tenantId, String username);
 
     @EntityGraph(attributePaths = {"roles", "roles.role"})
-    Optional<User> findByIdWithRoles(Long id);
+    @Query("SELECT u FROM User u WHERE u.id = :id")
+    Optional<User> findByIdWithRoles(@Param("id") Long id);
 
 }
