@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,10 +43,10 @@ class ChildServiceInvokerTest {
     RestClient.RequestHeadersSpec<?> requestHeadersSpec = mock(RestClient.RequestHeadersSpec.class);
     RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
 
-    when(restClient.get()).thenReturn(requestSpec);
-    when(requestSpec.uri(any(URI.class))).thenReturn(requestHeadersSpec);
-    when(requestHeadersSpec.accept(MediaType.APPLICATION_JSON)).thenReturn(requestHeadersSpec);
-    when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+    doReturn(requestSpec).when(restClient).get();
+    doReturn(requestHeadersSpec).when(requestSpec).uri(any(URI.class));
+    doReturn(requestHeadersSpec).when(requestHeadersSpec).accept(MediaType.APPLICATION_JSON);
+    doReturn(responseSpec).when(requestHeadersSpec).retrieve();
     when(responseSpec.body(String.class)).thenReturn("response-body");
 
     URI baseUrl = URI.create("https://child.test/api/");
