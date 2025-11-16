@@ -29,4 +29,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByTenantIdAndUsername(UUID tenantId, String username);
 
+    @EntityGraph(attributePaths = {"roles", "roles.role"})
+    Optional<User> findByIdWithRoles(Long id);
+
 }
