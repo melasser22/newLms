@@ -37,6 +37,8 @@
     <plugin.checkstyle.version>3.5.0</plugin.checkstyle.version>
     <plugin.spotbugs.version>4.8.6.5</plugin.spotbugs.version>
 
+    <spotbugs.version>4.8.6</spotbugs.version>
+
     <checkerframework.version>3.49.3</checkerframework.version>
   </properties>
 
