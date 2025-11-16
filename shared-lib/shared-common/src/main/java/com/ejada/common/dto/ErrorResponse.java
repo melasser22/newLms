@@ -1,13 +1,15 @@
 package com.ejada.common.dto;
 
+import com.ejada.common.context.ContextManager;
+import com.ejada.common.context.CorrelationContextUtil;
 import com.ejada.common.enums.StatusEnums.ApiStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.Instant;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.Instant;
-import java.util.List;
 
 /**
  * Standardized error response for Shared APIs.
@@ -35,7 +37,8 @@ public class ErrorResponse {
     private String tenantId;
 
     /** Correlation identifier for tracing */
-    private String correlationId;
+    @Builder.Default
+    private String correlationId = CorrelationContextUtil.getCorrelationId();
 
     /** Timestamp of error */
     @Builder.Default
@@ -67,5 +70,21 @@ public class ErrorResponse {
                 .tenantId(tenantId)
                 .timestamp(Instant.now())
                 .build();
+    }
+
+    @JsonProperty("tenantId")
+    public String getTenantId() {
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = ContextManager.Tenant.get();
+        }
+        return tenantId;
+    }
+
+    @JsonProperty("correlationId")
+    public String getCorrelationId() {
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = CorrelationContextUtil.getCorrelationId();
+        }
+        return correlationId;
     }
 }
