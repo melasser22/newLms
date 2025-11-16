@@ -1,40 +1,46 @@
 spring:
   application:
     name: email-template-service
-  profiles:
-    active: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/email
+    username: email
+    password: email
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
   flyway:
-    baseline-on-migrate: true
-    baseline-version: 0
-    schemas: public,tenant
-    default-schema: tenant
-server:
-  port: 8081
-  shutdown: graceful
-  servlet:
-    context-path: /tenant
-  compression:
     enabled: true
-    mime-types:
-      - text/html
-      - text/plain
-      - text/css
-      - application/json
-      - application/javascript
-    min-response-size: 2KB
-  error:
-    include-message: always
-    include-binding-errors: always
+    locations: classpath:db/migration
+  cache:
+    type: redis
 
-shared:
-  observability:
-    application-name: email-template-service
-  security:
-    enable-role-check: true
-    jwt:
-      token-period: 15m
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
 
-tenant:
-  kafka:
-    topics:
-      tenant-onboarding: "${TENANT_KAFKA_TENANT_TOPIC:email-management.onboarding.tenants}"
+email:
+  kafka-topics:
+    email-send: email-send
+    email-send-retry: email-send-retry
+    email-send-dlq: email-send-dlq
+    webhook-events: sendgrid-webhooks
+    email-events: email-events
+  sendgrid:
+    sandbox-mode: false
+    timeout: PT30S
+    webhook-public-key: ""
+    default-from-email: noreply@example.com
+    default-from-name: Notification Service
+    api-key: changeme
+  rate-limit:
+    default-limit-per-minute: 300
+    burst-multiplier: 2
+    window: PT1M
+    idempotency-ttl: PT24H
