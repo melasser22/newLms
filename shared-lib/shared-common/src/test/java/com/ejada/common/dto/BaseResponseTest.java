@@ -78,4 +78,11 @@ class BaseResponseTest {
             assertEquals("tenantA", r.getTenantId());
         }
     }
+
+    @Test
+    void correlationIdIsAlwaysPopulated() {
+        BaseResponse<String> response = BaseResponse.success("ok", "payload");
+        assertNotNull(response.getCorrelationId());
+        assertFalse(response.getCorrelationId().isBlank());
+    }
 }
