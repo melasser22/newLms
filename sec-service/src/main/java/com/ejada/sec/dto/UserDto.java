@@ -12,6 +12,7 @@ public class UserDto {
   @NotNull private UUID tenantId;
   @NotBlank @Size(max = 120) private String username;
   @Email @NotBlank @Size(max = 255) private String email;
+  @Size(max = 32) private String phoneNumber;
   private boolean enabled;
   private boolean locked;
   private boolean firstLoginCompleted;

@@ -31,6 +31,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByTenantIdAndUsername(UUID tenantId, String username);
 
+    boolean existsByTenantIdAndPhoneNumber(UUID tenantId, String phoneNumber);
+
+    Optional<User> findByTenantIdAndPhoneNumber(UUID tenantId, String phoneNumber);
+
     @EntityGraph(attributePaths = {"roles", "roles.role"})
     @Query("SELECT u FROM User u WHERE u.id = :id")
     Optional<User> findByIdWithRoles(@Param("id") Long id);

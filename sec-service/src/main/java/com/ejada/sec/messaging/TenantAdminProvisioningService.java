@@ -52,6 +52,7 @@ public class TenantAdminProvisioningService {
 
         String username = normalize(adminInfo.adminUserName());
         String email = normalize(adminInfo.email());
+        String phoneNumber = normalize(adminInfo.mobileNo());
         if (!StringUtils.hasText(username) || !StringUtils.hasText(email)) {
             log.warn("Skipping admin provisioning for customer {}: incomplete admin info", extCustomerId);
             return;
@@ -66,7 +67,7 @@ public class TenantAdminProvisioningService {
         }
         Optional<User> existing = userRepository.findByTenantIdAndUsername(tenantId, username);
         if (existing.isPresent()) {
-            updateExistingAdmin(existing.get(), email, tenantId);
+            updateExistingAdmin(existing.get(), email, phoneNumber, tenantId);
             ensureRoleAssignment(existing.get(), tenantId);
             return;
         }
@@ -76,10 +77,17 @@ public class TenantAdminProvisioningService {
             return;
         }
 
+        if (StringUtils.hasText(phoneNumber)
+                && userRepository.existsByTenantIdAndPhoneNumber(tenantId, phoneNumber)) {
+            log.warn("Skipping admin creation for tenant {}: phone {} already in use", tenantId, phoneNumber);
+            return;
+        }
+
         User user = new User();
         user.setTenantId(tenantId);
         user.setUsername(username);
         user.setEmail(email);
+        user.setPhoneNumber(phoneNumber);
         user.setPasswordHash(passwordEncoder.encode(generateRandomPassword()));
         user.setEnabled(true);
         user.setLocked(false);
@@ -89,21 +97,39 @@ public class TenantAdminProvisioningService {
         log.info("Provisioned tenant admin '{}' for tenant {}", username, tenantId);
     }
 
-    private void updateExistingAdmin(final User user, final String email, final UUID tenantId) {
-        if (email.equalsIgnoreCase(user.getEmail())) {
-            return;
+    private void updateExistingAdmin(final User user, final String email, final String phoneNumber, final UUID tenantId) {
+        boolean updated = false;
+
+        if (!email.equalsIgnoreCase(user.getEmail())) {
+            Optional<User> other = userRepository.findByTenantIdAndEmail(tenantId, email)
+                    .filter(o -> !o.getId().equals(user.getId()));
+            if (other.isPresent()) {
+                log.warn(
+                        "Skipping email update for user {} in tenant {}: email already used by user {}",
+                        user.getId(), tenantId, other.get().getId());
+            } else {
+                user.setEmail(email);
+                updated = true;
+            }
         }
-        userRepository.findByTenantIdAndEmail(tenantId, email)
-                .filter(other -> !other.getId().equals(user.getId()))
-                .ifPresentOrElse(
-                        other -> log.warn(
-                                "Skipping email update for user {} in tenant {}: email already used by user {}",
-                                user.getId(), tenantId, other.getId()),
-                        () -> {
-                            user.setEmail(email);
-                            userRepository.save(user);
-                            log.info("Updated admin email for user {} in tenant {}", user.getId(), tenantId);
-                        });
+
+        if (StringUtils.hasText(phoneNumber) && !phoneNumber.equals(user.getPhoneNumber())) {
+            Optional<User> otherPhone = userRepository.findByTenantIdAndPhoneNumber(tenantId, phoneNumber)
+                    .filter(o -> !o.getId().equals(user.getId()));
+            if (otherPhone.isPresent()) {
+                log.warn(
+                        "Skipping phone update for user {} in tenant {}: phone already used by user {}",
+                        user.getId(), tenantId, otherPhone.get().getId());
+            } else {
+                user.setPhoneNumber(phoneNumber);
+                updated = true;
+            }
+        }
+
+        if (updated) {
+            userRepository.save(user);
+            log.info("Updated admin contact info for user {} in tenant {}", user.getId(), tenantId);
+        }
     }
 
     private void ensureRoleAssignment(final User user, final UUID tenantId) {

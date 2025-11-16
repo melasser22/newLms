@@ -13,7 +13,8 @@ import java.util.UUID;
   name = "users",
   uniqueConstraints = {
       @UniqueConstraint(name = "ux_users_tenant_username", columnNames = {"tenant_id", "username"}),
-      @UniqueConstraint(name = "ux_users_tenant_email",    columnNames = {"tenant_id", "email"})
+      @UniqueConstraint(name = "ux_users_tenant_email",    columnNames = {"tenant_id", "email"}),
+      @UniqueConstraint(name = "ux_users_tenant_phone",    columnNames = {"tenant_id", "phone_number"})
   },
   indexes = {
     @Index(name = "ix_users_tenant_id", columnList = "tenant_id"),
@@ -37,6 +38,9 @@ public class User extends AuditableEntity {
 
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
+
+    @Column(name = "phone_number", length = 32)
+    private String phoneNumber;
 
     @Column(nullable = false)
     @Builder.Default
