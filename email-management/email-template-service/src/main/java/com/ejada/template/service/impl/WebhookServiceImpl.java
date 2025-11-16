@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.time.Duration;
 import java.time.Instant;
@@ -68,7 +69,7 @@ public class WebhookServiceImpl implements WebhookService {
         throw new IllegalArgumentException("Invalid webhook signature");
       }
     } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException
-        | InvalidKeySpecException ex) {
+        | InvalidKeySpecException | SignatureException ex) {
       throw new IllegalStateException("Verification algorithm or provider is not available", ex);
     } catch (RuntimeException ex) {
       throw new IllegalArgumentException("Unable to verify webhook signature", ex);
