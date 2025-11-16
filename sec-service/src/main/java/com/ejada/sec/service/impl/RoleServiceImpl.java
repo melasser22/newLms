@@ -1,11 +1,11 @@
 package com.ejada.sec.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.exception.ValidationException;
 import com.ejada.sec.domain.Role;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.mapper.ReferenceResolver;
 import com.ejada.sec.mapper.RoleMapper;
+import com.ejada.sec.context.TenantContextProvider;
 import com.ejada.sec.repository.RoleRepository;
 import com.ejada.sec.service.RoleService;
 import jakarta.transaction.Transactional;
@@ -18,7 +18,6 @@ import com.ejada.redis.starter.config.KeyPrefixStrategy;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import com.ejada.common.context.ContextManager;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +29,7 @@ public class RoleServiceImpl implements RoleService {
   private final ReferenceResolver resolver;
   private final RedisTemplate<String, Object> redisTemplate;
   private final KeyPrefixStrategy keyPrefixStrategy;
+  private final TenantContextProvider tenantContextProvider;
 
   private static final String ROLE_KEY_PREFIX = "role:";
   private static final String ROLE_LIST_KEY_PREFIX = "roles:tenant:";
@@ -99,14 +99,8 @@ public class RoleServiceImpl implements RoleService {
 
   @Override
     public BaseResponse<List<RoleDto>> listByTenant() {
-	  String tenantIdStr = ContextManager.Tenant.get();
-	    UUID tenantId;
-	    try {
-	      tenantId = UUID.fromString(tenantIdStr);
-	    } catch (RuntimeException ex) {
-	      throw new ValidationException("Invalid tenant ID format", ex.getMessage());
-	    }
-	          log.debug("Listing roles for tenant {}", tenantId);
+      UUID tenantId = tenantContextProvider.requireTenantId();
+      log.debug("Listing roles for tenant {}", tenantId);
       String key = roleListKey(tenantId);
       @SuppressWarnings("unchecked")
       List<RoleDto> cached = (List<RoleDto>) redisTemplate.opsForValue().get(key);

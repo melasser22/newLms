@@ -1,10 +1,10 @@
 package com.ejada.sec.service.impl;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.common.exception.ValidationException;
 import com.ejada.sec.domain.Privilege;
 import com.ejada.sec.dto.*;
 import com.ejada.sec.mapper.PrivilegeMapper;
+import com.ejada.sec.context.TenantContextProvider;
 import com.ejada.sec.repository.PrivilegeRepository;
 import com.ejada.sec.service.PrivilegeService;
 import jakarta.transaction.Transactional;
@@ -16,7 +16,6 @@ import com.ejada.redis.starter.config.KeyPrefixStrategy;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import com.ejada.common.context.ContextManager;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +25,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
   private final PrivilegeMapper mapper;
   private final RedisTemplate<String, Object> redisTemplate;
   private final KeyPrefixStrategy keyPrefixStrategy;
+  private final TenantContextProvider tenantContextProvider;
 
   private static final String PRIV_KEY_PREFIX = "priv:";
   private static final String PRIV_LIST_KEY_PREFIX = "privs:tenant:";
@@ -87,14 +87,8 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
   @Override
   public BaseResponse<List<PrivilegeDto>> listByTenant() {
-	  String tenantIdStr = ContextManager.Tenant.get();
-	    UUID tenantId;
-	    try {
-	      tenantId = UUID.fromString(tenantIdStr);
-	    } catch (RuntimeException ex) {
-	      throw new ValidationException("Invalid tenant ID format", ex.getMessage());
-	    }
-	    String key = privListKey(tenantId);
+    UUID tenantId = tenantContextProvider.requireTenantId();
+    String key = privListKey(tenantId);
     @SuppressWarnings("unchecked")
     List<PrivilegeDto> cached = (List<PrivilegeDto>) redisTemplate.opsForValue().get(key);
     if (cached != null) {
