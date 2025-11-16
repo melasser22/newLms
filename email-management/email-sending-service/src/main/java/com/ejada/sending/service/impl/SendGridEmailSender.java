@@ -15,7 +15,7 @@ import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Email;
 import com.sendgrid.helpers.mail.objects.MailSettings;
-import com.sendgrid.helpers.mail.objects.MailSettings.SandboxMode;
+import com.sendgrid.helpers.mail.objects.Setting;
 import com.sendgrid.helpers.mail.objects.Personalization;
 import com.sendgrid.helpers.mail.objects.Attachments;
 import java.io.IOException;
@@ -82,17 +82,22 @@ public class SendGridEmailSender implements EmailSender {
     }
 
     if (envelope.mode() == com.ejada.sending.dto.EmailSendRequest.SendMode.TEST || template.sandboxEnabled()) {
-      MailSettings mailSettings = new MailSettings();
-      SandboxMode sandboxMode = new SandboxMode();
-      sandboxMode.setEnable(true);
-      mailSettings.setSandboxMode(sandboxMode);
-      mail.setMailSettings(mailSettings);
+    	MailSettings mailSettings = new MailSettings();
+    	Setting sandboxMode = new Setting();
+    	sandboxMode.setEnable(true);
+    	mailSettings.setSandboxMode(sandboxMode);
+    	mail.setMailSettings(mailSettings);
     }
 
     Request request = new Request();
     request.setMethod(Method.POST);
     request.setEndpoint("mail/send");
-    request.setBody(mail.build());
+    try {
+		request.setBody(mail.build());
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
     try {
       Response response = client.api(request);
       if (response.getStatusCode() >= 400) {

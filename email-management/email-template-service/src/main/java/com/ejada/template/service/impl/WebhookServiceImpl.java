@@ -62,18 +62,19 @@ public class WebhookServiceImpl implements WebhookService {
       throw new IllegalStateException("SendGrid webhook public key is not configured");
     }
     try {
-      boolean valid =
-          eventWebhook.VerifySignature(
-              eventWebhook.ConvertPublicKeyToECDSA(publicKeyValue), payload, signature, timestamp);
-      if (!valid) {
-        throw new IllegalArgumentException("Invalid webhook signature");
-      }
-    } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException
-        | InvalidKeySpecException | SignatureException ex) {
-      throw new IllegalStateException("Verification algorithm or provider is not available", ex);
-    } catch (RuntimeException ex) {
-      throw new IllegalArgumentException("Unable to verify webhook signature", ex);
-    }
+    	  boolean valid = eventWebhook.VerifySignature(
+    	      eventWebhook.ConvertPublicKeyToECDSA(publicKeyValue), payload, signature, timestamp);
+    	  if (!valid) {
+    	    throw new IllegalArgumentException("Invalid webhook signature");
+    	  }
+    	} catch (IOException e) {
+    	  throw new IllegalStateException("IO error during webhook verification", e);
+    	} catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException
+    	        | InvalidKeySpecException | SignatureException ex) {
+    	  throw new IllegalStateException("Verification algorithm or provider is not available", ex);
+    	} catch (RuntimeException ex) {
+    	  throw new IllegalArgumentException("Unable to verify webhook signature", ex);
+    	}
   }
 
   private List<Map<String, Object>> parsePayload(String payload) {
