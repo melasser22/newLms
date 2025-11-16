@@ -1,6 +1,7 @@
 package com.ejada.common.dto;
 
 import com.ejada.common.context.ContextManager;
+import com.ejada.common.context.CorrelationContextUtil;
 import com.ejada.common.enums.StatusEnums.ApiStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
@@ -42,12 +43,23 @@ public class BaseResponse<T> {
     /** Tenant identifier for multi-tenancy */
     private String tenantId;
 
+    /** Correlation identifier echoed back to clients */
+    private String correlationId;
+
     @JsonProperty("tenantId")
     public String getTenantId() {
         if (tenantId == null || tenantId.isBlank()) {
             tenantId = ContextManager.Tenant.get();
         }
         return tenantId;
+    }
+
+    @JsonProperty("correlationId")
+    public String getCorrelationId() {
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = CorrelationContextUtil.getCorrelationId();
+        }
+        return correlationId;
     }
 
     // ===== Static builders (nice usability) =====
@@ -143,6 +155,7 @@ public class BaseResponse<T> {
                 .data(newData)
                 .timestamp(timestamp)
                 .tenantId(getTenantId())
+                .correlationId(getCorrelationId())
                 .build();
     }
 
