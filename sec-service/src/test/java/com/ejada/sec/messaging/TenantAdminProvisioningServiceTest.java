@@ -58,7 +58,6 @@ class TenantAdminProvisioningServiceTest {
         User saved = new User();
         saved.setId(42L);
         saved.setTenantId(tenantId);
-        saved.setInternalTenantId(tenantId);
         saved.setUsername("m.alqahtani");
         saved.setEmail("m.alqahtani@alnoursolutions.com");
         saved.setPasswordHash("hashed");
@@ -97,7 +96,6 @@ class TenantAdminProvisioningServiceTest {
         User existing = new User();
         existing.setId(11L);
         existing.setTenantId(tenantId);
-        existing.setInternalTenantId(tenantId);
         existing.setUsername("m.alqahtani");
         existing.setEmail("old@example.com");
 

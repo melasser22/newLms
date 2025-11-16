@@ -6,7 +6,6 @@ import java.util.UUID;
 public class UserSummary {
   private Long id;
   private UUID tenantId;
-  private UUID internalTenantId;
   private String username;
   private String email;
   private boolean enabled;

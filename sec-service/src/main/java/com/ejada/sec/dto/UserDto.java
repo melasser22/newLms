@@ -10,7 +10,6 @@ import lombok.*;
 public class UserDto {
   private Long id;
   @NotNull private UUID tenantId;
-  @NotNull private UUID internalTenantId;
   @NotBlank @Size(max = 120) private String username;
   @Email @NotBlank @Size(max = 255) private String email;
   private boolean enabled;
