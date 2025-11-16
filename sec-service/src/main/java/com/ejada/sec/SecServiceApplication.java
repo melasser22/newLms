@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
  * parent repository and exposes authentication and user management APIs.
  */
 @SpringBootApplication
-@EnableJpaAuditing
+@EnableJpaAuditing(auditorAwareRef = "requestAuditorAware")
 public class SecServiceApplication {
 
     private SecServiceApplication() {
