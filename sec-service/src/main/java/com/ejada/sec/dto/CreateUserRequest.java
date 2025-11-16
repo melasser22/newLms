@@ -1,6 +1,7 @@
 package com.ejada.sec.dto;
 
 import com.ejada.common.dto.BaseRequest;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -15,6 +16,7 @@ import java.util.List;
 public class CreateUserRequest extends BaseRequest {
   @NotBlank @Size(max = 120) private String username;
   @Email @NotBlank @Size(max = 255) private String email;
+  @JsonAlias({"phone_number", "phoneNumber"})
   @Size(max = 32) private String phoneNumber;
   @NotBlank @Size(min = 8, max = 120) private String password;
   private List<@NotBlank String> roles;
