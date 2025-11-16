@@ -15,6 +15,7 @@ import java.util.List;
 public class CreateUserRequest extends BaseRequest {
   @NotBlank @Size(max = 120) private String username;
   @Email @NotBlank @Size(max = 255) private String email;
+  @Size(max = 32) private String phoneNumber;
   @NotBlank @Size(min = 8, max = 120) private String password;
   private List<@NotBlank String> roles;
 }

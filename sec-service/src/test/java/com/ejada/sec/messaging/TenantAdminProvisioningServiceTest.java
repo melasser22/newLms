@@ -50,6 +50,7 @@ class TenantAdminProvisioningServiceTest {
         when(userRepository.findByTenantIdAndUsername(tenantId, "m.alqahtani")).thenReturn(Optional.empty());
         when(userRepository.existsByTenantIdAndEmail(tenantId, "m.alqahtani@alnoursolutions.com")).thenReturn(false);
         when(passwordEncoder.encode(any())).thenReturn("hashed");
+        when(userRepository.existsByTenantIdAndPhoneNumber(tenantId, "+966501234567")).thenReturn(false);
 
         Role role = Role.builder().id(5L).tenantId(tenantId).code("TENANT_ADMIN").name("Tenant Administrator").build();
         when(roleRepository.findByTenantIdAndCode(tenantId, "TENANT_ADMIN")).thenReturn(Optional.empty());
@@ -73,6 +74,7 @@ class TenantAdminProvisioningServiceTest {
         assertThat(userCaptor.getValue().getUsername()).isEqualTo("m.alqahtani");
         assertThat(userCaptor.getValue().getEmail()).isEqualTo("m.alqahtani@alnoursolutions.com");
         assertThat(userCaptor.getValue().getPasswordHash()).isEqualTo("hashed");
+        assertThat(userCaptor.getValue().getPhoneNumber()).isEqualTo("+966501234567");
 
         ArgumentCaptor<UserRole> linkCaptor = ArgumentCaptor.forClass(UserRole.class);
         verify(userRoleRepository).save(linkCaptor.capture());
@@ -102,6 +104,8 @@ class TenantAdminProvisioningServiceTest {
         when(userRepository.findByTenantIdAndUsername(tenantId, "m.alqahtani")).thenReturn(Optional.of(existing));
         when(userRepository.findByTenantIdAndEmail(tenantId, "m.alqahtani@alnoursolutions.com"))
                 .thenReturn(Optional.of(existing));
+        when(userRepository.findByTenantIdAndPhoneNumber(tenantId, "+966501234567"))
+                .thenReturn(Optional.of(existing));
 
         Role role = Role.builder().id(5L).tenantId(tenantId).code("TENANT_ADMIN").name("Tenant Administrator").build();
         when(roleRepository.findByTenantIdAndCode(tenantId, "TENANT_ADMIN")).thenReturn(Optional.of(role));
@@ -111,6 +115,7 @@ class TenantAdminProvisioningServiceTest {
 
         verify(userRepository).save(existing);
         assertThat(existing.getEmail()).isEqualTo("m.alqahtani@alnoursolutions.com");
+        assertThat(existing.getPhoneNumber()).isEqualTo("+966501234567");
         verify(userRoleRepository, never()).save(any(UserRole.class));
     }
 
