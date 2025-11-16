@@ -17,7 +17,8 @@ public record EmailEnvelope(
     Map<String, Object> dynamicData,
     List<AttachmentMetadataDto> attachments,
     EmailSendRequest.SendMode mode,
-    Instant createdAt) {
+    Instant createdAt,
+    String idempotencyKey) {
 
   public static EmailEnvelope from(String tenantId, EmailSendRequest request) {
     return new EmailEnvelope(
@@ -27,9 +28,10 @@ public record EmailEnvelope(
         request.to(),
         request.cc(),
         request.bcc(),
-        request.dynamicData(),
-        request.attachments(),
+        request.dynamicData() == null ? Map.of() : request.dynamicData(),
+        request.attachments() == null ? List.of() : request.attachments(),
         request.mode(),
-        Instant.now());
+        Instant.now(),
+        request.idempotencyKey());
   }
 }
