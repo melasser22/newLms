@@ -9,8 +9,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sendgrid.helpers.eventwebhook.EventWebhook;
 import java.io.IOException;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.spec.InvalidKeySpecException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -65,7 +67,8 @@ public class WebhookServiceImpl implements WebhookService {
       if (!valid) {
         throw new IllegalArgumentException("Invalid webhook signature");
       }
-    } catch (NoSuchAlgorithmException | NoSuchProviderException ex) {
+    } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException
+        | InvalidKeySpecException ex) {
       throw new IllegalStateException("Verification algorithm or provider is not available", ex);
     } catch (RuntimeException ex) {
       throw new IllegalArgumentException("Unable to verify webhook signature", ex);
