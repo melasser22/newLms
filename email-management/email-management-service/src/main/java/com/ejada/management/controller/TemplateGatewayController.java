@@ -2,7 +2,9 @@ package com.ejada.management.controller;
 
 import com.ejada.management.dto.TemplateSummary;
 import com.ejada.management.dto.TemplateSyncRequest;
+import com.ejada.management.service.AuditLogger;
 import com.ejada.management.service.TemplateGatewayService;
+import com.ejada.management.service.TenantRateLimiter;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -19,13 +21,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class TemplateGatewayController {
 
   private final TemplateGatewayService service;
+  private final TenantRateLimiter rateLimiter;
+  private final AuditLogger auditLogger;
 
-  public TemplateGatewayController(TemplateGatewayService service) {
+  public TemplateGatewayController(
+      TemplateGatewayService service, TenantRateLimiter rateLimiter, AuditLogger auditLogger) {
     this.service = service;
+    this.rateLimiter = rateLimiter;
+    this.auditLogger = auditLogger;
   }
 
   @GetMapping
   public List<TemplateSummary> listTemplates(@PathVariable String tenantId) {
+    rateLimiter.assertWithinQuota(tenantId, "template-list");
+    auditLogger.logTenantAction(tenantId, "TEMPLATE_LIST", "fetch");
     return service.fetchTemplates(tenantId);
   }
 
@@ -33,6 +42,8 @@ public class TemplateGatewayController {
   @ResponseStatus(HttpStatus.ACCEPTED)
   public void syncTemplates(
       @PathVariable String tenantId, @Valid @RequestBody TemplateSyncRequest request) {
+    rateLimiter.assertWithinQuota(tenantId, "template-sync");
+    auditLogger.logTenantAction(tenantId, "TEMPLATE_SYNC", request.syncType());
     service.requestSync(tenantId, request);
   }
 }
