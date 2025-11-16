@@ -17,8 +17,11 @@
   <name>email-management</name>
 
   <modules>
-  <!--   <module>shared-lib</module>-->
+    <module>email-management-service</module>
     <module>email-template-service</module>
+    <module>email-sending-service</module>
+    <module>email-webhook-service</module>
+    <module>email-usage-service</module>
   </modules>
 
   <properties>
@@ -26,6 +29,7 @@
     <maven.min.version>3.9.6</maven.min.version>
 
     <ejada.shared.version>1.0.0</ejada.shared.version>
+    <springdoc.version>2.6.0</springdoc.version>
 
     <plugin.enforcer.version>3.5.0</plugin.enforcer.version>
     <plugin.jacoco.version>0.8.12</plugin.jacoco.version>
@@ -59,9 +63,10 @@
       <artifactId>lombok</artifactId>
       <optional>true</optional>
     </dependency>
-     <dependency>
+    <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>${springdoc.version}</version>
     </dependency>
     <dependency>
       <groupId>com.github.spotbugs</groupId>

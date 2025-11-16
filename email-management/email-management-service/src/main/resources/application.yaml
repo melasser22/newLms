@@ -1,0 +1,12 @@
+server:
+  port: 8080
+
+child-services:
+  template:
+    base-url: http://email-template-service:8081
+  sending:
+    base-url: http://email-sending-service:8082
+  webhook:
+    base-url: http://email-webhook-service:8083
+  usage:
+    base-url: http://email-usage-service:8084
