@@ -4,27 +4,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 class ChildServicePropertiesTest {
 
   @Test
-  void getTemplateShouldReturnDefensiveCopy() {
+  void getTemplateShouldExposeBackingInstance() {
     ChildServiceProperties properties = new ChildServiceProperties();
-    ChildServiceProperties.ServiceEndpoint internalTemplate =
-        (ChildServiceProperties.ServiceEndpoint) ReflectionTestUtils.getField(properties, "template");
     URI templateUri = URI.create("https://template.test");
-    ReflectionTestUtils.setField(internalTemplate, "baseUrl", templateUri);
 
-    ChildServiceProperties.ServiceEndpoint retrievedTemplate = properties.getTemplate();
+    properties.getTemplate().setBaseUrl(templateUri);
 
-    assertThat(retrievedTemplate).isNotSameAs(internalTemplate);
-    assertThat(retrievedTemplate.getBaseUrl()).isEqualTo(templateUri);
-
-    retrievedTemplate.setBaseUrl(URI.create("https://mutated.test"));
-    ChildServiceProperties.ServiceEndpoint secondRead = properties.getTemplate();
-
-    assertThat(secondRead.getBaseUrl()).isEqualTo(templateUri);
+    assertThat(properties.getTemplate().getBaseUrl()).isEqualTo(templateUri);
   }
 
   @Test
@@ -35,5 +25,18 @@ class ChildServicePropertiesTest {
     endpoint.setBaseUrl(baseUrl);
 
     assertThat(endpoint.getBaseUrl()).isEqualTo(baseUrl);
+  }
+
+  @Test
+  void settersShouldCopyEndpoints() {
+    ChildServiceProperties properties = new ChildServiceProperties();
+    ChildServiceProperties.ServiceEndpoint endpoint = new ChildServiceProperties.ServiceEndpoint();
+    URI baseUrl = URI.create("https://child.test/api");
+    endpoint.setBaseUrl(baseUrl);
+
+    properties.setTemplate(endpoint);
+
+    assertThat(properties.getTemplate().getBaseUrl()).isEqualTo(baseUrl);
+    assertThat(properties.getTemplate()).isNotSameAs(endpoint);
   }
 }
