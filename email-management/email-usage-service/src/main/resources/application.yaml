@@ -18,6 +18,17 @@ spring:
     locations: classpath:db/migration/common,classpath:db/migration/{vendor}
 
 shared:
+  security:
+    mode: hs256
+    hs256:
+      secret: ${JWT_SECRET:7h1aH9UllV2E7Yka4P6s2F+1Vn6V5w9zIXhmJ5aB1kA=}
+    tenant-claim: tenant
+    resource-server:
+      enabled: true
+      permit-all:
+        - /actuator/health
+        - /v3/api-docs/**
+        - /swagger-ui/**
   core:
     tenant:
       resolve-from-jwt: true

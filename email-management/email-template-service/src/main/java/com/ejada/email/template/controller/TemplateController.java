@@ -12,6 +12,7 @@ import com.ejada.email.template.dto.TemplateVersionCreateRequest;
 import com.ejada.email.template.dto.TemplateVersionDto;
 import com.ejada.email.template.dto.UpdateTemplateRequest;
 import com.ejada.email.template.service.TemplateService;
+import com.ejada.starter_core.tenant.RequireTenant;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/templates")
+@RequireTenant
 public class TemplateController {
 
   private final TemplateService templateService;
