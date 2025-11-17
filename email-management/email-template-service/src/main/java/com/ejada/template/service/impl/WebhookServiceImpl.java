@@ -19,13 +19,11 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class WebhookServiceImpl implements WebhookService {
 
   private static final Duration DEDUP_TTL = Duration.ofHours(1);
@@ -35,6 +33,17 @@ public class WebhookServiceImpl implements WebhookService {
   private final WebhookEventProducer webhookEventProducer;
   private final WebhookDeduplicationService deduplicationService;
   private final EventWebhook eventWebhook = new EventWebhook();
+
+  public WebhookServiceImpl(
+      ObjectMapper objectMapper,
+      SendGridProperties sendGridProperties,
+      WebhookEventProducer webhookEventProducer,
+      WebhookDeduplicationService deduplicationService) {
+    this.objectMapper = objectMapper.copy();
+    this.sendGridProperties = sendGridProperties;
+    this.webhookEventProducer = webhookEventProducer;
+    this.deduplicationService = deduplicationService;
+  }
 
   @Override
   public void handleWebhook(String tenantId, String payload, String signature, String timestamp) {
