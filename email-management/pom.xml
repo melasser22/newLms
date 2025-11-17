@@ -29,7 +29,7 @@
     <maven.min.version>3.9.6</maven.min.version>
 
     <ejada.shared.version>1.0.0</ejada.shared.version>
-    <springdoc.version>2.6.0</springdoc.version>
+    <springdoc.version>2.7.0</springdoc.version>
 
     <plugin.enforcer.version>3.5.0</plugin.enforcer.version>
     <plugin.jacoco.version>0.8.12</plugin.jacoco.version>
