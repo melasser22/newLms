@@ -4,11 +4,13 @@ import com.ejada.sending.config.RateLimitProperties;
 import com.ejada.sending.service.RateLimiterService;
 import java.time.Instant;
 import java.util.List;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 @Service
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Dependencies are managed beans")
 public class RedisRateLimiterService implements RateLimiterService {
 
   private final StringRedisTemplate redisTemplate;

@@ -18,6 +18,14 @@ public record EmailSendRequest(
     @NotNull SendMode mode,
     String idempotencyKey) {
 
+  public EmailSendRequest {
+    to = List.copyOf(to);
+    cc = cc == null ? List.of() : List.copyOf(cc);
+    bcc = bcc == null ? List.of() : List.copyOf(bcc);
+    dynamicData = dynamicData == null ? Map.of() : Map.copyOf(dynamicData);
+    attachments = attachments == null ? List.of() : List.copyOf(attachments);
+  }
+
   public enum SendMode {
     PRODUCTION,
     TEST,

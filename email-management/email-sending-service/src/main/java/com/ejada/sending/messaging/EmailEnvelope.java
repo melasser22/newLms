@@ -20,6 +20,14 @@ public record EmailEnvelope(
     Instant createdAt,
     String idempotencyKey) {
 
+  public EmailEnvelope {
+    to = to == null ? List.of() : List.copyOf(to);
+    cc = cc == null ? List.of() : List.copyOf(cc);
+    bcc = bcc == null ? List.of() : List.copyOf(bcc);
+    dynamicData = dynamicData == null ? Map.of() : Map.copyOf(dynamicData);
+    attachments = attachments == null ? List.of() : List.copyOf(attachments);
+  }
+
   public static EmailEnvelope from(String tenantId, EmailSendRequest request) {
     return new EmailEnvelope(
         UUID.randomUUID().toString(),

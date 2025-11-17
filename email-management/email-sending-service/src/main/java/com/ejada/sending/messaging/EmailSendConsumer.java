@@ -4,6 +4,7 @@ import com.ejada.sending.config.EmailSendingProperties;
 import com.ejada.sending.config.KafkaTopicsProperties;
 import com.ejada.sending.service.EmailLogService;
 import com.ejada.sending.service.EmailSender;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
 @Component
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Dependencies are managed by Spring")
 public class EmailSendConsumer {
 
   private static final Logger log = LoggerFactory.getLogger(EmailSendConsumer.class);
