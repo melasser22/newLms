@@ -45,8 +45,7 @@ public class EmailSendConsumer {
     this.taskScheduler = taskScheduler;
   }
 
-  @KafkaListener(
-      topics = {"#{@kafkaTopicsProperties.emailSend}", "#{@kafkaTopicsProperties.emailBulk}"})
+  @KafkaListener(topics = {"${kafka.topics.email-send}", "${kafka.topics.email-bulk}"})
   public void consume(
       @Payload EmailEnvelope envelope,
       @Header(name = "x-attempt", required = false) Integer attemptHeader,
