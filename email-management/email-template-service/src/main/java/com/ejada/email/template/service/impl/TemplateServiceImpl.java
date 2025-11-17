@@ -25,13 +25,13 @@ import com.ejada.email.template.service.TemplateService;
 import com.ejada.email.template.service.support.SendGridTemplateClient;
 import com.ejada.email.template.service.support.TemplateRenderer;
 import com.ejada.email.template.service.support.TemplateValidator;
+import com.ejada.common.exception.ValidationException;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -288,6 +288,10 @@ public class TemplateServiceImpl implements TemplateService {
   }
 
   private String requireTenantId() {
-    return Objects.requireNonNull(ContextManager.Tenant.get(), "tenantId is required");
+    String tenantId = ContextManager.Tenant.get();
+    if (tenantId == null) {
+      throw new ValidationException("Tenant context is missing", "tenantId is required");
+    }
+    return tenantId;
   }
 }
