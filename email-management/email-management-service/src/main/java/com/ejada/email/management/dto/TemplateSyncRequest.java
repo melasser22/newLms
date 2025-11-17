@@ -1,4 +1,4 @@
-package com.ejada.management.dto;
+package com.ejada.email.management.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

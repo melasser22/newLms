@@ -1,7 +1,7 @@
-package com.ejada.management.controller;
+package com.ejada.email.management.controller;
 
-import com.ejada.management.dto.SendGridWebhookRequest;
-import com.ejada.management.service.WebhookGatewayService;
+import com.ejada.email.management.dto.SendGridWebhookRequest;
+import com.ejada.email.management.service.WebhookGatewayService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;

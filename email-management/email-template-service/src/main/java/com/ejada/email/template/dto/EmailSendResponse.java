@@ -1,6 +1,6 @@
-package com.ejada.template.dto;
+package com.ejada.email.template.dto;
 
-import com.ejada.template.domain.enums.EmailSendStatus;
+import com.ejada.email.template.domain.enums.EmailSendStatus;
 import lombok.Builder;
 import lombok.Value;
 

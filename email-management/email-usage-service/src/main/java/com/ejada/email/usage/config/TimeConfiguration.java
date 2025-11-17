@@ -1,4 +1,4 @@
-package com.ejada.usage.config;
+package com.ejada.email.usage.config;
 
 import java.time.Clock;
 import org.springframework.context.annotation.Bean;

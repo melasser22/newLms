@@ -1,4 +1,4 @@
-package com.ejada.template.config;
+package com.ejada.email.template.config;
 
 import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;

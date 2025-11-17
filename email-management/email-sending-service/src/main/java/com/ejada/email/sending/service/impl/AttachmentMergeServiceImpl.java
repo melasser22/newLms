@@ -1,7 +1,7 @@
-package com.ejada.sending.service.impl;
+package com.ejada.email.sending.service.impl;
 
-import com.ejada.sending.dto.AttachmentMetadataDto;
-import com.ejada.sending.service.AttachmentMergeService;
+import com.ejada.email.sending.dto.AttachmentMetadataDto;
+import com.ejada.email.sending.service.AttachmentMergeService;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

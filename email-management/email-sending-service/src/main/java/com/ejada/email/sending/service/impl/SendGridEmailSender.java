@@ -1,13 +1,13 @@
-package com.ejada.sending.service.impl;
+package com.ejada.email.sending.service.impl;
 
-import com.ejada.sending.client.TemplateClient;
-import com.ejada.sending.client.dto.TemplateDescriptor;
-import com.ejada.sending.config.EmailSendingProperties;
-import com.ejada.sending.config.SendGridProperties;
-import com.ejada.sending.dto.AttachmentMetadataDto;
-import com.ejada.sending.messaging.EmailEnvelope;
-import com.ejada.sending.service.AttachmentMergeService;
-import com.ejada.sending.service.EmailSender;
+import com.ejada.email.sending.client.TemplateClient;
+import com.ejada.email.sending.client.dto.TemplateDescriptor;
+import com.ejada.email.sending.config.EmailSendingProperties;
+import com.ejada.email.sending.config.SendGridProperties;
+import com.ejada.email.sending.dto.AttachmentMetadataDto;
+import com.ejada.email.sending.messaging.EmailEnvelope;
+import com.ejada.email.sending.service.AttachmentMergeService;
+import com.ejada.email.sending.service.EmailSender;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
@@ -61,7 +61,7 @@ public class SendGridEmailSender implements EmailSender {
     if (properties.getApiKey() == null || properties.getApiKey().isBlank()) {
       throw new IllegalStateException("SendGrid API key is not configured");
     }
-    if (envelope.mode() == com.ejada.sending.dto.EmailSendRequest.SendMode.DRAFT) {
+    if (envelope.mode() == com.ejada.email.sending.dto.EmailSendRequest.SendMode.DRAFT) {
       log.info("Skipping send for draft email {}", envelope.id());
       return;
     }
@@ -83,7 +83,7 @@ public class SendGridEmailSender implements EmailSender {
       attachments.forEach(attachment -> mail.addAttachments(resolveAttachment(attachment)));
     }
 
-    if (envelope.mode() == com.ejada.sending.dto.EmailSendRequest.SendMode.TEST || template.sandboxEnabled()) {
+    if (envelope.mode() == com.ejada.email.sending.dto.EmailSendRequest.SendMode.TEST || template.sandboxEnabled()) {
     	MailSettings mailSettings = new MailSettings();
     	Setting sandboxMode = new Setting();
     	sandboxMode.setEnable(true);
@@ -113,7 +113,7 @@ public class SendGridEmailSender implements EmailSender {
   private void addRecipients(Personalization personalization, EmailEnvelope envelope) {
     if (emailSendingProperties.getTestOverrideEmail() != null
         && !emailSendingProperties.getTestOverrideEmail().isBlank()
-        && envelope.mode() == com.ejada.sending.dto.EmailSendRequest.SendMode.TEST) {
+        && envelope.mode() == com.ejada.email.sending.dto.EmailSendRequest.SendMode.TEST) {
       personalization.addTo(new Email(emailSendingProperties.getTestOverrideEmail()));
       return;
     }

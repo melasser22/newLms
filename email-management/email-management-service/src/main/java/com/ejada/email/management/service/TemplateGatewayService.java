@@ -1,8 +1,8 @@
-package com.ejada.management.service;
+package com.ejada.email.management.service;
 
-import com.ejada.management.config.ChildServiceProperties;
-import com.ejada.management.dto.TemplateSummary;
-import com.ejada.management.dto.TemplateSyncRequest;
+import com.ejada.email.management.config.ChildServiceProperties;
+import com.ejada.email.management.dto.TemplateSummary;
+import com.ejada.email.management.dto.TemplateSyncRequest;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;

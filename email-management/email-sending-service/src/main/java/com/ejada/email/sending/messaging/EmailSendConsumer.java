@@ -1,9 +1,9 @@
-package com.ejada.sending.messaging;
+package com.ejada.email.sending.messaging;
 
-import com.ejada.sending.config.EmailSendingProperties;
-import com.ejada.sending.config.KafkaTopicsProperties;
-import com.ejada.sending.service.EmailLogService;
-import com.ejada.sending.service.EmailSender;
+import com.ejada.email.sending.config.EmailSendingProperties;
+import com.ejada.email.sending.config.KafkaTopicsProperties;
+import com.ejada.email.sending.service.EmailLogService;
+import com.ejada.email.sending.service.EmailSender;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.Instant;
 import org.slf4j.Logger;
@@ -53,12 +53,12 @@ public class EmailSendConsumer {
     int attempt = attemptHeader == null ? 1 : attemptHeader;
     emailLogService.incrementAttempts(envelope.id());
     try {
-      if (envelope.mode() == com.ejada.sending.dto.EmailSendRequest.SendMode.DRAFT) {
+      if (envelope.mode() == com.ejada.email.sending.dto.EmailSendRequest.SendMode.DRAFT) {
         emailLogService.markDraftSkipped(envelope.id());
         return;
       }
       emailSender.send(envelope);
-      if (envelope.mode() == com.ejada.sending.dto.EmailSendRequest.SendMode.TEST) {
+      if (envelope.mode() == com.ejada.email.sending.dto.EmailSendRequest.SendMode.TEST) {
         emailLogService.markTestSent(envelope.id());
       } else {
         emailLogService.markSent(envelope.id());

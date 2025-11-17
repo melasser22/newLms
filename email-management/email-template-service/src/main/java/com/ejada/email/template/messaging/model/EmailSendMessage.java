@@ -1,6 +1,6 @@
-package com.ejada.template.messaging.model;
+package com.ejada.email.template.messaging.model;
 
-import com.ejada.template.domain.enums.EmailSendMode;
+import com.ejada.email.template.domain.enums.EmailSendMode;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;

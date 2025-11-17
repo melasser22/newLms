@@ -1,4 +1,4 @@
-package com.ejada.template.domain.enums;
+package com.ejada.email.template.domain.enums;
 
 public enum EmailSendStatus {
   QUEUED,

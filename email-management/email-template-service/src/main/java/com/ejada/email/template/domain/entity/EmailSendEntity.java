@@ -1,9 +1,9 @@
-package com.ejada.template.domain.entity;
+package com.ejada.email.template.domain.entity;
 
 import com.ejada.starter_data.tenant.TenantBaseEntity;
-import com.ejada.template.domain.enums.EmailSendMode;
-import com.ejada.template.domain.enums.EmailSendStatus;
-import com.ejada.template.domain.value.AttachmentMetadata;
+import com.ejada.email.template.domain.enums.EmailSendMode;
+import com.ejada.email.template.domain.enums.EmailSendStatus;
+import com.ejada.email.template.domain.value.AttachmentMetadata;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.LinkedHashSet;

@@ -1,14 +1,14 @@
-package com.ejada.sending.service.impl;
+package com.ejada.email.sending.service.impl;
 
-import com.ejada.sending.config.KafkaTopicsProperties;
-import com.ejada.sending.dto.BulkEmailSendRequest;
-import com.ejada.sending.dto.EmailSendRequest;
-import com.ejada.sending.dto.EmailSendResponse;
-import com.ejada.sending.messaging.EmailEnvelope;
-import com.ejada.sending.service.EmailDispatchService;
-import com.ejada.sending.service.IdempotencyService;
-import com.ejada.sending.service.EmailLogService;
-import com.ejada.sending.service.RateLimiterService;
+import com.ejada.email.sending.config.KafkaTopicsProperties;
+import com.ejada.email.sending.dto.BulkEmailSendRequest;
+import com.ejada.email.sending.dto.EmailSendRequest;
+import com.ejada.email.sending.dto.EmailSendResponse;
+import com.ejada.email.sending.messaging.EmailEnvelope;
+import com.ejada.email.sending.service.EmailDispatchService;
+import com.ejada.email.sending.service.IdempotencyService;
+import com.ejada.email.sending.service.EmailLogService;
+import com.ejada.email.sending.service.RateLimiterService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.CompletableFuture;
 import org.springframework.kafka.core.KafkaTemplate;

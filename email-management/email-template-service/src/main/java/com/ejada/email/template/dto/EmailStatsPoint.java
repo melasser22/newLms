@@ -1,6 +1,6 @@
-package com.ejada.template.dto;
+package com.ejada.email.template.dto;
 
-import com.ejada.template.domain.enums.EmailEventType;
+import com.ejada.email.template.domain.enums.EmailEventType;
 import lombok.Builder;
 import lombok.Value;
 

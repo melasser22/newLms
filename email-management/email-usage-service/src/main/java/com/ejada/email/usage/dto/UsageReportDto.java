@@ -1,4 +1,4 @@
-package com.ejada.usage.dto;
+package com.ejada.email.usage.dto;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.ejada.template.domain.entity;
+package com.ejada.email.template.domain.entity;
 
 import com.ejada.starter_data.tenant.TenantBaseEntity;
 import jakarta.persistence.Column;

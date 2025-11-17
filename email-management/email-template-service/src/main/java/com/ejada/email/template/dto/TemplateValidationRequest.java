@@ -1,4 +1,4 @@
-package com.ejada.template.dto;
+package com.ejada.email.template.dto;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;

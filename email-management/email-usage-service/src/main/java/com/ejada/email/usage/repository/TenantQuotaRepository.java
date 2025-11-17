@@ -1,6 +1,6 @@
-package com.ejada.usage.repository;
+package com.ejada.email.usage.repository;
 
-import com.ejada.usage.domain.TenantQuota;
+import com.ejada.email.usage.domain.TenantQuota;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 

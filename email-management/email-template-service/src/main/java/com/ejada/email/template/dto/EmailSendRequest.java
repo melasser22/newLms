@@ -1,6 +1,6 @@
-package com.ejada.template.dto;
+package com.ejada.email.template.dto;
 
-import com.ejada.template.domain.enums.EmailSendMode;
+import com.ejada.email.template.domain.enums.EmailSendMode;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;

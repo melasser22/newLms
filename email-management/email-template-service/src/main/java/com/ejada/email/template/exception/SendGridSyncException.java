@@ -1,4 +1,4 @@
-package com.ejada.template.exception;
+package com.ejada.email.template.exception;
 
 public class SendGridSyncException extends RuntimeException {
   public SendGridSyncException(String message) {

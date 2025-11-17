@@ -1,7 +1,7 @@
-package com.ejada.sending.service.impl;
+package com.ejada.email.sending.service.impl;
 
-import com.ejada.sending.config.RateLimitProperties;
-import com.ejada.sending.service.RateLimiterService;
+import com.ejada.email.sending.config.RateLimitProperties;
+import com.ejada.email.sending.service.RateLimiterService;
 import java.time.Instant;
 import java.util.List;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;

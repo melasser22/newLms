@@ -1,4 +1,4 @@
-package com.ejada.template.gateway.dto;
+package com.ejada.email.template.gateway.dto;
 
 import java.time.Instant;
 

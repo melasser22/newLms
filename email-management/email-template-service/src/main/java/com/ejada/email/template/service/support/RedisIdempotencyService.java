@@ -1,6 +1,6 @@
-package com.ejada.template.service.support;
+package com.ejada.email.template.service.support;
 
-import com.ejada.template.config.RateLimitProperties;
+import com.ejada.email.template.config.RateLimitProperties;
 import java.time.Duration;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

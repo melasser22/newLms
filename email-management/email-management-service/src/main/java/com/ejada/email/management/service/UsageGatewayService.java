@@ -1,7 +1,7 @@
-package com.ejada.management.service;
+package com.ejada.email.management.service;
 
-import com.ejada.management.config.ChildServiceProperties;
-import com.ejada.management.dto.UsageReport;
+import com.ejada.email.management.config.ChildServiceProperties;
+import com.ejada.email.management.dto.UsageReport;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;

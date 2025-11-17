@@ -1,10 +1,10 @@
-package com.ejada.management.controller;
+package com.ejada.email.management.controller;
 
-import com.ejada.management.dto.EmailSendRequest;
-import com.ejada.management.dto.EmailSendResponse;
-import com.ejada.management.service.AuditLogger;
-import com.ejada.management.service.EmailGatewayService;
-import com.ejada.management.service.TenantRateLimiter;
+import com.ejada.email.management.dto.EmailSendRequest;
+import com.ejada.email.management.dto.EmailSendResponse;
+import com.ejada.email.management.service.AuditLogger;
+import com.ejada.email.management.service.EmailGatewayService;
+import com.ejada.email.management.service.TenantRateLimiter;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;

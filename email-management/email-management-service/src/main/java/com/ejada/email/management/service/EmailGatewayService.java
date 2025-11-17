@@ -1,8 +1,8 @@
-package com.ejada.management.service;
+package com.ejada.email.management.service;
 
-import com.ejada.management.config.ChildServiceProperties;
-import com.ejada.management.dto.EmailSendRequest;
-import com.ejada.management.dto.EmailSendResponse;
+import com.ejada.email.management.config.ChildServiceProperties;
+import com.ejada.email.management.dto.EmailSendRequest;
+import com.ejada.email.management.dto.EmailSendResponse;
 import java.net.URI;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;

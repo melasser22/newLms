@@ -1,4 +1,4 @@
-package com.ejada.template.exception;
+package com.ejada.email.template.exception;
 
 public class RateLimitExceededException extends RuntimeException {
   public RateLimitExceededException(String tenantId, String action) {

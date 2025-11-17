@@ -1,4 +1,4 @@
-package com.ejada.sending.config;
+package com.ejada.email.sending.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

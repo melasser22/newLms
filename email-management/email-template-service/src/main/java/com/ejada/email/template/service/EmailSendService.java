@@ -1,8 +1,8 @@
-package com.ejada.template.service;
+package com.ejada.email.template.service;
 
-import com.ejada.template.dto.BulkEmailSendRequest;
-import com.ejada.template.dto.EmailSendRequest;
-import com.ejada.template.dto.EmailSendResponse;
+import com.ejada.email.template.dto.BulkEmailSendRequest;
+import com.ejada.email.template.dto.EmailSendRequest;
+import com.ejada.email.template.dto.EmailSendResponse;
 import java.util.List;
 
 public interface EmailSendService {

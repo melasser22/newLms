@@ -1,8 +1,8 @@
-package com.ejada.management.config;
+package com.ejada.email.management.config;
 
-import com.ejada.management.service.AuditLogger;
-import com.ejada.management.service.TenantAuthorizationService;
-import com.ejada.management.service.TenantContextHolder;
+import com.ejada.email.management.service.AuditLogger;
+import com.ejada.email.management.service.TenantAuthorizationService;
+import com.ejada.email.management.service.TenantContextHolder;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,4 +1,4 @@
-package com.ejada.management.config;
+package com.ejada.email.management.config;
 
 import java.net.URI;
 import org.springframework.boot.context.properties.ConfigurationProperties;

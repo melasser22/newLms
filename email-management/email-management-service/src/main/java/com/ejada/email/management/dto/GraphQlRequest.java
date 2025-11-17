@@ -1,3 +1,3 @@
-package com.ejada.management.dto;
+package com.ejada.email.management.dto;
 
 public record GraphQlRequest(String query) {}

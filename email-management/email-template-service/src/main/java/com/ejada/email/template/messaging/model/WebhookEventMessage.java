@@ -1,4 +1,4 @@
-package com.ejada.template.messaging.model;
+package com.ejada.email.template.messaging.model;
 
 import java.time.Instant;
 import java.util.List;

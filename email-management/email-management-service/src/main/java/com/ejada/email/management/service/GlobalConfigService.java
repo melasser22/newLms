@@ -1,6 +1,6 @@
-package com.ejada.management.service;
+package com.ejada.email.management.service;
 
-import com.ejada.management.config.GlobalConfigProperties;
+import com.ejada.email.management.config.GlobalConfigProperties;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.stereotype.Service;

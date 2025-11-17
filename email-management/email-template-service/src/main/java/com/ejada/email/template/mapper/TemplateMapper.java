@@ -1,11 +1,11 @@
-package com.ejada.template.mapper;
+package com.ejada.email.template.mapper;
 
-import com.ejada.template.domain.entity.TemplateEntity;
-import com.ejada.template.domain.entity.TemplateVersionEntity;
-import com.ejada.template.domain.value.AttachmentMetadata;
-import com.ejada.template.dto.AttachmentMetadataDto;
-import com.ejada.template.dto.TemplateDto;
-import com.ejada.template.dto.TemplateVersionDto;
+import com.ejada.email.template.domain.entity.TemplateEntity;
+import com.ejada.email.template.domain.entity.TemplateVersionEntity;
+import com.ejada.email.template.domain.value.AttachmentMetadata;
+import com.ejada.email.template.dto.AttachmentMetadataDto;
+import com.ejada.email.template.dto.TemplateDto;
+import com.ejada.email.template.dto.TemplateVersionDto;
 import java.util.List;
 import java.util.Set;
 import org.mapstruct.Mapper;

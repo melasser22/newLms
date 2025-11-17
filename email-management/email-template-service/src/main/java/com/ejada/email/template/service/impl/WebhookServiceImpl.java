@@ -1,10 +1,10 @@
-package com.ejada.template.service.impl;
+package com.ejada.email.template.service.impl;
 
-import com.ejada.template.config.SendGridProperties;
-import com.ejada.template.messaging.model.WebhookEventMessage;
-import com.ejada.template.messaging.producer.WebhookEventProducer;
-import com.ejada.template.service.WebhookService;
-import com.ejada.template.service.support.WebhookDeduplicationService;
+import com.ejada.email.template.config.SendGridProperties;
+import com.ejada.email.template.messaging.model.WebhookEventMessage;
+import com.ejada.email.template.messaging.producer.WebhookEventProducer;
+import com.ejada.email.template.service.WebhookService;
+import com.ejada.email.template.service.support.WebhookDeduplicationService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sendgrid.helpers.eventwebhook.EventWebhook;

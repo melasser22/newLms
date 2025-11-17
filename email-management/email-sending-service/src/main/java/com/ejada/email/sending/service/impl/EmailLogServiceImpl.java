@@ -1,10 +1,10 @@
-package com.ejada.sending.service.impl;
+package com.ejada.email.sending.service.impl;
 
-import com.ejada.sending.messaging.EmailEnvelope;
-import com.ejada.sending.persistence.EmailLog;
-import com.ejada.sending.persistence.EmailLogRepository;
-import com.ejada.sending.persistence.EmailStatus;
-import com.ejada.sending.service.EmailLogService;
+import com.ejada.email.sending.messaging.EmailEnvelope;
+import com.ejada.email.sending.persistence.EmailLog;
+import com.ejada.email.sending.persistence.EmailLogRepository;
+import com.ejada.email.sending.persistence.EmailStatus;
+import com.ejada.email.sending.service.EmailLogService;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

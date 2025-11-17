@@ -1,14 +1,14 @@
-package com.ejada.usage.service;
+package com.ejada.email.usage.service;
 
-import com.ejada.usage.domain.AnomalyAlert;
-import com.ejada.usage.domain.DailyUsageAggregate;
-import com.ejada.usage.domain.QuotaStatus;
-import com.ejada.usage.domain.TenantQuota;
-import com.ejada.usage.domain.UsageReportRow;
-import com.ejada.usage.domain.UsageSummary;
-import com.ejada.usage.domain.UsageTrendPoint;
-import com.ejada.usage.repository.DailyUsageAggregateRepository;
-import com.ejada.usage.repository.TenantQuotaRepository;
+import com.ejada.email.usage.domain.AnomalyAlert;
+import com.ejada.email.usage.domain.DailyUsageAggregate;
+import com.ejada.email.usage.domain.QuotaStatus;
+import com.ejada.email.usage.domain.TenantQuota;
+import com.ejada.email.usage.domain.UsageReportRow;
+import com.ejada.email.usage.domain.UsageSummary;
+import com.ejada.email.usage.domain.UsageTrendPoint;
+import com.ejada.email.usage.repository.DailyUsageAggregateRepository;
+import com.ejada.email.usage.repository.TenantQuotaRepository;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.YearMonth;

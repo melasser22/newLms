@@ -1,4 +1,4 @@
-package com.ejada.management.config;
+package com.ejada.email.management.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

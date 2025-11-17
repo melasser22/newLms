@@ -1,6 +1,6 @@
-package com.ejada.management.service;
+package com.ejada.email.management.service;
 
-import com.ejada.management.config.TenantSecurityProperties;
+import com.ejada.email.management.config.TenantSecurityProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;

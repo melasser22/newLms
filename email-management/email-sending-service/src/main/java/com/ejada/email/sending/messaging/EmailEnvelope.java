@@ -1,7 +1,7 @@
-package com.ejada.sending.messaging;
+package com.ejada.email.sending.messaging;
 
-import com.ejada.sending.dto.AttachmentMetadataDto;
-import com.ejada.sending.dto.EmailSendRequest;
+import com.ejada.email.sending.dto.AttachmentMetadataDto;
+import com.ejada.email.sending.dto.EmailSendRequest;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;

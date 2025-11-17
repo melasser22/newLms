@@ -1,6 +1,6 @@
-package com.ejada.template.dto;
+package com.ejada.email.template.dto;
 
-import com.ejada.template.domain.enums.TemplateVersionStatus;
+import com.ejada.email.template.domain.enums.TemplateVersionStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;

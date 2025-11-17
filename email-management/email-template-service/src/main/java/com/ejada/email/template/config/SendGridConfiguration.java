@@ -1,4 +1,4 @@
-package com.ejada.template.config;
+package com.ejada.email.template.config;
 
 import com.sendgrid.SendGrid;
 import jakarta.annotation.PostConstruct;

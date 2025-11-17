@@ -1,9 +1,9 @@
-package com.ejada.template.service.support;
+package com.ejada.email.template.service.support;
 
-import com.ejada.template.config.SendGridProperties;
-import com.ejada.template.domain.entity.TemplateEntity;
-import com.ejada.template.domain.entity.TemplateVersionEntity;
-import com.ejada.template.exception.SendGridSyncException;
+import com.ejada.email.template.config.SendGridProperties;
+import com.ejada.email.template.domain.entity.TemplateEntity;
+import com.ejada.email.template.domain.entity.TemplateVersionEntity;
+import com.ejada.email.template.exception.SendGridSyncException;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;

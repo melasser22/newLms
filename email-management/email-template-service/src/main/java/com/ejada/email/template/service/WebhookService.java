@@ -1,4 +1,4 @@
-package com.ejada.template.service;
+package com.ejada.email.template.service;
 
 public interface WebhookService {
   void handleWebhook(String tenantId, String payload, String signature, String timestamp);

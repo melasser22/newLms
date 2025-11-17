@@ -1,8 +1,8 @@
-package com.ejada.management.service;
+package com.ejada.email.management.service;
 
-import com.ejada.management.dto.TenantPortalView;
-import com.ejada.management.dto.TemplateSummary;
-import com.ejada.management.dto.UsageReport;
+import com.ejada.email.management.dto.TenantPortalView;
+import com.ejada.email.management.dto.TemplateSummary;
+import com.ejada.email.management.dto.UsageReport;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;

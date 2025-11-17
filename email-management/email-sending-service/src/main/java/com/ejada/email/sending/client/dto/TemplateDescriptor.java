@@ -1,6 +1,6 @@
-package com.ejada.sending.client.dto;
+package com.ejada.email.sending.client.dto;
 
-import com.ejada.sending.dto.AttachmentMetadataDto;
+import com.ejada.email.sending.dto.AttachmentMetadataDto;
 import java.util.List;
 
 public record TemplateDescriptor(

@@ -1,10 +1,10 @@
-package com.ejada.usage.service.impl;
+package com.ejada.email.usage.service.impl;
 
-import com.ejada.usage.domain.UsageAggregate;
-import com.ejada.usage.dto.UsageMetricDto;
-import com.ejada.usage.dto.UsageReportDto;
-import com.ejada.usage.repository.UsageRepository;
-import com.ejada.usage.service.UsageService;
+import com.ejada.email.usage.domain.UsageAggregate;
+import com.ejada.email.usage.dto.UsageMetricDto;
+import com.ejada.email.usage.dto.UsageReportDto;
+import com.ejada.email.usage.repository.UsageRepository;
+import com.ejada.email.usage.service.UsageService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;

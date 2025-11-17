@@ -1,4 +1,4 @@
-package com.ejada.management.config;
+package com.ejada.email.management.config;
 
 import java.util.HashMap;
 import java.util.Map;

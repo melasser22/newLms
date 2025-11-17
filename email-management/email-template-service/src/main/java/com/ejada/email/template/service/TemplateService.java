@@ -1,15 +1,15 @@
-package com.ejada.template.service;
+package com.ejada.email.template.service;
 
-import com.ejada.template.dto.TemplateCloneRequest;
-import com.ejada.template.dto.TemplateDto;
-import com.ejada.template.dto.TemplatePreviewRequest;
-import com.ejada.template.dto.TemplatePreviewResponse;
-import com.ejada.template.dto.TemplateValidationRequest;
-import com.ejada.template.dto.TemplateValidationResponse;
-import com.ejada.template.dto.TemplateVersionCreateRequest;
-import com.ejada.template.dto.TemplateVersionDto;
-import com.ejada.template.dto.UpdateTemplateRequest;
-import com.ejada.template.dto.CreateTemplateRequest;
+import com.ejada.email.template.dto.TemplateCloneRequest;
+import com.ejada.email.template.dto.TemplateDto;
+import com.ejada.email.template.dto.TemplatePreviewRequest;
+import com.ejada.email.template.dto.TemplatePreviewResponse;
+import com.ejada.email.template.dto.TemplateValidationRequest;
+import com.ejada.email.template.dto.TemplateValidationResponse;
+import com.ejada.email.template.dto.TemplateVersionCreateRequest;
+import com.ejada.email.template.dto.TemplateVersionDto;
+import com.ejada.email.template.dto.UpdateTemplateRequest;
+import com.ejada.email.template.dto.CreateTemplateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

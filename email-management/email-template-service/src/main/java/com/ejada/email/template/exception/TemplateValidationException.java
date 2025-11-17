@@ -1,6 +1,6 @@
-package com.ejada.template.exception;
+package com.ejada.email.template.exception;
 
-import com.ejada.template.dto.TemplateValidationResponse;
+import com.ejada.email.template.dto.TemplateValidationResponse;
 import lombok.Getter;
 
 @Getter

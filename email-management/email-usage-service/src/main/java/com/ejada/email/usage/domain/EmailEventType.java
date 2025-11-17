@@ -1,4 +1,4 @@
-package com.ejada.usage.domain;
+package com.ejada.email.usage.domain;
 
 public enum EmailEventType {
   PROCESSED,

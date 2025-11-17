@@ -1,4 +1,4 @@
-package com.ejada.template.domain.value;
+package com.ejada.email.template.domain.value;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

@@ -1,11 +1,11 @@
-package com.ejada.usage.controller;
+package com.ejada.email.usage.controller;
 
-import com.ejada.usage.domain.AnomalyAlert;
-import com.ejada.usage.domain.QuotaStatus;
-import com.ejada.usage.domain.UsageReportRow;
-import com.ejada.usage.domain.UsageSummary;
-import com.ejada.usage.domain.UsageTrendPoint;
-import com.ejada.usage.service.UsageAnalyticsService;
+import com.ejada.email.usage.domain.AnomalyAlert;
+import com.ejada.email.usage.domain.QuotaStatus;
+import com.ejada.email.usage.domain.UsageReportRow;
+import com.ejada.email.usage.domain.UsageSummary;
+import com.ejada.email.usage.domain.UsageTrendPoint;
+import com.ejada.email.usage.service.UsageAnalyticsService;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;

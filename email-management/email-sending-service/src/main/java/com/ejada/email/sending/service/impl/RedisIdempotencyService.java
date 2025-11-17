@@ -1,6 +1,6 @@
-package com.ejada.sending.service.impl;
+package com.ejada.email.sending.service.impl;
 
-import com.ejada.sending.service.IdempotencyService;
+import com.ejada.email.sending.service.IdempotencyService;
 import java.time.Duration;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.data.redis.core.StringRedisTemplate;

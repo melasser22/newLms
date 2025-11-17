@@ -1,12 +1,12 @@
-package com.ejada.management.controller;
+package com.ejada.email.management.controller;
 
-import com.ejada.management.dto.GraphQlRequest;
-import com.ejada.management.dto.GraphQlResponse;
-import com.ejada.management.dto.TenantPortalView;
-import com.ejada.management.service.AuditLogger;
-import com.ejada.management.service.TenantContextHolder;
-import com.ejada.management.service.TenantExperienceService;
-import com.ejada.management.service.TenantRateLimiter;
+import com.ejada.email.management.dto.GraphQlRequest;
+import com.ejada.email.management.dto.GraphQlResponse;
+import com.ejada.email.management.dto.TenantPortalView;
+import com.ejada.email.management.service.AuditLogger;
+import com.ejada.email.management.service.TenantContextHolder;
+import com.ejada.email.management.service.TenantExperienceService;
+import com.ejada.email.management.service.TenantRateLimiter;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.regex.Matcher;

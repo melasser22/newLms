@@ -1,9 +1,9 @@
-package com.ejada.sending;
+package com.ejada.email.sending;
 
-import com.ejada.sending.config.EmailSendingProperties;
-import com.ejada.sending.config.KafkaTopicsProperties;
-import com.ejada.sending.config.RateLimitProperties;
-import com.ejada.sending.config.SendGridProperties;
+import com.ejada.email.sending.config.EmailSendingProperties;
+import com.ejada.email.sending.config.KafkaTopicsProperties;
+import com.ejada.email.sending.config.RateLimitProperties;
+import com.ejada.email.sending.config.SendGridProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;

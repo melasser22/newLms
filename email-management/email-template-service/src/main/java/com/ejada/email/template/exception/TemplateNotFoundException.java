@@ -1,4 +1,4 @@
-package com.ejada.template.exception;
+package com.ejada.email.template.exception;
 
 public class TemplateNotFoundException extends RuntimeException {
   public TemplateNotFoundException(Long id) {

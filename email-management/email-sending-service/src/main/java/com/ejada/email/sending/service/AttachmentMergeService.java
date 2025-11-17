@@ -1,6 +1,6 @@
-package com.ejada.sending.service;
+package com.ejada.email.sending.service;
 
-import com.ejada.sending.dto.AttachmentMetadataDto;
+import com.ejada.email.sending.dto.AttachmentMetadataDto;
 import java.util.List;
 
 public interface AttachmentMergeService {

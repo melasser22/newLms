@@ -1,8 +1,8 @@
-package com.ejada.management;
+package com.ejada.email.management;
 
-import com.ejada.management.config.ChildServiceProperties;
-import com.ejada.management.config.GlobalConfigProperties;
-import com.ejada.management.config.TenantSecurityProperties;
+import com.ejada.email.management.config.ChildServiceProperties;
+import com.ejada.email.management.config.GlobalConfigProperties;
+import com.ejada.email.management.config.TenantSecurityProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;

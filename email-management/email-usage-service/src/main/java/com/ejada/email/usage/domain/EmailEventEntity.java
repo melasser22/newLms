@@ -1,4 +1,4 @@
-package com.ejada.usage.domain;
+package com.ejada.email.usage.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

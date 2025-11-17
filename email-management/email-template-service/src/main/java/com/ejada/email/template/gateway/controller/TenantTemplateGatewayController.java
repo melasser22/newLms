@@ -1,8 +1,8 @@
-package com.ejada.template.gateway.controller;
+package com.ejada.email.template.gateway.controller;
 
-import com.ejada.template.gateway.dto.TemplateSummaryView;
-import com.ejada.template.gateway.dto.TemplateSyncRequest;
-import com.ejada.template.gateway.service.TemplateGatewayFacade;
+import com.ejada.email.template.gateway.dto.TemplateSummaryView;
+import com.ejada.email.template.gateway.dto.TemplateSyncRequest;
+import com.ejada.email.template.gateway.service.TemplateGatewayFacade;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;

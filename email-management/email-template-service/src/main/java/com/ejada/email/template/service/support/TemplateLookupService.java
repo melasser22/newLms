@@ -1,9 +1,9 @@
-package com.ejada.template.service.support;
+package com.ejada.email.template.service.support;
 
-import com.ejada.template.domain.entity.TemplateVersionEntity;
-import com.ejada.template.domain.enums.TemplateVersionStatus;
-import com.ejada.template.exception.TemplateVersionNotFoundException;
-import com.ejada.template.repository.TemplateVersionRepository;
+import com.ejada.email.template.domain.entity.TemplateVersionEntity;
+import com.ejada.email.template.domain.enums.TemplateVersionStatus;
+import com.ejada.email.template.exception.TemplateVersionNotFoundException;
+import com.ejada.email.template.repository.TemplateVersionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;

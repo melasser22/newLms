@@ -1,10 +1,10 @@
-package com.ejada.template.controller;
+package com.ejada.email.template.controller;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.template.dto.BulkEmailSendRequest;
-import com.ejada.template.dto.EmailSendRequest;
-import com.ejada.template.dto.EmailSendResponse;
-import com.ejada.template.service.EmailSendService;
+import com.ejada.email.template.dto.BulkEmailSendRequest;
+import com.ejada.email.template.dto.EmailSendRequest;
+import com.ejada.email.template.dto.EmailSendResponse;
+import com.ejada.email.template.service.EmailSendService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;

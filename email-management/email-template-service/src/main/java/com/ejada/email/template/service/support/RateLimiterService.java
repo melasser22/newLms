@@ -1,7 +1,7 @@
-package com.ejada.template.service.support;
+package com.ejada.email.template.service.support;
 
-import com.ejada.template.config.RateLimitProperties;
-import com.ejada.template.exception.RateLimitExceededException;
+import com.ejada.email.template.config.RateLimitProperties;
+import com.ejada.email.template.exception.RateLimitExceededException;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;

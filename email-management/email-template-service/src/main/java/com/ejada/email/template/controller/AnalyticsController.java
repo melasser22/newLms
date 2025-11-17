@@ -1,8 +1,8 @@
-package com.ejada.template.controller;
+package com.ejada.email.template.controller;
 
 import com.ejada.common.dto.BaseResponse;
-import com.ejada.template.dto.EmailStatsResponse;
-import com.ejada.template.service.EmailAnalyticsService;
+import com.ejada.email.template.dto.EmailStatsResponse;
+import com.ejada.email.template.service.EmailAnalyticsService;
 import java.time.Instant;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;

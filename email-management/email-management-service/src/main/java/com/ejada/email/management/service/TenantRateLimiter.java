@@ -1,6 +1,6 @@
-package com.ejada.management.service;
+package com.ejada.email.management.service;
 
-import com.ejada.management.config.TenantSecurityProperties;
+import com.ejada.email.management.config.TenantSecurityProperties;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

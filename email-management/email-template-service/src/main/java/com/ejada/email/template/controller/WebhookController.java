@@ -1,6 +1,6 @@
-package com.ejada.template.controller;
+package com.ejada.email.template.controller;
 
-import com.ejada.template.service.WebhookService;
+import com.ejada.email.template.service.WebhookService;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;

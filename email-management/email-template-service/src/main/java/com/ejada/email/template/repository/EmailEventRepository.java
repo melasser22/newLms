@@ -1,7 +1,7 @@
-package com.ejada.template.repository;
+package com.ejada.email.template.repository;
 
-import com.ejada.template.domain.entity.EmailEventEntity;
-import com.ejada.template.domain.enums.EmailEventType;
+import com.ejada.email.template.domain.entity.EmailEventEntity;
+import com.ejada.email.template.domain.enums.EmailEventType;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;

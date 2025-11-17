@@ -1,6 +1,6 @@
-package com.ejada.template.service;
+package com.ejada.email.template.service;
 
-import com.ejada.template.dto.EmailStatsResponse;
+import com.ejada.email.template.dto.EmailStatsResponse;
 import java.time.Instant;
 
 public interface EmailAnalyticsService {

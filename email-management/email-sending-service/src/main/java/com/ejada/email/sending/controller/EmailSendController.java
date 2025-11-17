@@ -1,9 +1,9 @@
-package com.ejada.sending.controller;
+package com.ejada.email.sending.controller;
 
-import com.ejada.sending.dto.BulkEmailSendRequest;
-import com.ejada.sending.dto.EmailSendRequest;
-import com.ejada.sending.dto.EmailSendResponse;
-import com.ejada.sending.service.EmailDispatchService;
+import com.ejada.email.sending.dto.BulkEmailSendRequest;
+import com.ejada.email.sending.dto.EmailSendRequest;
+import com.ejada.email.sending.dto.EmailSendResponse;
+import com.ejada.email.sending.service.EmailDispatchService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;

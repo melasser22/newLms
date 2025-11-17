@@ -1,6 +1,6 @@
-package com.ejada.sending.client;
+package com.ejada.email.sending.client;
 
-import com.ejada.sending.client.dto.TemplateDescriptor;
+import com.ejada.email.sending.client.dto.TemplateDescriptor;
 
 public interface TemplateClient {
   TemplateDescriptor fetchTemplate(String tenantId, String templateKey);

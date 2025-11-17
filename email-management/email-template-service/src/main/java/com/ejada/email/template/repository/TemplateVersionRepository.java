@@ -1,7 +1,7 @@
-package com.ejada.template.repository;
+package com.ejada.email.template.repository;
 
-import com.ejada.template.domain.entity.TemplateVersionEntity;
-import com.ejada.template.domain.enums.TemplateVersionStatus;
+import com.ejada.email.template.domain.entity.TemplateVersionEntity;
+import com.ejada.email.template.domain.enums.TemplateVersionStatus;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 

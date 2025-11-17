@@ -1,4 +1,4 @@
-package com.ejada.sending.persistence;
+package com.ejada.email.sending.persistence;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

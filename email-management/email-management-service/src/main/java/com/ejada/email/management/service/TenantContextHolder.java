@@ -1,4 +1,4 @@
-package com.ejada.management.service;
+package com.ejada.email.management.service;
 
 import java.util.Optional;
 

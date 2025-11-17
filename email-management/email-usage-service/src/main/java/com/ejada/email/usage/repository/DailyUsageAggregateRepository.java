@@ -1,6 +1,6 @@
-package com.ejada.usage.repository;
+package com.ejada.email.usage.repository;
 
-import com.ejada.usage.domain.DailyUsageAggregate;
+import com.ejada.email.usage.domain.DailyUsageAggregate;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;

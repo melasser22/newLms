@@ -1,6 +1,6 @@
-package com.ejada.management.config;
+package com.ejada.email.management.config;
 
-import com.ejada.management.service.TenantContextHolder;
+import com.ejada.email.management.service.TenantContextHolder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;

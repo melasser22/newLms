@@ -1,8 +1,8 @@
-package com.ejada.sending.service;
+package com.ejada.email.sending.service;
 
-import com.ejada.sending.dto.BulkEmailSendRequest;
-import com.ejada.sending.dto.EmailSendRequest;
-import com.ejada.sending.dto.EmailSendResponse;
+import com.ejada.email.sending.dto.BulkEmailSendRequest;
+import com.ejada.email.sending.dto.EmailSendRequest;
+import com.ejada.email.sending.dto.EmailSendResponse;
 
 public interface EmailDispatchService {
   EmailSendResponse sendEmail(String tenantId, EmailSendRequest request);

@@ -1,4 +1,4 @@
-package com.ejada.sending.dto;
+package com.ejada.email.sending.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

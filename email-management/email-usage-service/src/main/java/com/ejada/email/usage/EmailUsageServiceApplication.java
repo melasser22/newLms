@@ -1,4 +1,4 @@
-package com.ejada.usage;
+package com.ejada.email.usage;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

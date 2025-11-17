@@ -1,6 +1,6 @@
-package com.ejada.usage.repository;
+package com.ejada.email.usage.repository;
 
-import com.ejada.usage.domain.UsageAggregate;
+import com.ejada.email.usage.domain.UsageAggregate;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;

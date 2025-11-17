@@ -1,7 +1,7 @@
-package com.ejada.template.messaging.producer;
+package com.ejada.email.template.messaging.producer;
 
-import com.ejada.template.config.KafkaTopicsProperties;
-import com.ejada.template.messaging.model.WebhookEventMessage;
+import com.ejada.email.template.config.KafkaTopicsProperties;
+import com.ejada.email.template.messaging.model.WebhookEventMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;

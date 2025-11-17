@@ -1,8 +1,8 @@
-package com.ejada.sending.client.impl;
+package com.ejada.email.sending.client.impl;
 
-import com.ejada.sending.client.TemplateClient;
-import com.ejada.sending.client.dto.TemplateDescriptor;
-import com.ejada.sending.config.EmailSendingProperties;
+import com.ejada.email.sending.client.TemplateClient;
+import com.ejada.email.sending.client.dto.TemplateDescriptor;
+import com.ejada.email.sending.config.EmailSendingProperties;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,8 +1,8 @@
-package com.ejada.template.gateway.service;
+package com.ejada.email.template.gateway.service;
 
-import com.ejada.template.dto.TemplateDto;
-import com.ejada.template.gateway.dto.TemplateSummaryView;
-import com.ejada.template.service.TemplateService;
+import com.ejada.email.template.dto.TemplateDto;
+import com.ejada.email.template.gateway.dto.TemplateSummaryView;
+import com.ejada.email.template.service.TemplateService;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;

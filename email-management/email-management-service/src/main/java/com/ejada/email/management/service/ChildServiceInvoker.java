@@ -1,6 +1,6 @@
-package com.ejada.management.service;
+package com.ejada.email.management.service;
 
-import com.ejada.management.exception.ChildServiceException;
+import com.ejada.email.management.exception.ChildServiceException;
 import java.net.URI;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;

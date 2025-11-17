@@ -1,9 +1,9 @@
-package com.ejada.management.controller;
+package com.ejada.email.management.controller;
 
-import com.ejada.management.dto.UsageReport;
-import com.ejada.management.service.AuditLogger;
-import com.ejada.management.service.TenantRateLimiter;
-import com.ejada.management.service.UsageGatewayService;
+import com.ejada.email.management.dto.UsageReport;
+import com.ejada.email.management.service.AuditLogger;
+import com.ejada.email.management.service.TenantRateLimiter;
+import com.ejada.email.management.service.UsageGatewayService;
 import java.time.LocalDate;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;

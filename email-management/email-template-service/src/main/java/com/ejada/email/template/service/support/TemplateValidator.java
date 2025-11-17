@@ -1,7 +1,7 @@
-package com.ejada.template.service.support;
+package com.ejada.email.template.service.support;
 
-import com.ejada.template.domain.entity.TemplateVersionEntity;
-import com.ejada.template.dto.TemplateValidationResponse;
+import com.ejada.email.template.domain.entity.TemplateVersionEntity;
+import com.ejada.email.template.dto.TemplateValidationResponse;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;

@@ -1,6 +1,6 @@
-package com.ejada.usage.service;
+package com.ejada.email.usage.service;
 
-import com.ejada.usage.dto.UsageReportDto;
+import com.ejada.email.usage.dto.UsageReportDto;
 import java.time.LocalDate;
 
 public interface UsageService {

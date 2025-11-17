@@ -1,9 +1,9 @@
-package com.ejada.template.service.impl;
+package com.ejada.email.template.service.impl;
 
-import com.ejada.template.dto.EmailStatsPoint;
-import com.ejada.template.dto.EmailStatsResponse;
-import com.ejada.template.repository.EmailEventRepository;
-import com.ejada.template.service.EmailAnalyticsService;
+import com.ejada.email.template.dto.EmailStatsPoint;
+import com.ejada.email.template.dto.EmailStatsResponse;
+import com.ejada.email.template.repository.EmailEventRepository;
+import com.ejada.email.template.service.EmailAnalyticsService;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;

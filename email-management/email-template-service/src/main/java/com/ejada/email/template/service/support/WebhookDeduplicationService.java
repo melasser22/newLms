@@ -1,4 +1,4 @@
-package com.ejada.template.service.support;
+package com.ejada.email.template.service.support;
 
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;

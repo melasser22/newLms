@@ -1,4 +1,4 @@
-package com.ejada.sending.persistence;
+package com.ejada.email.sending.persistence;
 
 public enum EmailStatus {
   QUEUED,

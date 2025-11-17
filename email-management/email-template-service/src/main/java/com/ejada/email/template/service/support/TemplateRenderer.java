@@ -1,7 +1,7 @@
-package com.ejada.template.service.support;
+package com.ejada.email.template.service.support;
 
-import com.ejada.template.domain.entity.TemplateVersionEntity;
-import com.ejada.template.dto.TemplatePreviewResponse;
+import com.ejada.email.template.domain.entity.TemplateVersionEntity;
+import com.ejada.email.template.dto.TemplatePreviewResponse;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import java.io.IOException;

@@ -1,6 +1,6 @@
-package com.ejada.sending.service;
+package com.ejada.email.sending.service;
 
-import com.ejada.sending.messaging.EmailEnvelope;
+import com.ejada.email.sending.messaging.EmailEnvelope;
 
 public interface EmailSender {
   void send(EmailEnvelope envelope);
