@@ -54,6 +54,10 @@
     </dependency>
     <dependency>
       <groupId>com.ejada</groupId>
+      <artifactId>starter-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ejada</groupId>
       <artifactId>starter-openapi</artifactId>
     </dependency>
     <dependency>
