@@ -1,6 +1,8 @@
 spring:
   application:
     name: email-template-service
+  profiles:
+   active: dev
   datasource:
     url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ne}?currentSchema=email}"
     username: ${DB_USERNAME:postgres}
