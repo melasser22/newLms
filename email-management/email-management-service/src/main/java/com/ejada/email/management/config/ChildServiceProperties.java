@@ -11,8 +11,19 @@ public class ChildServiceProperties {
   private ServiceEndpoint webhook = new ServiceEndpoint();
   private ServiceEndpoint usage = new ServiceEndpoint();
 
+  public ChildServiceProperties() {
+    // default constructor
+  }
+
+  private ChildServiceProperties(ChildServiceProperties other) {
+    this.template = copyOf(other.template);
+    this.sending = copyOf(other.sending);
+    this.webhook = copyOf(other.webhook);
+    this.usage = copyOf(other.usage);
+  }
+
   public ServiceEndpoint getTemplate() {
-    return template;
+    return copyOf(template);
   }
 
   public void setTemplate(ServiceEndpoint template) {
@@ -20,7 +31,7 @@ public class ChildServiceProperties {
   }
 
   public ServiceEndpoint getSending() {
-    return sending;
+    return copyOf(sending);
   }
 
   public void setSending(ServiceEndpoint sending) {
@@ -28,7 +39,7 @@ public class ChildServiceProperties {
   }
 
   public ServiceEndpoint getWebhook() {
-    return webhook;
+    return copyOf(webhook);
   }
 
   public void setWebhook(ServiceEndpoint webhook) {
@@ -36,11 +47,15 @@ public class ChildServiceProperties {
   }
 
   public ServiceEndpoint getUsage() {
-    return usage;
+    return copyOf(usage);
   }
 
   public void setUsage(ServiceEndpoint usage) {
     this.usage = copyOf(usage);
+  }
+
+  public ChildServiceProperties copy() {
+    return new ChildServiceProperties(this);
   }
 
   public static class ServiceEndpoint {
