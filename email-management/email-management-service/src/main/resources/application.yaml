@@ -33,3 +33,9 @@ global-config:
   tenant-settings:
     premium:
       locale: en-GB
+
+shared:
+  core:
+    tenant:
+      resolve-from-jwt: true
+      prefer-header-over-jwt: false
