@@ -6,6 +6,7 @@ import com.ejada.email.webhook.model.EmailLogStatus;
 import com.ejada.email.webhook.model.SendgridEventRequest;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
@@ -17,7 +18,7 @@ public class EventMapper {
     if (eventName == null) {
       return EmailEventType.UNKNOWN;
     }
-    return switch (eventName.toLowerCase()) {
+    return switch (eventName.toLowerCase(Locale.ROOT)) {
       case "processed" -> EmailEventType.PROCESSED;
       case "delivered" -> EmailEventType.DELIVERED;
       case "bounce" -> EmailEventType.BOUNCED;

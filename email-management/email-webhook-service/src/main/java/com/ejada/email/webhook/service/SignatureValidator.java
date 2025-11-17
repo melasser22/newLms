@@ -1,6 +1,9 @@
 package com.ejada.email.webhook.service;
 
 import com.ejada.email.webhook.SendgridWebhookProperties;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
@@ -9,6 +12,9 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.stereotype.Component;
 
 @Component
+@SuppressFBWarnings(
+    value = "EI_EXPOSE_REP2",
+    justification = "Properties are provided by Spring and not mutated externally")
 public class SignatureValidator {
 
   private static final String HMAC_SHA256 = "HmacSHA256";
@@ -32,7 +38,7 @@ public class SignatureValidator {
       byte[] expected = mac.doFinal((timestamp + payload).getBytes(StandardCharsets.UTF_8));
       String expectedSignature = Base64.getEncoder().encodeToString(expected);
       return constantTimeEquals(expectedSignature, signature);
-    } catch (Exception e) {
+    } catch (NoSuchAlgorithmException | InvalidKeyException e) {
       return false;
     }
   }

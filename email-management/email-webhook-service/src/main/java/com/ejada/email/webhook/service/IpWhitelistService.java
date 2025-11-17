@@ -1,10 +1,14 @@
 package com.ejada.email.webhook.service;
 
 import com.ejada.email.webhook.SendgridWebhookProperties;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
+@SuppressFBWarnings(
+    value = "EI_EXPOSE_REP2",
+    justification = "Properties are managed by Spring and not mutated externally")
 public class IpWhitelistService {
 
   private final SendgridWebhookProperties properties;

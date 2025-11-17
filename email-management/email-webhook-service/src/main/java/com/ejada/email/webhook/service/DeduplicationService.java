@@ -1,6 +1,7 @@
 package com.ejada.email.webhook.service;
 
 import com.ejada.email.webhook.SendgridWebhookProperties;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.Duration;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -9,6 +10,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
+@SuppressFBWarnings(
+    value = "EI_EXPOSE_REP2",
+    justification = "Dependencies are managed by Spring and are not modified externally")
 public class DeduplicationService {
 
   private static final Logger log = LoggerFactory.getLogger(DeduplicationService.class);

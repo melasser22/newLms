@@ -29,11 +29,11 @@ public class SendgridWebhookProperties {
   }
 
   public List<String> getAllowedIps() {
-    return allowedIps;
+    return List.copyOf(allowedIps);
   }
 
   public void setAllowedIps(List<String> allowedIps) {
-    this.allowedIps = allowedIps;
+    this.allowedIps = allowedIps == null ? List.of() : List.copyOf(allowedIps);
   }
 
   public String getKafkaTopic() {

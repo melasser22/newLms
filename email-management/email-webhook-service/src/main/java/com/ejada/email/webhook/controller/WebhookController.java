@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -38,10 +39,10 @@ public class WebhookController {
       SendgridEventProcessor processor,
       IpWhitelistService ipWhitelistService,
       ObjectMapper objectMapper) {
-    this.signatureValidator = signatureValidator;
-    this.processor = processor;
-    this.ipWhitelistService = ipWhitelistService;
-    this.objectMapper = objectMapper;
+    this.signatureValidator = Objects.requireNonNull(signatureValidator);
+    this.processor = Objects.requireNonNull(processor);
+    this.ipWhitelistService = Objects.requireNonNull(ipWhitelistService);
+    this.objectMapper = Objects.requireNonNull(objectMapper).copy();
   }
 
   @PostMapping
