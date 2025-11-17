@@ -1,6 +1,7 @@
 package com.ejada.email.usage.controller;
 
 import com.ejada.common.context.ContextManager;
+import com.ejada.common.exception.ValidationException;
 import com.ejada.email.usage.domain.AnomalyAlert;
 import com.ejada.email.usage.domain.QuotaStatus;
 import com.ejada.email.usage.domain.UsageReportRow;
@@ -10,7 +11,6 @@ import com.ejada.email.usage.service.UsageAnalyticsService;
 import com.ejada.starter_core.tenant.RequireTenant;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Objects;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,7 +37,7 @@ public class UsageController {
       @RequestParam(value = "to", required = false)
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           LocalDate to) {
-    String tenantId = Objects.requireNonNull(ContextManager.Tenant.get(), "tenantId is required");
+    String tenantId = requireTenantId();
     LocalDate resolvedTo = to != null ? to : LocalDate.now();
     LocalDate resolvedFrom = from != null ? from : resolvedTo.minusDays(30);
     return ResponseEntity.ok(usageAnalyticsService.summarize(tenantId, resolvedFrom, resolvedTo));
@@ -51,7 +51,7 @@ public class UsageController {
       @RequestParam(value = "to", required = false)
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           LocalDate to) {
-    String tenantId = Objects.requireNonNull(ContextManager.Tenant.get(), "tenantId is required");
+    String tenantId = requireTenantId();
     LocalDate resolvedTo = to != null ? to : LocalDate.now();
     LocalDate resolvedFrom = from != null ? from : resolvedTo.minusDays(30);
     return ResponseEntity.ok(usageAnalyticsService.trend(tenantId, resolvedFrom, resolvedTo));
@@ -59,13 +59,13 @@ public class UsageController {
 
   @GetMapping("/quota")
   public ResponseEntity<QuotaStatus> quotaStatus() {
-    String tenantId = Objects.requireNonNull(ContextManager.Tenant.get(), "tenantId is required");
+    String tenantId = requireTenantId();
     return ResponseEntity.ok(usageAnalyticsService.quotaStatus(tenantId));
   }
 
   @GetMapping("/anomalies")
   public ResponseEntity<List<AnomalyAlert>> anomalies() {
-    String tenantId = Objects.requireNonNull(ContextManager.Tenant.get(), "tenantId is required");
+    String tenantId = requireTenantId();
     return ResponseEntity.ok(usageAnalyticsService.detectAnomalies(tenantId));
   }
 
@@ -73,5 +73,13 @@ public class UsageController {
   public ResponseEntity<List<UsageReportRow>> dailyReport(
       @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
     return ResponseEntity.ok(usageAnalyticsService.dailyReport(date));
+  }
+
+  private String requireTenantId() {
+    String tenantId = ContextManager.Tenant.get();
+    if (tenantId == null) {
+      throw new ValidationException("Tenant context is missing", "tenantId is required");
+    }
+    return tenantId;
   }
 }

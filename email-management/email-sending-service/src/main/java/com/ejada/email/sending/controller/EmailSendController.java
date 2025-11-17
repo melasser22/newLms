@@ -1,13 +1,13 @@
 package com.ejada.email.sending.controller;
 
 import com.ejada.common.context.ContextManager;
+import com.ejada.common.exception.ValidationException;
 import com.ejada.email.sending.dto.BulkEmailSendRequest;
 import com.ejada.email.sending.dto.EmailSendRequest;
 import com.ejada.email.sending.dto.EmailSendResponse;
 import com.ejada.email.sending.service.EmailDispatchService;
 import com.ejada.starter_core.tenant.RequireTenant;
 import jakarta.validation.Valid;
-import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,7 +30,7 @@ public class EmailSendController {
   @ResponseStatus(HttpStatus.ACCEPTED)
   public EmailSendResponse send(
       @Valid @RequestBody EmailSendRequest request) {
-    String tenantId = Objects.requireNonNull(ContextManager.Tenant.get(), "tenantId is required");
+    String tenantId = requireTenantId();
     return service.sendEmail(tenantId, request);
   }
 
@@ -38,7 +38,15 @@ public class EmailSendController {
   @ResponseStatus(HttpStatus.ACCEPTED)
   public void bulkSend(
       @Valid @RequestBody BulkEmailSendRequest request) {
-    String tenantId = Objects.requireNonNull(ContextManager.Tenant.get(), "tenantId is required");
+    String tenantId = requireTenantId();
     service.sendBulk(tenantId, request);
+  }
+
+  private String requireTenantId() {
+    String tenantId = ContextManager.Tenant.get();
+    if (tenantId == null) {
+      throw new ValidationException("Tenant context is missing", "tenantId is required");
+    }
+    return tenantId;
   }
 }

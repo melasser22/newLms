@@ -24,11 +24,11 @@ import com.ejada.email.template.service.support.TemplateLookupService;
 import com.ejada.email.template.service.support.TemplateValidator;
 import com.ejada.email.template.service.support.RateLimiterService;
 import com.ejada.email.template.service.support.RedisIdempotencyService;
+import com.ejada.common.exception.ValidationException;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -180,6 +180,10 @@ public class EmailSendServiceImpl implements EmailSendService {
   }
 
   private String requireTenantId() {
-    return Objects.requireNonNull(ContextManager.Tenant.get(), "tenantId is required");
+    String tenantId = ContextManager.Tenant.get();
+    if (tenantId == null) {
+      throw new ValidationException("Tenant context is missing", "tenantId is required");
+    }
+    return tenantId;
   }
 }
