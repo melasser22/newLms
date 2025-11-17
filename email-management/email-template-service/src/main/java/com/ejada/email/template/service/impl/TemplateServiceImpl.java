@@ -1,5 +1,6 @@
 package com.ejada.email.template.service.impl;
 
+import com.ejada.common.context.ContextManager;
 import com.ejada.email.template.domain.entity.TemplateEntity;
 import com.ejada.email.template.domain.entity.TemplateVersionEntity;
 import com.ejada.email.template.domain.enums.TemplateVersionStatus;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -56,6 +58,7 @@ public class TemplateServiceImpl implements TemplateService {
 
   @Override
   public TemplateDto createTemplate(CreateTemplateRequest request) {
+    requireTenantId();
     TemplateEntity entity = new TemplateEntity();
     entity.setName(request.getName());
     entity.setLocale(request.getLocale());
@@ -69,7 +72,10 @@ public class TemplateServiceImpl implements TemplateService {
   @Override
   @CacheEvict(value = {"templates", "activeTemplateVersions"}, key = "#templateId")
   public TemplateDto updateTemplate(Long templateId, UpdateTemplateRequest request) {
-    TemplateEntity entity = templateRepository.findById(templateId).orElseThrow(() -> new TemplateNotFoundException(templateId));
+    TemplateEntity entity =
+        templateRepository
+            .findByIdAndTenantId(templateId, requireTenantId())
+            .orElseThrow(() -> new TemplateNotFoundException(templateId));
     if (request.getDescription() != null) {
       entity.setDescription(request.getDescription());
     }
@@ -85,14 +91,20 @@ public class TemplateServiceImpl implements TemplateService {
   @Override
   @CacheEvict(value = {"templates", "activeTemplateVersions"}, key = "#templateId")
   public TemplateDto archiveTemplate(Long templateId) {
-    TemplateEntity entity = templateRepository.findById(templateId).orElseThrow(() -> new TemplateNotFoundException(templateId));
+    TemplateEntity entity =
+        templateRepository
+            .findByIdAndTenantId(templateId, requireTenantId())
+            .orElseThrow(() -> new TemplateNotFoundException(templateId));
     entity.setArchived(true);
     return templateMapper.toDto(entity);
   }
 
   @Override
   public TemplateDto cloneTemplate(Long templateId, TemplateCloneRequest request) {
-    TemplateEntity source = templateRepository.findById(templateId).orElseThrow(() -> new TemplateNotFoundException(templateId));
+    TemplateEntity source =
+        templateRepository
+            .findByIdAndTenantId(templateId, requireTenantId())
+            .orElseThrow(() -> new TemplateNotFoundException(templateId));
     TemplateEntity clone = new TemplateEntity();
     clone.setName(request.getName());
     clone.setLocale(request.getLocale());
@@ -114,7 +126,10 @@ public class TemplateServiceImpl implements TemplateService {
   @Override
   @CacheEvict(value = "templates", key = "#templateId")
   public TemplateVersionDto createVersion(Long templateId, TemplateVersionCreateRequest request) {
-    TemplateEntity template = templateRepository.findById(templateId).orElseThrow(() -> new TemplateNotFoundException(templateId));
+    TemplateEntity template =
+        templateRepository
+            .findByIdAndTenantId(templateId, requireTenantId())
+            .orElseThrow(() -> new TemplateNotFoundException(templateId));
     TemplateVersionEntity entity = new TemplateVersionEntity();
     entity.setTemplate(template);
     entity.setSubject(request.getSubject());
@@ -138,8 +153,15 @@ public class TemplateServiceImpl implements TemplateService {
       value = {"templates", "templateVersions", "activeTemplateVersions"},
       allEntries = true)
   public TemplateVersionDto publishVersion(Long templateId, Long versionId) {
-    TemplateEntity template = templateRepository.findById(templateId).orElseThrow(() -> new TemplateNotFoundException(templateId));
-    TemplateVersionEntity version = versionRepository.findById(versionId).orElseThrow(() -> new TemplateVersionNotFoundException(templateId, versionId));
+    String tenantId = requireTenantId();
+    TemplateEntity template =
+        templateRepository
+            .findByIdAndTenantId(templateId, tenantId)
+            .orElseThrow(() -> new TemplateNotFoundException(templateId));
+    TemplateVersionEntity version =
+        versionRepository
+            .findByIdAndTemplateIdAndTemplate_TenantId(versionId, templateId, tenantId)
+            .orElseThrow(() -> new TemplateVersionNotFoundException(templateId, versionId));
     version.setStatus(TemplateVersionStatus.PUBLISHED);
     version.setPublishedAt(Instant.now());
     if (version.getSendGridTemplateId() == null) {
@@ -155,26 +177,37 @@ public class TemplateServiceImpl implements TemplateService {
       value = "templateVersions",
       key = "T(com.ejada.common.context.ContextManager$Tenant).get() + ':' + #templateId + ':' + #versionId")
   public TemplateVersionDto getVersion(Long templateId, Long versionId) {
-    TemplateVersionEntity version = versionRepository.findById(versionId).orElseThrow(() -> new TemplateVersionNotFoundException(templateId, versionId));
+    TemplateVersionEntity version =
+        versionRepository
+            .findByIdAndTemplateIdAndTemplate_TenantId(versionId, templateId, requireTenantId())
+            .orElseThrow(() -> new TemplateVersionNotFoundException(templateId, versionId));
     return templateMapper.toDto(version);
   }
 
   @Override
   public TemplatePreviewResponse preview(Long templateId, Long versionId, TemplatePreviewRequest request) {
-    TemplateVersionEntity version = versionRepository.findById(versionId).orElseThrow(() -> new TemplateVersionNotFoundException(templateId, versionId));
+    TemplateVersionEntity version =
+        versionRepository
+            .findByIdAndTemplateIdAndTemplate_TenantId(versionId, templateId, requireTenantId())
+            .orElseThrow(() -> new TemplateVersionNotFoundException(templateId, versionId));
     return templateRenderer.render(version, request.getDynamicData());
   }
 
   @Override
   public TemplateValidationResponse validate(Long templateId, Long versionId, TemplateValidationRequest request) {
-    TemplateVersionEntity version = versionRepository.findById(versionId).orElseThrow(() -> new TemplateVersionNotFoundException(templateId, versionId));
+    TemplateVersionEntity version =
+        versionRepository
+            .findByIdAndTemplateIdAndTemplate_TenantId(versionId, templateId, requireTenantId())
+            .orElseThrow(() -> new TemplateVersionNotFoundException(templateId, versionId));
     return templateValidator.validate(version, request.getDynamicData());
   }
 
   @Override
   public Page<TemplateDto> listTemplates(Pageable pageable) {
     Pageable sanitizedPageable = sanitizePageable(pageable);
-    return templateRepository.findAll(sanitizedPageable).map(templateMapper::toDto);
+    return templateRepository
+        .findByTenantId(requireTenantId(), sanitizedPageable)
+        .map(templateMapper::toDto);
   }
 
   private Pageable sanitizePageable(Pageable pageable) {
@@ -252,5 +285,9 @@ public class TemplateServiceImpl implements TemplateService {
         .sizeInBytes(attachment.getSizeInBytes())
         .inline(attachment.isInline())
         .build();
+  }
+
+  private String requireTenantId() {
+    return Objects.requireNonNull(ContextManager.Tenant.get(), "tenantId is required");
   }
 }

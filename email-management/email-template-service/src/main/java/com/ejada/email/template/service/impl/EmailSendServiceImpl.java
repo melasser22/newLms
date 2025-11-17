@@ -50,7 +50,7 @@ public class EmailSendServiceImpl implements EmailSendService {
 
   @Override
   public EmailSendResponse sendEmail(EmailSendRequest request) {
-    String tenantId = ContextManager.Tenant.get();
+    String tenantId = requireTenantId();
     rateLimiterService.validateQuota(tenantId, "email-send");
 
     if (request.getIdempotencyKey() != null) {
@@ -58,13 +58,13 @@ public class EmailSendServiceImpl implements EmailSendService {
       if (existing.isPresent()) {
         EmailSendEntity entity =
             emailSendRepository
-                .findById(existing.get())
+                .findByIdAndTenantId(existing.get(), tenantId)
                 .orElseThrow(() -> new IllegalStateException("Idempotent send missing"));
         return buildResponse(entity);
       }
     }
 
-    TemplateVersionEntity version = resolveVersion(request);
+    TemplateVersionEntity version = resolveVersion(request, tenantId);
     validateDynamicData(version, request);
 
     EmailSendEntity entity = new EmailSendEntity();
@@ -106,14 +106,17 @@ public class EmailSendServiceImpl implements EmailSendService {
     return request.getSends().stream().map(this::sendEmail).collect(Collectors.toList());
   }
 
-  private TemplateVersionEntity resolveVersion(EmailSendRequest request) {
+  private TemplateVersionEntity resolveVersion(EmailSendRequest request, String tenantId) {
     if (request.getTemplateVersionId() != null) {
       return templateVersionRepository
-          .findById(request.getTemplateVersionId())
-          .filter(version -> version.getTemplate() != null && version.getTemplate().getId().equals(request.getTemplateId()))
+          .findByIdAndTemplateIdAndTemplate_TenantId(
+              request.getTemplateVersionId(), request.getTemplateId(), tenantId)
           .orElseThrow(() -> new TemplateVersionNotFoundException(request.getTemplateId(), request.getTemplateVersionId()));
     }
-    TemplateEntity template = templateRepository.findById(request.getTemplateId()).orElseThrow(() -> new TemplateNotFoundException(request.getTemplateId()));
+    TemplateEntity template =
+        templateRepository
+            .findByIdAndTenantId(request.getTemplateId(), tenantId)
+            .orElseThrow(() -> new TemplateNotFoundException(request.getTemplateId()));
     return templateLookupService.getActivePublishedVersion(template.getId());
   }
 
@@ -174,5 +177,9 @@ public class EmailSendServiceImpl implements EmailSendService {
         .status(entity.getStatus())
         .idempotencyKey(entity.getIdempotencyKey())
         .build();
+  }
+
+  private String requireTenantId() {
+    return Objects.requireNonNull(ContextManager.Tenant.get(), "tenantId is required");
   }
 }
