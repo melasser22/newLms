@@ -14,7 +14,7 @@ public class EmailGatewayService {
   private final ChildServiceInvoker invoker;
 
   public EmailGatewayService(ChildServiceProperties properties, ChildServiceInvoker invoker) {
-    this.properties = properties;
+    this.properties = requireProperties(properties);
     this.invoker = invoker;
   }
 
@@ -27,5 +27,10 @@ public class EmailGatewayService {
   private URI requireEndpoint(URI uri, String name) {
     Assert.notNull(uri, () -> "Missing baseUrl for " + name + " service");
     return uri;
+  }
+
+  private ChildServiceProperties requireProperties(ChildServiceProperties properties) {
+    Assert.notNull(properties, "Child service properties must not be null");
+    return properties.copy();
   }
 }

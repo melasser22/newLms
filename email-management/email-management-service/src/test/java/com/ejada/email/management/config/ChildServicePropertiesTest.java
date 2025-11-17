@@ -8,16 +8,6 @@ import org.junit.jupiter.api.Test;
 class ChildServicePropertiesTest {
 
   @Test
-  void getTemplateShouldExposeBackingInstance() {
-    ChildServiceProperties properties = new ChildServiceProperties();
-    URI templateUri = URI.create("https://template.test");
-
-    properties.getTemplate().setBaseUrl(templateUri);
-
-    assertThat(properties.getTemplate().getBaseUrl()).isEqualTo(templateUri);
-  }
-
-  @Test
   void settersShouldUpdateBaseUrl() {
     ChildServiceProperties.ServiceEndpoint endpoint = new ChildServiceProperties.ServiceEndpoint();
     URI baseUrl = URI.create("https://child.test/api");
@@ -38,5 +28,22 @@ class ChildServicePropertiesTest {
 
     assertThat(properties.getTemplate().getBaseUrl()).isEqualTo(baseUrl);
     assertThat(properties.getTemplate()).isNotSameAs(endpoint);
+  }
+
+  @Test
+  void getterShouldReturnCopyWithConfiguredValue() {
+    ChildServiceProperties properties = new ChildServiceProperties();
+    ChildServiceProperties.ServiceEndpoint endpoint = new ChildServiceProperties.ServiceEndpoint();
+    URI baseUrl = URI.create("https://template.test");
+    endpoint.setBaseUrl(baseUrl);
+
+    properties.setTemplate(endpoint);
+
+    ChildServiceProperties.ServiceEndpoint copy = properties.getTemplate();
+
+    assertThat(copy.getBaseUrl()).isEqualTo(baseUrl);
+    copy.setBaseUrl(URI.create("https://other.test"));
+
+    assertThat(properties.getTemplate().getBaseUrl()).isEqualTo(baseUrl);
   }
 }
