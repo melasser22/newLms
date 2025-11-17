@@ -1,0 +1,12 @@
+server:
+  port: 8090
+
+child-services:
+  template:
+    base-url: http://localhost:8091
+  sending:
+    base-url: http://localhost:8092
+  device:
+    base-url: http://localhost:8093
+  usage:
+    base-url: http://localhost:8094
