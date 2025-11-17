@@ -2,9 +2,9 @@ spring:
   application:
     name: email-template-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/email
-    username: email
-    password: email
+    url: "${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ne}?currentSchema=email}"
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
   jpa:
     hibernate:
       ddl-auto: none
