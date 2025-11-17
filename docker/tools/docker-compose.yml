@@ -134,3 +134,18 @@ services:
     networks:
       backend:
         aliases: [otel-collector]
+
+  github-cli:
+    image: ghcr.io/cli/cli:2.62.0
+    <<: [*restart_policy, *resources_light]
+    entrypoint: ["tail", "-f", "/dev/null"]
+    environment:
+      TZ: Asia/Riyadh
+      GH_HOST: github.com
+    volumes:
+      - ../..:/workspace
+      - ${HOME}/.config/gh:/root/.config/gh
+      - ${HOME}/.ssh:/root/.ssh:ro
+    networks:
+      backend:
+        aliases: [github-cli]

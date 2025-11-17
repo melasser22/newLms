@@ -17,14 +17,14 @@ RUN chown -R appuser:appgroup /app
 USER appuser
 
 # Expose the correct port
-EXPOSE 8081
+EXPOSE 8082
 
 # Add JVM optimizations
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8081/actuator/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8082/actuator/health || exit 1
 
 # Run the application
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
