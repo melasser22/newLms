@@ -38,7 +38,7 @@ services:
     image: postgres:16
     <<: [*restart_policy, *resources_light]
     environment:
-      POSTGRES_DB: lms
+      POSTGRES_DB: ne
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       TZ: Asia/Riyadh
@@ -48,7 +48,7 @@ services:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       <<: *health_defaults
-      test: ["CMD-SHELL", "pg_isready -U postgres -d lms"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ne"]
     networks:
       backend:
         aliases: [postgres]

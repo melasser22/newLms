@@ -1,9 +1,9 @@
-# Learning Management System (LMS)
+# Notification Management System (NE)
 
 This repository houses several components:
 
 - **shared-lib** – a collection of reusable Spring Boot starter modules and utilities.
-- **lms-setup** – a Spring Boot microservice for reference lookups and tenant/platform configuration.
+- **setup-service** – a Spring Boot microservice for reference lookups and tenant/platform configuration.
 - **tenant-persistence** – central JPA entities, repositories, and Flyway migrations for the tenant domain.
 
 ## Getting Started
@@ -23,7 +23,7 @@ mvn clean install
 ### Build and run the setup service
 
 ```bash
-cd ../lms-setup
+cd ../setup-service
 mvn spring-boot:run
 ```
 
@@ -43,7 +43,7 @@ Run unit tests for both modules:
 
 ```bash
 cd shared-lib && mvn test
-cd ../lms-setup && mvn test
+cd ../setup-service && mvn test
 ```
 
 The build pulls dependencies from Maven Central; ensure network access is available.
@@ -53,7 +53,7 @@ The build pulls dependencies from Maven Central; ensure network access is availa
 Containerised tooling and application services are now split across two compose files:
 
 - `docker-compose.tools.yml` — infrastructure dependencies such as PostgreSQL, Redis, Kafka, and the OpenTelemetry collector.
-- `docker-compose.apps.yml` — LMS application microservices.
+- `docker-compose.apps.yml` — NE application microservices.
 
 Start the full stack by composing both files together:
 

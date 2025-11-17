@@ -8,7 +8,7 @@ x-restart: &restart_policy
 
 x-common-env: &common_env
   TZ: Asia/Riyadh
-  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ne
   SPRING_DATASOURCE_USERNAME: postgres
   SPRING_DATASOURCE_PASSWORD: postgres
   SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
