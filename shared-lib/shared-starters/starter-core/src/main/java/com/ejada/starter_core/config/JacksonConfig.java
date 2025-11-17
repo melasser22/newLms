@@ -9,7 +9,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.domain.PageImpl;
+import org.springframework.util.ClassUtils;
 
 @Configuration
 public class JacksonConfig {
@@ -36,7 +36,7 @@ public class JacksonConfig {
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
         // Avoid UnsupportedOperationException when serializing PageImpl#pageable
-        mapper.addMixIn(PageImpl.class, PageImplMixIn.class);
+        registerPageImplMixin(mapper);
 
         return mapper;
     }
@@ -44,4 +44,22 @@ public class JacksonConfig {
     /** Mixin to ignore the "pageable" property of {@link PageImpl}. */
     @JsonIgnoreProperties("pageable")
     private interface PageImplMixIn {}
+
+    /**
+     * Registers the mixin for {@code PageImpl} only if Spring Data is on the classpath.
+     * This avoids a hard dependency on {@code spring-data-commons} for services that
+     * don't need it while preserving the behavior for those that do.
+     */
+    private void registerPageImplMixin(ObjectMapper mapper) {
+        if (!ClassUtils.isPresent("org.springframework.data.domain.PageImpl", getClass().getClassLoader())) {
+            return;
+        }
+
+        try {
+            Class<?> pageImplClass = ClassUtils.forName("org.springframework.data.domain.PageImpl", getClass().getClassLoader());
+            mapper.addMixIn(pageImplClass, PageImplMixIn.class);
+        } catch (ClassNotFoundException ex) {
+            // Should not happen because isPresent() returned true, but ignore defensively
+        }
+    }
 }
