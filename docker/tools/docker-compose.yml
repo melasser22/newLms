@@ -136,7 +136,10 @@ services:
         aliases: [otel-collector]
 
   github-cli:
-    image: ghcr.io/cli/cli:2.62.0
+    # Using the Dev Containers GitHub CLI image avoids GitHub Container Registry
+    # authentication requirements that can trigger 403 errors when pulling the
+    # upstream ghcr.io/cli/cli image.
+    image: mcr.microsoft.com/devcontainers/github-cli:latest
     <<: [*restart_policy, *resources_light]
     entrypoint: ["tail", "-f", "/dev/null"]
     environment:
