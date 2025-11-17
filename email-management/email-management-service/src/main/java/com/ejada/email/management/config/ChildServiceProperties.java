@@ -6,25 +6,41 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "child-services")
 public class ChildServiceProperties {
 
-  private final ServiceEndpoint template = new ServiceEndpoint();
-  private final ServiceEndpoint sending = new ServiceEndpoint();
-  private final ServiceEndpoint webhook = new ServiceEndpoint();
-  private final ServiceEndpoint usage = new ServiceEndpoint();
+  private ServiceEndpoint template = new ServiceEndpoint();
+  private ServiceEndpoint sending = new ServiceEndpoint();
+  private ServiceEndpoint webhook = new ServiceEndpoint();
+  private ServiceEndpoint usage = new ServiceEndpoint();
 
   public ServiceEndpoint getTemplate() {
-    return new ServiceEndpoint(template);
+    return template;
+  }
+
+  public void setTemplate(ServiceEndpoint template) {
+    this.template = copyOf(template);
   }
 
   public ServiceEndpoint getSending() {
-    return new ServiceEndpoint(sending);
+    return sending;
+  }
+
+  public void setSending(ServiceEndpoint sending) {
+    this.sending = copyOf(sending);
   }
 
   public ServiceEndpoint getWebhook() {
-    return new ServiceEndpoint(webhook);
+    return webhook;
+  }
+
+  public void setWebhook(ServiceEndpoint webhook) {
+    this.webhook = copyOf(webhook);
   }
 
   public ServiceEndpoint getUsage() {
-    return new ServiceEndpoint(usage);
+    return usage;
+  }
+
+  public void setUsage(ServiceEndpoint usage) {
+    this.usage = copyOf(usage);
   }
 
   public static class ServiceEndpoint {
@@ -45,5 +61,12 @@ public class ChildServiceProperties {
     public void setBaseUrl(URI baseUrl) {
       this.baseUrl = baseUrl;
     }
+  }
+
+  private static ServiceEndpoint copyOf(ServiceEndpoint source) {
+    if (source == null) {
+      return new ServiceEndpoint();
+    }
+    return new ServiceEndpoint(source);
   }
 }
