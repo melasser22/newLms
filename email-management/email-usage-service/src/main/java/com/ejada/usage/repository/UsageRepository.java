@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -15,7 +16,8 @@ public class UsageRepository {
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   public UsageRepository(NamedParameterJdbcTemplate jdbcTemplate) {
-    this.jdbcTemplate = jdbcTemplate;
+    this.jdbcTemplate =
+        new NamedParameterJdbcTemplate(Objects.requireNonNull(jdbcTemplate).getJdbcTemplate());
   }
 
   public List<UsageAggregate> loadUsage(String tenantId, LocalDate from, LocalDate to) {
