@@ -1,6 +1,9 @@
 -- Email template service schema managed by Flyway.
 -- Tables target the current schema configured via spring.flyway.
 
+CREATE SCHEMA IF NOT EXISTS email;
+SET search_path TO email;
+
 CREATE TABLE IF NOT EXISTS email_template (
   id            BIGSERIAL PRIMARY KEY,
   tenant_id     VARCHAR(64),

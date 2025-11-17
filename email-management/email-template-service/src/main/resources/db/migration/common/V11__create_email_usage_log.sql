@@ -1,4 +1,7 @@
 -- Read-model table used by the email usage service for daily aggregations.
+CREATE SCHEMA IF NOT EXISTS email;
+SET search_path TO email;
+
 CREATE TABLE IF NOT EXISTS email_event_log (
   id           BIGSERIAL PRIMARY KEY,
   tenant_id    VARCHAR(64) NOT NULL,
