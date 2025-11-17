@@ -9,6 +9,7 @@ import com.ejada.sending.service.EmailDispatchService;
 import com.ejada.sending.service.IdempotencyService;
 import com.ejada.sending.service.EmailLogService;
 import com.ejada.sending.service.RateLimiterService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.CompletableFuture;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 @Service
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Dependencies are injected and not exposed")
 public class EmailDispatchServiceImpl implements EmailDispatchService {
 
   private final KafkaTemplate<String, EmailEnvelope> kafkaTemplate;

@@ -8,6 +8,7 @@ import com.ejada.sending.dto.AttachmentMetadataDto;
 import com.ejada.sending.messaging.EmailEnvelope;
 import com.ejada.sending.service.AttachmentMergeService;
 import com.ejada.sending.service.EmailSender;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
@@ -29,6 +30,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 
 @Service
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Dependencies are injected and managed externally")
 public class SendGridEmailSender implements EmailSender {
 
   private static final Logger log = LoggerFactory.getLogger(SendGridEmailSender.class);
