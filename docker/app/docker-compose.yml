@@ -36,7 +36,7 @@ volumes:
 # ----------------------------- #
 services:
   tenant-service:
-    build: ./tenant-platform/tenant-service
+    build: ../tenant-platform/tenant-service
     <<: [*restart_policy]
     depends_on:
       <<: *core_dependencies
@@ -49,7 +49,7 @@ services:
       backend:
 
   setup-service:
-    build: ./setup-service
+    build: ../setup-service
     <<: [*restart_policy]
     depends_on:
       <<: *core_dependencies
@@ -62,7 +62,7 @@ services:
       backend:
 
   billing-service:
-    build: ./tenant-platform/billing-service
+    build: ../tenant-platform/billing-service
     <<: [*restart_policy]
     depends_on:
       <<: *core_dependencies
@@ -75,7 +75,7 @@ services:
       backend:
 
   catalog-service:
-    build: ./tenant-platform/catalog-service
+    build: ../tenant-platform/catalog-service
     <<: [*restart_policy]
     depends_on:
       <<: *core_dependencies
@@ -88,7 +88,7 @@ services:
       backend:
 
   subscription-service:
-    build: ./tenant-platform/subscription-service
+    build: ../tenant-platform/subscription-service
     <<: [*restart_policy]
     depends_on:
       <<: *core_dependencies
@@ -101,7 +101,7 @@ services:
       backend:
 
   security-service:
-    build: ./sec-service
+    build: ../sec-service
     <<: [*restart_policy]
     depends_on:
       <<: *core_dependencies
@@ -125,7 +125,7 @@ services:
       backend:
 
   admin-service:
-    build: ./admin-service
+    build: ../admin-service
     <<: [*restart_policy]
     depends_on:
       <<: *core_dependencies
@@ -138,7 +138,7 @@ services:
       backend:
 
   email-template-service:
-    build: ./email-management/email-template-service
+    build: ../email-management/email-template-service
     <<: [*restart_policy]
     depends_on:
       <<: *core_dependencies
@@ -154,7 +154,7 @@ services:
       backend:
 
   email-sending-service:
-    build: ./email-management/email-sending-service
+    build: ../email-management/email-sending-service
     <<: [*restart_policy]
     depends_on:
       <<: *core_dependencies
@@ -170,7 +170,7 @@ services:
       backend:
 
   email-webhook-service:
-    build: ./email-management/email-webhook-service
+    build: ../email-management/email-webhook-service
     <<: [*restart_policy]
     depends_on:
       <<: *core_dependencies
@@ -186,7 +186,7 @@ services:
       backend:
 
   email-usage-service:
-    build: ./email-management/email-usage-service
+    build: ../email-management/email-usage-service
     <<: [*restart_policy]
     depends_on:
       <<: *core_dependencies
