@@ -10,4 +10,9 @@ public record TemplateDescriptor(
     defaultAttachments =
         defaultAttachments == null ? List.of() : List.copyOf(defaultAttachments);
   }
+
+  @Override
+  public List<AttachmentMetadataDto> defaultAttachments() {
+    return List.copyOf(defaultAttachments);
+  }
 }
