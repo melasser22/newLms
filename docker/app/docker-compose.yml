@@ -191,3 +191,41 @@ services:
       - "8094:8084"
     networks:
       backend:
+
+  # ----------------------------- #
+  #     Infrastructure (reuse)    #
+  # ----------------------------- #
+  postgres:
+    extends:
+      file: ../tools/docker-compose.yml
+      service: postgres
+    networks:
+      backend:
+
+  zookeeper:
+    extends:
+      file: ../tools/docker-compose.yml
+      service: zookeeper
+    networks:
+      backend:
+
+  kafka:
+    extends:
+      file: ../tools/docker-compose.yml
+      service: kafka
+    networks:
+      backend:
+
+  otel-collector:
+    extends:
+      file: ../tools/docker-compose.yml
+      service: otel-collector
+    networks:
+      backend:
+
+  redis:
+    extends:
+      file: ../tools/docker-compose.yml
+      service: redis
+    networks:
+      backend:
