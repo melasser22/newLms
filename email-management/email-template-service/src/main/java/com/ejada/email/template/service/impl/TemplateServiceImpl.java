@@ -26,6 +26,7 @@ import com.ejada.email.template.service.support.TemplateRenderer;
 import com.ejada.email.template.service.support.TemplateValidator;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,13 +34,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class TemplateServiceImpl implements TemplateService {
+
+  private static final Set<String> ALLOWED_SORT_PROPERTIES =
+      Set.of("id", "name", "locale", "description", "archived", "createdAt", "updatedAt");
 
   private final TemplateRepository templateRepository;
   private final TemplateVersionRepository versionRepository;
@@ -167,7 +173,30 @@ public class TemplateServiceImpl implements TemplateService {
 
   @Override
   public Page<TemplateDto> listTemplates(Pageable pageable) {
-    return templateRepository.findAll(pageable).map(templateMapper::toDto);
+    Pageable sanitizedPageable = sanitizePageable(pageable);
+    return templateRepository.findAll(sanitizedPageable).map(templateMapper::toDto);
+  }
+
+  private Pageable sanitizePageable(Pageable pageable) {
+    if (pageable == null || pageable.isUnpaged() || pageable.getSort().isUnsorted()) {
+      return pageable;
+    }
+
+    List<Sort.Order> allowedOrders = new ArrayList<>();
+    pageable
+        .getSort()
+        .forEach(
+            order -> {
+              if (ALLOWED_SORT_PROPERTIES.contains(order.getProperty())) {
+                allowedOrders.add(order);
+              }
+            });
+
+    if (allowedOrders.isEmpty()) {
+      return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+    }
+
+    return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(allowedOrders));
   }
 
   private TemplateVersionEntity copyVersion(TemplateVersionEntity version) {
