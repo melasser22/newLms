@@ -25,6 +25,12 @@ networks:
   backend:
     driver: bridge
 
+volumes:
+  pgdata:
+  zkdata:
+  zklog:
+  kafkadata:
+
 # ----------------------------- #
 #       Application stack       #
 # ----------------------------- #
