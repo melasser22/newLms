@@ -4,7 +4,8 @@ import java.util.List;
 
 public record UsageReportDto(String tenantId, List<UsageMetricDto> metrics) {
 
-  public UsageReportDto {
+  public UsageReportDto(String tenantId, List<UsageMetricDto> metrics) {
+    this.tenantId = tenantId;
     this.metrics = metrics == null ? List.of() : List.copyOf(metrics);
   }
 
