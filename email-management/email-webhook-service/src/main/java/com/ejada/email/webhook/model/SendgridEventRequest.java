@@ -129,11 +129,11 @@ public class SendgridEventRequest {
   }
 
   public Map<String, Object> getCustomArgs() {
-    return customArgs;
+    return Map.copyOf(customArgs);
   }
 
   public void setCustomArgs(Map<String, Object> customArgs) {
-    this.customArgs = customArgs;
+    this.customArgs = customArgs == null ? Map.of() : new HashMap<>(customArgs);
   }
 
   public Instant occurredAt() {
@@ -141,7 +141,7 @@ public class SendgridEventRequest {
   }
 
   public Map<String, Object> getAdditionalFields() {
-    return additionalFields;
+    return Map.copyOf(additionalFields);
   }
 
   @JsonAnySetter

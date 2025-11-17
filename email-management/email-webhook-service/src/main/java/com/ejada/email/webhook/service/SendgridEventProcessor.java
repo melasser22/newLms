@@ -7,6 +7,7 @@ import com.ejada.email.webhook.model.EmailLogStatus;
 import com.ejada.email.webhook.model.SendgridEventRequest;
 import com.ejada.email.webhook.repository.EmailEventRepository;
 import com.ejada.email.webhook.repository.EmailLogRepository;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -15,6 +16,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
+@SuppressFBWarnings(
+    value = "EI_EXPOSE_REP2",
+    justification = "Dependencies are Spring-managed beans and not externally mutated")
 public class SendgridEventProcessor {
 
   private static final Logger log = LoggerFactory.getLogger(SendgridEventProcessor.class);

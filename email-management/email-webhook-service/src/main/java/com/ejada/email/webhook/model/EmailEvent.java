@@ -36,7 +36,7 @@ public class EmailEvent {
     this.tenantId = tenantId;
     this.occurredAt = occurredAt;
     this.processedAt = processedAt;
-    this.metadata = metadata;
+    this.metadata = metadata == null ? Map.of() : Map.copyOf(metadata);
     this.duplicate = duplicate;
   }
 

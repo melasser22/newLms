@@ -2,11 +2,15 @@ package com.ejada.email.webhook.service;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Component;
 
 @Component
+@SuppressFBWarnings(
+    value = "EI_EXPOSE_REP2",
+    justification = "MeterRegistry is provided by Spring and safely managed")
 public class ProcessingMetrics {
 
   private final MeterRegistry meterRegistry;
