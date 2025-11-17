@@ -46,3 +46,9 @@ email:
     burst-multiplier: 2
     window: PT1M
     idempotency-ttl: PT24H
+
+shared:
+  core:
+    tenant:
+      resolve-from-jwt: true
+      prefer-header-over-jwt: false

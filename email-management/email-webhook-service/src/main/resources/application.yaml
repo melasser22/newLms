@@ -16,3 +16,9 @@ sendgrid:
     allowed-ips: []
     kafka-topic: sendgrid.email-events
     deduplication-ttl-seconds: 86400
+
+shared:
+  core:
+    tenant:
+      resolve-from-jwt: true
+      prefer-header-over-jwt: false

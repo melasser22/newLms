@@ -32,3 +32,9 @@ kafka:
 rate-limit:
   capacity: 200
   refill-per-minute: 200
+
+shared:
+  core:
+    tenant:
+      resolve-from-jwt: true
+      prefer-header-over-jwt: false
