@@ -1,33 +1,20 @@
 package com.ejada.common.context;
 
-import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * Facade over a pluggable {@link ContextCarrier}.  Provides static methods for
- * getting/setting tenant, correlation ID, request ID and user ID contexts.
- * Initially backed by a {@link ThreadLocalContextCarrier}, but can be replaced
- * via {@link #setContextCarrier(ContextCarrier)} for testing or alternative
- * context propagation mechanisms.
+ * Centralized context holder for tenant, correlation ID, request ID, and user ID
+ * using thread-local storage.
  */
 public final class ContextManager {
 
-    /**
-     * The current context carrier.  Defaults to a thread‑local implementation.
-     */
-    private static volatile ContextCarrier CARRIER = new ThreadLocalContextCarrier();
+    private static final ThreadLocal<String> tenantId      = new ThreadLocal<>();
+    private static final ThreadLocal<String> correlationId = new ThreadLocal<>();
+    private static final ThreadLocal<String> requestId     = new ThreadLocal<>();
+    private static final ThreadLocal<String> userId        = new ThreadLocal<>();
 
     private ContextManager() {
         // utility class
-    }
-
-    /**
-     * Replace the current ContextCarrier.  Useful for tests or alternative carriers.
-     *
-     * @param carrier new context carrier (must not be null)
-     */
-    public static void setContextCarrier(ContextCarrier carrier) {
-        CARRIER = Objects.requireNonNull(carrier, "carrier must not be null");
     }
 
     // ==================== Tenant ====================
@@ -42,14 +29,14 @@ public final class ContextManager {
          * Set the current tenant identifier; pass null/blank to clear.
          */
         public static void set(String tenantId) {
-            CARRIER.setTenantId(tenantId);
+            setOrClear(ContextManager.tenantId, tenantId);
         }
 
         /**
          * Get the current tenant identifier or null if none is set.
          */
         public static String get() {
-            return CARRIER.getTenantId();
+            return tenantId.get();
         }
 
         /**
@@ -64,7 +51,7 @@ public final class ContextManager {
          * Clear the tenant identifier from the current context.
          */
         public static void clear() {
-            CARRIER.clearTenantId();
+            tenantId.remove();
         }
 
         /**
@@ -72,8 +59,9 @@ public final class ContextManager {
          * value when closed.
          */
         public static Scope openScope(String tenantId) {
-            AutoCloseable ac = CARRIER.openTenantScope(tenantId);
-            return new Scope(ac);
+            String previous = ContextManager.tenantId.get();
+            set(tenantId);
+            return new Scope(previous);
         }
 
         /**
@@ -95,14 +83,14 @@ public final class ContextManager {
         }
 
         /**
-         * Scope wrapper over ContextCarrier's AutoCloseable for tenant context.
+         * Scope wrapper to temporarily override tenant context.
          */
         public static final class Scope implements AutoCloseable {
-            private final AutoCloseable inner;
+            private final String previousValue;
             private boolean closed;
 
-            private Scope(AutoCloseable inner) {
-                this.inner = inner;
+            private Scope(String previousValue) {
+                this.previousValue = previousValue;
             }
 
             @Override
@@ -110,11 +98,7 @@ public final class ContextManager {
                 if (closed) {
                     return;
                 }
-                try {
-                    inner.close();
-                } catch (Exception e) {
-                    throw new RuntimeException("Failed to close context", e);
-                }
+                setOrClear(ContextManager.tenantId, previousValue);
                 closed = true;
             }
         }
@@ -123,52 +107,60 @@ public final class ContextManager {
     // ==================== Correlation ID ====================
 
     public static void setCorrelationId(String id) {
-        CARRIER.setCorrelationId(id);
+        setOrClear(correlationId, id);
     }
 
     public static String getCorrelationId() {
-        return CARRIER.getCorrelationId();
+        return correlationId.get();
     }
 
     public static void clearCorrelationId() {
-        CARRIER.clearCorrelationId();
+        correlationId.remove();
     }
 
     // ==================== Request ID ====================
 
     public static void setRequestId(String id) {
-        CARRIER.setRequestId(id);
+        setOrClear(requestId, id);
     }
 
     public static String getRequestId() {
-        return CARRIER.getRequestId();
+        return requestId.get();
     }
 
     public static void clearRequestId() {
-        CARRIER.clearRequestId();
+        requestId.remove();
     }
 
     // ==================== User ID ====================
 
     public static void setUserId(String id) {
-        CARRIER.setUserId(id);
+        setOrClear(userId, id);
     }
 
     public static String getUserId() {
-        return CARRIER.getUserId();
+        return userId.get();
     }
 
     public static void clearUserId() {
-        CARRIER.clearUserId();
+        userId.remove();
     }
 
     /**
      * Clear all header-related contexts: correlation, request, tenant and user.
      */
     public static void clearHeaders() {
-        CARRIER.clearCorrelationId();
-        CARRIER.clearRequestId();
-        CARRIER.clearTenantId();
-        CARRIER.clearUserId();
+        correlationId.remove();
+        requestId.remove();
+        tenantId.remove();
+        userId.remove();
+    }
+
+    private static void setOrClear(ThreadLocal<String> holder, String value) {
+        if (value == null || value.isBlank()) {
+            holder.remove();
+        } else {
+            holder.set(value);
+        }
     }
 }

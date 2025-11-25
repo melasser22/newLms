@@ -13,7 +13,7 @@ import org.hibernate.annotations.ParamDef;
  *
  * - Adds tenant_id column.
  * - Declares a Hibernate filter "tenantFilter" using two params:
- *     tenantId     : String   (current tenant from TenantContext)
+ *     tenantId     : String   (current tenant from ContextManager.Tenant)
  *     allowGlobal  : boolean  (include rows with tenant_id IS NULL)
  *
  * NOTE:
