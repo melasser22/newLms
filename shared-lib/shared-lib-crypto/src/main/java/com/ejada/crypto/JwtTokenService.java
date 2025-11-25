@@ -1,5 +1,7 @@
 package com.ejada.crypto;
 
+import com.ejada.common.constants.JwtClaims;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.time.Duration;
@@ -7,7 +9,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Base64;
+import java.util.Objects;
 import javax.crypto.SecretKey;
 
 /**
@@ -18,27 +20,30 @@ public class JwtTokenService {
     private final SecretKey key;
     private final Duration defaultTtl;
 
-    private JwtTokenService(SecretKey key, Duration defaultTtl) {
-        this.key = key;
+    public JwtTokenService(SecretKey key, Duration defaultTtl) {
+        this.key = Objects.requireNonNull(key, "key");
         this.defaultTtl = defaultTtl;
     }
 
     /**
      * Create a service instance using the provided shared secret.
      *
-     * @param secret the HMAC secret
+     * @param secret the HMAC secret (Base64-encoded)
      * @return configured service
      */
     public static JwtTokenService withSecret(String secret, Duration defaultTtl) {
-        if (secret == null) {
-            throw new IllegalArgumentException("secret must not be null");
-        }
-        byte[] keyBytes = Base64.getDecoder().decode(secret);
+        return new JwtTokenService(createKey(secret), defaultTtl);
+    }
+
+    /**
+     * Build an HMAC key from the configured Base64 secret.
+     */
+    public static SecretKey createKey(String secret) {
+        byte[] keyBytes = CryptoUtils.safeBase64Decode(secret, "JWT signing secret");
         if (keyBytes.length < 32) {
             throw new IllegalArgumentException("decoded secret must be at least 32 bytes");
         }
-        SecretKey key = Keys.hmacShaKeyFor(keyBytes);
-        return new JwtTokenService(key, defaultTtl);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     /**
@@ -48,14 +53,7 @@ public class JwtTokenService {
      * @return signed JWT token
      */
     public String generateToken(String subject) {
-        var builder = Jwts.builder()
-                .subject(subject)
-                .issuedAt(new Date())
-                .signWith(key, Jwts.SIG.HS256);
-        if (defaultTtl != null) {
-            builder.expiration(Date.from(Instant.now().plus(defaultTtl)));
-        }
-        return builder.compact();
+        return startBuilder(subject, defaultTtl).compact();
     }
 
     /**
@@ -70,24 +68,32 @@ public class JwtTokenService {
      */
     public String createToken(String subject, String tenant, List<String> roles,
             Map<String, Object> extraClaims, Duration ttl) {
-        var builder = Jwts.builder()
-                .subject(subject)
-                .issuedAt(new Date())
-                .signWith(key, Jwts.SIG.HS256);
-
-        if (tenant != null) {
-            builder.claim("tenant", tenant);
-        }
+        JwtBuilder builder = startBuilder(subject, ttl);
+        putClaimIfPresent(builder, JwtClaims.TENANT, tenant);
         if (roles != null && !roles.isEmpty()) {
-            builder.claim("roles", roles);
+            builder.claim(JwtClaims.ROLES, roles);
         }
         if (extraClaims != null && !extraClaims.isEmpty()) {
             extraClaims.forEach(builder::claim);
         }
-        Duration effectiveTtl = ttl != null ? ttl : defaultTtl;
+        return builder.compact();
+    }
+
+    private JwtBuilder startBuilder(String subject, Duration ttlOverride) {
+        Duration effectiveTtl = ttlOverride != null ? ttlOverride : defaultTtl;
+        JwtBuilder builder = Jwts.builder()
+                .subject(Objects.requireNonNull(subject, "subject"))
+                .issuedAt(new Date())
+                .signWith(key, Jwts.SIG.HS256);
         if (effectiveTtl != null) {
             builder.expiration(Date.from(Instant.now().plus(effectiveTtl)));
         }
-        return builder.compact();
+        return builder;
+    }
+
+    private static void putClaimIfPresent(JwtBuilder builder, String name, Object value) {
+        if (value != null) {
+            builder.claim(name, value);
+        }
     }
 }
