@@ -1,27 +1,27 @@
 package com.ejada.starter_core.web;
 
+import com.ejada.common.constants.ErrorCodes;
 import com.ejada.common.dto.BaseResponse;
 import com.ejada.common.exception.BusinessException;
 import com.ejada.common.exception.BusinessRuleException;
-import com.ejada.common.exception.NotFoundException;
 import com.ejada.common.exception.DuplicateResourceException;
+import com.ejada.common.exception.NotFoundException;
 import com.ejada.common.exception.ValidationException;
 import jakarta.validation.ConstraintViolationException;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
  * Global exception handler producing {@link BaseResponse} payloads.
@@ -31,36 +31,26 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<BaseResponse<?>> handleResourceNotFound(RuntimeException ex, WebRequest request) {
+    public ResponseEntity<BaseResponse<?>> handleResourceNotFound(NotFoundException ex) {
         log.warn("Resource not found: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(BaseResponse.error("ERR_RESOURCE_NOT_FOUND", ex.getMessage()));
+        return buildError(HttpStatus.NOT_FOUND, ErrorCodes.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<BaseResponse<?>> handleValidation(ValidationException ex, WebRequest request) {
+    public ResponseEntity<BaseResponse<?>> handleValidation(ValidationException ex) {
         log.warn("Validation error: {}", ex.getMessage());
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_VALIDATION", ex.getMessage()));
+        return buildError(HttpStatus.BAD_REQUEST, ErrorCodes.VALIDATION_ERROR, ex.getMessage());
     }
 
-    @ExceptionHandler(BusinessRuleException.class)
-    public ResponseEntity<BaseResponse<?>> handleBusinessRule(BusinessRuleException ex, WebRequest request) {
+    @ExceptionHandler({BusinessRuleException.class, BusinessException.class})
+    public ResponseEntity<BaseResponse<?>> handleBusinessRule(BusinessRuleException ex) {
         log.warn("Business rule violation: {}", ex.getMessage());
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_BUSINESS_RULE", ex.getMessage()));
-    }
-
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<BaseResponse<?>> handleBusiness(BusinessException ex, WebRequest request) {
-        log.warn("Business logic violation: {}", ex.getMessage());
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_BUSINESS_LOGIC", ex.getMessage()));
+        return buildError(HttpStatus.BAD_REQUEST, ErrorCodes.BUSINESS_RULE_VIOLATION, ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<BaseResponse<List<Map<String, String>>>> handleValidationErrors(
-            MethodArgumentNotValidException ex, WebRequest request) {
+            MethodArgumentNotValidException ex) {
         List<Map<String, String>> errors = new ArrayList<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = error instanceof FieldError fieldError
@@ -74,51 +64,64 @@ public class GlobalExceptionHandler {
         });
 
         log.warn("Validation errors: {}", errors);
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_VALIDATION",
-                        "Validation failed with " + errors.size() + " errors",
-                        errors));
+        return buildError(HttpStatus.BAD_REQUEST,
+                ErrorCodes.VALIDATION_ERROR,
+                "Validation failed with " + errors.size() + " errors",
+                errors);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<BaseResponse<?>> handleConstraintViolation(ConstraintViolationException ex, WebRequest request) {
+    public ResponseEntity<BaseResponse<?>> handleConstraintViolation(ConstraintViolationException ex) {
         log.warn("Constraint violation: {}", ex.getMessage());
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_CONSTRAINT_VIOLATION", "Constraint violation: " + ex.getMessage()));
+        return buildError(HttpStatus.BAD_REQUEST,
+                ErrorCodes.VALIDATION_ERROR,
+                "Constraint violation: " + ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<BaseResponse<?>> handleTypeMismatch(MethodArgumentTypeMismatchException ex, WebRequest request) {
+    public ResponseEntity<BaseResponse<?>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         log.warn("Type mismatch: {}", ex.getMessage());
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_TYPE_MISMATCH", "Invalid parameter type for: " + ex.getName()));
+        return buildError(HttpStatus.BAD_REQUEST,
+                ErrorCodes.API_BAD_REQUEST,
+                "Invalid parameter type for: " + ex.getName());
     }
 
-    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
-    public ResponseEntity<BaseResponse<?>> handleMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex, WebRequest request) {
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<BaseResponse<?>> handleMessageNotReadable(HttpMessageNotReadableException ex) {
         log.warn("Message not readable: {}", ex.getMessage());
-        return ResponseEntity.badRequest()
-                .body(BaseResponse.error("ERR_INVALID_REQUEST", "Invalid request body"));
+        return buildError(HttpStatus.BAD_REQUEST,
+                ErrorCodes.API_BAD_REQUEST,
+                "Invalid request body");
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<BaseResponse<?>> handleDataIntegrityViolation(DataIntegrityViolationException ex, WebRequest request) {
+    public ResponseEntity<BaseResponse<?>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         log.error("Data integrity violation: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(BaseResponse.error("ERR_DATA_CONFLICT", "Data conflict occurred"));
+        return buildError(HttpStatus.CONFLICT,
+                ErrorCodes.DATA_INTEGRITY,
+                "Data conflict occurred");
     }
 
     @ExceptionHandler(DuplicateResourceException.class)
-    public ResponseEntity<BaseResponse<?>> handleDuplicateResource(DuplicateResourceException ex, WebRequest request) {
+    public ResponseEntity<BaseResponse<?>> handleDuplicateResource(DuplicateResourceException ex) {
         log.warn("Duplicate resource: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(BaseResponse.error(ex.getErrorCode(), ex.getMessage()));
+        return buildError(HttpStatus.CONFLICT, ex.getErrorCode(), ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<BaseResponse<?>> handleGeneric(Exception ex, WebRequest request) {
+    public ResponseEntity<BaseResponse<?>> handleGeneric(Exception ex) {
         log.error("Unexpected error occurred", ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(BaseResponse.error("ERR_INTERNAL", "An unexpected error occurred"));
+        return buildError(HttpStatus.INTERNAL_SERVER_ERROR,
+                ErrorCodes.INTERNAL_ERROR,
+                "An unexpected error occurred");
+    }
+
+    private ResponseEntity<BaseResponse<?>> buildError(HttpStatus status, String code, String message) {
+        return buildError(status, code, message, null);
+    }
+
+    private <T> ResponseEntity<BaseResponse<T>> buildError(HttpStatus status, String code, String message, T details) {
+        return ResponseEntity.status(status)
+                .body(BaseResponse.error(code, message, details));
     }
 }
