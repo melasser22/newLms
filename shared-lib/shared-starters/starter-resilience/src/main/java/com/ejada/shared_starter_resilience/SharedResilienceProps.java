@@ -1,6 +1,6 @@
 package com.ejada.shared_starter_resilience;
 
-import com.ejada.common.BaseStarterProperties;
+
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "shared.resilience")
-public class SharedResilienceProps implements BaseStarterProperties {
+public class SharedResilienceProps  {
 
   /** HTTP timeout in milliseconds. */
   private int httpTimeoutMs = 5000;

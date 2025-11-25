@@ -1,6 +1,6 @@
 package com.ejada.starter_security;
 
-import com.ejada.common.BaseStarterProperties;
+
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,7 +29,7 @@ import org.springframework.validation.annotation.Validated;
 @Setter
 @Validated
 @ConfigurationProperties(prefix = "shared.security")
-public class SharedSecurityProps implements BaseStarterProperties {
+public class SharedSecurityProps  {
 
   // --------- JWT (back-compat root) ---------
   /** hs256 | jwks | issuer */

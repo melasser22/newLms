@@ -28,8 +28,6 @@ server:
     include-binding-errors: always
 
 shared:
-  observability:
-    application-name: billing-service
   security:
     enable-role-check: true
     jwt:

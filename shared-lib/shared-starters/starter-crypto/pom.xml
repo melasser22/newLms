@@ -46,7 +46,6 @@
       <artifactId>shared-lib-crypto</artifactId>
     </dependency>
 
-    <!-- Observability (opt-in) -->
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-core</artifactId>

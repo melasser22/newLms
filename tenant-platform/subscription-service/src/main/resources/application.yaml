@@ -34,8 +34,6 @@ server:
     include-binding-errors: always
 
 shared:
-  observability:
-    application-name: subscription-service
   security:
     enable-role-check: true
     jwt:

@@ -1,4 +1,4 @@
-# Notification Management System (NE)
+# Scheduling and Appointment System
 
 This repository houses several components:
 
@@ -53,7 +53,7 @@ The build pulls dependencies from Maven Central; ensure network access is availa
 Containerised tooling and application services are now split across two compose files:
 
 - `docker-compose.tools.yml` — infrastructure dependencies such as PostgreSQL, Redis, Kafka, and the OpenTelemetry collector.
-- `docker-compose.apps.yml` — NE application microservices.
+- `docker-compose.apps.yml` —  applications microservices.
 
 Start the full stack by composing both files together:
 

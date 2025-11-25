@@ -27,8 +27,6 @@ server:
     include-binding-errors: always
 
 shared:
-  observability:
-    application-name: tenant-service
   security:
     enable-role-check: true
     jwt:

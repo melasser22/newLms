@@ -30,10 +30,7 @@
     </dependency>
 
     <!-- Environment configuration properties -->
-    <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>shared-config</artifactId>
-    </dependency>
+    
 
     <!-- Lombok for logging and boilerplate reduction -->
     <dependency>

@@ -1,6 +1,6 @@
 package com.ejada.starter_core.props;
 
-import com.ejada.common.BaseStarterProperties;
+
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -12,7 +12,7 @@ import com.ejada.common.constants.HeaderNames;
 
 @Getter
 @ConfigurationProperties(prefix = "shared.core")
-public class CoreProps implements BaseStarterProperties {
+public class CoreProps  {
 
     private final Correlation correlation = new Correlation();
     private final Tenant tenant = new Tenant();

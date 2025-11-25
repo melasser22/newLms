@@ -111,21 +111,3 @@ services:
     networks:
       backend:
         aliases: [kafka]
-
-  otel-collector:
-    image: otel/opentelemetry-collector:latest
-    <<: [*restart_policy, *resources_light]
-    # Mount the resources directory relative to THIS compose file
-    volumes:
-      - "./shared-starters/starter-observability/src/main/resources:/etc/otelcol:ro"
-    # Point to the file inside that directory
-    command: ["--config=/etc/otelcol/otel-collector-config.yaml"]
-    ports:
-      - "4317:4317"   # OTLP gRPC
-      - "4318:4318"   # OTLP HTTP
-    healthcheck:
-      <<: *health_defaults
-      test: ["CMD", "/otelcol", "--version"]
-    networks:
-      backend:
-        aliases: [otel-collector]

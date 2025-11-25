@@ -11,7 +11,6 @@
   <description>Aggregator + parent; imports shared-bom and enforces repo-wide standards.</description>
 
   <modules>
-    <module>shared-config</module>
     <module>shared-quality</module>
     <module>shared-bom</module>
     <module>shared-common</module>
@@ -67,11 +66,6 @@
         <artifactId>shared-common</artifactId>
         <version>${project.version}</version>
       </dependency>
-      <dependency>
-        <groupId>com.ejada</groupId>
-        <artifactId>shared-config</artifactId>
-        <version>${project.version}</version>
-      </dependency>
        <dependency>
         <groupId>com.ejada</groupId>
         <artifactId>shared-lib-crypto</artifactId>
@@ -93,7 +87,6 @@
     <dependency><groupId>com.ejada</groupId><artifactId>starter-crypto</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>com.ejada</groupId><artifactId>starter-money-time</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>com.ejada</groupId><artifactId>starter-ratelimit</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.ejada</groupId><artifactId>starter-observability</artifactId><version>${project.version}</version></dependency>
    <dependency>
         <groupId>com.ejada</groupId>
         <artifactId>shared-test-support</artifactId>

@@ -32,7 +32,6 @@
     <dependency><groupId>com.ejada</groupId><artifactId>starter-crypto</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>com.ejada</groupId><artifactId>starter-money-time</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>com.ejada</groupId><artifactId>starter-ratelimit</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>com.ejada</groupId><artifactId>starter-observability</artifactId><version>${project.version}</version></dependency>
   </dependencies>
 </dependencyManagement>
   <modules>
@@ -52,7 +51,6 @@
     <module>starter-crypto</module>
     <module>starter-money-time</module>
     <module>starter-ratelimit</module>
-    <module>starter-observability</module>
     <!-- future modules: api-clients, feature-flags -->
   </modules>
 </project>

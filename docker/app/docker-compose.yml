@@ -6,109 +6,158 @@ version: "3.8"
 x-restart: &restart_policy
   restart: unless-stopped
 
-x-common-env: &common_env
-  TZ: Asia/Riyadh
-  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ne
-  SPRING_DATASOURCE_USERNAME: postgres
-  SPRING_DATASOURCE_PASSWORD: postgres
-  SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-  OTEL_TRACES_EXPORTER: otlp
-  OTEL_METRICS_EXPORTER: otlp
-
-x-core-dependencies: &core_dependencies
-  postgres: { condition: service_healthy }
-  otel-collector: { condition: service_started }
-  kafka: { condition: service_healthy }
-
 networks:
   backend:
     driver: bridge
-
-volumes:
-  pgdata:
-  zkdata:
-  zklog:
-  kafkadata:
 
 # ----------------------------- #
 #       Application stack       #
 # ----------------------------- #
 services:
   tenant-service:
-    build: ../tenant-platform/tenant-service
+    build: ./tenant-platform/tenant-service
     <<: [*restart_policy]
     depends_on:
-      <<: *core_dependencies
+      postgres: { condition: service_healthy }
+      otel-collector: { condition: service_started }
     environment:
-      <<: *common_env
+      TZ: Asia/Riyadh
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
       OTEL_SERVICE_NAME: tenant-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      # If this service uses Redis via shared-lib, uncomment:
+      # SHARED_REDIS_HOST: redis
+      # SHARED_REDIS_PORT: 6379
+      # SHARED_REDIS_TIMEOUT: 5s
+      # SPRING_DATA_REDIS_HOST: redis
+      # SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8080:8080"
     networks:
       backend:
 
   setup-service:
-    build: ../setup-service
+    build: ./setup-service
     <<: [*restart_policy]
     depends_on:
-      <<: *core_dependencies
+      postgres: { condition: service_healthy }
+      otel-collector: { condition: service_started }
     environment:
-      <<: *common_env
+      TZ: Asia/Riyadh
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
       OTEL_SERVICE_NAME: setup-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      # Optional Redis bindings (see note above)
+      # SHARED_REDIS_HOST: redis
+      # SHARED_REDIS_PORT: 6379
+      # SHARED_REDIS_TIMEOUT: 5s
+      # SPRING_DATA_REDIS_HOST: redis
+      # SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8081:8080"
     networks:
       backend:
 
   billing-service:
-    build: ../tenant-platform/billing-service
+    build: ./tenant-platform/billing-service
     <<: [*restart_policy]
     depends_on:
-      <<: *core_dependencies
+      postgres: { condition: service_healthy }
+      otel-collector: { condition: service_started }
     environment:
-      <<: *common_env
+      TZ: Asia/Riyadh
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
       OTEL_SERVICE_NAME: billing-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      # Optional Redis bindings
+      # SHARED_REDIS_HOST: redis
+      # SHARED_REDIS_PORT: 6379
+      # SHARED_REDIS_TIMEOUT: 5s
+      # SPRING_DATA_REDIS_HOST: redis
+      # SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8082:8080"
     networks:
       backend:
 
   catalog-service:
-    build: ../tenant-platform/catalog-service
+    build: ./tenant-platform/catalog-service
     <<: [*restart_policy]
     depends_on:
-      <<: *core_dependencies
+      postgres: { condition: service_healthy }
+      otel-collector: { condition: service_started }
     environment:
-      <<: *common_env
+      TZ: Asia/Riyadh
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
       OTEL_SERVICE_NAME: catalog-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      # Optional Redis bindings
+      # SHARED_REDIS_HOST: redis
+      # SHARED_REDIS_PORT: 6379
+      # SHARED_REDIS_TIMEOUT: 5s
+      # SPRING_DATA_REDIS_HOST: redis
+      # SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8083:8080"
     networks:
       backend:
 
   subscription-service:
-    build: ../tenant-platform/subscription-service
+    build: ./tenant-platform/subscription-service
     <<: [*restart_policy]
     depends_on:
-      <<: *core_dependencies
+      postgres: { condition: service_healthy }
+      otel-collector: { condition: service_started }
     environment:
-      <<: *common_env
+      TZ: Asia/Riyadh
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
       OTEL_SERVICE_NAME: subscription-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      # Optional Redis bindings
+      # SHARED_REDIS_HOST: redis
+      # SHARED_REDIS_PORT: 6379
+      # SHARED_REDIS_TIMEOUT: 5s
+      # SPRING_DATA_REDIS_HOST: redis
+      # SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8084:8080"
     networks:
       backend:
 
   security-service:
-    build: ../sec-service
+    build: ./sec-service
     <<: [*restart_policy]
     depends_on:
-      <<: *core_dependencies
+      postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
+      otel-collector: { condition: service_started }
     environment:
-      <<: *common_env
-      OTEL_SERVICE_NAME: security-service
+      TZ: Asia/Riyadh
+
+      # --- Database ---
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
 
       # --- Redis via shared-lib (fixes localhost issue in containers) ---
       SHARED_REDIS_HOST: redis
@@ -119,119 +168,13 @@ services:
       # Some Spring parts may read spring.data.redis.* directly:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
+
+      # --- Observability ---
+      OTEL_SERVICE_NAME: security-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
     ports:
       - "8085:8080"
-    networks:
-      backend:
-
-  admin-service:
-    build: ../admin-service
-    <<: [*restart_policy]
-    depends_on:
-      <<: *core_dependencies
-    environment:
-      <<: *common_env
-      OTEL_SERVICE_NAME: admin-service
-    ports:
-      - "8086:8080"
-    networks:
-      backend:
-
-  email-template-service:
-    build: ../email-management/email-template-service
-    <<: [*restart_policy]
-    depends_on:
-      <<: *core_dependencies
-      redis: { condition: service_healthy }
-    environment:
-      <<: *common_env
-      OTEL_SERVICE_NAME: email-template-service
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-    ports:
-      - "8091:8081"
-    networks:
-      backend:
-
-  email-sending-service:
-    build: ../email-management/email-sending-service
-    <<: [*restart_policy]
-    depends_on:
-      <<: *core_dependencies
-      redis: { condition: service_healthy }
-    environment:
-      <<: *common_env
-      OTEL_SERVICE_NAME: email-sending-service
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-    ports:
-      - "8092:8082"
-    networks:
-      backend:
-
-  email-webhook-service:
-    build: ../email-management/email-webhook-service
-    <<: [*restart_policy]
-    depends_on:
-      <<: *core_dependencies
-      redis: { condition: service_healthy }
-    environment:
-      <<: *common_env
-      OTEL_SERVICE_NAME: email-webhook-service
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-    ports:
-      - "8093:8083"
-    networks:
-      backend:
-
-  email-usage-service:
-    build: ../email-management/email-usage-service
-    <<: [*restart_policy]
-    depends_on:
-      <<: *core_dependencies
-    environment:
-      <<: *common_env
-      OTEL_SERVICE_NAME: email-usage-service
-    ports:
-      - "8094:8084"
-    networks:
-      backend:
-
-  # ----------------------------- #
-  #     Infrastructure (reuse)    #
-  # ----------------------------- #
-  postgres:
-    extends:
-      file: ../tools/docker-compose.yml
-      service: postgres
-    networks:
-      backend:
-
-  zookeeper:
-    extends:
-      file: ../tools/docker-compose.yml
-      service: zookeeper
-    networks:
-      backend:
-
-  kafka:
-    extends:
-      file: ../tools/docker-compose.yml
-      service: kafka
-    networks:
-      backend:
-
-  otel-collector:
-    extends:
-      file: ../tools/docker-compose.yml
-      service: otel-collector
-    networks:
-      backend:
-
-  redis:
-    extends:
-      file: ../tools/docker-compose.yml
-      service: redis
     networks:
       backend:

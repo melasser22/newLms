@@ -1,6 +1,6 @@
 package com.ejada.shared_starter_ratelimit;
 
-import com.ejada.common.BaseStarterProperties;
+
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "shared.ratelimit")
-public class RateLimitProps implements BaseStarterProperties {
+public class RateLimitProps  {
 
   /** Bucket capacity. */
   private int capacity = 100;

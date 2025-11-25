@@ -29,8 +29,6 @@ server:
     include-binding-errors: always
 
 shared:
-  observability:
-    application-name: system-admin-service
   security:
     enable-role-check: true
     jwt:

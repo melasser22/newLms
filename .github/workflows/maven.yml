@@ -21,9 +21,3 @@ jobs:
         run: mvn -B -DskipTests=true verify -f tenant-platform/pom.xml
       - name: Build setup service
         run: mvn -B -DskipTests=true verify -f setup-service/pom.xml
-        - name: Build Sec service
-        run: mvn -B -DskipTests=true verify -f sec-service/pom.xml
-        - name: Build setup service
-        run: mvn -B -DskipTests=true verify -f admin-service/pom.xml
-        - name: Build Email Management service
-        run: mvn -B -DskipTests=true verify -f email-management/pom.xml

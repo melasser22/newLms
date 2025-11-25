@@ -1,6 +1,6 @@
 # Catalog Service – Addon Module
 
-This Spring Boot microservice manages addons for the multi-tenant NE platform. It provides REST endpoints to create, update, retrieve, list, and soft-delete addons. The service uses Postgres and Redis, integrated with shared-lib starters.
+This Spring Boot microservice manages addons for the multi-tenant platform. It provides REST endpoints to create, update, retrieve, list, and soft-delete addons. The service uses Postgres and Redis, integrated with shared-lib starters.
 
 ## Configuration
 

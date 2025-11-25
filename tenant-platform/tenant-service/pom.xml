@@ -56,10 +56,7 @@
       <groupId>com.ejada</groupId>
       <artifactId>starter-core</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.ejada</groupId>
-      <artifactId>shared-config</artifactId>
-    </dependency>
+    
     <dependency>
       <groupId>com.ejada</groupId>
       <artifactId>starter-data</artifactId>
