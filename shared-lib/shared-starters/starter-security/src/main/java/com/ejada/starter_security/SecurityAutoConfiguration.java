@@ -1,10 +1,22 @@
 package com.ejada.starter_security;
 
 import com.ejada.common.constants.HeaderNames;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ejada.starter_security.web.JsonAccessDeniedHandler;
 import com.ejada.starter_security.web.JsonAuthEntryPoint;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -16,7 +28,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -32,6 +43,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
@@ -39,17 +51,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.Map;
 
 /**
  * Default Resource Server security:
@@ -63,6 +64,36 @@ import java.util.Map;
 @ConditionalOnClass(SecurityFilterChain.class)
 @EnableMethodSecurity
 public class SecurityAutoConfiguration {
+
+  private static final String DEFAULT_MODE = "hs256";
+  private static final String HS256_ALGORITHM = "HmacSHA256";
+  private static final int MIN_HS256_KEY_BYTES = 32;
+
+  private static final List<String> DEFAULT_PERMIT_ALL = List.of(
+      "/actuator/health",
+      "/v3/api-docs/**",
+      "/swagger-ui/**",
+      "/swagger-ui.html"
+  );
+
+  private static final List<String> DEFAULT_ALLOWED_METHODS = List.of("GET", "POST", "PUT", "DELETE", "OPTIONS");
+  private static final List<String> DEFAULT_ALLOWED_HEADERS = List.of(
+      HeaderNames.AUTHORIZATION,
+      HeaderNames.CONTENT_TYPE,
+      HeaderNames.X_REQUESTED_WITH,
+      HeaderNames.CORRELATION_ID,
+      HeaderNames.X_TENANT_ID,
+      HeaderNames.CSRF_TOKEN
+  );
+  private static final List<String> DEFAULT_EXPOSED_HEADERS = List.of(
+      HeaderNames.CORRELATION_ID,
+      HeaderNames.X_TENANT_ID,
+      HeaderNames.CSRF_TOKEN
+  );
+
+  private static final Set<String> VALID_ROLES = EnumSet.allOf(Role.class).stream()
+      .map(Enum::name)
+      .collect(Collectors.toUnmodifiableSet());
 
   /* ---------------------------------------------------
    * RoleChecker : exposes @roleChecker for SpEL usage
@@ -79,41 +110,55 @@ public class SecurityAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
   public JwtAuthenticationConverter jwtAuthenticationConverter(SharedSecurityProps props) {
-    var conv = new JwtAuthenticationConverter();
-    // Only allow roles defined in the Role enum
-    var validRoles = EnumSet.allOf(Role.class).stream().map(Enum::name).collect(Collectors.toSet());
-    conv.setJwtGrantedAuthoritiesConverter(jwt -> {
-      List<GrantedAuthority> out = new ArrayList<>();
+    JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+    converter.setJwtGrantedAuthoritiesConverter(jwt -> buildAuthorities(jwt, props));
+    return converter;
+  }
 
-      // Roles (array or string, supports nested claim path like "realm_access.roles")
-      Object rolesObj = claimPath(jwt.getClaims(), props.getRolesClaim());
-      if (rolesObj instanceof Collection<?> coll) {
-        for (Object r : coll) {
-          String role = String.valueOf(r).trim();
-          if (!role.isEmpty() && validRoles.contains(role)) {
-            out.add(new SimpleGrantedAuthority(props.getRolePrefix() + role));
-          }
-        }
-      } else if (rolesObj instanceof String s && StringUtils.hasText(s)) {
-        for (String role : s.split("[,\\s]+")) {
-          String trimmed = role.trim();
-          if (!trimmed.isBlank() && validRoles.contains(trimmed)) {
-            out.add(new SimpleGrantedAuthority(props.getRolePrefix() + trimmed));
-          }
-        }
-      }
+  private Collection<GrantedAuthority> buildAuthorities(Jwt jwt, SharedSecurityProps props) {
+    List<GrantedAuthority> authorities = new ArrayList<>();
 
-      // Scopes (space-delimited string)
-      String scope = jwt.getClaimAsString(props.getScopeClaim());
-      if (StringUtils.hasText(scope)) {
-        for (String sc : scope.split("\\s+")) {
-          if (!sc.isBlank()) out.add(new SimpleGrantedAuthority(props.getAuthorityPrefix() + sc.trim()));
-        }
-      }
+    Object rolesObj = claimPath(jwt.getClaims(), props.getRolesClaim());
+    addRoleAuthorities(rolesObj, props.getRolePrefix(), authorities);
 
-      return out;
-    });
-    return conv;
+    String scope = jwt.getClaimAsString(props.getScopeClaim());
+    addScopeAuthorities(scope, props.getAuthorityPrefix(), authorities);
+
+    return authorities;
+  }
+
+  private void addRoleAuthorities(Object rolesObj, String rolePrefix, List<GrantedAuthority> authorities) {
+    if (rolesObj instanceof Collection<?> collection) {
+      collection.stream()
+          .map(String::valueOf)
+          .map(String::trim)
+          .filter(role -> !role.isEmpty())
+          .filter(VALID_ROLES::contains)
+          .map(role -> new SimpleGrantedAuthority(rolePrefix + role))
+          .forEach(authorities::add);
+      return;
+    }
+
+    if (rolesObj instanceof String roles && StringUtils.hasText(roles)) {
+      Arrays.stream(roles.split("[,\\s]+"))
+          .map(String::trim)
+          .filter(role -> !role.isBlank())
+          .filter(VALID_ROLES::contains)
+          .map(role -> new SimpleGrantedAuthority(rolePrefix + role))
+          .forEach(authorities::add);
+    }
+  }
+
+  private void addScopeAuthorities(String scope, String authorityPrefix, List<GrantedAuthority> authorities) {
+    if (!StringUtils.hasText(scope)) {
+      return;
+    }
+
+    Arrays.stream(scope.split("\\s+"))
+        .map(String::trim)
+        .filter(sc -> !sc.isBlank())
+        .map(sc -> new SimpleGrantedAuthority(authorityPrefix + sc))
+        .forEach(authorities::add);
   }
 
   /* ---------------------------------------------------
@@ -122,31 +167,37 @@ public class SecurityAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean(JwtDecoder.class)
   public JwtDecoder jwtDecoder(SharedSecurityProps props) {
-    String mode = Optional.ofNullable(props.getMode()).orElse("hs256").toLowerCase(Locale.ROOT);
-    NimbusJwtDecoder decoder;
+    String mode = Optional.ofNullable(props.getMode()).orElse(DEFAULT_MODE).toLowerCase(Locale.ROOT);
+    NimbusJwtDecoder decoder = createDecoder(mode, props);
 
-    switch (mode) {
+    decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(buildValidators(props)));
+    return decoder;
+  }
+
+  private NimbusJwtDecoder createDecoder(String mode, SharedSecurityProps props) {
+    return switch (mode) {
       case "issuer" -> {
         require(StringUtils.hasText(props.getIssuer()), "shared.security.issuer is required when mode=issuer");
-        decoder = NimbusJwtDecoder.withIssuerLocation(props.getIssuer()).build();
+        yield NimbusJwtDecoder.withIssuerLocation(props.getIssuer()).build();
       }
       case "jwks" -> {
         String jwksUri = Optional.ofNullable(props.getJwks()).map(SharedSecurityProps.Jwks::getUri).orElse(null);
         require(StringUtils.hasText(jwksUri), "shared.security.jwks.uri is required when mode=jwks");
-        decoder = NimbusJwtDecoder.withJwkSetUri(jwksUri).build();
+        yield NimbusJwtDecoder.withJwkSetUri(jwksUri).build();
       }
       case "hs256" -> {
         String secret = Optional.ofNullable(props.getHs256()).map(SharedSecurityProps.Hs256::getSecret).orElse(null);
         require(StringUtils.hasText(secret), "shared.security.hs256.secret is required when mode=hs256");
         SecretKey key = buildHs256Key(secret);
-        decoder = NimbusJwtDecoder.withSecretKey(key).macAlgorithm(MacAlgorithm.HS256).build();
+        yield NimbusJwtDecoder.withSecretKey(key).macAlgorithm(MacAlgorithm.HS256).build();
       }
       default -> throw new IllegalArgumentException("Invalid shared.security.mode: " + mode);
-    }
+    };
+  }
 
-    // Validators: timestamp + optional issuer + optional audience
+  private List<OAuth2TokenValidator<Jwt>> buildValidators(SharedSecurityProps props) {
     List<OAuth2TokenValidator<Jwt>> validators = new ArrayList<>();
-    validators.add(JwtValidators.createDefault()); // includes timestamp
+    validators.add(JwtValidators.createDefault());
     if (StringUtils.hasText(props.getIssuer())) {
       validators.add(JwtValidators.createDefaultWithIssuer(props.getIssuer()));
     }
@@ -154,8 +205,7 @@ public class SecurityAutoConfiguration {
       validators.add(new JwtClaimValidator<List<String>>(OAuth2ParameterNames.AUDIENCE,
           aud -> aud != null && aud.contains(props.getAudience())));
     }
-    decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(validators));
-    return decoder;
+    return validators;
   }
 
   private SecretKey buildHs256Key(String secret) {
@@ -166,11 +216,11 @@ public class SecurityAutoConfiguration {
       throw new IllegalArgumentException(
           "shared.security.hs256.secret must be a Base64-encoded string", ex);
     }
-    if (decoded.length < 32) {
+    if (decoded.length < MIN_HS256_KEY_BYTES) {
       throw new IllegalArgumentException(
-          "shared.security.hs256.secret must decode to at least 32 bytes");
+          "shared.security.hs256.secret must decode to at least " + MIN_HS256_KEY_BYTES + " bytes");
     }
-    return new SecretKeySpec(decoded, "HmacSHA256");
+    return new SecretKeySpec(decoded, HS256_ALGORITHM);
   }
 
   /* ---------------------------------------------------
@@ -185,27 +235,43 @@ public class SecurityAutoConfiguration {
                                              ObjectMapper objectMapper,
                                              CorsConfigurationSource corsConfigurationSource) throws Exception {
 
-    var rs = props.getResourceServer();
+    SharedSecurityProps.ResourceServer resourceServer = props.getResourceServer();
 
-    if (rs.isDisableCsrf()) {
+    applyCsrf(http, resourceServer);
+    applySessionManagement(http, resourceServer);
+
+    List<String> permitAllPatterns = buildPermitAll(resourceServer);
+    configureAuthorization(http, corsConfigurationSource, permitAllPatterns, jwtAuthConverter, objectMapper);
+    addTenantPropagation(http, props);
+
+    return http.build();
+  }
+
+  private void applyCsrf(HttpSecurity http, SharedSecurityProps.ResourceServer resourceServer) throws Exception {
+    if (resourceServer.isDisableCsrf()) {
       http.csrf(AbstractHttpConfigurer::disable);
     } else {
       http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
       http.addFilterAfter(new CsrfHeaderFilter(), CsrfFilter.class);
     }
-    if (rs.isStateless()) {
+  }
+
+  private void applySessionManagement(HttpSecurity http, SharedSecurityProps.ResourceServer resourceServer) throws Exception {
+    if (resourceServer.isStateless()) {
       http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
     }
+  }
 
-    // Build a final, de-duplicated list of permitAll patterns
-    final List<String> permitAllFinal = buildPermitAll(rs);
+  private void configureAuthorization(HttpSecurity http,
+                                      CorsConfigurationSource corsConfigurationSource,
+                                      List<String> permitAllPatterns,
+                                      JwtAuthenticationConverter jwtAuthConverter,
+                                      ObjectMapper objectMapper) throws Exception {
 
     http.cors(cors -> cors.configurationSource(corsConfigurationSource))
         .authorizeHttpRequests(auth -> {
           auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
-          for (String p : permitAllFinal) {
-            auth.requestMatchers(p).permitAll();
-          }
+          permitAllPatterns.forEach(p -> auth.requestMatchers(p).permitAll());
           auth.anyRequest().authenticated();
         })
         .oauth2ResourceServer(oauth -> oauth
@@ -219,22 +285,21 @@ public class SecurityAutoConfiguration {
         .httpBasic(AbstractHttpConfigurer::disable)
         .logout(AbstractHttpConfigurer::disable)
         .headers(headers -> {
-            headers.frameOptions(frame -> frame.deny());
-            headers.contentTypeOptions(org.springframework.security.config.Customizer.withDefaults());
-            headers.httpStrictTransportSecurity(hsts -> hsts
-                .maxAgeInSeconds(31536000)
-                .includeSubDomains(true)
-                .preload(true)
-            );
-            headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN));
+          headers.frameOptions(frame -> frame.deny());
+          headers.contentTypeOptions(org.springframework.security.config.Customizer.withDefaults());
+          headers.httpStrictTransportSecurity(hsts -> hsts
+              .maxAgeInSeconds(31536000)
+              .includeSubDomains(true)
+              .preload(true)
+          );
+          headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN));
         });
+  }
 
-    // Propagate tenant from JWT claim (after JWT auth), if configured
+  private void addTenantPropagation(HttpSecurity http, SharedSecurityProps props) throws Exception {
     if (StringUtils.hasText(props.getTenantClaim())) {
       http.addFilterAfter(new JwtTenantFilter(props.getTenantClaim()), BearerTokenAuthenticationFilter.class);
     }
-
-    return http.build();
   }
 
   @Bean
@@ -245,18 +310,9 @@ public class SecurityAutoConfiguration {
     if (origins != null && !origins.isEmpty()) {
       configuration.setAllowedOrigins(origins);
     }
-    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(Arrays.asList(
-        HeaderNames.AUTHORIZATION,
-        HeaderNames.CONTENT_TYPE,
-        "X-Requested-With",
-        HeaderNames.CORRELATION_ID,
-        HeaderNames.X_TENANT_ID,
-        HeaderNames.CSRF_TOKEN));
-    configuration.setExposedHeaders(Arrays.asList(
-        HeaderNames.CORRELATION_ID,
-        HeaderNames.X_TENANT_ID,
-        HeaderNames.CSRF_TOKEN));
+    configuration.setAllowedMethods(DEFAULT_ALLOWED_METHODS);
+    configuration.setAllowedHeaders(DEFAULT_ALLOWED_HEADERS);
+    configuration.setExposedHeaders(DEFAULT_EXPOSED_HEADERS);
     configuration.setAllowCredentials(false);
     configuration.setMaxAge(3600L);
 
@@ -270,12 +326,7 @@ public class SecurityAutoConfiguration {
    * --------------------------------------------------- */
 
   private static List<String> buildPermitAll(SharedSecurityProps.ResourceServer rs) {
-    // maintain order & remove duplicates
-    LinkedHashSet<String> set = new LinkedHashSet<>();
-    set.add("/actuator/health");
-    set.add("/v3/api-docs/**");
-    set.add("/swagger-ui/**");
-    set.add("/swagger-ui.html");
+    LinkedHashSet<String> set = new LinkedHashSet<>(DEFAULT_PERMIT_ALL);
     if (rs.getPermitAll() != null) {
       Collections.addAll(set, rs.getPermitAll());
     }

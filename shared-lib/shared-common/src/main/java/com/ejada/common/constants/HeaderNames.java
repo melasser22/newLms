@@ -44,6 +44,7 @@ public final class HeaderNames {
     public static final String ACCEPT = "Accept";
     public static final String ACCEPT_LANGUAGE = "Accept-Language";
     public static final String LOCALE = "X-Locale";
+    public static final String X_REQUESTED_WITH = "X-Requested-With";
 
     // ⏱️ Performance / Caching
     public static final String CACHE_CONTROL = "Cache-Control";
