@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * Centralized handler that maps Spring MVC / validation exceptions into Shared ErrorResponse.
  * P0 behavior:
  *  - All validation errors -> ERR-VALIDATION, with field messages.
- *  - Enrich every response with correlationId (from MDC/header) and tenantId (TenantContext).
+ *  - Enrich every response with correlationId (from MDC/header) and tenantId (ContextManager.Tenant).
  */
 @Order(Ordered.HIGHEST_PRECEDENCE + 40)
 @ControllerAdvice

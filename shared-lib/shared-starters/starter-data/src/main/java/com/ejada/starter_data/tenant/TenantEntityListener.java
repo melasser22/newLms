@@ -8,7 +8,7 @@ import jakarta.persistence.PreUpdate;
  * JPA entity listener that injects the current tenant into tenant-scoped entities.
  *
  * Behavior:
- * - On persist: if tenant_id is null/blank and a tenant exists in TenantContext -> set it.
+ * - On persist: if tenant_id is null/blank and a tenant exists in ContextManager.Tenant -> set it.
  * - On update: never overwrite a non-blank tenant_id; if it was cleared accidentally and a tenant exists -> restore it.
  *
  * NOTE: Entities that want this must implement {@link TenantScoped} and
